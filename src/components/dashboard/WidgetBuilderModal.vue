@@ -160,7 +160,9 @@ function initCfg() {
     // Output shaping is a rank WINDOW, not a sort direction: "Top 10" / "Bottom 10".
     // (None/Ascending/Descending said how to order the rows but never how many to
     // keep, which is the question a long-tailed chart actually asks.)
-    rank: ex?.rank || 'top', rankN: ex?.rankN ?? 10,
+    /* A tile with no rankN plots everything, which IS "All" — read it back that way so
+     * reopening an unbounded chart does not silently show "Top 10" selected. */
+    rank: ex ? (ex.rank || (ex.rankN ? 'top' : 'all')) : 'top', rankN: ex?.rankN ?? 10,
     excludeZero: false, sqlQuery: ex?.sql || '',
     access: ex?.access || 'public',   // Public / Private / Restricted — as a dashboard has
     // display properties, saved on the widget. undefined = on / off respectively.
@@ -285,7 +287,8 @@ const previewTile = computed(() => {
      * ranks slices), so labels and values must be reordered together — sorting the
      * values alone, as the old sortOrder did, silently detached each bar from its
      * label. Multi-series charts are left alone: there is no single ranking. */
-    const n = Number(cfg.rankN) || 0
+    // 'all' plots every category regardless of what the (disabled) N box still holds
+    const n = cfg.rank === 'all' ? 0 : Number(cfg.rankN) || 0
     if (series.length === 1 && n > 0 && n < labels.length) {
       const pairs = labels.map((l, i) => ({ l, v: series[0].values[i] }))
       pairs.sort((a, b) => (cfg.rank === 'bottom' ? a.v - b.v : b.v - a.v))
@@ -296,7 +299,7 @@ const previewTile = computed(() => {
     const t = mkChart(title, { kind: curType.value.kind, labels, series }, cfg.description)
     t.legend = cfg.legend          // so the live preview reflects the toggle
     t.dataLabels = cfg.dataLabels
-    t.rank = cfg.rank; t.rankN = cfg.rankN
+    t.rank = cfg.rank; t.rankN = cfg.rank === 'all' ? undefined : cfg.rankN
     if (isPie.value) t.chart.donut = cfg.donut   // ring vs flat pie
     return t
   }
@@ -339,7 +342,7 @@ function save(place) {
     t.type = curType.value.type
     if (isChart.value) {
       t.chart = pv.chart
-      t.legend = cfg.legend; t.dataLabels = cfg.dataLabels; t.rank = cfg.rank; t.rankN = cfg.rankN
+      t.legend = cfg.legend; t.dataLabels = cfg.dataLabels; t.rank = cfg.rank; t.rankN = cfg.rank === 'all' ? undefined : cfg.rankN
       t.columns = undefined; t.rows = undefined; t.value = undefined
     }
     else if (isShortcut.value) { t.columns = pv.columns; t.rows = pv.rows; t.sql = cfg.sqlQuery; t.chart = undefined }
@@ -699,18 +702,23 @@ function save(place) {
               <div v-if="isChart && !predefinedEdit && !noDisplay" class="sec">
                 <div class="sec-h">Display</div>
 
+                <!-- Manage Legend — the same rank window the tile's legend pill offers, so
+                     a chart can be bounded at build time instead of only after it is placed
+                     and already unreadable. All is an explicit segment, not "leave the box
+                     empty": blank-means-everything is a rule you have to be told. -->
                 <div v-if="manualMode && !isNewKind" class="fld">
-                  <label>Show</label>
+                  <label>Manage Legend</label>
                   <div class="rank-row">
                     <div class="seg">
+                      <button class="seg-b" :class="{ on: cfg.rank === 'all' }" @click="cfg.rank = 'all'">All</button>
                       <button class="seg-b" :class="{ on: cfg.rank === 'top' }" @click="cfg.rank = 'top'">Top N</button>
                       <button class="seg-b" :class="{ on: cfg.rank === 'bottom' }" @click="cfg.rank = 'bottom'">Bottom N</button>
                     </div>
-                    <input class="input rank-n" type="text" inputmode="numeric" v-model="rankN" placeholder="All" />
+                    <input class="input rank-n" type="text" inputmode="numeric" v-model="rankN" :disabled="cfg.rank === 'all'" :placeholder="cfg.rank === 'all' ? '—' : '10'" />
                   </div>
                   <p class="hint">
-                    The {{ cfg.rank === 'bottom' ? 'smallest' : 'largest' }}
-                    <b>{{ Number(cfg.rankN) || '—' }}</b> categories. Leave it blank to plot every one.
+                    <template v-if="cfg.rank === 'all'">Every category is plotted. Past about ten, colour stops separating them — the legend does the work.</template>
+                    <template v-else>The {{ cfg.rank === 'bottom' ? 'smallest' : 'largest' }} <b>{{ Number(cfg.rankN) || '—' }}</b> categories.</template>
                   </p>
                 </div>
 

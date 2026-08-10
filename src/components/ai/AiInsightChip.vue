@@ -18,7 +18,11 @@ const emit = defineEmits(['ask'])
 
 const { count, summary } = useAiTeaser(() => props.board)
 const open = ref(false)
-const CTAS = AI_TEASER_CTAS
+/* This entry point offers ONE action, not the pair. Deep dive is a long, structured
+ * read — it belongs where there is room to land it (the widget's own card and the AI
+ * panel, which both still offer both). From a topbar icon the useful question is the
+ * short one: what needs attention. */
+const CTAS = AI_TEASER_CTAS.filter((c) => c.intent === 'focus')
 
 function pick(c) { open.value = false; emit('ask', c.intent, c.label) }
 function onKey(e) { if (e.key === 'Escape' && open.value) open.value = false }
@@ -29,7 +33,10 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
 <template>
   <div class="chip-wrap">
     <button class="ai-chip" :class="{ on: open }" :aria-expanded="open" title="AI insights" @click.stop="open = !open">
-      <Icon name="sparkles" :size="15" /><span class="ai-chip-l">AI Insights</span><span v-if="count" class="ai-chip-n">{{ count }}</span>
+      <!-- icon only, matching a widget's own AI sparkle. The label and the count were
+           two labels for one button in a row of icon-only actions; the count in
+           particular promised a number that nothing downstream ever refers to again. -->
+      <Icon name="sparkles" :size="17" />
     </button>
     <div v-if="open" class="pop-backdrop" @click="open = false" />
     <transition name="pop">
@@ -54,7 +61,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
    than its neighbours and a different shape; the gradient border is enough to mark it out
    without also breaking the row's geometry. */
 .ai-chip {
-  display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  width: 36px; height: 36px; padding: 0;
   border: 1.5px solid transparent; border-radius: var(--r);
   background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--ai-grad-line) border-box;
 }

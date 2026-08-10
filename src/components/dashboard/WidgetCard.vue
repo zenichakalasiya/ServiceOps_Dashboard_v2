@@ -268,6 +268,24 @@ const canEdit = computed(() => true)
 const canDelete = computed(() => !props.tile.seeded)
 
 // Empty-widget states: unconfigured vs error vs no-data vs ok (distinct copy each)
+/* Arrow direction is the MOVE; colour is whether that move is good news. They are not the
+ * same question — Overdue Requests rising 14% is an up-arrow and bad, Unassigned falling
+ * 6% is a down-arrow and good. The tile's own `status` already carries that judgement
+ * (the AI engine reads it too), so colour follows status and only falls back to
+ * "up is green" when a KPI has no status at all. */
+const deltaTone = computed(() => {
+  const s = props.tile.status
+  if (s === 'bad') return 'bad'
+  if (s === 'warn') return 'warn'
+  if (s === 'good') return 'good'
+  return props.tile.delta?.dir === 'down' ? 'bad' : 'good'
+})
+const deltaTitle = computed(() => {
+  const d = props.tile.delta
+  if (!d) return ''
+  return `${d.dir === 'down' ? 'Down' : 'Up'} ${d.pct}% versus the previous period`
+})
+
 const tileState = computed(() => {
   if (props.tile.state === 'error') return 'error'
   if (props.tile.state === 'unconfigured') return 'unconfigured'
@@ -541,7 +559,12 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 
       <template v-else-if="tile.type === 'kpi'">
         <div class="kpi">
-          <div class="kpinum">{{ tile.value }}<span v-if="tile.unit" class="unit">{{ tile.unit }}</span></div>
+          <!-- The trend rides beside the number, not under it: a KPI's period-on-period
+               move is the second half of the same sentence ("128, and rising"), and it
+               already existed in the data — the tile just never showed it. -->
+          <div class="kpinum">{{ tile.value }}<span v-if="tile.unit" class="unit">{{ tile.unit }}</span><span
+            v-if="tile.delta" class="kpidelta" :class="deltaTone" :title="deltaTitle"
+          >{{ tile.delta.dir === 'down' ? '▼' : '▲' }}{{ tile.delta.pct }}%</span></div>
         </div>
       </template>
 
@@ -604,7 +627,7 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
           <div class="phead"><b>{{ tile.title }}</b><button class="btn btn-icon" @click="present = false"><Icon name="x" :size="18" /></button></div>
           <div class="pbody">
             <ChartTile v-if="tile.type === 'chart'" :chart="tile.chart" :legend="showLegend" :data-labels="tile.dataLabels === true" :height="620" />
-            <div v-else-if="tile.type === 'kpi'" class="kpi big"><div class="kpinum">{{ tile.value }}<span class="unit">{{ tile.unit }}</span></div></div>
+            <div v-else-if="tile.type === 'kpi'" class="kpi big"><div class="kpinum">{{ tile.value }}<span class="unit">{{ tile.unit }}</span><span v-if="tile.delta" class="kpidelta" :class="deltaTone">{{ tile.delta.dir === 'down' ? '▼' : '▲' }}{{ tile.delta.pct }}%</span></div></div>
             <FreeTextTile v-else-if="tile.type === 'text'" :content="tile.content" />
             <div v-else class="stbl big">
               <!-- full screen: the same bar, always available (there is no header icon to
@@ -809,6 +832,12 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 .tile:hover .kpi { background: var(--surface-2); }
 .kpinum { font-size: 46px; font-weight: 500; letter-spacing: -1px; line-height: 1; }
 .kpinum .unit { font-size: 20px; font-weight: 600; color: var(--muted); margin-left: 3px; }
+/* the delta is a footnote to the number, not a second number — a quarter of the size,
+   sitting on the same baseline so the pair reads as one figure */
+.kpinum .kpidelta { font-size: 14px; font-weight: 600; letter-spacing: 0; margin-left: 10px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.kpidelta.good { color: var(--green); }
+.kpidelta.warn { color: var(--amber); }
+.kpidelta.bad { color: var(--red); }
 .stbl { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .stbl-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 /* the whole bar is ONE field: chips and the picker live inside the box, so it reads as a
@@ -858,6 +887,7 @@ table { font-size: 12.5px; }
 .pbody { padding: 32px 40px; flex: 1; min-height: 62vh; display: grid; place-items: center; overflow: auto; }
 .pbody > * { width: 100%; }
 .kpi.big { padding: 0; } .kpi.big .kpinum { font-size: 150px; } .kpi.big .kpinum .unit { font-size: 48px; }
+.kpi.big .kpinum .kpidelta { font-size: 34px; margin-left: 22px; }
 .stbl.big { align-self: stretch; width: 100%; } .stbl.big table { font-size: 15px; }
 /* full screen: the record list scrolls within the dialog (sticky header) instead of
    a "View all" jump; taller than the tile so more rows show at once. */
