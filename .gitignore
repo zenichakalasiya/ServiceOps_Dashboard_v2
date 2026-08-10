@@ -5,6 +5,18 @@ dist/
 .DS_Store
 *.log
 
+# Secrets — this repo is PUBLIC. credentials.txt lives in the workspace root (outside
+# this repo) and has never been tracked here; these patterns exist so it can never be
+# committed by accident if a copy is ever dropped into the project.
+credentials.txt
+credentials*.txt
+*credentials*
+*secret*
+*.pem
+*.key
+*.p12
+*.pfx
+
 # Playwright
 /test-results/
 /playwright-report/
