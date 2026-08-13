@@ -13,8 +13,15 @@ larger analysis workspace that is public — the planning docs, the limitations 
 credentials live in the parent workspace **outside this folder** and must never be copied in here.
 
 ## Deployment
-Repo: https://github.com/zenichakalasiya/ServiceOps_Dashboard
-Live URL: https://zenichakalasiya.github.io/ServiceOps_Dashboard/
+Repo: https://github.com/zenichakalasiya/ServiceOps_Dashboard_v2
+Live URL: https://zenichakalasiya.github.io/ServiceOps_Dashboard_v2/
+
+**This is v2** — the restyled build (lucide icons, style-guide palette/type/radius,
+Export replacing Share, Free Text as a note, group date filters).
+The ORIGINAL board is still live and unchanged at
+https://zenichakalasiya.github.io/ServiceOps_Dashboard/ (repo `ServiceOps_Dashboard`),
+so anything already shared with management keeps working. The two are independent:
+pushing here never touches the original.
 
 ## Commands
 
@@ -33,7 +40,7 @@ There is **no lint step and no unit-test suite** — don't invent one. Playwrigh
 only; the app itself has no in-repo assertions.
 
 **Deploy:** commit + push to `main` → GitHub Actions rebuilds → live at
-`https://zenichakalasiya.github.io/ServiceOps_Dashboard/`. Vite `base` is `/ServiceOps_Dashboard/`,
+`https://zenichakalasiya.github.io/ServiceOps_Dashboard_v2/`. Vite `base` is `/ServiceOps_Dashboard_v2/`,
 so all asset paths assume that prefix — never hardcode a root-absolute `/foo` URL.
 
 ## Architecture — the big picture
