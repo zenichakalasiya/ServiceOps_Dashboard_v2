@@ -26,7 +26,6 @@ function pillClass(v) {
   if (m) return 'pill pill-p' + m[1]
   return ''
 }
-const STATUS_CLASS = { good: 'good', warn: 'warn', bad: 'bad' }
 </script>
 
 <template>
@@ -43,11 +42,9 @@ const STATUS_CLASS = { good: 'good', warn: 'warn', bad: 'bad' }
     <div class="tbody">
       <template v-if="tile.type === 'kpi'">
         <div class="kpi">
+          <!-- no ▲/▼ % badge: KPI tiles on the board dropped it, and the showcase has to
+               show the tile the product actually renders -->
           <div class="kpinum">{{ tile.value }}<span v-if="tile.unit" class="unit">{{ tile.unit }}</span></div>
-          <div v-if="tile.delta" class="delta" :class="STATUS_CLASS[tile.status]">
-            <Icon :name="tile.delta.dir === 'up' ? 'sort-asc' : 'sort-desc'" :size="13" />
-            {{ tile.delta.pct }}%
-          </div>
         </div>
       </template>
 
@@ -85,7 +82,7 @@ const STATUS_CLASS = { good: 'good', warn: 'warn', bad: 'bad' }
 .tile.alert-bad { box-shadow: 0 0 0 2px var(--red), var(--sh); }
 .thead { display: flex; align-items: center; justify-content: space-between; padding: 10px 10px 2px 12px; gap: 8px; min-height: 30px; }
 .left { display: flex; align-items: center; gap: 6px; min-width: 0; }
-.title { font-weight: 600; font-size: 13.5px; }
+.title { font-weight: 600; font-size: 13px; }
 .info { color: var(--muted-2); display: inline-grid; place-items: center; cursor: help; }
 .info:hover { color: var(--primary); }
 .right { display: flex; align-items: center; gap: 4px; flex: none; }
@@ -94,18 +91,14 @@ const STATUS_CLASS = { good: 'good', warn: 'warn', bad: 'bad' }
 .kpi { display: flex; flex-direction: column; justify-content: center; align-items: center; flex: 1; text-align: center; gap: 6px; }
 .kpinum { font-size: 42px; font-weight: 500; letter-spacing: -1px; line-height: 1; }
 .kpinum .unit { font-size: 18px; font-weight: 600; color: var(--muted); margin-left: 2px; }
-.delta { display: inline-flex; align-items: center; gap: 2px; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: var(--r-pill); }
-.delta.good { color: var(--green); background: var(--green-soft); }
-.delta.warn { color: var(--amber); background: var(--amber-soft); }
-.delta.bad { color: var(--red); background: var(--red-soft); }
 /* table */
 .stbl { flex: 1; overflow: auto; min-height: 0; }
-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
 th { text-align: left; font-weight: 600; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .3px; padding: 4px 8px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); }
 td { padding: 6px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
 tr:last-child td { border-bottom: none; }
 .id-link { color: var(--primary-700); font-weight: 600; }
-.pill { display: inline-flex; align-items: center; height: 20px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.pill { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: var(--r-sm); font-size: 11px; font-weight: 500; white-space: nowrap; }
 .pill-blue { background: var(--blue-soft); color: var(--blue); }
 .pill-amber { background: var(--amber-soft); color: var(--amber); }
 .pill-green { background: var(--green-soft); color: var(--green); }

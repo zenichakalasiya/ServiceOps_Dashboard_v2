@@ -90,16 +90,16 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown, true))
 /* the panel fills the column the lab gives it (push layout owns the width) */
 .aip { display: flex; flex-direction: column; height: 100%; min-height: 0; background: var(--surface); border-left: 1px solid var(--ai-border); }
 .aip-head { display: flex; align-items: center; gap: 9px; padding: 12px 12px 12px 14px; border-bottom: 1px solid var(--border); background: var(--ai-grad-card); }
-.aip-spark { flex: none; width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: var(--ai-softer); }
-.aip-spark :deep(.ico) { background: var(--ai-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
-.aip-title { flex: 1; margin: 0; font-size: 14.5px; font-weight: 600; color: var(--ink); }
-.aip-ic { width: 30px; height: 30px; border: none; background: transparent; color: var(--muted); border-radius: 7px; display: grid; place-items: center; }
+.aip-spark { flex: none; width: 30px; height: 30px; border-radius: 4px; display: grid; place-items: center; background: var(--ai-softer); }
+.aip-spark :deep(.ico) { stroke: url(#ai-grad); color: var(--ai); }
+.aip-title { flex: 1; margin: 0; font-size: 14px; font-weight: 600; color: var(--ink); }
+.aip-ic { width: 30px; height: 30px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .aip-ic:hover { background: var(--surface); color: var(--ink); }
 .aip-ic.on { color: var(--ai-ink); background: var(--ai-soft); }
 .aip-ic:focus-visible { outline: 2px solid var(--ai); outline-offset: 1px; }
 
 .aip-body { flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 3px; }
-.ins { display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: left; padding: 11px 10px; border: 1px solid transparent; border-radius: 10px; background: transparent; cursor: pointer; }
+.ins { display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: left; padding: 11px 10px; border: 1px solid transparent; border-radius: 4px; background: transparent; cursor: pointer; }
 .ins:hover { background: var(--ai-softer); }
 .ins.open { background: var(--ai-softer); border-color: var(--ai-border); }
 .ins:focus-visible { outline: 2px solid var(--ai); outline-offset: 1px; }
@@ -107,7 +107,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown, true))
 .ins-dot.bad { background: var(--red); } .ins-dot.warn { background: var(--amber); } .ins-dot.good { background: var(--green); }
 .ins-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .ins-title { font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.4; }
-.ins-detail { font-size: 12.5px; color: var(--ink-2); line-height: 1.5; }
+.ins-detail { font-size: 13px; color: var(--ink-2); line-height: 1.5; }
 .ins-from { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); }
 .ins-from :deep(.ico) { color: var(--muted-2); }
 .ins-chev { flex: none; color: var(--muted-2); margin-top: 3px; transition: transform .14s; }

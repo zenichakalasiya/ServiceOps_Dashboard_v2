@@ -7,7 +7,6 @@ import DashboardMenu from './DashboardMenu.vue'
 import { toggleFavorite, recordView, folderName } from '../../store/index.js'
 import { ACCESS } from '../../data/mock.js'
 const props = defineProps({ d: Object })
-const emit = defineEmits(['share'])
 const router = useRouter()
 const hov = ref(false)
 
@@ -39,7 +38,7 @@ function openIt() { recordView(props.d); router.push(`/dashboard/${props.d.id}`)
       <button class="star" :class="{ on: d.favorite }" @click.stop="toggleFavorite(d)" :title="d.favorite ? 'Unfavorite' : 'Add to favorites'">
         <Icon :name="d.favorite ? 'star-fill' : 'star'" :size="16" />
       </button>
-      <DashboardMenu :d="d" @share="emit('share', d)" @open="openIt" />
+      <DashboardMenu :d="d" @open="openIt" />
     </div>
 
     <div class="body" @click="openIt">
@@ -75,15 +74,15 @@ function openIt() { recordView(props.d); router.push(`/dashboard/${props.d.id}`)
 <style scoped>
 .dcard { position: relative; padding: 10px; transition: box-shadow .15s, transform .1s, border-color .15s; cursor: pointer; }
 .dcard:hover { box-shadow: var(--sh); border-color: var(--border-strong); transform: translateY(-2px); }
-.preview { border-radius: 10px; overflow: hidden; }
+.preview { border-radius: 4px; overflow: hidden; }
 .top { position: absolute; top: 16px; right: 16px; display: flex; gap: 2px; }
-.star { width: 30px; height: 30px; border-radius: 8px; border: none; background: rgba(255,255,255,.86); backdrop-filter: blur(3px); color: var(--muted); display: grid; place-items: center; box-shadow: var(--sh-sm); }
+.star { width: 30px; height: 30px; border-radius: 4px; border: none; background: rgba(255,255,255,.86); backdrop-filter: blur(3px); color: var(--muted); display: grid; place-items: center; box-shadow: var(--sh-sm); }
 .star:hover { color: #f5a623; }
 .star.on { color: #f5a623; }
 .body { padding: 11px 6px 5px; }
 .name-row { display: flex; align-items: center; gap: 7px; }
-.name { font-weight: 600; font-size: 14.5px; }
-.desc { color: var(--muted); font-size: 12.5px; margin: 3px 0 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.name { font-weight: 600; font-size: 14px; }
+.desc { color: var(--muted); font-size: 13px; margin: 3px 0 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .meta { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
 .mtxt { font-size: 12px; color: var(--muted); }
 .dot-sep { color: var(--muted-2); }

@@ -90,25 +90,25 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll, true))
 </template>
 
 <style scoped>
-.drf { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 4px 0 12px; border: 1px solid var(--border-strong); border-radius: 9px; background: var(--surface); cursor: pointer; }
+.drf { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 4px 0 12px; border: 1px solid var(--border-strong); border-radius: 4px; background: var(--surface); cursor: pointer; }
 .drf:hover { border-color: var(--primary); }
 .drf.on { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
-.drf-v { flex: 1; min-width: 0; font-size: 13.5px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.drf-v { flex: 1; min-width: 0; font-size: 13px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .drf-v.ph { color: var(--muted-2); }
-.drf-cal { flex: none; width: 30px; height: 30px; border: none; background: transparent; color: var(--muted); border-radius: 7px; display: grid; place-items: center; }
+.drf-cal { flex: none; width: 30px; height: 30px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .drf:hover .drf-cal, .drf.on .drf-cal { color: var(--primary); }
 
 .drf-back { position: fixed; inset: 0; z-index: 300; }
 /* one pane — no quick-range column, so it is the width of the From/To fields alone */
-.drf-pop { position: fixed; z-index: 301; width: 288px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--sh-pop); overflow: hidden; }
+.drf-pop { position: fixed; z-index: 301; width: 288px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-pop); overflow: hidden; }
 .drf-abs { padding: 16px; display: flex; flex-direction: column; }
 .drf-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 2px; }
 .drf-h { font-weight: 600; font-size: 13px; margin-bottom: 12px; }
 .drf-fb { display: flex; flex-direction: column; margin-bottom: 12px; }
 .drf-fb label { font-size: 12px; font-weight: 500; color: var(--ink-2); margin-bottom: 5px; }
 .drf-dt { position: relative; }
-.drf-dt .input { height: 36px; font-size: 12.5px; padding-right: 36px; width: 100%; }
+.drf-dt .input { height: 36px; font-size: 13px; padding-right: 36px; width: 100%; }
 .drf-dt .input::-webkit-calendar-picker-indicator { opacity: 0; }
-.drf-ci { position: absolute; right: 4px; top: 4px; width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: 7px; display: grid; place-items: center; }
+.drf-ci { position: absolute; right: 4px; top: 4px; width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .drf-ci:hover { background: var(--surface-2); color: var(--ink); }
 </style>

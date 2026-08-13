@@ -59,17 +59,17 @@ const isActive = (name) => route.name === name
 <style scoped>
 .sidebar { background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 12px 10px; gap: 4px; overflow: hidden; }
 .brand { display: flex; align-items: center; gap: 9px; padding: 6px 8px 12px; cursor: pointer; }
-.logo { width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; display: grid; place-items: center; flex: none; }
+.logo { width: 30px; height: 30px; border-radius: 4px; background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; display: grid; place-items: center; flex: none; }
 .brand-name { font-weight: 700; font-size: 15px; letter-spacing: -.2px; }
 .brand-tag { font-size: 11px; color: var(--muted); font-weight: 500; }
 .nav { display: flex; flex-direction: column; gap: 2px; }
-.nav-item { display: flex; align-items: center; gap: 11px; height: 38px; padding: 0 10px; border-radius: 9px; border: none; background: transparent; color: var(--ink-2); font-weight: 500; font-size: 13.5px; width: 100%; }
+.nav-item { display: flex; align-items: center; gap: 11px; height: 38px; padding: 0 10px; border-radius: 4px; border: none; background: transparent; color: var(--ink-2); font-weight: 500; font-size: 13px; width: 100%; }
 .nav-item:hover { background: var(--surface-2); }
 .nav-item.active { background: var(--primary-soft); color: var(--primary-700); }
 .nav-item .count, .link .count { margin-left: auto; font-size: 11px; color: var(--muted); background: var(--surface-2); padding: 1px 7px; border-radius: 999px; font-weight: 600; }
-.sec-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted-2); font-weight: 600; padding: 14px 10px 5px; }
+.sec-label { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted-2); font-weight: 600; padding: 14px 10px 5px; }
 .list { display: flex; flex-direction: column; gap: 1px; }
-.link { display: flex; align-items: center; gap: 9px; height: 32px; padding: 0 10px; border-radius: 8px; border: none; background: transparent; color: var(--ink-2); font-size: 13px; font-weight: 500; width: 100%; text-align: left; }
+.link { display: flex; align-items: center; gap: 9px; height: 32px; padding: 0 10px; border-radius: 4px; border: none; background: transparent; color: var(--ink-2); font-size: 13px; font-weight: 500; width: 100%; text-align: left; }
 .link:hover { background: var(--surface-2); }
 .link.active { background: var(--primary-softer); color: var(--primary-700); }
 .fav { color: #f5a623; }

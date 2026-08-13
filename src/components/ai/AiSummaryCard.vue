@@ -64,11 +64,11 @@ function toggle() { open.value = !open.value }
 }
 /* collapsed row — glyph, title, and the dropdown chevron pinned right */
 .ac-head { display: flex; align-items: center; gap: 11px; cursor: pointer; }
-.ac-head:focus-visible { outline: 2px solid var(--ai); outline-offset: 3px; border-radius: 8px; }
-.ac-spark { flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--ai-softer); }
-.ac-spark :deep(.ico) { background: var(--ai-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+.ac-head:focus-visible { outline: 2px solid var(--ai); outline-offset: 3px; border-radius: 4px; }
+.ac-spark { flex: none; width: 34px; height: 34px; border-radius: 4px; display: grid; place-items: center; background: var(--ai-softer); }
+.ac-spark :deep(.ico) { stroke: url(#ai-grad); color: var(--ai); }
 .ac-title { flex: 1; font-size: 15px; font-weight: 600; color: var(--ink); }
-.ac-arrow { flex: none; width: 28px; height: 28px; border-radius: 7px; display: grid; place-items: center; color: var(--ai); }
+.ac-arrow { flex: none; width: 28px; height: 28px; border-radius: 4px; display: grid; place-items: center; color: var(--ai); }
 .ac-head:hover .ac-arrow { background: var(--ai-soft); }
 
 /* expanded: the small summary, then the CTAs beneath it at the bottom-left */
@@ -81,13 +81,14 @@ function toggle() { open.value = !open.value }
 .ac-cta {
   display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; white-space: nowrap;
   border: 1px solid var(--ai-border); border-radius: var(--r-pill);
-  background: var(--ai-grad-soft); color: var(--ai-ink); font-weight: 600; font-size: 12.5px;
+  background: var(--ai-grad-soft); color: var(--ai-ink); font-weight: 600; font-size: 13px;
 }
 .ac-cta :deep(.ico) { color: var(--ai); }
 .ac-cta:hover { border-color: var(--ai); background: var(--ai-soft); }
 /* primary: gradient border AND gradient label on a white fill */
 .ac-cta.primary { border: 1.5px solid transparent; background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--ai-grad-line) border-box; }
-.ac-cta.primary span, .ac-cta.primary :deep(.ico) { background: var(--ai-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+.ac-cta.primary span { background: var(--ai-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+.ac-cta.primary :deep(.ico) { stroke: url(#ai-grad); color: var(--ai); }
 .ac-cta.primary:hover { background: linear-gradient(var(--ai-soft), var(--ai-soft)) padding-box, var(--ai-grad-line) border-box; }
 
 .acx-enter-active, .acx-leave-active { transition: opacity .16s ease; }

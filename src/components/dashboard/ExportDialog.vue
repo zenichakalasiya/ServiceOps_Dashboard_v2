@@ -1,0 +1,159 @@
+<script setup>
+/**
+ * ExportDialog — anchored under the Export button in the board header.
+ *
+ * Replaces the old Download popover *and* the "Export dashboard as a PDF" half of the
+ * share popover. Exporting a board has exactly three destinations, and they differ only
+ * in where the file ends up:
+ *   Image        → a PNG of the board, downloaded
+ *   PDF          → the same board as a PDF, downloaded
+ *   Email as PDF → that same PDF, delivered instead of downloaded
+ *
+ * Email is a destination, not a separate feature, so it is a third segment rather than
+ * a second dialog — the password option is shared by both PDF routes, and stating it
+ * once is what keeps the two from drifting apart.
+ */
+import { ref, computed, nextTick } from 'vue'
+import Icon from '../ui/Icon.vue'
+import { toast } from '../../store/index.js'
+const props = defineProps({ d: Object })
+const emit = defineEmits(['close'])
+
+const FORMATS = [
+  { id: 'image', label: 'Image', icon: 'image' },
+  { id: 'pdf', label: 'PDF', icon: 'file-text' },
+  { id: 'email', label: 'Email as PDF', icon: 'mail' },
+]
+const fmt = ref('pdf')
+// an image has no container to encrypt, so protection only exists on the two PDF routes
+const isPdf = computed(() => fmt.value !== 'image')
+const isEmail = computed(() => fmt.value === 'email')
+
+const pwd = ref(false)
+const password = ref('')
+const showPwd = ref(false)
+
+/* Recipients, added one at a time: committing an address turns it into a row and brings
+ * the [+] back, so an empty input never sits on screen pretending to be a required field. */
+const emails = ref([])
+const newEmail = ref('')
+const adding = ref(false)
+const emailEl = ref(null)
+const emailValid = computed(() => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(newEmail.value.trim()))
+function startEmail() { adding.value = true; nextTick(() => emailEl.value?.focus()) }
+function cancelEmail() { adding.value = false; newEmail.value = '' }
+function addEmail() {
+  if (!emailValid.value) return
+  emails.value.push(newEmail.value.trim())
+  newEmail.value = ''
+  adding.value = false
+}
+function removeEmail(i) { emails.value.splice(i, 1) }
+
+function run() {
+  // asking for protection and leaving it blank would produce an unprotected file
+  if (pwd.value && isPdf.value && !password.value.trim()) { toast('Set an attachment password, or turn the protection off', 'warn'); return }
+  const prot = pwd.value && isPdf.value ? ' — password protected' : ''
+  if (isEmail.value) {
+    if (!emails.value.length) { toast('Add at least one email address', 'warn'); return }
+    toast(`“${props.d.name}” sent as PDF to ${emails.value.length} recipient${emails.value.length > 1 ? 's' : ''}${prot}`, 'success')
+  } else {
+    toast(`Exporting “${props.d.name}” as ${fmt.value === 'pdf' ? 'PDF' : 'an image'}${prot}`, 'success')
+  }
+  emit('close')
+}
+</script>
+
+<template>
+  <div class="pv-back" @click="emit('close')" />
+  <div class="pv card" @click.stop>
+    <header class="pv-head"><span class="pv-title">Export dashboard</span></header>
+
+    <div class="tabs">
+      <button v-for="f in FORMATS" :key="f.id" class="tab" :class="{ on: fmt === f.id }" @click="fmt = f.id">
+        <Icon :name="f.icon" :size="15" /> {{ f.label }}
+      </button>
+    </div>
+
+    <!-- Email as PDF: who it goes to -->
+    <template v-if="isEmail">
+      <label class="fl">Add Email <i>*</i></label>
+      <div class="emails">
+        <div v-for="(e, i) in emails" :key="i" class="erow">
+          <span class="eaddr">{{ e }}</span>
+          <button class="ex" title="Remove" @click="removeEmail(i)"><Icon name="x" :size="13" /></button>
+        </div>
+        <div v-if="adding" class="erow">
+          <input ref="emailEl" class="input" v-model="newEmail" placeholder="name@company.com" @keyup.enter="addEmail" @keyup.esc="cancelEmail" />
+          <button class="ex" title="Cancel" @click="cancelEmail"><Icon name="x" :size="13" /></button>
+        </div>
+        <button v-else class="add-btn" title="Add an email address" @click="startEmail"><Icon name="plus" :size="16" /></button>
+      </div>
+    </template>
+
+    <label v-if="isPdf" class="tgl-row">
+      <span class="tgl-txt">
+        <b>Password Protected</b>
+        <em>The PDF is encrypted, and anyone opening it needs this password.</em>
+      </span>
+      <button class="tgl" :class="{ on: pwd }" role="switch" :aria-checked="pwd" @click.prevent="pwd = !pwd"><i /></button>
+    </label>
+
+    <template v-if="pwd && isPdf">
+      <label class="fl">Attachment Password <i>*</i></label>
+      <div class="pw">
+        <input class="input" :type="showPwd ? 'text' : 'password'" v-model="password" placeholder="Password" />
+        <button class="eye" :title="showPwd ? 'Hide' : 'Show'" @click="showPwd = !showPwd"><Icon name="eye" :size="15" /></button>
+      </div>
+    </template>
+
+    <footer class="pv-foot">
+      <button class="btn" @click="emit('close')">Cancel</button>
+      <button class="btn btn-primary" @click="run">
+        <Icon :name="isEmail ? 'mail' : 'download'" :size="15" /> {{ isEmail ? 'Send PDF' : 'Export' }}
+      </button>
+    </footer>
+  </div>
+</template>
+
+<style scoped>
+.pv-back { position: fixed; inset: 0; z-index: 55; }
+/* anchored directly under the Export button, right-aligned to it */
+.pv { position: absolute; top: 44px; right: 0; z-index: 60; width: 380px; padding: 14px 16px 12px; }
+.pv-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pv-title { font-weight: 700; font-size: 15px; color: var(--ink); }
+
+.tabs { display: flex; gap: 4px; margin: 12px 0 4px; padding: 3px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; }
+.tab { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px; border: none; background: transparent; color: var(--muted); border-radius: 4px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.tab:hover { color: var(--ink); }
+.tab.on { background: var(--primary); color: #fff; box-shadow: var(--sh-sm); }
+
+.fl { display: block; font-size: 12px; font-weight: 500; color: var(--ink-2); margin: 14px 0 6px; }
+.fl i { color: var(--red); font-style: normal; }
+
+/* one address per row, with the [+] as the only affordance when nothing is being typed */
+.emails { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.erow { display: flex; align-items: center; gap: 6px; width: 100%; }
+.erow .input { flex: 1; min-width: 0; }
+.eaddr { flex: 1; min-width: 0; height: 36px; display: flex; align-items: center; padding: 0 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface-2); font-size: 13px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ex { flex: none; width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
+.ex:hover { background: var(--surface-2); color: var(--red); }
+.add-btn { flex: none; width: 34px; height: 32px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--primary-700); border-radius: 4px; display: grid; place-items: center; }
+.add-btn:hover { background: var(--primary-soft); border-color: var(--primary); }
+
+.tgl-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 14px; cursor: pointer; }
+.tgl-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tgl-txt b { font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.tgl-txt em { font-style: normal; font-size: 12px; color: var(--muted); line-height: 1.45; }
+.tgl { flex: none; width: 38px; height: 22px; padding: 0; border: none; border-radius: 999px; background: var(--border-strong); position: relative; transition: background .15s; }
+.tgl i { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: var(--sh-sm); transition: transform .15s; }
+.tgl.on { background: var(--primary); }
+.tgl.on i { transform: translateX(16px); }
+
+.pw { position: relative; }
+.pw .input { width: 100%; padding-right: 38px; }
+.eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
+.eye:hover { background: var(--surface-2); color: var(--ink); }
+
+.pv-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
+</style>

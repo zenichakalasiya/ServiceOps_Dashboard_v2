@@ -21,6 +21,22 @@ watch(() => store.ui.listingOpen, (v) => { if (v) store.ui.railExpanded = false 
 
 <template>
   <div class="app">
+    <!-- The AI identity gradient, as an SVG paint server.
+         Icons used to be a webfont, so an AI glyph could be painted by laying the
+         gradient behind the text and clipping it to the glyph (`background-clip: text`).
+         Lucide icons are SVG strokes, and background-clip has nothing to clip to — the
+         icon simply vanished. An SVG <linearGradient> referenced as `stroke: url(#…)`
+         is the equivalent that works on a path. Declared once, here, because a paint
+         server has to exist in the document for every icon that references it. -->
+    <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+      <defs>
+        <linearGradient id="ai-grad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#4cb1fe" />
+          <stop offset="45%" stop-color="#731efb" />
+          <stop offset="100%" stop-color="#f911e3" />
+        </linearGradient>
+      </defs>
+    </svg>
     <AppTopbar />
     <div class="below">
       <ModuleRail />

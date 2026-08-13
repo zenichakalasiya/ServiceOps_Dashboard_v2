@@ -2,7 +2,6 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Icon from '../ui/Icon.vue'
-import ShareDialog from './ShareDialog.vue'
 import ConfirmDialog from '../ui/ConfirmDialog.vue'
 import { store, live, recents, toggleFavorite, archiveDashboard, markDefault, recordView } from '../../store/index.js'
 import { ACCESS } from '../../data/mock.js'
@@ -71,11 +70,10 @@ function del(d) { archiveDashboard(d) }
 function openFull() { emit('close'); router.push('/dashboards') }
 function newDashboard() { store.ui.cloneTarget = null; store.ui.editTarget = null; store.ui.createOpen = true }
 
-// ---- per-row actions menu (Edit · Clone · Mark as default · Share · Archive) ----
+// ---- per-row actions menu (Edit · Clone · Mark as default · Archive) ----
 const menuId = ref(null)
 const menuPos = ref({ top: 0, left: 0 })
 const menuDash = computed(() => (menuId.value ? live.value.find((d) => d.id === menuId.value) : null))
-const shareTarget = ref(null)
 // archiving from the listing used to fire on a single click — confirm it by name
 const delTarget = ref(null)
 function openMenu(d, e) {
@@ -87,7 +85,7 @@ function openMenu(d, e) {
 }
 /* Capture the dashboard BEFORE closing the menu. `menuDash` is derived from
  * `menuId`, so clearing the menu first handed every action a null dashboard —
- * Edit, Clone, Mark-default, Share and Archive were all silently no-ops. */
+ * Edit, Clone, Mark-default and Archive were all silently no-ops. */
 function menuAct(fn) {
   const d = menuDash.value
   menuId.value = null
@@ -140,10 +138,11 @@ function doClone(d) { store.ui.editTarget = null; store.ui.cloneTarget = d; stor
           </button>
           <div v-if="open.has(grp.name)" class="items">
             <div v-for="d in grp.items" :key="grp.name + d.id" class="item" :class="{ active: route.params.id === d.id, 'menu-open': menuId === d.id }" @click="openBoard(d)">
-              <!-- the kind is carried by the GLYPH (monitor / person / share), so the box
-                   and its colour stay uniform — three different icon colours down a list
-                   turned a quiet sidebar into a legend nobody asked for -->
-              <span class="ibox" :title="dashKind(d)"><Icon :name="dashIcon(d)" :size="14" /></span>
+              <!-- the kind is carried by the GLYPH (monitor / person / share) and nothing
+                   else — one colour down the whole list, or a quiet sidebar becomes a
+                   legend nobody asked for. 16px because a bare glyph has to hold the
+                   column on its own now that the box behind it is gone. -->
+              <span class="ibox" :title="dashKind(d)"><Icon :name="dashIcon(d)" :size="16" /></span>
               <span class="iname ellip">{{ d.name }}</span>
               <!-- the default landing board carries a static home icon beside its name here too -->
               <Icon v-if="d.default" name="default-home" :size="13" class="def-mark" title="Default dashboard — the one you land on" />
@@ -175,7 +174,6 @@ function doClone(d) { store.ui.editTarget = null; store.ui.cloneTarget = d; stor
           <button class="menu-item" @click="menuAct((d) => doEdit(d))"><Icon name="edit" :size="15" /> Edit</button>
           <button class="menu-item" @click="menuAct((d) => doClone(d))"><Icon name="copy" :size="15" /> Clone</button>
           <button v-if="!menuDash.default" class="menu-item" @click="menuAct((d) => markDefault(d))"><Icon name="default-home" :size="15" /> Mark as default landing</button>
-          <button class="menu-item" @click="menuAct((d) => { shareTarget = d })"><Icon name="share" :size="15" /> Share</button>
           <!-- a predefined dashboard cannot be archived or deleted — the action is
                absent, not disabled: there is nothing the user could do to enable it -->
           <template v-if="!menuDash.predefined">
@@ -185,8 +183,6 @@ function doClone(d) { store.ui.editTarget = null; store.ui.cloneTarget = d; stor
         </div>
       </transition>
     </teleport>
-
-    <ShareDialog v-if="shareTarget" :d="shareTarget" @close="shareTarget = null" />
 
     <ConfirmDialog
       v-if="delTarget"
@@ -208,16 +204,16 @@ function doClone(d) { store.ui.editTarget = null; store.ui.cloneTarget = d; stor
 .flyout { width: 300px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; height: 100%; }
 .fhead { display: flex; align-items: center; justify-content: space-between; padding: 12px 12px 8px; }
 .ftitle { font-weight: 600; font-size: 15px; }
-.ic { width: 30px; height: 30px; border: none; background: transparent; color: var(--muted); border-radius: 8px; display: grid; place-items: center; }
+.ic { width: 30px; height: 30px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .ic:hover { background: var(--surface-2); color: var(--ink); }
 /* the primary create action — same filled treatment as the topbar's +, sized to this
    header so it sits level with the 30px ghost chevron opposite it */
-.new-ic { width: 28px; height: 28px; border: none; border-radius: 8px; background: var(--primary); color: #fff; display: grid; place-items: center; box-shadow: var(--sh-sm); }
+.new-ic { width: 28px; height: 28px; border: none; border-radius: 4px; background: var(--primary); color: #fff; display: grid; place-items: center; box-shadow: var(--sh-sm); }
 .new-ic:hover { background: var(--primary-600); }
 .row { display: flex; align-items: center; } .gap-6 { gap: 6px; }
 /* footer: Manage all dashboards, on its own */
 .ffoot { border-top: 1px solid var(--border); padding: 10px; }
-.manage-link { width: 100%; display: flex; align-items: center; gap: 9px; padding: 9px 12px; border: none; background: transparent; color: var(--ink-2); font-weight: 600; font-size: 13px; border-radius: 8px; }
+.manage-link { width: 100%; display: flex; align-items: center; gap: 9px; padding: 9px 12px; border: none; background: transparent; color: var(--ink-2); font-weight: 600; font-size: 13px; border-radius: 4px; }
 .manage-link:hover { background: var(--surface-2); color: var(--ink); }
 .manage-link .ml-arrow { margin-left: auto; color: var(--muted); }
 /* inline underline tabs (matches the Add-Widget side popup). Four labels are wider than
@@ -225,22 +221,22 @@ function doClone(d) { store.ui.editTarget = null; store.ui.cloneTarget = d; stor
    hidden — a visible one under a 1px rule reads as a broken border. */
 .tabs2 { display: flex; gap: 0; padding: 0 12px; border-bottom: 1px solid var(--border); margin-bottom: 8px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -ms-overflow-style: none; }
 .tabs2::-webkit-scrollbar { display: none; }
-.t2 { border: none; background: transparent; padding: 9px 2px; margin-right: 14px; color: var(--muted); font-weight: 500; font-size: 12.5px; border-bottom: 2px solid transparent; white-space: nowrap; flex: none; }
+.t2 { border: none; background: transparent; padding: 9px 2px; margin-right: 14px; color: var(--muted); font-weight: 500; font-size: 13px; border-bottom: 2px solid transparent; white-space: nowrap; flex: none; }
 .t2:last-child { margin-right: 0; }
 .t2:hover { color: var(--ink); }
 .t2.on { color: var(--primary-700); border-bottom-color: var(--primary); }
-.fsearch { display: flex; align-items: center; gap: 8px; margin: 0 12px 8px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 9px; padding: 0 10px; height: 34px; }
+.fsearch { display: flex; align-items: center; gap: 8px; margin: 0 12px 8px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 0 10px; height: 36px; }
 .fsearch input { border: none; outline: none; background: transparent; width: 100%; font-size: 13px; }
 .glist { flex: 1; overflow: auto; padding: 4px 8px 14px; }
 .grp { margin-bottom: 2px; }
 /* the chevron sits hard against the panel's left edge — it was indented 6px, which put
    every group heading out of line with the "Dashboards" title and the search box above */
-.grp-head { display: flex; align-items: center; gap: 7px; width: 100%; border: none; background: transparent; padding: 7px 6px 7px 0; border-radius: 8px; color: var(--ink-2); font-weight: 600; font-size: 12.5px; text-align: left; }
+.grp-head { display: flex; align-items: center; gap: 7px; width: 100%; border: none; background: transparent; padding: 7px 6px 7px 0; border-radius: 4px; color: var(--ink-2); font-weight: 600; font-size: 13px; text-align: left; }
 .grp-head:hover { background: var(--surface-2); }
 .gname { flex: 1; }
 .gcount { font-size: 11px; color: var(--muted); background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px; padding: 0 7px; font-weight: 600; }
 .items { display: flex; flex-direction: column; gap: 1px; padding: 1px 0 4px; }
-.item { display: flex; align-items: center; gap: 8px; padding: 4px 8px 4px 20px; border-radius: 8px; cursor: pointer; }
+.item { display: flex; align-items: center; gap: 8px; padding: 4px 8px 4px 20px; border-radius: 4px; cursor: pointer; }
 .item:hover { background: var(--surface-2); }
 /* No filled "selected" row inside the groups. The default board is already marked by the
    home icon beside its name AND pinned on its own row above, so a third signal on the
@@ -248,14 +244,19 @@ function doClone(d) { store.ui.editTarget = null; store.ui.cloneTarget = d; stor
    painting the sidebar blue to say something already said twice. The name alone carries
    the current board. */
 .item.active .iname { color: var(--primary-700); font-weight: 600; }
-/* every dashboard's icon sits in the same soft rounded box — the box is the constant,
-   the glyph inside it is what says predefined vs mine vs shared */
-.ibox { flex: none; width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; background: var(--surface-2); color: var(--ink-2); }
-.item:hover .ibox { background: var(--surface); }
-.item.active .ibox { background: var(--primary-soft); color: var(--primary-700); }
+/* Bare glyph, no container — the settings-nav treatment. The box this used to sit in was
+   doing the work of a second, competing surface: a filled tile inside a row that already
+   fills on hover, so hovering swapped one fill for another and the row read as two
+   overlapping controls. Uniformity now comes from the fixed-width SLOT (the names still
+   line up) rather than from a drawn box, and the glyph is quiet enough that the name
+   stays the thing you read first. Colour still carries state: muted at rest, ink on
+   hover, primary on the current board — matching the name beside it. */
+.ibox { flex: none; width: 20px; height: 20px; display: grid; place-items: center; color: var(--muted); }
+.item:hover .ibox { color: var(--ink-2); }
+.item.active .ibox { color: var(--primary-700); }
 .lk { color: var(--muted-2); flex: none; }
 .iname { flex: 0 1 auto; min-width: 0; font-size: 13px; }
-.tag-pre { font-size: 9.5px; font-weight: 500; color: var(--primary-700); background: var(--primary-soft); padding: 2px 6px; border-radius: 4px; flex: none; }
+.tag-pre { font-size: 10px; font-weight: 500; color: var(--primary-700); background: var(--primary-soft); padding: 2px 6px; border-radius: 4px; flex: none; }
 /* pinned default row — sits above the groups, so no chevron indent; home icon + ⋯ only */
 .def-row { margin: 0 8px 6px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
 .item.def { padding-left: 8px; }
@@ -267,7 +268,7 @@ function doClone(d) { store.ui.editTarget = null; store.ui.cloneTarget = d; stor
 .hov { display: flex; align-items: center; gap: 2px; opacity: 0; transition: opacity .12s; }
 .item:hover .hov, .item.menu-open .hov { opacity: 1; }
 .item.menu-open { background: var(--surface-2); }
-.hb { width: 24px; height: 24px; border: none; background: transparent; color: var(--muted); border-radius: 6px; display: grid; place-items: center; }
+.hb { width: 24px; height: 24px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .hb:hover { background: var(--surface); }
 .hb.del:hover { color: var(--red); background: var(--red-soft); }
 /* favourite: pushed to the right, appears on hover, and stays lit (amber) once set */

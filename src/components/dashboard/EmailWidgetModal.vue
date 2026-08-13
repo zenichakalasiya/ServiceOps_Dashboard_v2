@@ -1,29 +1,26 @@
 <script setup>
 /**
- * ShareWidgetModal — share a single widget, with screenshot-style markup.
+ * EmailWidgetModal — Export ▸ Email as PDF for a single widget, with screenshot-style
+ * markup.
  *
  * The preview is a *live* render of the tile, not a bitmap: no html2canvas
  * dependency, dark mode keeps working, and text stays crisp. Annotations are
  * kept as shape data (never rasterised here), so Undo is a pop and the payload
- * can be replayed by the server when it renders the real PNG for the email.
+ * can be replayed by the server when it renders the real PDF for the email.
+ *
+ * This was ShareWidgetModal, which also had an in-product "share this widget with
+ * technicians" mode. Widget-level sharing is gone — a widget is reached through the
+ * dashboard that holds it, and its own access is set in the builder — so the component
+ * now does the one job its name states.
  */
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import Icon from '../ui/Icon.vue'
 import ChartTile from './ChartTile.vue'
 import DataTable from './DataTable.vue'
 import { toast } from '../../store/index.js'
-import { TECHNICIANS, TECH_GROUPS } from '../../data/mock.js'
 
-/* One component, two jobs — because the annotate-the-widget half is identical and the only
- * thing that differs is WHO it goes to.
- *   mode 'share' → pick technicians / groups, sends in-product. No note: the recipients
- *                  open the widget itself, so a covering message has nowhere to live.
- *   mode 'email' → type email addresses, attach a PDF of the marked-up widget, and the
- *                  note IS the email body, so here it earns its place.
- */
-const props = defineProps({ tile: Object, mode: { type: String, default: 'share' } })
+const props = defineProps({ tile: Object })
 const emit = defineEmits(['close'])
-const isEmail = computed(() => props.mode === 'email')
 
 /* ---------------- annotation ---------------- */
 const COLORS = ['#e0483d', '#d98a0b', '#1f9d63', '#3d8bd0', '#8b5cf6', '#364658']
@@ -102,39 +99,27 @@ function head(s) {
 }
 
 /* ---------------- recipients ---------------- */
+// No suggestion list: there is no directory of arbitrary email addresses to suggest
+// from, and a picker that only ever returns nothing is worse than no picker.
 const query = ref('')
 const picked = ref([])
 const note = ref('')
 const focused = ref(false)
 
-// email mode offers no suggestion list — there is no directory of arbitrary addresses to
-// suggest from, and a picker that only ever returns nothing is worse than no picker
-const suggestions = computed(() => {
-  if (isEmail.value) return []
-  const q = query.value.trim().toLowerCase()
-  const taken = new Set(picked.value.map((p) => p.name))
-  const pool = [
-    ...TECH_GROUPS.map((name) => ({ name, group: true })),
-    ...TECHNICIANS.map((name) => ({ name, group: false })),
-  ].filter((p) => !taken.has(p.name))
-  return (q ? pool.filter((p) => p.name.toLowerCase().includes(q)) : pool).slice(0, 6)
-})
-function add(p) { picked.value.push(p); query.value = ''; }
 function addTyped() {
   const q = query.value.trim()
   if (!q) return
-  if (isEmail.value) { if (!picked.value.some((p) => p.name === q)) picked.value.push({ name: q, group: false, email: true }); query.value = ''; return }
-  add(suggestions.value[0] ?? { name: q, group: false })   // an email typed in full is valid too
+  if (!picked.value.some((p) => p.name === q)) picked.value.push({ name: q })
+  query.value = ''
 }
 function remove(i) { picked.value.splice(i, 1) }
 
-const canShare = computed(() => picked.value.length > 0)
-function share() {
-  if (!canShare.value) return
+const canSend = computed(() => picked.value.length > 0)
+function send() {
+  if (!canSend.value) return
   const who = picked.value.length === 1 ? picked.value[0].name : `${picked.value.length} recipients`
   const marks = shapes.value.length ? ` with ${shapes.value.length} annotation${shapes.value.length > 1 ? 's' : ''}` : ''
-  if (isEmail.value) toast(`“${props.tile.title}” emailed as PDF${marks} to ${who}`, 'success')
-  else toast(`Shared “${props.tile.title}”${marks} to ${who}`, 'success')
+  toast(`“${props.tile.title}” emailed as PDF${marks} to ${who}`, 'success')
   emit('close')
 }
 </script>
@@ -144,13 +129,12 @@ function share() {
     <div class="sw">
       <!-- header: title left, markup tools hard right, then close -->
       <header class="sw-h">
-        <b class="sw-t">{{ isEmail ? 'Email as PDF' : 'Share widget' }}</b>
+        <b class="sw-t">Email as PDF</b>
         <div class="grow" />
-        <!-- Markup belongs to Email as PDF only. Sharing in-product hands over the LIVE
-             widget — the recipient opens it, filters it, drills it — so pen strokes drawn
-             here would either be thrown away or freeze a live tile into a picture. The
-             PDF is a snapshot, which is the one case where marking it up means something. -->
-        <div v-if="isEmail" class="tools" @click.stop>
+        <!-- Markup earns its place because a PDF is a SNAPSHOT: the marks travel with it.
+             They would be meaningless over a live tile, which the recipient would go on
+             filtering and drilling after the pen strokes were drawn. -->
+        <div class="tools" @click.stop>
           <button class="tl" :class="{ on: tool === 'pen' }" title="Draw freehand" @click="togglePen">
             <Icon name="pen" :size="17" />
           </button>
@@ -190,7 +174,7 @@ function share() {
 
       <div class="sw-b">
         <!-- the widget, with a markup layer over it -->
-        <div class="snap" :class="{ drawing: drawing && isEmail }">
+        <div class="snap" :class="{ drawing }">
           <!-- no Copy link: a widget has no URL of its own to hand out, so the button
                copied a board link with a fragment nothing reads back -->
           <div class="snap-h">
@@ -202,7 +186,7 @@ function share() {
             <DataTable v-else-if="tile.type === 'shortcut'" :columns="tile.columns || []" :rows="tile.rows || []" :sortable="false" />
           </div>
 
-          <svg v-if="isEmail" class="anno" @pointerdown="down" @pointermove="move" @pointerup="up" @pointercancel="up">
+          <svg class="anno" @pointerdown="down" @pointermove="move" @pointerup="up" @pointercancel="up">
             <template v-for="(s, i) in all" :key="i">
               <path v-if="s.type === 'pen'" :d="path(s)" :stroke="s.color" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
               <rect v-else-if="s.type === 'rect'" v-bind="box(s)" :stroke="s.color" fill="none" stroke-width="3" rx="4" />
@@ -214,44 +198,33 @@ function share() {
             </template>
           </svg>
 
-          <span v-if="drawing && isEmail" class="hint">{{ tool === 'pen' ? 'Draw to highlight' : `Drag to place a ${shapeKind}` }} · Esc to stop</span>
+          <span v-if="drawing" class="hint">{{ tool === 'pen' ? 'Draw to highlight' : `Drag to place a ${shapeKind}` }} · Esc to stop</span>
         </div>
 
         <!-- recipients -->
-        <label class="fl">{{ isEmail ? 'Email' : 'Share with' }}</label>
+        <label class="fl">Email</label>
         <div class="rcpt" :class="{ focus: focused }">
           <span v-for="(p, i) in picked" :key="p.name" class="rchip">
-            <Icon :name="p.email ? 'mail' : p.group ? 'users' : 'user'" :size="12" />{{ p.name }}
+            <Icon name="mail" :size="12" />{{ p.name }}
             <button @click="remove(i)"><Icon name="x" :size="12" /></button>
           </span>
           <input
-            v-model="query" :type="isEmail ? 'email' : 'text'"
-            :placeholder="picked.length ? '' : isEmail ? 'Type an email address and press Enter…' : 'Add technician or technician group…'"
+            v-model="query" type="email"
+            :placeholder="picked.length ? '' : 'Type an email address and press Enter…'"
             @focus="focused = true" @blur="focused = false"
             @keydown.enter.prevent="addTyped" @keydown.backspace="!query && picked.length && remove(picked.length - 1)"
           />
-          <div v-if="focused && suggestions.length" class="sugg" @mousedown.prevent>
-            <button v-for="s in suggestions" :key="s.name" class="sg" @click="add(s)">
-              <Icon :name="s.group ? 'users' : 'user'" :size="15" class="mu" />
-              <span>{{ s.name }}</span>
-              <em v-if="s.group">Group</em>
-            </button>
-          </div>
         </div>
 
-        <!-- the note is the EMAIL BODY, so it only exists in email mode. Sharing in-product
-             drops the recipient onto the widget itself; a covering note there had nowhere
-             to be read. -->
-        <template v-if="isEmail">
-          <label class="fl">Note</label>
-          <textarea v-model="note" rows="2" placeholder="Add a note for the recipients…" />
-        </template>
+        <!-- the note IS the email body, which is what earns it a place here -->
+        <label class="fl">Note</label>
+        <textarea v-model="note" rows="2" placeholder="Add a note for the recipients…" />
       </div>
 
       <footer class="sw-f">
         <button class="btn" @click="emit('close')">Cancel</button>
-        <button class="btn btn-primary" :disabled="!canShare" :title="canShare ? '' : isEmail ? 'Add at least one email address' : 'Add at least one recipient'" @click="share">
-          <Icon :name="isEmail ? 'mail' : 'share'" :size="15" /> {{ isEmail ? 'Send PDF' : 'Share' }}
+        <button class="btn btn-primary" :disabled="!canSend" :title="canSend ? '' : 'Add at least one email address'" @click="send">
+          <Icon name="mail" :size="15" /> Send PDF
         </button>
       </footer>
     </div>
@@ -267,17 +240,17 @@ function share() {
 .grow { flex: 1; }
 .tools { display: flex; align-items: center; gap: 2px; }
 .tl-wrap { position: relative; display: flex; }
-.tl { position: relative; display: inline-flex; align-items: center; gap: 1px; height: 32px; min-width: 32px; justify-content: center; padding: 0 5px; border: none; background: transparent; color: var(--muted); border-radius: 7px; }
+.tl { position: relative; display: inline-flex; align-items: center; gap: 1px; height: 32px; min-width: 32px; justify-content: center; padding: 0 5px; border: none; background: transparent; color: var(--muted); border-radius: 4px; }
 .tl:hover:not(:disabled) { background: var(--surface-2); color: var(--ink); }
 .tl.on { background: var(--primary-soft); color: var(--primary-700); }
 .tl:disabled { opacity: .35; }
 .tl .caret { opacity: .6; }
 .tl.close:hover { background: var(--red-soft); color: var(--red); }
 .tl-sep { width: 1px; height: 20px; background: var(--border); margin: 0 5px; }
-.chip { width: 17px; height: 17px; border-radius: 5px; border: 1.5px solid rgba(0,0,0,.12); }
+.chip { width: 17px; height: 17px; border-radius: 4px; border: 1.5px solid rgba(0,0,0,.12); }
 
 .pop { position: absolute; top: 36px; right: 0; z-index: 5; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-sm); box-shadow: var(--sh-pop); padding: 4px; min-width: 150px; }
-.pop-i { display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 8px; border: none; background: transparent; color: var(--ink-2); border-radius: 5px; font-size: 12.5px; }
+.pop-i { display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 8px; border: none; background: transparent; color: var(--ink-2); border-radius: 4px; font-size: 13px; }
 .pop-i:hover { background: var(--surface-2); }
 .pop-i.on { color: var(--primary-700); background: var(--primary-soft); }
 .pop.swatches { display: flex; gap: 5px; min-width: 0; padding: 7px; }
@@ -291,8 +264,8 @@ function share() {
 /* the widget preview + markup layer */
 .snap { position: relative; border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); padding: 12px 14px; margin-bottom: 16px; }
 .snap-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-.snap-h b { font-size: 13.5px; color: var(--ink); }
-.lnk { display: inline-flex; align-items: center; gap: 4px; border: none; background: transparent; color: var(--primary-700); font-size: 11.5px; font-weight: 600; }
+.snap-h b { font-size: 13px; color: var(--ink); }
+.lnk { display: inline-flex; align-items: center; gap: 4px; border: none; background: transparent; color: var(--primary-700); font-size: 12px; font-weight: 600; }
 .lnk:hover { text-decoration: underline; }
 .snap-c { min-height: 120px; }
 .pv-kpi { font-size: 68px; font-weight: 600; color: var(--ink); text-align: center; padding: 22px 0; letter-spacing: -1px; }
@@ -305,19 +278,13 @@ function share() {
 .snap.drawing { border-color: var(--primary); }
 .hint { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); background: rgba(27,28,46,.82); color: #fff; font-size: 11px; padding: 3px 9px; border-radius: 999px; pointer-events: none; }
 
-.fl { display: block; font-size: 11.5px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
-.rcpt { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 5px; min-height: 38px; padding: 5px 8px; border: 1px solid var(--border); border-radius: var(--r-sm); margin-bottom: 14px; }
+.fl { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
+.rcpt { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 5px; min-height: 36px; padding: 5px 8px; border: 1px solid var(--border); border-radius: var(--r-sm); margin-bottom: 14px; }
 .rcpt.focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
 .rcpt input { flex: 1; min-width: 150px; border: none; outline: none; background: transparent; font: inherit; font-size: 13px; color: var(--ink); height: 26px; }
 .rchip { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 4px 0 8px; background: var(--surface-2); border-radius: var(--r-sm); font-size: 12px; color: var(--ink-2); }
 .rchip button { display: grid; place-items: center; border: none; background: transparent; color: var(--muted); padding: 2px; border-radius: 4px; }
 .rchip button:hover { background: var(--red-soft); color: var(--red); }
-
-.sugg { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 6; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-sm); box-shadow: var(--sh-pop); padding: 4px; max-height: 210px; overflow: auto; }
-.sg { display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px 8px; border: none; background: transparent; border-radius: 5px; font-size: 13px; color: var(--ink-2); }
-.sg:hover { background: var(--surface-2); }
-.sg .mu { color: var(--muted); }
-.sg em { margin-left: auto; font-style: normal; font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
 
 textarea { width: 100%; border: 1px solid var(--border); border-radius: var(--r-sm); padding: 8px 10px; font: inherit; font-size: 13px; color: var(--ink); background: var(--surface); resize: vertical; outline: none; }
 textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }

@@ -282,7 +282,7 @@ const option = computed(() => {
 
   const tip = {
     backgroundColor: t.surface, borderColor: t.border, borderWidth: 1, padding: [6, 10],
-    extraCssText: 'box-shadow: 0 8px 28px rgba(27,28,46,.18); border-radius: 8px;',
+    extraCssText: 'box-shadow: 0 8px 28px rgba(27,28,46,.18); border-radius: 4px;',
     textStyle: { color: t.ink2, fontSize: 12, fontFamily: t.font },
   }
   const axis = {
@@ -758,7 +758,7 @@ onBeforeUnmount(() => {
    widget is narrowed. */
 .ls-foot { flex: none; display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; }
 .ls-pager { flex: none; display: flex; align-items: center; justify-content: center; gap: 1px; height: 22px; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.ls-pager button { width: 16px; height: 16px; border: none; background: transparent; color: var(--muted); border-radius: 5px; display: grid; place-items: center; }
+.ls-pager button { width: 16px; height: 16px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .ls-pager button:hover:not(:disabled) { background: var(--surface-2); color: var(--ink); }
 .ls-pager button:disabled { opacity: .3; cursor: not-allowed; }
 /* The pill takes the row's spare width and its label ellipses rather than pushing
@@ -774,7 +774,7 @@ onBeforeUnmount(() => {
 .lg-wrap { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 12px; }
 /* revealing all 63 legends must not shove the chart out of the tile */
 .lg-wrap.scroller { max-height: 74px; overflow-y: auto; padding: 1px 2px; }
-.lg { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--muted); cursor: pointer; transition: opacity .12s; user-select: none; }
+.lg { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); cursor: pointer; transition: opacity .12s; user-select: none; }
 .lg.faded { opacity: .4; }
 .lg i { width: 9px; height: 9px; border-radius: 3px; flex: none; }
 .lg b { color: var(--ink-2); }
@@ -789,7 +789,7 @@ onBeforeUnmount(() => {
 /* ④ overflow popover — teleported to <body>, so it floats over the whole card
    instead of being clipped by it. Positioned in viewport coords from the chip. */
 .more-back { position: fixed; inset: 0; z-index: 299; }
-.more-pop { position: fixed; z-index: 300; display: flex; flex-direction: column; gap: 7px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--sh-pop); }
+.more-pop { position: fixed; z-index: 300; display: flex; flex-direction: column; gap: 7px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-pop); }
 /* only the series list grows and scrolls; tabs, field and footnote stay put */
 .more-pop > * { flex: none; }
 .more-pop > .sm { flex: 1; min-height: 0; }
@@ -799,7 +799,7 @@ onBeforeUnmount(() => {
    off from the controls under it. At 10.5px uppercase muted it looked like a field label
    for the Sort Order row rather than the name of the panel. */
 .mp-h { display: flex; align-items: center; justify-content: space-between; flex: none; font-size: 13px; font-weight: 600; letter-spacing: -.1px; color: var(--ink); padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 2px; }
-.mp-x { border: none; background: transparent; color: var(--muted); display: grid; place-items: center; padding: 2px; border-radius: 5px; }
+.mp-x { border: none; background: transparent; color: var(--muted); display: grid; place-items: center; padding: 2px; border-radius: 4px; }
 .mp-x:hover { background: var(--surface-2); color: var(--ink); }
 
 /* ② the "Other" residue, spelled out */
@@ -808,24 +808,24 @@ onBeforeUnmount(() => {
 .cs-note i { width: 9px; height: 9px; border-radius: 3px; }
 
 /* the rank pill — first item in the legend row */
-.cs-chip { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 8px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink-2); border-radius: 999px; font-size: 11.5px; font-weight: 600; flex: none; }
+.cs-chip { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 8px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink-2); border-radius: 999px; font-size: 12px; font-weight: 600; flex: none; }
 .cs-chip:hover, .cs-chip.on { border-color: var(--primary); color: var(--primary-700); background: var(--primary-soft); }
 
 /* rank window — tabs, then the one field that tab needs */
-.rp-tabs { display: flex; gap: 2px; padding: 2px; background: var(--surface-2); border-radius: 7px; }
-.rp-t { flex: 1; height: 26px; border: none; background: transparent; color: var(--muted); border-radius: 5px; font-size: 11px; font-weight: 600; white-space: nowrap; padding: 0 4px; }
+.rp-tabs { display: flex; gap: 2px; padding: 2px; background: var(--surface-2); border-radius: 4px; }
+.rp-t { flex: 1; height: 26px; border: none; background: transparent; color: var(--muted); border-radius: 4px; font-size: 11px; font-weight: 600; white-space: nowrap; padding: 0 4px; }
 .rp-t:hover { color: var(--ink); }
 .rp-t.on { background: var(--surface); color: var(--primary-700); box-shadow: var(--sh-sm); }
 /* Sort Order (tabs) and Value (select) share one row, each under its own label */
 .rp-row { display: flex; align-items: flex-end; gap: 10px; padding-bottom: 9px; border-bottom: 1px solid var(--border); }
 .rp-col { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 0; }
 .rp-col.n { flex: none; width: 84px; }
-.rp-l { font-size: 11.5px; font-weight: 500; color: var(--ink-2); }
-.rp-sel { height: 30px; border: 1px solid var(--border-strong); border-radius: 7px; background: var(--surface); color: var(--ink); font: inherit; font-size: 12px; font-weight: 600; padding: 0 6px; }
+.rp-l { font-size: 12px; font-weight: 500; color: var(--ink-2); }
+.rp-sel { height: 30px; border: 1px solid var(--border-strong); border-radius: 4px; background: var(--surface); color: var(--ink); font: inherit; font-size: 12px; font-weight: 600; padding: 0 6px; }
 .rp-sel:disabled { opacity: .5; cursor: not-allowed; }
 .rp-field { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-height: 30px; padding-bottom: 7px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--muted); }
 .rp-field label { font-size: 12px; color: var(--ink-2); font-weight: 500; }
-.rp-n { width: 56px; height: 26px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface); color: var(--ink); font: inherit; font-size: 12px; font-weight: 600; text-align: center; }
+.rp-n { width: 56px; height: 26px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--ink); font: inherit; font-size: 12px; font-weight: 600; text-align: center; }
 .rp-n:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
 .rp-d { color: var(--muted); font-size: 12px; }
 

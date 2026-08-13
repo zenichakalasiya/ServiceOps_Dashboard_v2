@@ -47,8 +47,8 @@ function pick(o) {
 
 <style scoped>
 .dd { position: relative; }
-.dd-btn { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; height: 38px; padding: 0 12px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink); border-radius: var(--r); font-size: 13.5px; text-align: left; transition: border-color .15s, box-shadow .15s; }
-.dd-sm .dd-btn { height: 32px; font-size: 13px; border-radius: 8px; padding: 0 10px; }
+.dd-btn { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; height: 36px; padding: 0 12px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink); border-radius: var(--r); font-size: 13px; text-align: left; transition: border-color .15s, box-shadow .15s; }
+.dd-sm .dd-btn { height: 32px; font-size: 13px; border-radius: 4px; padding: 0 10px; }
 .dd-btn:hover { border-color: #c7cad9; }
 .dd.open .dd-btn { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
 .dd-val { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -56,12 +56,12 @@ function pick(o) {
 .dd-chev { color: var(--muted); transition: transform .15s; flex: none; }
 .dd.open .dd-chev { transform: rotate(180deg); }
 .dd-back { position: fixed; inset: 0; z-index: 60; }
-.dd-menu { position: absolute; z-index: 70; top: calc(100% + 5px); left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--sh-pop); padding: 5px; max-height: 240px; overflow: auto; }
-.dd-opt { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 8px 10px; border: none; background: transparent; border-radius: 7px; font-size: 13.5px; color: var(--ink-2); text-align: left; }
+.dd-menu { position: absolute; z-index: 70; top: calc(100% + 5px); left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-pop); padding: 5px; max-height: 240px; overflow: auto; }
+.dd-opt { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 8px 10px; border: none; background: transparent; border-radius: 4px; font-size: 13px; color: var(--ink-2); text-align: left; }
 .dd-opt:hover { background: var(--surface-2); }
 .dd-opt.on { color: var(--primary-700); font-weight: 500; }
 .dd-ck { color: var(--primary); flex: none; }
-.dd-none { padding: 10px; text-align: center; color: var(--muted-2); font-size: 12.5px; }
+.dd-none { padding: 10px; text-align: center; color: var(--muted-2); font-size: 13px; }
 .ellip { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dd-pop-enter-active { transition: opacity .12s ease, transform .12s ease; }
 .dd-pop-enter-from { opacity: 0; transform: translateY(-4px); }

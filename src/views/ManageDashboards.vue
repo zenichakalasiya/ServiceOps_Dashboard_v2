@@ -302,14 +302,14 @@ function onDrop(target) {
 .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
 /* one segmented control, not four loose buttons: a soft track with the active segment
    filled solid, exactly as the reference has it */
-.tabs { display: inline-flex; gap: 2px; padding: 4px; background: var(--surface-2); border-radius: 10px; }
-.t { border: none; background: transparent; padding: 7px 14px; border-radius: 7px; font-weight: 500; font-size: 13px; color: var(--ink-2); }
+.tabs { display: inline-flex; gap: 2px; padding: 4px; background: var(--surface-2); border-radius: 4px; }
+.t { border: none; background: transparent; padding: 7px 14px; border-radius: 4px; font-weight: 500; font-size: 13px; color: var(--ink-2); }
 .t:hover { background: color-mix(in srgb, var(--surface) 70%, transparent); color: var(--ink); }
 .t.on { background: var(--ink); color: #fff; font-weight: 600; box-shadow: var(--sh-sm); }
 .t .c { font-size: 11px; background: var(--surface); border-radius: 999px; padding: 0 6px; margin-left: 5px; color: var(--ink-2); }
 .t.on .c { background: rgba(255,255,255,.22); color: #fff; }
 .tr { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.srch { display: flex; align-items: center; gap: 7px; background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 8px; padding: 0 10px; height: 34px; width: 200px; }
+.srch { display: flex; align-items: center; gap: 7px; background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 4px; padding: 0 10px; height: 36px; width: 200px; }
 .srch input { border: none; outline: none; background: transparent; width: 100%; font-size: 13px; }
 /* the prototype gives this screen ONE wide field carrying the chips and the query,
    with the picker inside it — the same bar the Shortcut tables use */
@@ -318,23 +318,23 @@ function onDrop(target) {
 .srch.wide input { min-width: 80px; }
 .in-srch :deep(.fm-btn) { width: 26px; height: 26px; border: none; background: transparent; }
 .in-srch :deep(.fm-btn:hover) { background: var(--surface-2); }
-.mchip { display: inline-flex; align-items: center; gap: 4px; flex: none; max-width: 220px; height: 22px; padding: 0 4px 0 8px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--border); font-size: 11.5px; color: var(--ink-2); white-space: nowrap; }
+.mchip { display: inline-flex; align-items: center; gap: 4px; flex: none; max-width: 220px; height: 22px; padding: 0 4px 0 8px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--border); font-size: 12px; color: var(--ink-2); white-space: nowrap; }
 .mchip b { font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; }
 .mchip em { font-style: normal; color: var(--muted); }
 .mchip button { flex: none; width: 15px; height: 15px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .mchip button:hover { background: var(--border); color: var(--ink); }
-.fsel { height: 34px; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 8px; padding: 0 10px; font-size: 12.5px; color: var(--ink-2); }
+.fsel { height: 34px; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 4px; padding: 0 10px; font-size: 13px; color: var(--ink-2); }
 .colbtn { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; }
 .cols-wrap { position: relative; }
 .cols-back { position: fixed; inset: 0; z-index: 40; }
 /* right-anchored so it never overflows past the viewport edge */
-.cols-pop { position: absolute; top: calc(100% + 4px); right: 0; left: auto; z-index: 41; min-width: 210px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--sh-pop); padding: 6px; }
-.col-opt { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-radius: 7px; font-size: 13px; color: var(--ink-2); cursor: pointer; width: 100%; border: none; background: transparent; text-align: left; white-space: nowrap; }
+.cols-pop { position: absolute; top: calc(100% + 4px); right: 0; left: auto; z-index: 41; min-width: 210px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-pop); padding: 6px; }
+.col-opt { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-radius: 4px; font-size: 13px; color: var(--ink-2); cursor: pointer; width: 100%; border: none; background: transparent; text-align: left; white-space: nowrap; }
 .col-opt:hover { background: var(--surface-2); }
 .col-opt input { accent-color: var(--primary); }
 .col-foot { display: flex; justify-content: flex-end; padding: 6px 4px 2px; border-top: 1px solid var(--border); margin-top: 4px; }
 /* bulk bar */
-.bulkbar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; margin-bottom: 10px; background: var(--primary-softer); border: 1px solid var(--primary-soft); border-radius: 10px; }
+.bulkbar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; margin-bottom: 10px; background: var(--primary-softer); border: 1px solid var(--primary-soft); border-radius: 4px; }
 .bb-n { font-weight: 600; font-size: 13px; color: var(--primary-700); }
 .btn.danger { color: var(--red); border-color: var(--red-soft); }
 .btn.danger:hover { background: var(--red-soft); }
@@ -343,7 +343,7 @@ function onDrop(target) {
 .mtbl { width: 100%; border-collapse: collapse; font-size: 13px; }
 /* header row on the page's own white, in sentence case — the grey band was the only thing
    left implying a card once the container went */
-.mtbl thead th { position: sticky; top: 0; z-index: 2; background: var(--surface); text-align: left; font-size: 12.5px; color: var(--ink); font-weight: 600; padding: 12px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.mtbl thead th { position: sticky; top: 0; z-index: 2; background: var(--surface); text-align: left; font-size: 13px; color: var(--ink); font-weight: 600; padding: 12px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
 .mtbl td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
 /* sortable headers */
 .mtbl thead th.srt { cursor: pointer; user-select: none; }
@@ -371,24 +371,24 @@ function onDrop(target) {
 /* favourite (star) + default (home) indicators, side by side */
 .nm-ic { flex: none; display: inline-grid; place-items: center; }
 .nm-ic.def { color: var(--primary); }
-.nm-ic.fav { border: none; background: transparent; color: var(--muted-2); border-radius: 5px; opacity: 0; transition: opacity .12s; padding: 2px; }
+.nm-ic.fav { border: none; background: transparent; color: var(--muted-2); border-radius: 4px; opacity: 0; transition: opacity .12s; padding: 2px; }
 .nm:hover .nm-ic.fav, .nm-ic.fav.on { opacity: 1; }
 .nm-ic.fav.on { color: #f5a623; }
 .nm-ic.fav:hover { background: var(--surface); }
 .cat-pill { font-size: 12px; color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; }
 /* minimal technician pills (task 7): 6px radius, subtle color, 1 + N */
 .techcell { position: relative; white-space: nowrap; }
-.tp { display: inline-flex; align-items: center; font-size: 12px; color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; margin-right: 4px; }
+.tp { display: inline-flex; align-items: center; font-size: 12px; color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; margin-right: 4px; }
 .tp.more { cursor: pointer; color: var(--primary-700); background: var(--primary-softer); border-color: var(--primary-soft); font-weight: 600; }
 .tp-back { position: fixed; inset: 0; z-index: 40; }
-.tp-pop { position: absolute; top: calc(100% + 3px); left: 0; z-index: 41; display: flex; flex-wrap: wrap; gap: 4px; max-width: 240px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--sh-pop); padding: 8px; }
+.tp-pop { position: absolute; top: calc(100% + 3px); left: 0; z-index: 41; display: flex; flex-wrap: wrap; gap: 4px; max-width: 240px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-pop); padding: 8px; }
 .desc { color: var(--muted); max-width: 260px; }
 .sw { width: 38px; height: 22px; border-radius: 999px; border: none; background: var(--border-strong); position: relative; flex: none; }
 .sw i { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: var(--sh-sm); }
 .sw.on { background: var(--green); } .sw.on i { left: 18px; }
 .acts { white-space: nowrap; }
 .acts-in { display: flex; gap: 2px; align-items: center; }
-.ia { width: 30px; height: 30px; border: none; background: transparent; color: var(--muted); border-radius: 7px; display: grid; place-items: center; }
+.ia { width: 30px; height: 30px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .ia:disabled { color: var(--muted-2); cursor: not-allowed; }
 .ia:disabled:hover { background: transparent; }
 .ia:hover { background: var(--surface); color: var(--ink); }
@@ -397,7 +397,7 @@ function onDrop(target) {
 .ia-blank { display: block; width: 30px; height: 30px; }
 .del-wrap { position: relative; }
 .cfm-back { position: fixed; inset: 0; z-index: 45; }
-.cfm { position: absolute; top: 50%; right: calc(100% + 6px); transform: translateY(-50%); z-index: 46; display: flex; align-items: center; gap: 6px; white-space: nowrap; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; box-shadow: var(--sh-pop); padding: 7px 10px; font-size: 12.5px; color: var(--ink-2); }
+.cfm { position: absolute; top: 50%; right: calc(100% + 6px); transform: translateY(-50%); z-index: 46; display: flex; align-items: center; gap: 6px; white-space: nowrap; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; box-shadow: var(--sh-pop); padding: 7px 10px; font-size: 13px; color: var(--ink-2); }
 .empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 44px; color: var(--muted); }
 .ellip { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>

@@ -90,26 +90,26 @@ function openPicker(el) { try { el?.showPicker?.() } catch (e) { el?.focus() } }
 .lbl-1 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* compact two-line From/To range inside the trigger */
 .trigger.is-range { padding-top: 0; padding-bottom: 0; }
-.rng { display: flex; flex-direction: column; justify-content: center; line-height: 1.2; font-size: 10.5px; font-variant-numeric: tabular-nums; text-align: left; }
+.rng { display: flex; flex-direction: column; justify-content: center; line-height: 1.2; font-size: 11px; font-variant-numeric: tabular-nums; text-align: left; }
 .rl { white-space: nowrap; }
 .backdrop { position: fixed; inset: 0; z-index: 55; }
-.pop { position: absolute; top: 42px; right: 0; z-index: 60; display: grid; grid-template-columns: 264px 232px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--sh-pop); overflow: hidden; }
+.pop { position: absolute; top: 42px; right: 0; z-index: 60; display: grid; grid-template-columns: 264px 232px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-pop); overflow: hidden; }
 .abs { padding: 16px; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
 .lbl { font-weight: 600; font-size: 13px; margin-bottom: 12px; }
 /* From / To stacked vertically */
 .field-block { display: flex; flex-direction: column; margin-bottom: 12px; }
 .field-block label { font-size: 12px; font-weight: 500; color: var(--ink-2); margin-bottom: 5px; }
 .dt { position: relative; }
-.dt .input { height: 36px; font-size: 12.5px; padding-right: 36px; width: 100%; }
+.dt .input { height: 36px; font-size: 13px; padding-right: 36px; width: 100%; }
 .dt .input::-webkit-calendar-picker-indicator { opacity: 0; }
-.cal { position: absolute; right: 4px; top: 4px; width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: 7px; display: grid; place-items: center; }
+.cal { position: absolute; right: 4px; top: 4px; width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .cal:hover { background: var(--surface-2); color: var(--ink); }
 .apply { width: 100%; margin-top: 4px; }
 .quick { padding: 12px 10px; display: flex; flex-direction: column; min-height: 0; }
-.qsearch { display: flex; align-items: center; gap: 7px; border: 1px solid var(--border-strong); border-radius: 8px; padding: 0 9px; height: 34px; margin-bottom: 8px; }
-.qsearch input { border: none; outline: none; background: transparent; width: 100%; font-size: 12.5px; }
+.qsearch { display: flex; align-items: center; gap: 7px; border: 1px solid var(--border-strong); border-radius: 4px; padding: 0 9px; height: 36px; margin-bottom: 8px; }
+.qsearch input { border: none; outline: none; background: transparent; width: 100%; font-size: 13px; }
 .qlist { display: flex; flex-direction: column; gap: 1px; overflow: auto; max-height: 300px; }
-.qitem { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border: none; background: transparent; border-radius: 7px; font-size: 13px; color: var(--ink-2); text-align: left; }
+.qitem { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border: none; background: transparent; border-radius: 4px; font-size: 13px; color: var(--ink-2); text-align: left; }
 .qitem:hover { background: var(--surface-2); }
 .qitem.on { background: var(--primary-soft); color: var(--primary-700); font-weight: 600; }
 .qnone { padding: 14px 10px; color: var(--muted-2); font-size: 12px; }

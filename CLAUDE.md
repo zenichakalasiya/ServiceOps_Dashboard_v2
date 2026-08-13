@@ -96,12 +96,23 @@ only the components actually used registered to keep the bundle small. Tables us
 
 **Styling** is plain CSS with design tokens in `src/styles/tokens.css` (full **light + dark**
 themes; the topbar toggles `store.ui.theme`). No CSS framework. The typeface is **Inter**
-(loaded in `index.html`, exposed as `--font`). Icons are Material Symbols routed through
-`src/components/ui/Icon.vue` (name → ligature map).
+(loaded in `index.html`, exposed as `--font`). Icons are **lucide** (`lucide-vue-next`) routed through
+`src/components/ui/Icon.vue` (name → component map). The indirection is deliberate: call
+sites name what an icon MEANS, so lucide's renames between majors stop in one file.
+
+**The visual language follows a style guide** — colour, type scale, radius tiers
+(controls 4px / badges 2px / surfaces 8px / containers 12px), control heights (32/36),
+buttons, forms, pills, tables, cards, tabs and menus. The values live in `tokens.css` and
+`global.css`; components read them through `var()`. Charts, the AI panel, the note tile,
+widget/group chrome and the dark theme are outside its scope and keep their own styling.
 
 **The AI gradient is tokenised — use the tokens, never hand-rolled gradients:**
 - `--ai-grad` — the vivid identity gradient (blue → purple → pink, `0 / 24.52 / 100%`). Used
-  **only** for icon glyphs (`background-clip: text`) and solid primary buttons.
+  for solid primary buttons and for **text** clipped with `background-clip: text`.
+  > ⚠️ **Icons cannot use `background-clip: text`** — they are SVG strokes, not font
+  > glyphs, and the clip has nothing to bite on (every AI icon rendered blank when the
+  > project moved to lucide). An AI icon paints itself with `stroke: url(#ai-grad)`,
+  > referencing the `<linearGradient>` declared once in `App.vue`.
 - `--ai-grad-line` — the same ramp at 80% alpha, for **gradient borders** on primary CTAs
   (`linear-gradient(var(--surface),var(--surface)) padding-box, var(--ai-grad-line) border-box`
   over a `1.5px solid transparent` border).
@@ -144,6 +155,11 @@ positioned in viewport coordinates — follow that pattern for any new floating 
 | `views/AiPlacementLab.vue` | Internal `/ai-placement` lab comparing 3 entry placements (header chip · KPI-row card · banner). All three open the **real `AiAssistant` overlay** — each CTA fires its own intent (`analyzing` / `widgets` / `suggestwidget`). `AiInsightsPanel.vue` (the old mock push-panel) is no longer referenced. |
 | `data/aiEngine.js` | **Deterministic, no-LLM** engine: facts, anomalies, explanations, briefings. |
 | `data/aiAssistant.js` | Intent routing, tile/fact resolution, and `resolveWidget` (description → configured widget). |
+| `data/freeText.js` | Note content: allowlist sanitiser, markdown-lite upgrade, derived title. |
+| `components/dashboard/NoteEditor.vue` | The note rich-text editor — contenteditable + execCommand, no dependency. |
+| `components/dashboard/TimeRangePopover.vue` | The ONE two-pane date picker (topbar · widget · group). |
+| `components/dashboard/ExportDialog.vue` | Board Export — Image / PDF / Email as PDF. |
+| `components/ui/Hint.vue` | Info icon beside a field label, carrying what was once a one-liner. |
 
 ## The AI assistant (`components/ai/AiAssistant.vue`)
 
@@ -212,6 +228,25 @@ every higher-is-better meter.
 widget added). Contextual **follow-ups** appear only on answers that invite a next question
 (`FOLLOWUP_KINDS`). **Rate / copy** (`hasFeedback`) sit under every finished answer but never under
 a question card or anything still awaiting input. Don't stack all three on one block.
+
+## Sharing, Export, notes and dates
+
+**There is no Share action.** Not on a dashboard, not on a widget. A board's audience IS
+its access level (Public / Private / Restricted + technician/group targeting); the pill
+beside the board title opens a read-only **"Shared with"** list. **Export** — in the board
+header and in every widget's ⋯ — offers exactly **Image · PDF · Email as PDF**.
+
+**Free Text is a NOTE, not a widget.** No header band, no title, no data, no time range,
+no AI summary; a warm paper surface (`--note-*`) with the ⋯ floating on hover. Content is
+rich HTML from `NoteEditor.vue`, rendered through `toNoteHtml()` in `data/freeText.js`,
+which **allowlist-sanitises** it (it goes out via `v-html`) and upgrades older
+markdown-lite content in place — one render path, no migration. Notes are not named: the
+title is derived from the first line.
+
+**Dates resolve widget → group → dashboard**, most specific wins. A group header carries
+its own date filter and every widget in it inherits that range unless the widget set its
+own. All three pickers are the same component (`TimeRangePopover.vue`) reading the same
+`data/timeRanges.js`, so a range cannot exist in one picker and not another.
 
 ## Locking rules (predefined content)
 

@@ -160,15 +160,15 @@ onBeforeUnmount(() => removeEventListener('keydown', onEsc))
 <style scoped>
 .tfb { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 /* the whole bar is ONE field — chips and the query share it, as the design draws it */
-.tfb-box { flex: 1; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-height: 34px; padding: 4px 8px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); cursor: text; }
+.tfb-box { flex: 1; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-height: 36px; padding: 4px 8px; border: 1px solid var(--border-strong); border-radius: 4px; background: var(--surface); cursor: text; }
 .tfb-box.act, .tfb-box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
 .mu { color: var(--muted); flex: none; }
-.tfb-in { flex: 1; min-width: 120px; border: none; outline: none; background: transparent; font-size: 12.5px; color: var(--ink); }
-.tfb-x { flex: none; width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: 7px; display: grid; place-items: center; }
+.tfb-in { flex: 1; min-width: 120px; border: none; outline: none; background: transparent; font-size: 13px; color: var(--ink); }
+.tfb-x { flex: none; width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .tfb-x:hover { background: var(--surface-2); color: var(--ink); }
 
 /* a condition, stated the way the product states it: Field Operator Value */
-.fchip { display: inline-flex; align-items: center; gap: 4px; flex: none; max-width: 240px; height: 22px; padding: 0 4px 0 8px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--border); font-size: 11.5px; color: var(--ink-2); white-space: nowrap; cursor: pointer; }
+.fchip { display: inline-flex; align-items: center; gap: 4px; flex: none; max-width: 240px; height: 22px; padding: 0 4px 0 8px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--border); font-size: 12px; color: var(--ink-2); white-space: nowrap; cursor: pointer; }
 .fchip:hover { border-color: var(--border-strong); }
 .fchip.on { border-color: var(--primary); background: var(--primary-soft); }
 /* still being built — it filters nothing until it has a value */
@@ -182,7 +182,7 @@ onBeforeUnmount(() => removeEventListener('keydown', onEsc))
 .tfb-back { position: fixed; inset: 0; z-index: 210; }
 /* field list */
 .tfb-fields { position: fixed; z-index: 211; width: 224px; max-height: 320px; overflow: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--sh-pop); padding: 6px; }
-.tfb-f { display: block; width: 100%; text-align: left; padding: 8px 10px; border: none; background: transparent; border-radius: 7px; font-size: 13px; color: var(--ink-2); }
+.tfb-f { display: block; width: 100%; text-align: left; padding: 8px 10px; border: none; background: transparent; border-radius: 4px; font-size: 13px; color: var(--ink-2); }
 .tfb-f:hover { background: var(--surface-2); color: var(--ink); }
 .tfb-empty { margin: 0; padding: 12px; text-align: center; font-size: 12px; color: var(--muted-2); }
 /* operator + value */
@@ -190,7 +190,7 @@ onBeforeUnmount(() => removeEventListener('keydown', onEsc))
 .tfb-l { font-size: 12px; font-weight: 500; color: var(--ink-2); }
 .tfb-t { width: 100%; }
 .tfb-vals { max-height: 190px; overflow: auto; display: flex; flex-direction: column; gap: 1px; }
-.tfb-v { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 7px; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+.tfb-v { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 4px; font-size: 13px; color: var(--ink-2); cursor: pointer; }
 .tfb-v:hover { background: var(--surface-2); }
 .tfb-v.on { color: var(--primary-700); font-weight: 500; }
 .tfb-v input { accent-color: var(--primary); flex: none; }

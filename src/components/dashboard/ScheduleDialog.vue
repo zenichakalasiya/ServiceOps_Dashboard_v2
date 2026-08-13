@@ -167,17 +167,17 @@ function delSchedule(s) { props.d.schedules = props.d.schedules.filter((x) => x.
 .sc-panel { width: 720px; max-width: 96vw; height: 100%; background: var(--surface); box-shadow: var(--sh-lg); display: flex; flex-direction: column; overflow: hidden; animation: slideIn .22s cubic-bezier(.2,.8,.2,1); }
 @keyframes slideIn { from { transform: translateX(30px); opacity: .4; } to { transform: translateX(0); opacity: 1; } }
 .head { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px 14px; border-bottom: 1px solid var(--border); } .head h3 { margin: 0; font-size: 17px; }
-.ic { width: 34px; height: 34px; border: none; background: transparent; color: var(--muted); border-radius: 9px; display: grid; place-items: center; } .ic:hover { background: var(--surface-2); color: var(--ink); }
+.ic { width: 34px; height: 32px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; } .ic:hover { background: var(--surface-2); color: var(--ink); }
 /* list */
 .lst-top { display: flex; align-items: center; gap: 12px; padding: 16px 22px 8px; }
-.qbox { display: flex; align-items: center; gap: 8px; flex: 1; height: 38px; border: 1px solid var(--border-strong); border-radius: var(--r); padding: 0 11px; background: var(--surface-2); }
-.qbox input { border: none; outline: none; background: transparent; width: 100%; font-size: 13.5px; }
+.qbox { display: flex; align-items: center; gap: 8px; flex: 1; height: 36px; border: 1px solid var(--border-strong); border-radius: var(--r); padding: 0 11px; background: var(--surface-2); }
+.qbox input { border: none; outline: none; background: transparent; width: 100%; font-size: 13px; }
 .lst-body { flex: 1; overflow: auto; padding: 8px 22px; min-height: 220px; }
-.stbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.stbl { width: 100%; border-collapse: collapse; font-size: 13px; }
 .stbl th { text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .4px; font-weight: 600; padding: 10px 10px; border-bottom: 1px solid var(--border); }
 .stbl td { padding: 12px 10px; border-bottom: 1px solid var(--border); }
 .ta-r { text-align: right; }
-.act { width: 30px; height: 30px; border: none; background: transparent; color: var(--muted); border-radius: 7px; }
+.act { width: 30px; height: 30px; border: none; background: transparent; color: var(--muted); border-radius: 4px; }
 .act:hover { background: var(--surface-2); color: var(--primary-700); } .act.del:hover { color: var(--red); background: var(--red-soft); }
 .none { text-align: center; color: var(--muted-2); padding: 40px; }
 /* form */
@@ -186,22 +186,22 @@ function delSchedule(s) { props.d.schedules = props.d.schedules.filter((x) => x.
 .fld { display: flex; flex-direction: column; }
 .fld.span2 { grid-column: 1 / -1; }
 .fld label { font-size: 12px; font-weight: 500; color: var(--ink-2); margin-bottom: 6px; } .fld label i { color: var(--red); font-style: normal; }
-.pwd-input { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border-strong); border-radius: var(--r); padding: 0 10px; height: 38px; }
-.pwd-input input { border: none; outline: none; background: transparent; flex: 1; font-size: 13.5px; }
+.pwd-input { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border-strong); border-radius: var(--r); padding: 0 10px; height: 36px; }
+.pwd-input input { border: none; outline: none; background: transparent; flex: 1; font-size: 13px; }
 .eye { border: none; background: transparent; color: var(--muted); display: grid; place-items: center; }
-.seg { display: inline-flex; gap: 4px; background: var(--surface-2); padding: 3px; border-radius: 9px; border: 1px solid var(--border); align-self: flex-start; }
-.seg-b { border: none; background: transparent; padding: 6px 14px; border-radius: 7px; font-weight: 500; font-size: 12.5px; color: var(--muted); }
+.seg { display: inline-flex; gap: 4px; background: var(--surface-2); padding: 3px; border-radius: 4px; border: 1px solid var(--border); align-self: flex-start; }
+.seg-b { border: none; background: transparent; padding: 6px 14px; border-radius: 4px; font-weight: 500; font-size: 13px; color: var(--muted); }
 .seg-b.on { background: var(--primary); color: #fff; box-shadow: var(--sh-sm); }
 .emails { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; border: 1px solid var(--border-strong); border-radius: var(--r); padding: 6px 8px; min-height: 38px; }
-.echip { display: inline-flex; align-items: center; gap: 5px; background: var(--primary-soft); color: var(--primary-700); border-radius: 6px; padding: 2px 8px; font-size: 12px; } .echip button { border: none; background: transparent; color: var(--primary-700); display: grid; place-items: center; }
+.echip { display: inline-flex; align-items: center; gap: 5px; background: var(--primary-soft); color: var(--primary-700); border-radius: 4px; padding: 2px 8px; font-size: 12px; } .echip button { border: none; background: transparent; color: var(--primary-700); display: grid; place-items: center; }
 .einput { border: none; outline: none; background: transparent; flex: 1; min-width: 90px; font-size: 13px; }
-.eadd { width: 26px; height: 26px; border: none; background: var(--primary); color: #fff; border-radius: 6px; display: grid; place-items: center; }
-.radios { display: flex; gap: 18px; height: 38px; align-items: center; } .radio { display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; color: var(--ink-2); }
+.eadd { width: 26px; height: 26px; border: none; background: var(--primary); color: #fff; border-radius: 4px; display: grid; place-items: center; }
+.radios { display: flex; gap: 18px; height: 38px; align-items: center; } .radio { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--ink-2); }
 .sw { width: 40px; height: 22px; border-radius: 999px; border: none; background: var(--border-strong); position: relative; align-self: flex-start; }
 .sw i { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: var(--sh-sm); }
 .sw.on { background: var(--primary); } .sw.on i { left: 20px; }
 .time-row { display: flex; align-items: center; gap: 8px; } .time-row .colon { color: var(--muted); font-weight: 600; }
 .foot { display: flex; align-items: center; gap: 10px; padding: 14px 22px; border-top: 1px solid var(--border); background: var(--surface-2); }
-.foot .grow { flex: 1; font-size: 12.5px; }
+.foot .grow { flex: 1; font-size: 13px; }
 .foot:not(:has(.grow)) { justify-content: flex-start; }
 </style>

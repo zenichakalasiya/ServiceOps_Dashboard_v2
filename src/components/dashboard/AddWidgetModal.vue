@@ -373,7 +373,9 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
         :style="{ top: usagePos.top + 'px', left: usagePos.left + 'px' }"
         @mouseenter="keepUsage" @mouseleave="closeUsageSoon"
       >
-        <div class="up-h">Placed on {{ usageOf(usageItem).length }} dashboard{{ usageOf(usageItem).length > 1 ? 's' : '' }}</div>
+        <!-- no count here: the badge beside the widget name is the count, and repeating it
+             two pixels away made the same number look like two different facts -->
+        <div class="up-h">Placed on</div>
         <!-- names only. No remove action here: a predefined widget can't be pulled off,
              and the arrow on hover already says the row is a link. -->
         <button
@@ -422,28 +424,28 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 @keyframes slideIn { from { transform: translateX(30px); opacity: .4; } to { transform: translateX(0); opacity: 1; } }
 .aw-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px 12px; }
 .aw-head h3 { margin: 0; font-size: 17px; }
-.ic { width: 34px; height: 34px; border: none; background: transparent; color: var(--muted); border-radius: 9px; display: grid; place-items: center; }
+.ic { width: 34px; height: 32px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .ic:hover { background: var(--surface-2); color: var(--ink); }
 /* five labels are wider than the drawer, so the strip scrolls sideways rather than
    clipping the last tab — same treatment as the dashboard listing's tabs */
 .aw-tabs { display: flex; gap: 4px; padding: 0 22px; border-bottom: 1px solid var(--border); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -ms-overflow-style: none; }
 .aw-tabs::-webkit-scrollbar { display: none; }
 .awt { flex: none; }
-.awt { display: inline-flex; align-items: center; gap: 5px; border: none; background: transparent; padding: 10px 4px; margin-right: 14px; font-weight: 500; font-size: 13.5px; color: var(--muted); border-bottom: 2px solid transparent; }
+.awt { display: inline-flex; align-items: center; gap: 5px; border: none; background: transparent; padding: 10px 4px; margin-right: 14px; font-weight: 500; font-size: 13px; color: var(--muted); border-bottom: 2px solid transparent; }
 .awt:hover { color: var(--ink); }
 .awt.on { color: var(--primary-700); border-bottom-color: var(--primary); }
-.awt-count { font-size: 10.5px; font-weight: 700; background: var(--red-soft); color: var(--red); border-radius: 999px; padding: 0 6px; }
+.awt-count { font-size: 11px; font-weight: 700; background: var(--red-soft); color: var(--red); border-radius: 999px; padding: 0 6px; }
 .aw-filters { display: flex; gap: 9px; padding: 14px 22px 6px; }
-.srch { display: flex; align-items: center; gap: 8px; background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 9px; padding: 0 11px; height: 38px; flex: 1; }
-.srch input { border: none; outline: none; background: transparent; width: 100%; font-size: 13.5px; }
+.srch { display: flex; align-items: center; gap: 8px; background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 4px; padding: 0 11px; height: 36px; flex: 1; }
+.srch input { border: none; outline: none; background: transparent; width: 100%; font-size: 13px; }
 .modsel { width: 172px; flex: none; }
 .type-chips { display: flex; gap: 7px; padding: 10px 22px 2px; }
-.tchip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 11px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink-2); border-radius: 999px; font-size: 12.5px; font-weight: 500; }
+.tchip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 11px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink-2); border-radius: 999px; font-size: 13px; font-weight: 500; }
 .tchip:hover { background: var(--surface-2); }
 /* the selected type filter is filled solid, matching the segmented control the reference
    uses — a soft tint read as "hovered", not "this is the filter in force" */
 .tchip.on { background: var(--ink); border-color: var(--ink); color: #fff; font-weight: 600; }
-.tc-count { font-size: 10.5px; font-weight: 600; background: var(--surface-2); border-radius: 999px; padding: 0 6px; color: var(--muted); }
+.tc-count { font-size: 11px; font-weight: 600; background: var(--surface-2); border-radius: 999px; padding: 0 6px; color: var(--muted); }
 .tchip.on .tc-count { background: rgba(255,255,255,.22); color: #fff; }
 .aw-body { flex: 1; overflow: auto; padding: 14px 22px 22px; }
 .cat { margin-bottom: 18px; }
@@ -452,7 +454,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 /* padding is 28, not 30, purely so the card's height is unchanged now that the icon box
    went 60 → 64: the four extra pixels of glyph come out of the padding rather than out of
    the grid. Card height stays 154. */
-.tc { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 28px 12px; border: 1px solid var(--border); background: var(--surface-2); border-radius: 12px; color: var(--ink-2); }
+.tc { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 28px 12px; border: 1px solid var(--border); background: var(--surface-2); border-radius: 4px; color: var(--ink-2); }
 .tc:hover { border-color: var(--primary); background: var(--primary-softer); color: var(--primary-700); box-shadow: var(--sh-sm); transform: translateY(-2px); }
 .tc-group { border-style: dashed; border-color: var(--border-strong); }
 /* the icons paint with currentColor, so they inherit the card's ink at rest (--ink-2,
@@ -460,25 +462,25 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .tc-ico { width: 64px; height: 64px; display: grid; place-items: center; }
 .tc-label { font-size: 13px; font-weight: 500; }
 .lst { display: flex; flex-direction: column; gap: 2px; }
-.lrow { display: flex; align-items: center; gap: 12px; padding: 10px 10px; border-radius: 10px; }
+.lrow { display: flex; align-items: center; gap: 12px; padding: 10px 10px; border-radius: 4px; }
 .lrow:hover { background: var(--surface-2); }
 .lrow.sel { background: var(--primary-softer); }
 .lrow.placed { opacity: .72; }
 .lrow.placed .lcb { cursor: not-allowed; }
-.placed-tag { display: inline-flex; align-items: center; gap: 3px; font-size: 10.5px; font-weight: 600; color: var(--green); background: var(--green-soft); padding: 1px 7px 1px 5px; border-radius: 999px; flex: none; }
+.placed-tag { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; color: var(--green); background: var(--green-soft); padding: 1px 7px 1px 5px; border-radius: 999px; flex: none; }
 .lcb { width: 16px; height: 16px; accent-color: var(--primary); flex: none; cursor: pointer; margin: 0; }
 .lt-main { flex: 1; min-width: 0; }
-.lt-name-row { display: flex; align-items: center; gap: 7px; } .lt-name { font-weight: 500; font-size: 13.5px; }
-.lt-meta { position: relative; font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.lt-name-row { display: flex; align-items: center; gap: 7px; } .lt-name { font-weight: 500; font-size: 13px; }
+.lt-meta { position: relative; font-size: 12px; color: var(--muted); margin-top: 2px; }
 /* usage count — a pill on the widget's NAME */
 .use-badge { flex: none; min-width: 18px; height: 18px; padding: 0 5px; display: inline-grid; place-items: center;
   background: var(--primary-soft); color: var(--primary-700); border-radius: 999px;
-  font-size: 10.5px; font-weight: 700; line-height: 1; cursor: pointer; }
+  font-size: 11px; font-weight: 700; line-height: 1; cursor: pointer; }
 .use-badge:hover, .use-badge.on { background: var(--primary); color: #fff; }
 
-.usage-pop { position: fixed; z-index: 160; width: 250px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--sh-pop); padding: 8px; }
-.up-h { font-size: 10.5px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted-2); font-weight: 700; padding: 2px 6px 6px; }
-.up-row { display: flex; align-items: center; gap: 7px; width: 100%; padding: 6px; border: none; background: transparent; border-radius: 7px; font-size: 12.5px; color: var(--ink-2); text-align: left; cursor: pointer; }
+.usage-pop { position: fixed; z-index: 160; width: 250px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-pop); padding: 8px; }
+.up-h { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted-2); font-weight: 700; padding: 2px 6px 6px; }
+.up-row { display: flex; align-items: center; gap: 7px; width: 100%; padding: 6px; border: none; background: transparent; border-radius: 4px; font-size: 13px; color: var(--ink-2); text-align: left; cursor: pointer; }
 .up-row:hover { background: var(--primary-softer); color: var(--primary-700); }
 .up-ic { color: var(--muted-2); flex: none; }
 .up-row:hover .up-ic { color: var(--primary); }
@@ -487,10 +489,10 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .up-go { flex: none; color: var(--primary); opacity: 0; transform: translateX(-3px); transition: opacity .12s, transform .12s; }
 .up-row:hover .up-go { opacity: 1; transform: none; }
 /* left-pointing description tooltip (teleported, fixed to viewport) */
-.lib-tip { position: fixed; z-index: 200; transform: translateY(-50%); width: 232px; background: #20223a; color: #fff; font-size: 11.5px; line-height: 1.45; padding: 8px 11px; border-radius: 8px; box-shadow: var(--sh-pop); pointer-events: none; text-align: left; }
+.lib-tip { position: fixed; z-index: 200; transform: translateY(-50%); width: 232px; background: #20223a; color: #fff; font-size: 12px; line-height: 1.45; padding: 8px 11px; border-radius: 4px; box-shadow: var(--sh-pop); pointer-events: none; text-align: left; }
 .lib-tip-desc { display: block; color: rgba(255,255,255,.88); }
 /* provenance as a tag under the description — mirrors WidgetCard's .tt-tag */
-.tt-tag { display: inline-flex; align-items: center; margin-top: 8px; padding: 2px 9px; border-radius: 999px; font-size: 10.5px; font-weight: 600; letter-spacing: .2px; background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.2); color: #fff; }
+.tt-tag { display: inline-flex; align-items: center; margin-top: 8px; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: .2px; background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.2); color: #fff; }
 .tt-tag.predefined { background: rgba(139,92,246,.3); border-color: rgba(139,92,246,.55); color: #ded3ff; }
 .tt-tag.shared { background: rgba(76,177,254,.26); border-color: rgba(76,177,254,.5); color: #cfe8ff; }
 .tt-tag.user { background: rgba(31,157,99,.3); border-color: rgba(31,157,99,.55); color: #b9edd3; }
@@ -502,7 +504,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .lrow:hover .lt-acts { opacity: 1; }
 .lt-acts.always { opacity: 1; }
 .trash-ic { width: 16px; display: inline-grid; place-items: center; color: var(--muted-2); flex: none; }
-.la { width: 28px; height: 28px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink-2); border-radius: 7px; display: grid; place-items: center; }
+.la { width: 28px; height: 28px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink-2); border-radius: 4px; display: grid; place-items: center; }
 .la:hover { border-color: var(--primary); color: var(--primary-700); background: var(--primary-softer); }
 .la.del { color: var(--red); }
 .la.del:hover { color: var(--red); border-color: var(--red); background: var(--red-soft); }
@@ -517,12 +519,12 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .cf-del:hover { background: #c73f34; border-color: #c73f34; }
 /* multi-select footer */
 .aw-foot { display: flex; align-items: center; justify-content: space-between; padding: 12px 22px; border-top: 1px solid var(--border); background: var(--surface-2); flex: none; }
-.selinfo { font-size: 12.5px; font-weight: 500; color: var(--muted); }
+.selinfo { font-size: 13px; font-weight: 500; color: var(--muted); }
 .fbtns { display: flex; gap: 10px; }
 .slideup-enter-active, .slideup-leave-active { transition: transform .2s ease, opacity .2s ease; }
 .slideup-enter-from, .slideup-leave-to { transform: translateY(100%); opacity: 0; }
 .none { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--muted-2); padding: 54px 20px; text-align: center; }
 .none-t { margin: 4px 0 0; font-size: 14px; font-weight: 600; color: var(--ink-2); }
-.none-h { font-size: 12.5px; color: var(--muted); max-width: 300px; }
+.none-h { font-size: 13px; color: var(--muted); max-width: 300px; }
 .ellip { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>

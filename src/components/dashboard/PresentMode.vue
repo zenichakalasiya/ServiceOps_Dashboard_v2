@@ -58,7 +58,7 @@ function cellStyle(t) {
 .pm-title b { font-weight: 600; }
 .pm-ctl { display: flex; align-items: center; gap: 8px; }
 .pm-sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
-.pm-exit { width: 44px; height: 44px; border: none; background: transparent; color: var(--muted); border-radius: 12px; display: grid; place-items: center; }
+.pm-exit { width: 44px; height: 44px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .pm-exit:hover { background: var(--red-soft); color: var(--red); }
 .pm-body { flex: 1; overflow: auto; padding: 22px 26px; }
 .pm-grid { display: grid; grid-template-columns: repeat(12, 1fr); align-items: start; }

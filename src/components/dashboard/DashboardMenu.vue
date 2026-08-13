@@ -3,7 +3,11 @@ import { ref } from 'vue'
 import Icon from '../ui/Icon.vue'
 import ConfirmDialog from '../ui/ConfirmDialog.vue'
 import { store, markDefault, archiveDashboard } from '../../store/index.js'
-const props = defineProps({ d: Object, align: { type: String, default: 'right' } })
+/* `toolbar` is the board header's variant: outlined, and sized to the 36px the rest of
+ * that toolbar runs at, so the ⋯ sits in the row as a button rather than a loose glyph.
+ * The listing contexts (a dashboard card, a row in the Manage grid) keep the bare 34px
+ * icon — an outline on every row there would draw a box around each one. */
+const props = defineProps({ d: Object, align: { type: String, default: 'right' }, toolbar: { type: Boolean, default: false } })
 const emit = defineEmits(['present', 'schedule', 'history'])
 const open = ref(false)
 function act(fn) { open.value = false; fn() }
@@ -13,7 +17,7 @@ const confirmDel = ref(false)
 
 <template>
   <div class="wrap">
-    <button class="btn btn-icon" :class="{ on: open }" @click.stop="open = !open" title="Actions">
+    <button class="btn btn-icon" :class="{ on: open, tb: toolbar }" @click.stop="open = !open" title="Actions">
       <Icon name="dots-v" :size="18" />
     </button>
     <div v-if="open" class="backdrop" @click="open = false" />
@@ -52,6 +56,11 @@ const confirmDel = ref(false)
 <style scoped>
 .wrap { position: relative; }
 .btn-icon.on { background: var(--surface-2); color: var(--ink); }
+/* the board-header variant: 38×36 with a real border, matching the Export button it
+   sits beside — `.btn-icon` ships 34×34 and a transparent border, which left the ⋯ a
+   glyph floating 2px shorter than every control in the row */
+.btn-icon.tb { width: 38px; height: 36px; border-color: var(--border-strong); background: var(--surface); }
+.btn-icon.tb:hover { background: var(--surface-2); border-color: var(--muted-2); color: var(--ink); }
 .backdrop { position: fixed; inset: 0; z-index: 55; }
 .menu { top: 38px; }
 .menu-item:disabled { opacity: .45; cursor: not-allowed; }

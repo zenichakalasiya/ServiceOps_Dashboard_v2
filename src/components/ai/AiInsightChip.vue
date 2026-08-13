@@ -66,34 +66,35 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
   border: 1.5px solid transparent; border-radius: var(--r);
   background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--ai-grad-line) border-box;
 }
-.ai-chip :deep(.ico) { background: var(--ai-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+.ai-chip :deep(.ico) { stroke: url(#ai-grad); color: var(--ai); }
 /* the button names itself, as the design does — an icon plus a bare number said what
    there was but never what it was */
-.ai-chip-l { font-size: 12.5px; font-weight: 600; color: var(--ai-ink); white-space: nowrap; }
+.ai-chip-l { font-size: 13px; font-weight: 600; color: var(--ai-ink); white-space: nowrap; }
 /* the count still rides along: it is the one thing the label cannot carry */
 .ai-chip-n { min-width: 17px; height: 17px; padding: 0 5px; display: grid; place-items: center; border-radius: 999px; background: var(--ai-soft); font-size: 11px; font-weight: 700; color: var(--ai-ink); font-variant-numeric: tabular-nums; }
 .ai-chip:hover, .ai-chip.on { background: linear-gradient(var(--ai-soft), var(--ai-soft)) padding-box, var(--ai-grad-line) border-box; }
 .pop-backdrop { position: fixed; inset: 0; z-index: 40; }
 .ai-pop {
   position: absolute; top: 38px; right: 0; z-index: 50; width: 340px;
-  background: var(--surface); border: 1px solid var(--ai-border); border-radius: 12px;
+  background: var(--surface); border: 1px solid var(--ai-border); border-radius: 4px;
   box-shadow: var(--sh-pop); padding: 14px;
 }
 .ai-pop-h { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
-.ai-pop-spark { width: 26px; height: 26px; border-radius: 8px; flex: none; display: grid; place-items: center; background: var(--ai-softer); }
-.ai-pop-spark :deep(.ico) { background: var(--ai-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
-.ai-pop-sum { margin: 0; font-size: 12.5px; line-height: 1.55; color: var(--ink-2); }
+.ai-pop-spark { width: 26px; height: 26px; border-radius: 4px; flex: none; display: grid; place-items: center; background: var(--ai-softer); }
+.ai-pop-spark :deep(.ico) { stroke: url(#ai-grad); color: var(--ai); }
+.ai-pop-sum { margin: 0; font-size: 13px; line-height: 1.55; color: var(--ink-2); }
 .ai-pop-acts { display: flex; flex-direction: column; gap: 8px; margin-top: 13px; }
 .ai-pop-cta {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 36px; padding: 0 14px;
   border: 1px solid var(--ai-border); border-radius: var(--r-pill);
-  background: var(--ai-grad-soft); color: var(--ai-ink); font-weight: 600; font-size: 12.5px;
+  background: var(--ai-grad-soft); color: var(--ai-ink); font-weight: 600; font-size: 13px;
 }
 .ai-pop-cta :deep(.ico) { color: var(--ai); }
 .ai-pop-cta:hover { border-color: var(--ai); background: var(--ai-soft); }
 /* primary: gradient border over white + gradient label (label lives in its own span) */
 .ai-pop-cta.primary { border: 1.5px solid transparent; background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--ai-grad-line) border-box; }
-.ai-pop-cta.primary span, .ai-pop-cta.primary :deep(.ico) { background: var(--ai-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+.ai-pop-cta.primary span { background: var(--ai-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+.ai-pop-cta.primary :deep(.ico) { stroke: url(#ai-grad); color: var(--ai); }
 .ai-pop-cta.primary:hover { background: linear-gradient(var(--ai-soft), var(--ai-soft)) padding-box, var(--ai-grad-line) border-box; }
 .pop-enter-active, .pop-leave-active { transition: opacity .14s ease, transform .14s ease; transform-origin: top right; }
 .pop-enter-from, .pop-leave-to { opacity: 0; transform: scale(.96); }

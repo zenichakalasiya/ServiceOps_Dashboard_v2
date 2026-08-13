@@ -4,7 +4,6 @@ import { useRoute, useRouter } from 'vue-router'
 import Icon from '../components/ui/Icon.vue'
 import DashboardCard from '../components/dashboard/DashboardCard.vue'
 import DashboardTable from '../components/dashboard/DashboardTable.vue'
-import ShareDialog from '../components/dashboard/ShareDialog.vue'
 import { store, live, recents, folderName } from '../store/index.js'
 import { CATEGORIES } from '../data/mock.js'
 const route = useRoute()
@@ -15,7 +14,6 @@ const q = ref(route.query.q || '')
 const folder = ref(route.query.folder || '')
 const category = ref('')
 const sort = ref('recent')
-const shareFor = ref(null)
 
 watch(() => route.query.q, (v) => (q.value = v || ''))
 watch(() => route.query.folder, (v) => (folder.value = v || ''))
@@ -88,7 +86,7 @@ const clearFolder = () => { folder.value = ''; router.replace({ path: '/dashboar
     <template v-if="showSections && favs.length && !store.ui.listView">
       <div class="sec-head"><Icon name="star-fill" :size="15" class="gold" /> Favorites</div>
       <div class="grid">
-        <DashboardCard v-for="d in favs" :key="d.id" :d="d" @share="shareFor = $event" />
+        <DashboardCard v-for="d in favs" :key="d.id" :d="d" />
       </div>
     </template>
 
@@ -96,7 +94,7 @@ const clearFolder = () => { folder.value = ''; router.replace({ path: '/dashboar
     <template v-if="showSections && recents.length && !store.ui.listView">
       <div class="sec-head"><Icon name="clock" :size="15" /> Recently used</div>
       <div class="grid">
-        <DashboardCard v-for="d in recents" :key="d.id" :d="d" @share="shareFor = $event" />
+        <DashboardCard v-for="d in recents" :key="d.id" :d="d" />
       </div>
     </template>
 
@@ -105,16 +103,15 @@ const clearFolder = () => { folder.value = ''; router.replace({ path: '/dashboar
       {{ q || folder || category ? 'Results' : 'All in ' + (tab === 'mine' ? 'My Dashboards' : tab === 'shared' ? 'Shared with me' : 'this view') }}
       <span class="cnt">{{ filtered.length }}</span>
     </div>
-    <DashboardTable v-if="store.ui.listView && filtered.length" :items="filtered" @share="shareFor = $event" />
+    <DashboardTable v-if="store.ui.listView && filtered.length" :items="filtered" />
     <div v-else-if="filtered.length" class="grid">
-      <DashboardCard v-for="d in filtered" :key="d.id" :d="d" @share="shareFor = $event" />
+      <DashboardCard v-for="d in filtered" :key="d.id" :d="d" />
     </div>
     <div v-else class="empty card">
       <Icon name="search" :size="26" class="muted" />
       <p>No dashboards match. Try a different search or <button class="linkbtn" @click="store.ui.createOpen = true">create one</button>.</p>
     </div>
 
-    <ShareDialog v-if="shareFor" :d="shareFor" @close="shareFor = null" />
   </div>
 </template>
 
@@ -124,17 +121,17 @@ const clearFolder = () => { folder.value = ''; router.replace({ path: '/dashboar
 .page-head h1 { margin: 0; font-size: 22px; letter-spacing: -.3px; }
 .page-head p { margin: 4px 0 0; font-size: 13px; }
 .controls { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-.search-inline { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 10px; padding: 0 10px; height: 36px; width: 240px; }
+.search-inline { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 4px; padding: 0 10px; height: 36px; width: 240px; }
 .search-inline:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
 .search-inline input { border: none; outline: none; width: 100%; font-size: 13px; background: transparent; }
 .search-inline .x { border: none; background: transparent; color: var(--muted); cursor: pointer; display: grid; place-items: center; }
 .select { position: relative; }
 .sel { height: 36px; width: auto; padding: 0 30px 0 12px; appearance: none; font-weight: 500; font-size: 13px; color: var(--ink-2); cursor: pointer; }
 .chev { position: absolute; right: 10px; top: 11px; color: var(--muted); pointer-events: none; }
-.vtoggle { display: inline-flex; gap: 2px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 9px; padding: 2px; }
-.vtoggle button { width: 32px; height: 30px; border: none; background: transparent; color: var(--muted); border-radius: 7px; display: grid; place-items: center; }
+.vtoggle { display: inline-flex; gap: 2px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 4px; padding: 2px; }
+.vtoggle button { width: 32px; height: 30px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .vtoggle button.on { background: var(--primary-soft); color: var(--primary-700); }
-.folder-banner { display: flex; align-items: center; gap: 9px; background: var(--primary-softer); border: 1px solid var(--primary-soft); color: var(--primary-700); padding: 9px 13px; border-radius: 10px; font-size: 13px; margin-bottom: 16px; }
+.folder-banner { display: flex; align-items: center; gap: 9px; background: var(--primary-softer); border: 1px solid var(--primary-soft); color: var(--primary-700); padding: 9px 13px; border-radius: 4px; font-size: 13px; margin-bottom: 16px; }
 .folder-banner .btn { margin-left: auto; }
 .sec-head { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--ink-2); margin: 22px 2px 12px; }
 .sec-head .gold { color: #f5a623; }

@@ -1,62 +1,122 @@
 <script setup>
-// Google Material Symbols (Rounded). Same API as before: <Icon name="…" :size="…" />.
+/**
+ * Icon — the one icon component. `<Icon name="…" :size="…" />`, unchanged API.
+ *
+ * Backed by **lucide-vue-next** (UI-STYLE-GUIDE §5: "one family, no mixing"). It used to
+ * render Material Symbols ligatures from a webfont; the names below are the same product
+ * vocabulary mapped onto lucide components instead, so no call site had to change.
+ *
+ * Why the indirection is worth keeping rather than importing lucide directly at each
+ * call site:
+ *   - the ~140 call sites name what the icon MEANS ('predefined-monitor', 'chart-hbar'),
+ *     not which glyph draws it, so swapping the library again touches one file;
+ *   - lucide's own names churn between majors (BarChart3 → ChartColumn), and that churn
+ *     stops here;
+ *   - the guide's stroke/size defaults get applied once.
+ *
+ * Named imports keep this tree-shakeable — only the icons listed here ship, not all 5847.
+ *
+ * §5 sizes: 15 inside 32px controls · 16 nav/section · 18 panel headers and close buttons
+ * · 13–14 inline with 12–13px text. Default colour is inherited (`currentColor`), so the
+ * call site's `color` still drives it exactly as it did with the font.
+ */
 import { computed } from 'vue'
+import {
+  Plus, Search, Star, Folder, FolderOpen, Clock, RefreshCw, Share2, Link, Copy, Pencil,
+  Trash2, Archive, ArchiveRestore, EllipsisVertical, Ellipsis, Maximize, Info,
+  ChevronDown, ChevronRight, ChevronLeft, ChevronUp, LayoutGrid, List, Check, X, Eye,
+  ListFilter, Hash, ChartColumn, ChartLine, ChartPie, Table2, House, LayoutDashboard,
+  Sparkles, User, Users, Lock, Globe, Calendar, Download, Image, FileText, ExternalLink,
+  Bell, Settings, ArrowLeft, Pin, Wand2, Maximize2, GripVertical, Inbox, TrendingUp, FileOutput,
+  Moon, Sun, CalendarDays, Rows3, LayoutTemplate, TriangleAlert, Package, Network,
+  Lightbulb, UserCheck, ClipboardCheck, UsersRound, Menu, Keyboard, History, Monitor,
+  Ungroup, FolderPlus, BadgeCheck, Undo2, Redo2, ThumbsUp, ThumbsDown, ArrowUp, ArrowDown,
+  PenLine, Palette, Square, Circle, MoveUpRight, Eraser, Mail, MousePointer2, ChartArea,
+  Filter, Triangle, ChartBarBig, ChartBarStacked, ChartSpline, ChartNoAxesCombined,
+  ChartColumnBig, Grid3x3, Gauge, AlignLeft, Map, ArrowRight, MessageSquare,
+  ChartNoAxesColumnIncreasing, Zap, Send, Paperclip, Brain, Flag, Telescope, Crosshair,
+  MonitorSmartphone, Shield, Boxes, PanelLeftOpen, PanelLeftClose, Bold, Italic, Underline,
+  Strikethrough, Highlighter, Heading, Quote, Code, ListOrdered, IndentIncrease,
+  IndentDecrease, RemoveFormatting, StickyNote,
+} from 'lucide-vue-next'
+
 const props = defineProps({
   name: String,
   size: { type: [Number, String], default: 18 },
-  strokeWidth: { type: [Number, String], default: 2 }, // kept for API compat (unused)
+  strokeWidth: { type: [Number, String], default: 2 },
 })
 
-// our icon names → Material Symbols ligatures
+// our product vocabulary → the lucide component that draws it
 const MAP = {
-  plus: 'add', search: 'search', star: 'star', 'star-fill': 'star',
-  folder: 'folder', 'folder-open': 'folder_open', clock: 'schedule', refresh: 'refresh',
-  share: 'share', link: 'link', copy: 'content_copy', edit: 'edit', trash: 'delete',
-  archive: 'archive', restore: 'restore', 'dots-v': 'more_vert', 'dots-h': 'more_horiz',
-  fullscreen: 'fullscreen', info: 'info', 'chevron-down': 'keyboard_arrow_down',
-  'chevron-right': 'chevron_right', 'chevron-left': 'chevron_left', 'chevron-up': 'keyboard_arrow_up', grid: 'grid_view',
-  list: 'format_list_bulleted', check: 'check', x: 'close', eye: 'visibility', filter: 'filter_alt',
-  kpi: 'numbers', 'chart-bar': 'bar_chart', 'chart-line': 'show_chart', 'chart-pie': 'pie_chart',
-  table: 'table_chart', home: 'home', layout: 'dashboard', sparkles: 'auto_awesome',
-  user: 'person', users: 'group', lock: 'lock', globe: 'public', calendar: 'calendar_today',
-  download: 'download', image: 'image', 'file-text': 'description', bell: 'notifications',
-  settings: 'settings', 'arrow-left': 'arrow_back', pin: 'push_pin', wand: 'auto_fix_high',
-  'maximize-tile': 'open_in_full', drag: 'drag_indicator', inbox: 'inbox', trend: 'trending_up',
-  moon: 'dark_mode', sun: 'light_mode', calendar2: 'event', rows: 'view_list',
-  template: 'dashboard_customize', alert: 'warning', package: 'inventory_2', sitemap: 'account_tree',
-  bulb: 'lightbulb', 'user-check': 'how_to_reg', clipboard: 'checklist', team: 'groups',
-  menu: 'menu', keyboard: 'keyboard', history: 'history', 'predefined-monitor': 'desktop_windows',
-  ungroup: 'layers_clear', 'default-home': 'home', 'new-group': 'create_new_folder',
-  verified: 'verified', undo: 'undo', redo: 'redo',
-  'thumb-up': 'thumb_up', 'thumb-down': 'thumb_down',
-  'sort-asc': 'arrow_upward', 'sort-desc': 'arrow_downward',
-  rearrange: 'auto_awesome_mosaic', pen: 'draw', palette: 'palette',
-  'shape-rect': 'crop_square', 'shape-ellipse': 'circle', 'shape-arrow': 'arrow_outward',
-  erase: 'ink_eraser', mail: 'mail', cursor: 'arrow_selector_tool',
-  'chart-area': 'area_chart', 'chart-donut': 'donut_large', 'chart-funnel': 'filter_alt',
-  'chart-pyramid': 'change_history', 'chart-hbar': 'align_horizontal_left',
+  plus: Plus, search: Search, star: Star, 'star-fill': Star,
+  folder: Folder, 'folder-open': FolderOpen, clock: Clock, refresh: RefreshCw,
+  share: Share2, link: Link, copy: Copy, edit: Pencil, trash: Trash2,
+  archive: Archive, restore: ArchiveRestore, 'dots-v': EllipsisVertical, 'dots-h': Ellipsis,
+  fullscreen: Maximize, info: Info, 'chevron-down': ChevronDown,
+  'chevron-right': ChevronRight, 'chevron-left': ChevronLeft, 'chevron-up': ChevronUp,
+  grid: LayoutGrid, list: List, check: Check, x: X, eye: Eye, filter: ListFilter,
+  kpi: Hash, 'chart-bar': ChartColumn, 'chart-line': ChartLine, 'chart-pie': ChartPie,
+  table: Table2, home: House, layout: LayoutDashboard, sparkles: Sparkles,
+  user: User, users: Users, lock: Lock, globe: Globe, calendar: Calendar,
+  download: Download, image: Image, 'file-text': FileText,
+  // Export produces a FILE and sends it somewhere — image, PDF, or PDF by email. An
+  // ExternalLink arrow said "this opens another page", which is a different promise.
+  export: FileOutput,
+  bell: Bell, settings: Settings, 'arrow-left': ArrowLeft, pin: Pin, wand: Wand2,
+  'maximize-tile': Maximize2, drag: GripVertical, inbox: Inbox, trend: TrendingUp,
+  moon: Moon, sun: Sun, calendar2: CalendarDays, rows: Rows3,
+  template: LayoutTemplate, alert: TriangleAlert, package: Package, sitemap: Network,
+  bulb: Lightbulb, 'user-check': UserCheck, clipboard: ClipboardCheck, team: UsersRound,
+  menu: Menu, keyboard: Keyboard, history: History, 'predefined-monitor': Monitor,
+  ungroup: Ungroup, 'default-home': House, 'new-group': FolderPlus,
+  verified: BadgeCheck, undo: Undo2, redo: Redo2,
+  'thumb-up': ThumbsUp, 'thumb-down': ThumbsDown,
+  'sort-asc': ArrowUp, 'sort-desc': ArrowDown,
+  rearrange: LayoutGrid, pen: PenLine, palette: Palette,
+  'shape-rect': Square, 'shape-ellipse': Circle, 'shape-arrow': MoveUpRight,
+  erase: Eraser, mail: Mail, cursor: MousePointer2,
+  'chart-area': ChartArea, 'chart-donut': ChartPie, 'chart-funnel': Filter,
+  'chart-pyramid': Triangle, 'chart-hbar': ChartBarBig,
   // PMG-ACT-01 additional chart kinds
-  'chart-stack': 'stacked_bar_chart', 'chart-multiline': 'multiline_chart',
-  'chart-combo': 'insert_chart', 'chart-hist': 'bar_chart', 'chart-heatmap': 'grid_on',
-  'chart-gauge': 'speed', 'chart-text': 'notes', 'chart-map': 'public',
-  'open-in': 'arrow_forward', chat: 'chat_bubble', 'auto-graph': 'auto_graph', bolt: 'bolt',
-  send: 'send', attach: 'attach_file', brain: 'neurology', flag: 'flag', research: 'travel_explore',
-  target: 'center_focus_strong', insights: 'insights',
+  'chart-stack': ChartBarStacked, 'chart-multiline': ChartSpline,
+  'chart-combo': ChartNoAxesCombined, 'chart-hist': ChartColumnBig, 'chart-heatmap': Grid3x3,
+  'chart-gauge': Gauge, 'chart-text': AlignLeft, 'chart-map': Map,
+  'open-in': ArrowRight, chat: MessageSquare, 'auto-graph': ChartNoAxesColumnIncreasing,
+  bolt: Zap, send: Send, attach: Paperclip, brain: Brain, flag: Flag, research: Telescope,
+  target: Crosshair, insights: ChartNoAxesCombined,
   // module-rail glyphs
-  assets: 'devices', patch: 'shield', packages: 'deployed_code',
-  'panel-left': 'left_panel_open', 'panel-close': 'left_panel_close',
+  assets: MonitorSmartphone, patch: Shield, packages: Boxes,
+  'panel-left': PanelLeftOpen, 'panel-close': PanelLeftClose,
+  // note editor toolbar
+  bold: Bold, italic: Italic, underline: Underline, strikethrough: Strikethrough,
+  highlight: Highlighter, title: Heading, quote: Quote, code: Code,
+  'list-bullet': List, 'list-number': ListOrdered,
+  indent: IndentIncrease, outdent: IndentDecrease,
+  'clear-format': RemoveFormatting, note: StickyNote,
 }
+
+// the only filled glyph in the set — a favourited star reads as filled, not outlined
 const FILLED = new Set(['star-fill'])
 
-const ligature = computed(() => MAP[props.name] || props.name || '')
+const cmp = computed(() => MAP[props.name] || null)
 const px = computed(() => (typeof props.size === 'number' ? props.size : parseFloat(props.size) || 18))
-const opsz = computed(() => Math.max(20, Math.min(48, px.value)))
-const styleVar = computed(() => ({
-  fontSize: px.value + 'px',
-  fontVariationSettings: `'FILL' ${FILLED.has(props.name) ? 1 : 0}, 'wght' 300, 'GRAD' 0, 'opsz' ${opsz.value}`,
-}))
+/* Lucide's own default is 2. The guide's icons read lighter than that at 13–15px, where
+ * a 2px stroke on a 13px glyph closes up the counters, so small sizes step down. */
+const stroke = computed(() => (px.value <= 14 ? 1.75 : 2))
 </script>
 
 <template>
-  <span class="material-symbols-rounded ico" :style="styleVar" aria-hidden="true">{{ ligature }}</span>
+  <component
+    :is="cmp" v-if="cmp" class="ico"
+    :size="px" :stroke-width="stroke"
+    :fill="FILLED.has(name) ? 'currentColor' : 'none'"
+    aria-hidden="true"
+  />
 </template>
+
+<style scoped>
+/* `flex: none` so an icon decorating a label never compresses when the label wraps
+   (§5). `display: block` kills the inline baseline gap that pushed icons ~3px low
+   inside flex rows. */
+.ico { display: block; flex: none; }
+</style>

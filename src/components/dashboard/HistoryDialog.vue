@@ -64,15 +64,15 @@ const rows = computed(() => {
 @keyframes slideIn { from { transform: translateX(30px); opacity: .4; } to { transform: translateX(0); opacity: 1; } }
 .hd-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px 14px; border-bottom: 1px solid var(--border); }
 .hd-head h3 { margin: 0; font-size: 17px; }
-.ic { width: 34px; height: 34px; border: none; background: transparent; color: var(--muted); border-radius: 9px; display: grid; place-items: center; }
+.ic { width: 34px; height: 32px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .ic:hover { background: var(--surface-2); color: var(--ink); }
 .hd-filters { display: flex; align-items: flex-end; gap: 12px; padding: 16px 22px 12px; }
 .hd-filter2 { padding: 0 22px 16px; border-bottom: 1px solid var(--border); }
 .fl { display: flex; flex-direction: column; }
 .fl label { font-size: 12px; font-weight: 500; color: var(--ink-2); margin-bottom: 6px; } .fl label i { color: var(--red); font-style: normal; }
-.srch-btn { height: 38px; }
-.qbox { display: flex; align-items: center; gap: 8px; height: 38px; border: 1px solid var(--border-strong); border-radius: var(--r); padding: 0 11px; background: var(--surface-2); }
-.qbox input { border: none; outline: none; background: transparent; width: 100%; font-size: 13.5px; }
+.srch-btn { height: 36px; }
+.qbox { display: flex; align-items: center; gap: 8px; height: 36px; border: 1px solid var(--border-strong); border-radius: var(--r); padding: 0 11px; background: var(--surface-2); }
+.qbox input { border: none; outline: none; background: transparent; width: 100%; font-size: 13px; }
 .hd-body { flex: 1; overflow: auto; padding: 6px 22px 20px; }
 .htbl { width: 100%; border-collapse: collapse; font-size: 13px; }
 .htbl th { position: sticky; top: 0; background: var(--surface); text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .4px; font-weight: 600; padding: 12px 12px; border-bottom: 1px solid var(--border); }
@@ -81,5 +81,5 @@ const rows = computed(() => {
 .user { color: var(--primary-700); font-weight: 500; }
 .sum { color: var(--ink-2); }
 .none { text-align: center; color: var(--muted-2); padding: 40px; }
-.hd-foot { padding: 12px 22px; border-top: 1px solid var(--border); background: var(--surface-2); font-size: 12.5px; }
+.hd-foot { padding: 12px 22px; border-top: 1px solid var(--border); background: var(--surface-2); font-size: 13px; }
 </style>

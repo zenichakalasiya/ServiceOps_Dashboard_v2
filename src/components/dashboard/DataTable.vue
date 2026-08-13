@@ -114,12 +114,20 @@ table { width: 100%; border-collapse: collapse; font-size: inherit; table-layout
 /* one line everywhere — headers and values alike. A wrapped cell changes its row's height
    and knocks the row rule out of line with its neighbours. */
 th, td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-th { text-align: left; color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; padding: 4px 8px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 1; }
-td { padding: 6px 8px; border-bottom: 1px solid var(--border); }
+/* §8 — header 12px semibold in the PRIMARY ink (not muted uppercase), body 13px.
+   Rows are separated by a single rule on the row, hover #F9FAFB. Numeric and date
+   columns get tabular-nums so digits don't jitter between rows. */
+th { text-align: left; color: var(--ink); font-weight: 600; font-size: 12px; letter-spacing: .01em; padding: 8px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 1; }
+td { padding: 8px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--ink); }
+tbody tr { transition: background .12s; }
+tbody tr:hover { background: var(--row-hover); }
+/* §8: an empty cell renders an em dash, never blank */
+td:empty::after { content: '—'; color: var(--placeholder); }
 /* the sort header is an inline-flex row, so it needs its own clamp — the th's ellipsis
    cannot reach inside it */
 .th-lbl { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.nodata { text-align: center; color: var(--muted-2); padding: 18px; }
+/* §8 empty state — the guide's py-12, in the placeholder ink */
+.nodata { text-align: center; color: var(--placeholder); padding: 48px 16px; font-size: 13px; }
 
 /* Header doubles as a sort control. The caret stays invisible until hover or
    active sort, so an unsorted table looks exactly like the old static one. */
@@ -130,6 +138,6 @@ th.srt:hover .sc { opacity: .6; }
 .sc.vis { opacity: 1; color: var(--primary); }
 th.on { color: var(--ink); }
 
-.clr { display: block; margin: 8px auto 0; border: 1px solid var(--border); background: var(--surface); color: var(--primary-700); border-radius: 6px; padding: 4px 10px; font-size: 11.5px; font-weight: 600; }
+.clr { display: block; margin: 8px auto 0; border: 1px solid var(--border); background: var(--surface); color: var(--primary-700); border-radius: 4px; padding: 4px 10px; font-size: 12px; font-weight: 600; }
 .clr:hover { background: var(--primary-soft); border-color: var(--primary); }
 </style>

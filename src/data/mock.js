@@ -47,15 +47,6 @@ export const shortcut = (title, columns, rows, info) =>
 export const text = (title, content, info) =>
   ({ id: uid('t'), type: 'text', title, info, content, w: 4, h: 1 })
 
-// Share-widget recipients (technicians + technician groups)
-export const TECHNICIANS = [
-  'Aarav Mehta', 'Meera Iyer', 'Rohan Patel', 'Priya Nair', 'Vikram Reddy',
-  'Ananya Bose', 'Karan Gupta', 'Divya Menon', 'Arjun Rao', 'Nisha Shah',
-]
-export const TECH_GROUPS = [
-  'Service Desk L1', 'Service Desk L2', 'Network Team', 'Asset & Procurement',
-  'Change Advisory Board', 'All technicians',
-]
 
 const WK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']

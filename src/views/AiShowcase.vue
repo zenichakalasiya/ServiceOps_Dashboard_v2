@@ -98,20 +98,20 @@ function runJob(j) {
 .showcase { padding: 22px 26px 40px; max-width: 1400px; margin: 0 auto; width: 100%; }
 .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
 .head-l { display: flex; gap: 13px; }
-.spark { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex: none; background: var(--primary-soft); color: var(--primary-700); }
+.spark { width: 40px; height: 40px; border-radius: 4px; display: grid; place-items: center; flex: none; background: var(--primary-soft); color: var(--primary-700); }
 .head h1 { font-size: 22px; font-weight: 600; margin: 0; letter-spacing: -.3px; }
-.head p { margin: 3px 0 0; color: var(--muted); font-size: 13.5px; max-width: 640px; }
+.head p { margin: 3px 0 0; color: var(--muted); font-size: 13px; max-width: 640px; }
 .on-prem { flex: none; }
 /* jobs */
 .jobs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
 .job { display: flex; align-items: center; gap: 11px; text-align: left; border: 1px solid var(--border); background: var(--surface); border-radius: var(--r-lg); padding: 13px 14px; box-shadow: var(--sh-sm); transition: all .16s ease; }
 .job:hover { border-color: var(--primary); transform: translateY(-1px); box-shadow: var(--sh); }
-.job-ic { width: 36px; height: 36px; border-radius: 10px; flex: none; display: grid; place-items: center; background: var(--primary-soft); color: var(--primary-700); }
+.job-ic { width: 36px; height: 36px; border-radius: 4px; flex: none; display: grid; place-items: center; background: var(--primary-soft); color: var(--primary-700); }
 .job-b { flex: 1; min-width: 0; }
 .job-top { display: flex; align-items: center; gap: 8px; }
-.job-top b { font-size: 14.5px; font-weight: 600; }
+.job-top b { font-size: 14px; font-weight: 600; }
 .job-p { font-size: 10px; font-weight: 500; color: var(--muted-2); }
-.job-blurb { font-size: 11.5px; color: var(--muted); margin-top: 1px; line-height: 1.3; }
+.job-blurb { font-size: 12px; color: var(--muted); margin-top: 1px; line-height: 1.3; }
 .job-try { display: inline-flex; align-items: center; gap: 1px; font-size: 11px; font-weight: 600; color: var(--primary-700); flex: none; opacity: 0; transition: opacity .16s; }
 .job:hover .job-try { opacity: 1; }
 /* stage */
@@ -126,11 +126,11 @@ function runJob(j) {
 .bt-l b { font-size: 15px; font-weight: 600; }
 .bt-meta { font-size: 12px; }
 .bt-r { display: flex; align-items: center; gap: 8px; }
-.mock-ctl { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 12.5px; color: var(--ink-2); background: var(--surface); }
-.askai { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 13px; border: 1px solid var(--primary); border-radius: 8px; font-weight: 600; font-size: 13px; color: var(--primary-700); background: var(--primary-softer); position: relative; }
+.mock-ctl { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; color: var(--ink-2); background: var(--surface); }
+.askai { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 13px; border: 1px solid var(--primary); border-radius: 4px; font-weight: 600; font-size: 13px; color: var(--primary-700); background: var(--primary-softer); position: relative; }
 .askai:hover { background: var(--primary-soft); }
 .askai.on { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 0 0 4px var(--primary-soft); }
-.cnt { display: inline-grid; place-items: center; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 999px; background: var(--red); color: #fff; font-size: 10.5px; font-weight: 700; }
+.cnt { display: inline-grid; place-items: center; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 999px; background: var(--red); color: #fff; font-size: 11px; font-weight: 700; }
 /* grid */
 .grid { display: grid; grid-template-columns: repeat(12, 1fr); grid-auto-rows: 148px; gap: 14px; padding: 16px; }
 .grid :deep(.span-3) { grid-column: span 3; }

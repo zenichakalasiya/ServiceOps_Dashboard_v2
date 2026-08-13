@@ -10,17 +10,17 @@ import AddWidgetModal from '../components/dashboard/AddWidgetModal.vue'
 import WidgetBuilderModal from '../components/dashboard/WidgetBuilderModal.vue'
 import PresentMode from '../components/dashboard/PresentMode.vue'
 import HistoryDialog from '../components/dashboard/HistoryDialog.vue'
-import DownloadDialog from '../components/dashboard/DownloadDialog.vue'
-import SharePopover from '../components/dashboard/SharePopover.vue'
-import ShareDialog from '../components/dashboard/ShareDialog.vue'
+import ExportDialog from '../components/dashboard/ExportDialog.vue'
 import ScheduleDialog from '../components/dashboard/ScheduleDialog.vue'
+import TimeRangePopover, { rectOf } from '../components/dashboard/TimeRangePopover.vue'
 import AiSummaryCard from '../components/ai/AiSummaryCard.vue'
 import AiInsightChip from '../components/ai/AiInsightChip.vue'
 import AiInsightCard from '../components/ai/AiInsightCard.vue'
 import AiAssistant from '../components/ai/AiAssistant.vue'
 import { demoBoard } from '../data/aiDemo.js'
-import { store, byId, recordView, toggleFavorite, removeTile, toast, rearrangeTiles } from '../store/index.js'
-import { uid } from '../data/mock.js'
+import { store, byId, recordView, toggleFavorite, removeTile, toast } from '../store/index.js'
+import { uid, ACCESS } from '../data/mock.js'
+import { windowFor, relativeFor, stampFor } from '../data/timeRanges.js'
 const route = useRoute()
 const router = useRouter()
 
@@ -28,12 +28,11 @@ const d = computed(() => byId(route.params.id))
 const edit = ref(route.query.edit === '1')
 const dirty = ref(false)
 const showAdd = ref(false)
-const showShare = ref(false)
 const showSchedule = ref(false)
 const showHistory = ref(false)
-const showDownload = ref(false)
-const sharePop = ref(false)
-const restrictOpen = ref(false)
+const showExport = ref(false)
+// the "who can see this board" popover, opened from the access pill beside the title
+const accessOpen = ref(false)
 const descHover = ref(false)
 const presenting = ref(false)
 const loadingBoard = ref(true)
@@ -46,6 +45,21 @@ const gridEl = ref(null)
 
 // ---- drag-to-reorder / drag-into-group (armed from each card's 6-dot handle) ----
 const dragArmed = ref(null)      // tile id currently draggable
+/* Who this board reaches, in one sentence, under the access pill. Each access level
+ * answers the question differently — Public reaches everyone with portal access, Private
+ * reaches nobody but the owner, and only Restricted has a list worth counting. */
+const audienceLine = computed(() => {
+  const b = d.value
+  if (!b) return ''
+  if (b.access === 'public') return 'Everyone with portal access can open this dashboard.'
+  if (b.access === 'private') return `Private — only ${b.owner} can open this dashboard.`
+  const n = (b.techAccess || []).length + (b.groupAccess || []).length
+  return `Restricted — ${n} recipient${n === 1 ? '' : 's'} can open this dashboard.`
+})
+// access lives in the dashboard's own settings; this opens them rather than duplicating
+// the fields into a second form that could disagree with the first
+function editAccess() { store.ui.cloneTarget = null; store.ui.editTarget = d.value; store.ui.createOpen = true }
+
 const dragId = ref(null)         // tile id being dragged
 const dropGroup = ref(undefined) // group id currently hovered (undefined=none, null=ungrouped)
 /* Layout Lock freezes position AND size. Guarding here rather than only hiding the
@@ -85,7 +99,7 @@ function tilesIn(gid) {
 const addToGroup = ref(null)   // group id a newly-added widget should land in
 function addGroup(absorb = true) {
   if (!d.value.groups) d.value.groups = []
-  const g = { id: uid('g'), name: `New group ${d.value.groups.length + 1}`, collapsed: false }
+  const g = { id: uid('g'), name: `New group ${d.value.groups.length + 1}`, collapsed: false, dateFilter: null }
   const first = d.value.groups.length === 0
   d.value.groups.push(g)
   // The very first group absorbs all currently-ungrouped widgets (canvas "New group").
@@ -234,7 +248,7 @@ function closeTileMenu() { tileMenu.value = { ...tileMenu.value, open: false } }
 function onCellContext(t, e) { if (gRightClick.value) openTileMenu(t, e) }
 function tileNewGroup(t) {
   if (!d.value.groups) d.value.groups = []
-  const g = { id: uid('g'), name: `New group ${d.value.groups.length + 1}`, collapsed: false }
+  const g = { id: uid('g'), name: `New group ${d.value.groups.length + 1}`, collapsed: false, dateFilter: null }
   d.value.groups.push(g); t.group = g.id
   editingGroup.value = g.id
   d.value.updated = new Date().toISOString(); dirty.value = true; closeTileMenu()
@@ -268,7 +282,7 @@ let mqPending = null, mqStart = null
 // container-first: a labeled "Add group" makes an empty, collapsible group you fill later
 function insertEmptyGroup(i) {
   if (!d.value.groups) d.value.groups = []
-  const g = { id: uid('g'), name: `New group ${d.value.groups.length + 1}`, collapsed: false }
+  const g = { id: uid('g'), name: `New group ${d.value.groups.length + 1}`, collapsed: false, dateFilter: null }
   d.value.groups.splice(i, 0, g)
   d.value.updated = new Date().toISOString(); dirty.value = true
   editingGroup.value = g.id            // drop straight into rename
@@ -333,7 +347,7 @@ function clearPicks() { groupPicks.value = new Set(); showGroupCta.value = false
 function createGroupFromPicks() {
   if (!groupPicks.value.size) { clearPicks(); return }
   if (!d.value.groups) d.value.groups = []
-  const g = { id: uid('g'), name: `New group ${d.value.groups.length + 1}`, collapsed: false }
+  const g = { id: uid('g'), name: `New group ${d.value.groups.length + 1}`, collapsed: false, dateFilter: null }
   d.value.groups.push(g)
   const n = groupPicks.value.size
   // remember each tile's previous group so the action can be undone cleanly
@@ -357,13 +371,47 @@ function ungroup(g) {
   dirty.value = true
 }
 const editingGroup = ref(null)
-/* Rearrange one GROUP's contents, from the button in its header. The whole-canvas
- * entry point (the topbar ⋯ item) is gone; `rearrangeTiles` still takes a null
- * groupId for the canvas, so bringing it back is a one-line change.
- * The {tiles, groups} snapshot watcher feeds undo/redo, so Ctrl+Z reverts it. */
-function onRearrange(groupId) {
-  if (rearrangeTiles(d.value, groupId)) dirty.value = true
+
+/* ── A group's date filter ─────────────────────────────────────────────────────────
+ * Set once in the group header; every widget in that group reads it instead of the
+ * dashboard's global filter. A widget that set its OWN range keeps it — the chain is
+ * widget → group → dashboard, most specific wins — so turning a group filter on never
+ * silently overwrites a range someone chose deliberately for one tile. WidgetCard
+ * resolves that chain; this only owns the group's own value. */
+const gdOpen = ref(null)      // id of the group whose picker is open
+const gdRect = ref(null)
+const gdGroup = computed(() => (d.value?.groups || []).find((g) => g.id === gdOpen.value) || null)
+function toggleGroupDate(g, e) {
+  if (gdOpen.value === g.id) { gdOpen.value = null; return }
+  gdRect.value = rectOf(e.currentTarget)
+  gdOpen.value = g.id
 }
+function pickGroupDate(range) {
+  const g = gdGroup.value; if (!g) return
+  g.dateFilter = range
+  gdOpen.value = null; dirty.value = true
+  toast(`“${g.name}” → ${range}`)
+}
+function clearGroupDate() {
+  const g = gdGroup.value; if (!g) return
+  g.dateFilter = null
+  gdOpen.value = null; dirty.value = true
+  toast(`“${g.name}” follows the dashboard filter`)
+}
+function groupDateTitle(g) {
+  const n = tilesIn(g.id).length
+  if (!g.dateFilter) return `Set one time range for all ${n} widget${n === 1 ? '' : 's'} in “${g.name}”`
+  const { start, end } = windowFor(g.dateFilter)
+  return `${stampFor(start)} → ${stampFor(end)}\nEvery widget in “${g.name}” reads this instead of the dashboard filter`
+}
+// how many widgets in this group opted out with a range of their own — the group note
+// says so rather than claiming a reach it doesn't have
+function ownDated(gid) { return tilesIn(gid).filter((t) => t.dateFilter).length }
+/* The group header's Rearrange button is gone. It reset every widget in the group to
+ * its default footprint and repacked them — an action whose result you could only judge
+ * after it had already destroyed the layout you arranged by hand. Widgets are still
+ * rearranged the direct way, by dragging them. `rearrangeTiles` is left in the store
+ * (it takes a null groupId for the whole canvas) if it is ever wanted back. */
 function onPin(t) { t.pinned = !t.pinned; d.value.updated = new Date().toISOString(); dirty.value = true; toast(t.pinned ? `Pinned “${t.title}”` : `Unpinned “${t.title}”`) }
 
 // ---- per-dashboard layout (from the create/clone panel) ----
@@ -583,22 +631,32 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
                 </span>
               </transition>
             </span>
-            <!-- Only Restricted dashboards show an access indicator; click it for the technician fields -->
-            <div v-if="d.access === 'restricted'" class="acc-wrap">
-              <button class="restrict-ic" @click.stop="restrictOpen = !restrictOpen" title="Restricted access"><Icon name="users" :size="15" /></button>
-              <div v-if="restrictOpen" class="backdrop" @click="restrictOpen = false" />
+            <!-- Who this board is shared with. This is the ONLY place that answers the
+                 question now: the Share button beside Export was withdrawn, because it
+                 offered to share a board that is already governed by its access level,
+                 and the two could disagree. The pill reports that access level, and
+                 opening it names the technicians and groups behind it. It shows on every
+                 board, not just Restricted ones — "who can see this" is a question a
+                 Public or Private board has an answer to as well. -->
+            <div class="acc-wrap">
+              <button class="restrict-ic" :class="d.access" @click.stop="accessOpen = !accessOpen" :title="`${ACCESS[d.access].label} — see who this is shared with`"><Icon :name="ACCESS[d.access].icon" :size="15" /></button>
+              <div v-if="accessOpen" class="backdrop" @click="accessOpen = false" />
               <transition name="pop">
-                <div v-if="restrictOpen" class="restrict-pop card" @click.stop>
-                  <div class="ap-h"><Icon name="users" :size="14" /> Restricted — who can access</div>
+                <div v-if="accessOpen" class="restrict-pop card" @click.stop>
+                  <div class="ap-h"><Icon :name="ACCESS[d.access].icon" :size="14" /> Shared with</div>
+                  <p class="ap-aud">{{ audienceLine }}</p>
                   <div class="ap-sec">
-                    <label>Technician Access Level</label>
-                    <div class="ap-chips"><span v-for="t in d.techAccess" :key="t" class="chip sm"><Icon name="user" :size="11" /> {{ t }}</span><span v-if="!d.techAccess.length" class="muted small">None</span></div>
+                    <label>Technicians</label>
+                    <div class="ap-chips"><span v-for="t in (d.techAccess || [])" :key="t" class="chip sm"><Icon name="user" :size="11" /> {{ t }}</span><span v-if="!(d.techAccess || []).length" class="muted small">None</span></div>
                   </div>
                   <div class="ap-sec">
-                    <label>Technician Group Access Level</label>
-                    <div class="ap-chips"><span v-for="g in d.groupAccess" :key="g" class="chip sm"><Icon name="users" :size="11" /> {{ g }}</span><span v-if="!d.groupAccess.length" class="muted small">None</span></div>
+                    <label>Technician groups</label>
+                    <div class="ap-chips"><span v-for="g in (d.groupAccess || [])" :key="g" class="chip sm"><Icon name="users" :size="11" /> {{ g }}</span><span v-if="!(d.groupAccess || []).length" class="muted small">None</span></div>
                   </div>
-                  <button class="ap-edit" @click="restrictOpen = false; showShare = true"><Icon name="edit" :size="13" /> Manage access &amp; sharing</button>
+                  <!-- the way to CHANGE any of this is the dashboard's own settings, which
+                       is where the access level lives — not a second, parallel share form -->
+                  <button v-if="!d.predefined" class="ap-edit" @click="accessOpen = false; editAccess()"><Icon name="edit" :size="13" /> Manage access</button>
+                  <p v-else class="ap-locked"><Icon name="lock" :size="12" /> A predefined dashboard’s visibility is fixed.</p>
                 </div>
               </transition>
             </div>
@@ -618,17 +676,16 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
         <TimeFilter />
         <AutoRefresh @refresh="onRefresh" />
         <span class="vsep" />
+        <!-- One button where Share and Download used to sit side by side. Both produced a
+             file of this board; only the destination differed, and the split meant "email
+             me a PDF" lived under Share while "save a PDF" lived under Download. -->
         <div class="pop-wrap">
-          <button class="btn ico-only" :class="{ on: sharePop }" @click.stop="sharePop = !sharePop" title="Share / Export"><Icon name="share" :size="17" /></button>
-          <SharePopover v-if="sharePop" :d="d" @close="sharePop = false" />
-        </div>
-        <div class="pop-wrap">
-          <button class="btn ico-only" :class="{ on: showDownload }" @click.stop="showDownload = !showDownload" title="Download"><Icon name="download" :size="17" /></button>
-          <DownloadDialog v-if="showDownload" :d="d" @close="showDownload = false" />
+          <button class="btn ico-only" :class="{ on: showExport }" @click.stop="showExport = !showExport" title="Export"><Icon name="export" :size="17" /></button>
+          <ExportDialog v-if="showExport" :d="d" @close="showExport = false" />
         </div>
         <!-- A: the AI-insights chip lives in the header, immediately left of the ⋯ menu -->
         <AiInsightChip v-if="!loadingBoard && ap === 'A'" :board="aiBoard" @ask="onCardAsk" />
-        <DashboardMenu :d="d" align="right" @present="presenting = true" @schedule="showSchedule = true" @history="showHistory = true" />
+        <DashboardMenu :d="d" align="right" toolbar @present="presenting = true" @schedule="showSchedule = true" @history="showHistory = true" />
       </div>
     </header>
 
@@ -759,15 +816,33 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
             <b v-else class="grp-name" @click="editingGroup = g.id">{{ g.name }}</b>
             <span class="grp-count">{{ tilesIn(g.id).length }}</span>
             <div class="grow" />
+            <!-- The group's own time range. Set it once here and every widget the group
+                 holds reads it instead of the dashboard filter; leave it unset and the
+                 group inherits the dashboard filter like anything else. A widget can
+                 still opt out individually — its own calendar wins over this one. -->
+            <button
+              class="grp-date" :class="{ on: !!g.dateFilter || gdOpen === g.id }"
+              @click.stop="toggleGroupDate(g, $event)"
+              :title="groupDateTitle(g)"
+            >
+              <Icon name="calendar" :size="14" />
+              <span>{{ g.dateFilter ? relativeFor(g.dateFilter) : 'Date filter' }}</span>
+            </button>
             <button v-if="tilesIn(g.id).length" class="grp-add" title="Add widget to this group" @click="addWidgetToGroup(g.id)"><Icon name="plus" :size="14" /> Add widget</button>
-            <button v-if="tilesIn(g.id).length > 1" class="grp-act" title="Rearrange widgets in this group" @click="onRearrange(g.id)"><Icon name="rearrange" :size="15" /></button>
             <button class="grp-act" title="Ungroup" @click="ungroup(g)"><Icon name="ungroup" :size="15" /></button>
           </header>
+          <!-- the one-liner: what the range above actually does to the widgets below it -->
+          <p v-if="g.dateFilter && !g.collapsed" class="grp-date-note">
+            <Icon name="info" :size="13" />
+            All {{ tilesIn(g.id).length }} widget{{ tilesIn(g.id).length === 1 ? '' : 's' }} in
+            “{{ g.name }}” use <b>{{ g.dateFilter }}</b> instead of the dashboard filter<template v-if="ownDated(g.id)">, except {{ ownDated(g.id) }} on {{ ownDated(g.id) === 1 ? 'its' : 'their' }} own range</template>.
+          </p>
           <div v-if="!g.collapsed" class="grid" :style="gridStyle">
             <div v-for="t in tilesIn(g.id)" :key="t.id" :data-tile="t.id" class="cell"
               :class="{ flash: highlightId === t.id, dragging: dragId === t.id }" :style="cellStyle(t)" :draggable="dragArmed === t.id"
               @dragstart="onDragStart(t)" @dragend="onDragEnd" @dragover.prevent @drop.stop.prevent="onDropTile(t)" @contextmenu="onCellContext(t, $event)">
-              <WidgetCard :tile="t" :edit="edit" @remove="onRemove" @edit="onEditTile" @duplicate="onDuplicate" @pin="onPin" @armdrag="armDrag" />
+              <!-- `group` is what lets the tile inherit this group's date filter -->
+              <WidgetCard :tile="t" :edit="edit" :group="g" @remove="onRemove" @edit="onEditTile" @duplicate="onDuplicate" @pin="onPin" @armdrag="armDrag" />
               <span v-if="!layoutLocked" class="resize" title="Drag to resize" @mousedown.stop.prevent="startResize($event, t)" />
               <button v-if="gHoverIcon" class="cell-grp-chip" title="Group this widget" @click.stop="openTileMenu(t, $event)"><Icon name="new-group" :size="13" /> Group</button>
             </div>
@@ -860,11 +935,18 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
       </transition>
     </teleport>
 
+    <!-- a group's time range — the same picker a widget and the topbar open -->
+    <TimeRangePopover
+      v-if="gdOpen && gdGroup" :value="gdGroup.dateFilter" :rect="gdRect"
+      :follow-label="gdGroup.dateFilter ? 'Follow dashboard filter' : null"
+      :note="`Applies to all ${tilesIn(gdGroup.id).length} widget${tilesIn(gdGroup.id).length === 1 ? '' : 's'} in “${gdGroup.name}”. A widget with its own range keeps it.`"
+      @pick="pickGroupDate" @clear="clearGroupDate" @close="gdOpen = null"
+    />
+
     <AddWidgetModal v-if="showAdd" :d="d" :group="addToGroup" @close="showAdd = false; addToGroup = null" @created="onWidgetCreated" @newgroup="onNewGroup" />
     <WidgetBuilderModal v-if="editTile" :d="d" :type="typeForTile(editTile)" :existing="editTile" @close="editTile = null" @saved="onTileSaved" />
     <!-- Duplicate: builder pre-filled with the tile; save creates a new copy in place -->
     <WidgetBuilderModal v-if="dupTile" :d="d" :type="typeForTile(dupTile)" :existing="dupTile" :duplicate="true" @close="dupTile = null" @duplicated="onTileDuplicated" />
-    <ShareDialog v-if="showShare" :d="d" @close="showShare = false" />
     <ScheduleDialog v-if="showSchedule" :d="d" @close="showSchedule = false" />
     <HistoryDialog v-if="showHistory" :d="d" @close="showHistory = false" />
     <PresentMode v-if="presenting" :start-id="d.id" @close="presenting = false" />
@@ -881,9 +963,9 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .board { display: flex; flex-direction: column; min-height: 100%; }
 .bhead { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 16px 24px; background: var(--surface); border-bottom: 1px solid var(--border); flex-wrap: nowrap; }
 .bh-left { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
-.listing-toggle { width: 34px; height: 34px; border: 1px solid var(--border); background: var(--surface); color: var(--ink-2); border-radius: 9px; display: grid; place-items: center; flex: none; }
+.listing-toggle { width: 34px; height: 32px; border: 1px solid var(--border); background: var(--surface); color: var(--ink-2); border-radius: 4px; display: grid; place-items: center; flex: none; }
 .listing-toggle:hover { background: var(--surface-2); color: var(--ink); border-color: var(--border-strong); }
-.star { width: 34px; height: 34px; border-radius: 9px; border: none; background: transparent; color: var(--muted); display: grid; place-items: center; }
+.star { width: 34px; height: 32px; border-radius: 4px; border: none; background: transparent; color: var(--muted); display: grid; place-items: center; }
 .star:hover, .star.on { color: #f5a623; }
 .titles { min-width: 0; }
 .t-row { display: flex; align-items: center; gap: 9px; }
@@ -895,21 +977,30 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .dinfo-desc { display: block; font-weight: 400; color: rgba(255,255,255,.88); line-height: 1.45; }
 /* pills sit BELOW the description, left-aligned — mirrors WidgetCard's .tt-tag */
 .dinfo-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
-.tt-tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; font-size: 10.5px; font-weight: 600; letter-spacing: .2px; background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.2); color: #fff; }
+.tt-tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: .2px; background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.2); color: #fff; }
 .tt-tag.predefined { background: rgba(139,92,246,.3); border-color: rgba(139,92,246,.55); color: #ded3ff; }
 .tt-tag.def { background: rgba(76,177,254,.26); border-color: rgba(76,177,254,.5); color: #cfe8ff; }
 /* restricted → click the icon to see technician + group access */
-.restrict-ic { display: inline-grid; place-items: center; width: 28px; height: 26px; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 7px; color: var(--amber); cursor: pointer; }
-.restrict-ic:hover { background: var(--amber-soft); border-color: transparent; }
+/* the pill now appears on every board, so it carries the access level's own colour —
+   the glyph alone (globe / lock / people) is what has to say which one this is */
+.restrict-ic { display: inline-grid; place-items: center; width: 28px; height: 26px; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 4px; color: var(--muted); cursor: pointer; }
+.restrict-ic.restricted { color: var(--amber); }
+.restrict-ic.public { color: var(--blue); }
+.restrict-ic:hover { border-color: transparent; background: var(--surface-2); }
+.restrict-ic.restricted:hover { background: var(--amber-soft); }
+.restrict-ic.public:hover { background: var(--blue-soft); }
 .restrict-pop { position: absolute; top: 34px; left: 0; z-index: 60; width: 300px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
 .backdrop { position: fixed; inset: 0; z-index: 55; }
 .ap-h { display: flex; align-items: center; gap: 7px; font-weight: 600; font-size: 13px; }
-.ap-sec label { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted-2); font-weight: 600; margin-bottom: 7px; }
+/* the one-line answer sits directly under the heading, before the lists that back it up */
+.ap-aud { margin: -6px 0 0; font-size: 12px; line-height: 1.5; color: var(--ink-2); }
+.ap-locked { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 12px; color: var(--muted); }
+.ap-sec label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted-2); font-weight: 600; margin-bottom: 7px; }
 .ap-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.ap-chips .chip.sm { height: 22px; font-size: 11.5px; padding: 0 8px; }
+.ap-chips .chip.sm { height: 22px; font-size: 12px; padding: 0 8px; }
 .small { font-size: 12px; }
-.ap-desc { margin: 0; font-size: 12.5px; color: var(--ink-2); line-height: 1.5; }
-.ap-edit { display: flex; align-items: center; gap: 7px; justify-content: center; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 8px; padding: 7px; font-weight: 500; font-size: 12.5px; color: var(--ink-2); }
+.ap-desc { margin: 0; font-size: 13px; color: var(--ink-2); line-height: 1.5; }
+.ap-edit { display: flex; align-items: center; gap: 7px; justify-content: center; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 4px; padding: 7px; font-weight: 500; font-size: 13px; color: var(--ink-2); }
 .ap-edit:hover { background: var(--surface-2); }
 .bh-right { display: flex; align-items: center; gap: 8px; flex: none; }
 .titles { min-width: 0; }
@@ -917,12 +1008,12 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .vsep { width: 1px; height: 24px; background: var(--border); margin: 0 2px; }
 /* undo / redo with instant hover tooltip */
 .udr { display: inline-flex; gap: 2px; }
-.udr-b { position: relative; width: 34px; height: 34px; border: 1px solid var(--border); background: var(--surface); color: var(--ink-2); border-radius: 8px; display: grid; place-items: center; }
+.udr-b { position: relative; width: 34px; height: 32px; border: 1px solid var(--border); background: var(--surface); color: var(--ink-2); border-radius: 4px; display: grid; place-items: center; }
 .udr-b:hover:not(:disabled) { background: var(--surface-2); color: var(--ink); }
 .udr-b:disabled { color: var(--muted); opacity: .85; cursor: not-allowed; }
-.udr-tip { position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #20223a; color: #fff; font-size: 11.5px; white-space: nowrap; padding: 5px 9px; border-radius: 7px; display: none; align-items: center; gap: 6px; z-index: 60; box-shadow: var(--sh-pop); }
+.udr-tip { position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #20223a; color: #fff; font-size: 12px; white-space: nowrap; padding: 5px 9px; border-radius: 4px; display: none; align-items: center; gap: 6px; z-index: 60; box-shadow: var(--sh-pop); }
 .udr-b:hover .udr-tip { display: inline-flex; }
-.udr-tip kbd { font-family: inherit; font-size: 10.5px; background: rgba(255,255,255,.16); border-radius: 4px; padding: 1px 5px; }
+.udr-tip kbd { font-family: inherit; font-size: 11px; background: rgba(255,255,255,.16); border-radius: 4px; padding: 1px 5px; }
 .btn.ico-only { width: 38px; padding: 0; justify-content: center; }
 .btn.ico-only.on { background: var(--primary-soft); color: var(--primary-700); border-color: transparent; }
 .pop-wrap { position: relative; }
@@ -950,9 +1041,13 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 /* drag-reorder states */
 .cell.dragging { opacity: .4; }
 .cell.dropzone { outline: 2px dashed var(--primary); outline-offset: 2px; border-radius: var(--r-lg); }
-/* bottom-right resize grip (two diagonal lines), revealed on hover */
-.resize { position: absolute; right: 3px; bottom: 3px; width: 17px; height: 17px; z-index: 6; cursor: nwse-resize; opacity: 0; transition: opacity .14s; border-radius: 0 0 6px 0;
-  background: linear-gradient(135deg, transparent 0 42%, var(--muted) 42% 52%, transparent 52% 66%, var(--muted) 66% 76%, transparent 76%); }
+/* Bottom-right resize grip (two diagonal strokes), revealed on hover.
+   Inset 5px, not 3px: at 3px a 17px grip ran its strokes over the tile's 1px border and
+   through its 4px corner arc, so the marks read as damage to the card rather than a
+   control sitting on it. 5px clears both the border and the radius, and 12px keeps the
+   grip small enough to stay a hint — it is a drag target, not a button. */
+.resize { position: absolute; right: 5px; bottom: 5px; width: 12px; height: 12px; z-index: 6; cursor: nwse-resize; opacity: 0; transition: opacity .14s;
+  background: linear-gradient(135deg, transparent 0 44%, var(--muted) 44% 57%, transparent 57% 71%, var(--muted) 71% 84%, transparent 84%); }
 .cell:hover .resize { opacity: .9; }
 .resize:hover { opacity: 1; }
 /* staggered widget reveal after the loading skeleton */
@@ -974,7 +1069,7 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
    inside got their own stronger edge the container's border was a third frame stacked on
    the same content. It comes back only while something is being dragged into it, where
    the border IS the message. */
-.group { border: 1px solid transparent; border-radius: 10px; background: var(--group-bg); padding: 6px 12px 14px; transition: box-shadow .15s, border-color .15s; }
+.group { border: 1px solid transparent; border-radius: 4px; background: var(--group-bg); padding: 6px 12px 14px; transition: box-shadow .15s, border-color .15s; }
 /* A tile inside a group sits on --group-bg (#FAFBFD), which is within four units of the
    tile header's own --bg (#F6F9FC) — close enough that the header strip merges into the
    ground and the tile appears to begin at its white body. The tile's EDGE has to do the
@@ -992,26 +1087,39 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .grp-toggle { border: none; background: transparent; color: var(--muted); display: grid; place-items: center; width: 16px; height: 26px; padding: 0; border-radius: 0; }
 .grp-toggle:hover { background: transparent; color: var(--ink); }
 .grp-name { font-weight: 600; font-size: 14px; cursor: text; }
-.grp-name-input { font-weight: 600; font-size: 14px; border: 1px solid var(--primary); border-radius: 6px; padding: 2px 8px; outline: none; box-shadow: 0 0 0 3px var(--primary-soft); }
-.grp-count { font-size: 11.5px; font-weight: 600; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; }
-.grp-act { width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: 7px; display: grid; place-items: center; }
+.grp-name-input { font-weight: 600; font-size: 14px; border: 1px solid var(--primary); border-radius: 4px; padding: 2px 8px; outline: none; box-shadow: 0 0 0 3px var(--primary-soft); }
+.grp-count { font-size: 12px; font-weight: 600; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; }
+.grp-act { width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .grp-act:hover { background: var(--surface); color: var(--ink); }
 .grp-act[title="Ungroup"]:hover { background: var(--red-soft); color: var(--red); }
-.grp-add { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--primary-700); border-radius: 7px; font-weight: 500; font-size: 12px; }
+.grp-add { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--primary-700); border-radius: 4px; font-weight: 500; font-size: 12px; }
 .grp-add:hover { background: var(--primary-soft); border-color: transparent; }
+/* the group's time range, in the indigo "time" hue every date control in the product
+   uses — distinct from the primary blue of Add widget beside it, so the two read as
+   different kinds of action rather than a pair */
+.grp-date { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--muted); border-radius: 4px; font-weight: 500; font-size: 12px; white-space: nowrap; }
+.grp-date :deep(.ico) { color: var(--muted); }
+.grp-date:hover { color: var(--df-ink); border-color: var(--df-line); background: var(--df-soft); }
+.grp-date:hover :deep(.ico) { color: var(--df); }
+.grp-date.on { background: var(--df-soft); border-color: var(--df-line); color: var(--df-ink); }
+.grp-date.on :deep(.ico) { color: var(--df); }
+/* the one-liner under the header: what that range does to the widgets below it */
+.grp-date-note { display: flex; align-items: center; gap: 6px; margin: -6px 0 10px; font-size: 12px; line-height: 1.45; color: var(--df-ink); }
+.grp-date-note :deep(.ico) { color: var(--df); flex: none; }
+.grp-date-note b { font-weight: 600; }
 /* an empty group's drop target: a dashed well on the group's own ground, with a plain
    bordered button. The button used to be btn-primary — a solid blue CTA inside an empty
    placeholder pulled more attention than the widgets the group is meant to hold. */
-.grp-empty { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 26px 24px; color: var(--muted-2); font-size: 12.5px; border: 1px dashed var(--border-strong); border-radius: 10px; }
+.grp-empty { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 26px 24px; color: var(--muted-2); font-size: 13px; border: 1px dashed var(--border-strong); border-radius: 4px; }
 .grp-empty p { margin: 0; }
-.grp-empty .eg-btn { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 14px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink-2); border-radius: 8px; font-size: 12.5px; font-weight: 600; }
+.grp-empty .eg-btn { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 14px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink-2); border-radius: 4px; font-size: 13px; font-weight: 600; }
 .grp-empty .eg-btn:hover { border-color: var(--primary); color: var(--primary-700); background: var(--primary-softer); }
 /* grouping-style demo switcher */
-.gstyle-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 12px; margin-bottom: 14px; background: var(--surface); border: 1px dashed var(--border-strong); border-radius: 10px; }
+.gstyle-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 12px; margin-bottom: 14px; background: var(--surface); border: 1px dashed var(--border-strong); border-radius: 4px; }
 .legend-bar .gsb-label em { font-style: normal; font-weight: 500; color: var(--muted); font-size: 11px; margin-left: 4px; }
 .gsb-label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--muted); }
-.gsb-seg { display: inline-flex; gap: 3px; background: var(--surface-2); padding: 3px; border-radius: 9px; border: 1px solid var(--border); }
-.gsb-b { border: none; background: transparent; padding: 5px 11px; border-radius: 7px; font-size: 12.5px; font-weight: 500; color: var(--muted); display: inline-flex; align-items: center; gap: 5px; }
+.gsb-seg { display: inline-flex; gap: 3px; background: var(--surface-2); padding: 3px; border-radius: 4px; border: 1px solid var(--border); }
+.gsb-b { border: none; background: transparent; padding: 5px 11px; border-radius: 4px; font-size: 13px; font-weight: 500; color: var(--muted); display: inline-flex; align-items: center; gap: 5px; }
 .gsb-b:hover { color: var(--ink); }
 .gsb-b.on { background: var(--surface); color: var(--primary-700); box-shadow: var(--sh-sm); font-weight: 600; }
 .gsb-n { font-size: 13px; }
@@ -1034,14 +1142,14 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 
 /* ⑥ onboarding nudge */
 .ai-nudge { display: flex; align-items: center; gap: 12px; border: 1px solid var(--ai-border); border-radius: var(--r-lg); background: var(--ai-grad-soft); padding: 11px 14px; margin-bottom: 14px; }
-.an-spark { flex: none; width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; background: var(--ai-grad); color: #fff; }
+.an-spark { flex: none; width: 32px; height: 32px; border-radius: 4px; display: grid; place-items: center; background: var(--ai-grad); color: #fff; }
 .an-txt { flex: 1; font-size: 13px; color: var(--ink-2); line-height: 1.45; }
 .an-txt b { color: var(--ink); }
-.an-sub { display: flex; align-items: center; gap: 4px; margin-top: 3px; font-size: 11.5px; color: var(--muted); }
+.an-sub { display: flex; align-items: center; gap: 4px; margin-top: 3px; font-size: 12px; color: var(--muted); }
 .an-sub :deep(.ico) { color: var(--ai); }
-.an-try { flex: none; height: 32px; padding: 0 15px; border: none; border-radius: var(--r-pill); background: var(--ai-grad); color: #fff; font-weight: 600; font-size: 12.5px; }
+.an-try { flex: none; height: 32px; padding: 0 15px; border: none; border-radius: var(--r-pill); background: var(--ai-grad); color: #fff; font-weight: 600; font-size: 13px; }
 .an-try:hover { filter: brightness(1.06); }
-.an-x { flex: none; width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: 7px; display: grid; place-items: center; }
+.an-x { flex: none; width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .an-x:hover { background: var(--ai-soft); color: var(--ai-ink); }
 
 /* docked assistant panel */
@@ -1052,30 +1160,30 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .fo-ic.ai { background: var(--ai-grad); }
 .bg-toolbar { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
 /* ⑨ auto-group: segmented "Group by" control */
-.auto-seg { display: inline-flex; gap: 3px; background: var(--surface-2); padding: 3px; border-radius: 8px; border: 1px solid var(--border); }
-.auto-b { border: none; background: transparent; padding: 4px 12px; border-radius: 6px; font-size: 12.5px; font-weight: 500; color: var(--muted); }
+.auto-seg { display: inline-flex; gap: 3px; background: var(--surface-2); padding: 3px; border-radius: 4px; border: 1px solid var(--border); }
+.auto-b { border: none; background: transparent; padding: 4px 12px; border-radius: 4px; font-size: 13px; font-weight: 500; color: var(--muted); }
 .auto-b.on { background: var(--surface); color: var(--primary-700); box-shadow: var(--sh-sm); font-weight: 600; }
 /* ⑧ sections / ⑨ auto: render groups as borderless headings instead of boxed containers */
 .group.as-section { border: none; background: transparent; padding: 0; box-shadow: none; margin-bottom: 6px; }
 .group.as-section > .grp-head { border-bottom: 1.5px solid var(--border); border-radius: 0; padding: 4px 2px 8px; background: transparent; }
 .group.as-section .sec-ic { color: var(--primary); }
 .group.as-section > .grid { padding: 12px 0 4px; }
-.new-section-bar { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 12px; padding: 9px; border: 1px dashed var(--border-strong); background: transparent; border-radius: 9px; color: var(--primary-700); font-weight: 600; font-size: 12.5px; }
+.new-section-bar { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 12px; padding: 9px; border: 1px dashed var(--border-strong); background: transparent; border-radius: 4px; color: var(--primary-700); font-weight: 600; font-size: 13px; }
 .new-section-bar:hover { background: var(--primary-softer); border-color: var(--primary); }
 /* persistent "New group" bar at the board's end (grouping method 3) */
 /* the New Group panel wears the group's own skin — same ground, same border, same radius
    — so it previews the container it creates instead of announcing itself as a CTA bar */
-.new-group-bar { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; margin-top: 14px; padding: 16px 12px; border: 1px solid var(--border); background: var(--group-bg); border-radius: 10px; }
-.ng-btn { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 15px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink-2); border-radius: 8px; font-weight: 600; font-size: 12.5px; }
+.new-group-bar { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; margin-top: 14px; padding: 16px 12px; border: 1px solid var(--border); background: var(--group-bg); border-radius: 4px; }
+.ng-btn { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 15px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink-2); border-radius: 4px; font-weight: 600; font-size: 13px; }
 .ng-btn:hover { border-color: var(--primary); color: var(--primary-700); background: var(--primary-softer); }
 .ng-note { margin: 0; font-size: 12px; color: var(--muted-2); text-align: center; }
 /* ⑦ per-widget group chip (hover-reveal, bottom-left, out of the header actions' way) */
-.cell-grp-chip { position: absolute; left: 10px; bottom: 8px; z-index: 7; display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 11px; border: 1px solid var(--primary-soft); background: var(--surface); color: var(--primary-700); border-radius: 999px; font-size: 11.5px; font-weight: 600; box-shadow: var(--sh-sm); opacity: 0; transition: opacity .14s; }
+.cell-grp-chip { position: absolute; left: 10px; bottom: 8px; z-index: 7; display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 11px; border: 1px solid var(--primary-soft); background: var(--surface); color: var(--primary-700); border-radius: 999px; font-size: 12px; font-weight: 600; box-shadow: var(--sh-sm); opacity: 0; transition: opacity .14s; }
 .cell:hover .cell-grp-chip { opacity: 1; }
 .cell-grp-chip:hover { background: var(--primary-softer); border-color: var(--primary); }
 /* ⑥/⑦ tile group menu */
 .tile-grp-menu { position: fixed; z-index: 140; min-width: 200px; max-height: 320px; overflow: auto; }
-.menu-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted-2); font-weight: 600; padding: 4px 10px 2px; }
+.menu-label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted-2); font-weight: 600; padding: 4px 10px 2px; }
 /* inline (③): hover-reveal "+ New group here" inserter in each ungrouped row gap */
 .ug-wrap { position: relative; }
 .row-insert { position: absolute; left: 0; right: 0; height: 16px; transform: translateY(-50%); display: flex; align-items: center; gap: 10px; cursor: pointer; opacity: 0; transition: opacity .14s; z-index: 8; }
@@ -1085,7 +1193,7 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .grp-insert { display: flex; align-items: center; gap: 10px; height: 14px; margin: 2px 0; cursor: pointer; opacity: 0; transition: opacity .14s; }
 .grp-insert:hover { opacity: 1; }
 .gi-line { flex: 1; height: 1px; background: var(--primary-soft); }
-.gi-btn { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; color: var(--primary-700); background: var(--primary-softer); border: 1px solid var(--primary-soft); border-radius: 999px; padding: 2px 10px; }
+.gi-btn { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: var(--primary-700); background: var(--primary-softer); border: 1px solid var(--primary-soft); border-radius: 999px; padding: 2px 10px; }
 .empty-cta { display: flex; gap: 10px; align-items: center; }
 .big-cta.ghost { background: transparent; color: var(--primary-700); border: 1px solid var(--border-strong); }
 .big-cta.ghost:hover { background: var(--primary-softer); border-color: var(--primary); }
@@ -1095,14 +1203,14 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .cell.pick-on { outline: 2px dashed var(--primary); outline-offset: 2px; box-shadow: 0 0 0 4px var(--primary-soft); border-radius: var(--r-lg); }
 .marquee { position: fixed; z-index: 300; border: 1.5px dashed var(--primary); background: rgba(61,139,208,.12); border-radius: 4px; pointer-events: none; }
 /* bottom-right confirm CTA */
-.group-cta { position: fixed; right: 26px; bottom: 96px; z-index: 60; display: flex; align-items: center; gap: 10px; padding: 9px 12px 9px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--sh-lg); }
+.group-cta { position: fixed; right: 26px; bottom: 96px; z-index: 60; display: flex; align-items: center; gap: 10px; padding: 9px 12px 9px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; box-shadow: var(--sh-lg); }
 .gc-count { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; font-size: 13px; color: var(--primary-700); }
-.add-group { display: inline-flex; align-items: center; gap: 7px; border: none; background: transparent; border-radius: 9px; padding: 8px 12px; font-weight: 600; font-size: 13px; color: var(--primary-700); }
+.add-group { display: inline-flex; align-items: center; gap: 7px; border: none; background: transparent; border-radius: 4px; padding: 8px 12px; font-weight: 600; font-size: 13px; color: var(--primary-700); }
 .add-group:hover { background: var(--primary-softer); }
 .empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; padding: 64px 20px; text-align: center; }
 /* illustration — a small cluster of the three tile types */
 .empty-ill { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 10px; }
-.ei { display: grid; place-items: center; border-radius: 14px; box-shadow: var(--sh-sm); }
+.ei { display: grid; place-items: center; border-radius: 4px; box-shadow: var(--sh-sm); }
 .ei-chart { width: 64px; height: 64px; background: var(--blue-soft); color: var(--blue); }
 .ei-kpi { width: 54px; height: 54px; background: var(--primary-soft); color: var(--primary); }
 .ei-tbl { width: 54px; height: 54px; background: var(--green-soft); color: var(--green); }
@@ -1123,7 +1231,7 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .fab.on:hover { transform: rotate(45deg) translateY(-2px) scale(1.04); }
 /* slide-up menu above the FAB */
 .fab-menu { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
-.fab-opt { display: inline-flex; align-items: center; gap: 11px; height: 46px; padding: 0 18px 0 14px; border: 1px solid var(--border); background: var(--surface); color: var(--ink); border-radius: 999px; font-weight: 600; font-size: 13.5px; box-shadow: var(--sh-md); white-space: nowrap; }
+.fab-opt { display: inline-flex; align-items: center; gap: 11px; height: 46px; padding: 0 18px 0 14px; border: 1px solid var(--border); background: var(--surface); color: var(--ink); border-radius: 999px; font-weight: 600; font-size: 13px; box-shadow: var(--sh-md); white-space: nowrap; }
 .fab-opt:hover { background: var(--surface-2); border-color: var(--primary); color: var(--primary-700); transform: translateY(-1px); }
 /* Generate with AI — primary CTA with the gradient border (blue→purple→pink) */
 .fab-opt.ai { border: 1.5px solid transparent; background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--ai-grad-line) border-box; color: var(--ai-ink); }

@@ -35,27 +35,10 @@ const defaultLanding = ref(src?.default || false)
 const layoutLock = ref(src?.layoutLock === true)
 const err = ref('')
 
-/* "Default landing" is two different acts wearing one switch. Setting a board as YOUR
- * landing page is a personal preference; setting it as someone else's is an admin action
- * that changes what a colleague sees when they sign in. The switch alone could not tell
- * them apart, so turning it on now asks which one you mean — and defaults to the harmless
- * one. Nobody re-points a teammate's home screen by accident. */
-const defaultScope = ref(src?.defaultScope || 'me')          // 'me' | 'users'
-const defaultUsers = ref(src?.defaultUsers ? [...src.defaultUsers] : [])
-const userQuery = ref('')
-const PROFILES = ['PMG', 'PMG UX', 'Service Desk L1', 'NOC Viewers']
-// people are @-mentioned, profiles are #-tagged — the same grammar the search box teaches
-const userPool = computed(() => [...store.owners.map((o) => ({ id: o, label: o, kind: 'user' })), ...PROFILES.map((p) => ({ id: p, label: p, kind: 'profile' }))])
-const userMatches = computed(() => {
-  const q = userQuery.value.replace(/^[@#]/, '').trim().toLowerCase()
-  const picked = new Set(defaultUsers.value)
-  const pool = userPool.value.filter((u) => !picked.has(u.id))
-  if (userQuery.value.startsWith('#')) return pool.filter((u) => u.kind === 'profile' && u.label.toLowerCase().includes(q))
-  if (userQuery.value.startsWith('@')) return pool.filter((u) => u.kind === 'user' && u.label.toLowerCase().includes(q))
-  return q ? pool.filter((u) => u.label.toLowerCase().includes(q)) : pool
-})
-function addUser(u) { if (!defaultUsers.value.includes(u.id)) defaultUsers.value.push(u.id); userQuery.value = '' }
-function dropUser(id) { defaultUsers.value = defaultUsers.value.filter((x) => x !== id) }
+/* "Default landing" is a personal preference again: turning it on makes this board the
+ * one YOU land on. The "Only for me / For specific users" choice that used to follow the
+ * switch is gone — re-pointing a colleague's home screen is an administrative act that
+ * does not belong inside dashboard settings. */
 
 /* Dashboard names must be unique. The board being edited is excluded by id, so it
  * can't collide with itself; archived boards still count, because restoring one
@@ -117,15 +100,9 @@ function submit(openAdd = false) {
       layoutLock: layoutLock.value,
       updated: new Date().toISOString(),
     })
-    /* Only "Only for me" moves the single global default. "For specific users" targets
-     * other people's home screens, which this mock has no per-user state for — so it is
-     * recorded on the board and left out of the global flag rather than silently
-     * repointing YOUR landing page to a board you set for someone else. */
-    if (defaultLanding.value) {
-      src.defaultScope = defaultScope.value
-      src.defaultUsers = defaultScope.value === 'users' ? [...defaultUsers.value] : undefined
-      if (defaultScope.value === 'me') { store.dashboards.forEach((x) => (x.default = false)); src.default = true }
-    } else { src.default = false; src.defaultScope = undefined; src.defaultUsers = undefined }
+    // the default landing board is a single global flag — setting one clears the rest
+    if (defaultLanding.value) { store.dashboards.forEach((x) => (x.default = false)); src.default = true }
+    else src.default = false
     close()
     return
   }
@@ -133,9 +110,7 @@ function submit(openAdd = false) {
   const opts = {
     name: name.value, access: access.value, category: category.value, description: description.value,
     techAccess: ta, groupAccess: ga,
-    makeDefault: defaultLanding.value && defaultScope.value === 'me',
-    defaultScope: defaultLanding.value ? defaultScope.value : undefined,
-    defaultUsers: defaultLanding.value && defaultScope.value === 'users' ? [...defaultUsers.value] : undefined,
+    makeDefault: defaultLanding.value,
     layout: { ...layout }, layoutLock: layoutLock.value,
   }
   if (isClone.value) opts.tiles = src.tiles.map((t) => ({ ...JSON.parse(JSON.stringify(t)), id: uid('t') }))
@@ -235,38 +210,6 @@ function submit(openAdd = false) {
           <button class="sw" :class="{ on: defaultLanding }" @click="defaultLanding = !defaultLanding"><i /><b>{{ defaultLanding ? 'ON' : 'OFF' }}</b></button>
         </div>
 
-        <!-- Whose default? Setting your own landing page and re-pointing a colleague's
-             are different acts; the switch could not tell them apart, so it asks — and
-             lands on the harmless one. -->
-        <div v-if="defaultLanding" class="dl-scope">
-          <label class="rad" :class="{ on: defaultScope === 'me' }">
-            <input type="radio" value="me" v-model="defaultScope" />
-            <span class="rad-txt"><b>Only for me</b><em>Opens first when you sign in. Teammates’ defaults are unchanged.</em></span>
-          </label>
-          <label class="rad" :class="{ on: defaultScope === 'users' }">
-            <input type="radio" value="users" v-model="defaultScope" />
-            <span class="rad-txt"><b>For specific users</b><em>Pick exactly who gets this as their default. Everyone else keeps theirs.</em></span>
-          </label>
-
-          <div v-if="defaultScope === 'users'" class="grp dl-users">
-            <label class="field">Choose users</label>
-            <div class="us-box" :class="{ open: !!userQuery }">
-              <div class="us-in"><Icon name="search" :size="14" class="muted" /><input v-model="userQuery" placeholder="@User or #User Profile" /></div>
-              <!-- @ narrows to people, # to profiles — the placeholder teaches the grammar
-                   and the list obeys it, so the hint is not decoration -->
-              <div v-if="userQuery" class="us-list">
-                <button v-for="u in userMatches" :key="u.id" class="us-opt" @click="addUser(u)">
-                  <span class="us-sig">{{ u.kind === 'profile' ? '#' : '@' }}</span>{{ u.label }}
-                </button>
-                <div v-if="!userMatches.length" class="us-none">No match</div>
-              </div>
-            </div>
-            <div v-if="defaultUsers.length" class="us-chips">
-              <span v-for="u in defaultUsers" :key="u" class="us-chip">{{ u }}<button @click="dropUser(u)"><Icon name="x" :size="12" /></button></span>
-            </div>
-          </div>
-        </div>
-
         <!-- Layout Lock — freezes position AND size for everyone viewing the board -->
         <div class="grp toggle-grp">
           <div class="tg-text">
@@ -331,43 +274,43 @@ function submit(openAdd = false) {
 @keyframes slideIn { from { transform: translateX(30px); opacity: .4; } to { transform: none; opacity: 1; } }
 .head { display: flex; align-items: flex-start; justify-content: space-between; padding: 20px 22px 12px; }
 .head h3 { margin: 0; font-size: 18px; }
-.head p { margin: 3px 0 0; font-size: 12.5px; }
+.head p { margin: 3px 0 0; font-size: 13px; }
 /* close sits in its own soft square, as the design has it */
-.x-btn { width: 30px; height: 30px; flex: none; border: 1px solid var(--border); background: var(--surface-2); color: var(--ink-2); border-radius: 8px; display: grid; place-items: center; }
+.x-btn { width: 30px; height: 30px; flex: none; border: 1px solid var(--border); background: var(--surface-2); color: var(--ink-2); border-radius: 4px; display: grid; place-items: center; }
 .x-btn:hover { background: var(--border); color: var(--ink); }
 .body { flex: 1; padding: 6px 22px 20px; display: flex; flex-direction: column; gap: 16px; overflow: auto; }
 /* section headings — Basics / Visibility & sharing / Layout, as the design groups them.
    The first one loses its top margin so it doesn't push away from the drawer header. */
-.sec-h { font-size: 14.5px; font-weight: 700; color: var(--ink); margin: 22px 0 -2px; }
+.sec-h { font-size: 14px; font-weight: 700; color: var(--ink); margin: 22px 0 -2px; }
 .sec-h:first-of-type { margin-top: 2px; }
 .grp { display: flex; flex-direction: column; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .req { color: var(--red); }
 .err { color: var(--red); font-size: 12px; margin-top: 5px; }
 /* Duplicate name reads as a WARNING, not an error — amber, not red. */
-.dup-err { display: flex; align-items: flex-start; gap: 7px; margin: 6px 0 0; padding: 8px 10px; font-size: 12px; line-height: 1.45; color: var(--amber); background: var(--amber-soft); border-radius: 7px; }
+.dup-err { display: flex; align-items: flex-start; gap: 7px; margin: 6px 0 0; padding: 8px 10px; font-size: 12px; line-height: 1.45; color: var(--amber); background: var(--amber-soft); border-radius: 4px; }
 .dup-err :deep(.ico) { flex: none; margin-top: 1px; }
 .dup-err b { font-weight: 600; color: var(--amber); }
 .input.bad { border-color: var(--amber); }
 .sec-title { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 10px; }
 /* one segmented control on a soft track, active segment filled solid — the same control
    the Manage tabs use, so "which of these three is in force" reads identically everywhere */
-.seg { display: inline-flex; gap: 2px; padding: 4px; background: var(--surface-2); border-radius: 10px; align-self: flex-start; }
-.seg-btn { display: flex; align-items: center; justify-content: center; height: 32px; padding: 0 22px; border-radius: 7px; border: none; background: transparent; color: var(--ink-2); font-weight: 500; font-size: 13px; }
+.seg { display: inline-flex; gap: 2px; padding: 4px; background: var(--surface-2); border-radius: 4px; align-self: flex-start; }
+.seg-btn { display: flex; align-items: center; justify-content: center; height: 32px; padding: 0 22px; border-radius: 4px; border: none; background: transparent; color: var(--ink-2); font-weight: 500; font-size: 13px; }
 .seg-btn:hover { color: var(--ink); }
 .seg-btn.on { background: var(--ink); color: #fff; font-weight: 600; box-shadow: var(--sh-sm); }
 /* the access one-liner sits in its own soft box, not as loose grey text under the control */
-.oneliner { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; padding: 9px 11px; background: var(--surface-2); border-radius: 8px; font-size: 12.5px; color: var(--ink-2); }
+.oneliner { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; padding: 9px 11px; background: var(--surface-2); border-radius: 4px; font-size: 13px; color: var(--ink-2); }
 .oneliner :deep(.ico) { color: var(--muted); flex: none; }
 /* predefined-dashboard note — same treatment as the predefined-widget line in the builder */
-.pd-note { display: flex; align-items: flex-start; gap: 8px; margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--primary-700); background: var(--primary-softer); border: 1px solid var(--primary-soft); border-radius: 9px; padding: 10px 12px; }
+.pd-note { display: flex; align-items: flex-start; gap: 8px; margin: 0; font-size: 13px; line-height: 1.5; color: var(--primary-700); background: var(--primary-softer); border: 1px solid var(--primary-soft); border-radius: 4px; padding: 10px 12px; }
 .pd-note :deep(.ico) { flex: none; margin-top: 1px; }
 /* `.plain` is the toggle's own description — loose grey text, no box, since it explains a
    switch rather than reporting the consequence of a choice */
 .oneliner.plain { display: block; margin: 3px 0 0; padding: 0; background: none; border-radius: 0; font-size: 12px; line-height: 1.5; color: var(--muted); }
 /* category + add new */
 .cat-row { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: start; }
-.cat-new { height: 38px; white-space: nowrap; color: var(--primary-700); border-color: var(--border-strong); }
+.cat-new { height: 36px; white-space: nowrap; color: var(--primary-700); border-color: var(--border-strong); }
 .cat-new:hover { background: var(--primary-softer); border-color: transparent; }
 .cat-pop { position: absolute; top: 46px; right: 0; z-index: 30; width: 280px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
 .cat-pop-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
@@ -382,7 +325,7 @@ function submit(openAdd = false) {
    other people see. The word removes the guess. */
 .sw { width: 58px; height: 24px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface-2); position: relative; transition: background .15s, border-color .15s; flex: none; }
 .sw i { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--muted-2); transition: left .15s, background .15s; box-shadow: var(--sh-sm); }
-.sw b { position: absolute; top: 0; right: 8px; line-height: 22px; font-size: 9.5px; font-weight: 700; letter-spacing: .4px; color: var(--muted); transition: color .15s; }
+.sw b { position: absolute; top: 0; right: 8px; line-height: 22px; font-size: 10px; font-weight: 700; letter-spacing: .4px; color: var(--muted); transition: color .15s; }
 .sw.on { background: var(--green-soft); border-color: color-mix(in srgb, var(--green) 40%, transparent); }
 .sw.on i { left: 38px; background: var(--green); }
 .sw.on b { right: auto; left: 9px; color: var(--green); }
@@ -393,36 +336,14 @@ function submit(openAdd = false) {
 .rng { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 999px; background: var(--surface-2); outline: none; }
 .rng::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--primary); cursor: pointer; box-shadow: var(--sh-sm); }
 .rng-row { display: flex; align-items: center; gap: 10px; }
-.rng-num { min-width: 30px; text-align: center; font-size: 12px; font-weight: 600; color: var(--ink-2); background: var(--surface-2); border-radius: 6px; padding: 2px 6px; }
+.rng-num { min-width: 30px; text-align: center; font-size: 12px; font-weight: 600; color: var(--ink-2); background: var(--surface-2); border-radius: 4px; padding: 2px 6px; }
 .rng-ticks { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); padding: 0 2px; }
 /* live preview */
 .lp { display: grid; grid-template-columns: 1fr 1fr; margin-top: 8px; padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-lg); }
-.lp-tile { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.lp-tile { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
 .lp-title { font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lp-body { flex: 1; border-radius: 6px; background: repeating-linear-gradient(135deg, var(--surface-2) 0 8px, transparent 8px 16px); }
+.lp-body { flex: 1; border-radius: 4px; background: repeating-linear-gradient(135deg, var(--surface-2) 0 8px, transparent 8px 16px); }
 /* ---- Default landing scope: who does this become the home screen for? ---- */
-.dl-scope { display: flex; flex-direction: column; gap: 8px; margin-top: -6px; }
-.rad { display: flex; align-items: flex-start; gap: 10px; padding: 11px 13px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); cursor: pointer; }
-.rad:hover { border-color: var(--border-strong); }
-.rad.on { border-color: var(--primary); background: var(--primary-softer); }
-.rad input { margin: 2px 0 0; accent-color: var(--primary); flex: none; }
-.rad-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.rad-txt b { font-size: 13px; font-weight: 600; color: var(--ink); }
-.rad-txt em { font-style: normal; font-size: 12px; line-height: 1.5; color: var(--muted); }
-.dl-users { margin-top: 4px; }
-.us-box { position: relative; }
-.us-in { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 11px; border: 1px solid var(--border-strong); border-radius: 9px; background: var(--surface); }
-.us-in:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
-.us-in input { border: none; outline: none; background: transparent; width: 100%; font-size: 13px; }
-.us-list { position: absolute; top: 42px; left: 0; right: 0; z-index: 20; max-height: 190px; overflow: auto; padding: 5px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; box-shadow: var(--sh-pop); }
-.us-opt { display: flex; align-items: center; gap: 7px; width: 100%; padding: 7px 9px; border: none; background: transparent; border-radius: 7px; font-size: 13px; color: var(--ink-2); text-align: left; }
-.us-opt:hover { background: var(--surface-2); color: var(--ink); }
-.us-sig { color: var(--muted-2); font-weight: 700; }
-.us-none { padding: 10px; font-size: 12px; color: var(--muted-2); }
-.us-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
-.us-chip { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 4px 0 10px; border-radius: 7px; background: var(--surface-2); border: 1px solid var(--border); font-size: 12.5px; color: var(--ink); }
-.us-chip button { width: 18px; height: 18px; border: none; background: transparent; color: var(--muted); border-radius: 5px; display: grid; place-items: center; }
-.us-chip button:hover { background: var(--border); color: var(--ink); }
 
 .foot { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 22px; border-top: 1px solid var(--border); background: var(--surface); }
 /* the primary is the design's near-black, not the product blue — inside a modal whose

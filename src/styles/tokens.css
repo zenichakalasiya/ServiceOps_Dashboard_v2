@@ -1,18 +1,31 @@
-/* Design tokens — ServiceOps Dashboards revamp (ClickUp-inspired, modern light) */
+/* Design tokens — ServiceOps Dashboards revamp.
+ *
+ * The light palette below is UI-STYLE-GUIDE §1 verbatim. Where a value here used to
+ * differ it has been moved onto the guide's, so the two can't drift: this file is the
+ * only place the hexes live, and every component reads them through var().
+ *
+ * The DARK theme has no counterpart in the guide (it defines none), so it keeps the
+ * values this product already shipped — see the note above the [data-theme="dark"]
+ * block.
+ */
 :root {
-  /* Brand — Motadata ServiceOps (from ServiceOps_Design_Token/Light.tokens.json) */
-  --primary: #3d8bd0;          /* Primary Blue */
-  --primary-600: #3179bb;
-  --primary-700: #2b6aa6;
-  --primary-soft: #e8f1f9;     /* Navigation Active BG (Primary @12%) */
-  --primary-softer: #f3f8fc;
+  /* Brand — §1.2 */
+  --primary: #3d8bd0;          /* Primary */
+  --primary-600: #2f7ab8;      /* Primary hover (filled) */
+  --primary-700: #2e6ba4;      /* Primary pressed; also primary-on-white text */
+  --primary-soft: #ebf5ff;     /* Primary tint — selected row, active pill */
+  --primary-tint: #e8f4fd;     /* Primary tint (soft) — ID pills */
+  --primary-softer: #f0f8ff;   /* Primary tint (softest) — icon-button hover on white */
   --accent: #3279be;           /* Primary Alt / Gauge Text */
 
-  /* Status */
-  --green: #1f9d63;  --green-soft: #e6f6ee;
-  --amber: #d98a0b;  --amber-soft: #fdf3e2;
-  --red: #e0483d;    --red-soft: #fdecea;
-  --blue: #3279be;   --blue-soft: #e7f0f9;
+  /* Status — §1.3. Each has a TEXT hex, a DOT hex (one step brighter, because a 8px
+     dot needs more saturation than a word to read at the same weight) and a TINT. */
+  --green: #22a06b;  --green-dot: #22c55e;  --green-soft: #f0fdf4;
+  --amber: #d97706;  --amber-dot: #f59e0b;  --amber-soft: #fff7ed;
+  --red: #dc2626;    --red-dot: #ef4444;    --red-soft: #fef3f2;
+  --orange: #ea580c;                        /* Important / high severity */
+  --neutral: #64748b; --neutral-dot: #94a3b8; --neutral-soft: #f1f5f9;
+  --blue: #3d8bd0;   --blue-soft: #ebf5ff;
 
   /* ── Chart palette ──────────────────────────────────────────────────────────
      Theme-aware on purpose. The same hex that reads well on white blooms on the
@@ -29,6 +42,14 @@
      ~12 ΔE from --chart-8 before it drops under that bar; the remainder is
      always named in the legend, so colour is not carrying it alone. */
   --chart-other: #7d8ea3;
+
+  /* Note surface — a Free Text tile is a NOTE, so it is the one tile that isn't a white
+     panel. A warm paper tint separates "someone wrote this" from "the system computed
+     this" at a glance, without a header having to say so. Kept desaturated: a real
+     sticky-note yellow would out-shout every chart on the board. */
+  --note-bg: #fffdf4;
+  --note-line: #efe6c9;
+  --note-mark: #fdf0a8;
 
   /* Date-scope accent — a "time" hue reserved for per-widget date overrides.
      Indigo: distinct from primary sky-blue, from status red/amber/green, and from
@@ -53,39 +74,62 @@
   --ai-grad-soft: linear-gradient(90deg, #f1f9ff 0%, #f4edff 41.49%, #feecfd 100%);
   --ai-grad-card: linear-gradient(90deg, #f1f9ff 0%, #f4edff 41.49%, #feecfd 100%);
 
-  /* Neutrals — ServiceOps token source */
-  --bg: #f6f9fc;               /* Light BG / Card Foreground — Figma Neutral/10 */
-  --surface: #ffffff;          /* White / Widget BG / Nav BG */
-  --surface-2: #eff2f6;        /* Action Box / Switch / Nav Hover BG — Figma light_bg */
+  /* Surfaces — §1.4 */
+  --bg: #f7f9fc;               /* Page background (app shell) */
+  --surface: #ffffff;          /* Surface / card / table */
+  --surface-2: #f5f7fa;        /* Subtle fill / hover */
+  --row-hover: #f9fafb;        /* Table row hover */
+  --icon-hover: #f3f4f6;       /* Icon-button hover */
+  --inset: #f1f5f9;            /* Inset panel fill */
   --group-bg: #fafbfd;         /* widget-group container — a hair off the canvas, so a
                                   group reads as a region without becoming a second card */
   /* Sidebar tint — the two left sidebars use this to read as a distinct region against
      the near-white main canvas (ClickUp-style). */
   --sidebar: #eef1f6; --sidebar-hover: #e3e8f1; --sidebar-border: #dce2ec;
-  --border: #dfe5ed;           /* Border Color */
-  --border-strong: #cad3e2;    /* Figma Neutral/40 */
-  --ink: #364658;              /* Page Text Color */
-  --ink-2: #516381;            /* Figma Text/Subdued */
-  --muted: #7b8fa5;            /* Gray Label / Neutral Regular */
-  /* placeholder text sits one step lighter than a field's own title (--ink-2 #516381) —
-     enough to read as "not filled in yet" without dropping below legibility */
-  --placeholder: #6a7fa0;
-  --muted-2: #a5bad0;          /* Light Gray Text / Neutral Light */
 
-  /* Radius */
-  --r-sm: 6px;
-  --r: 10px;
-  --r-lg: 14px;
-  --r-xl: 20px;
+  /* Borders — §1.4. The split is load-bearing and is NOT interchangeable:
+     --border         separates CONTENT (card edges, table rules, dividers)
+     --border-control outlines CONTROLS (buttons, dropdowns, segmented tracks)
+     --border-strong  is the INPUT border, one step darker so a field reads as editable */
+  --border: #e5e7eb;
+  --border-control: #dfe5ed;
+  --border-strong: #d1d5db;
+  --border-hairline: #f0f2f5;  /* hairline inside a card */
+  --rule: #eef2f6;             /* light divider / tab strip underline */
+
+  /* Text — §1.1 */
+  --ink: #364658;              /* Primary text — the default for everything */
+  --ink-2: #64748b;            /* Secondary grey — toolbar text, meta rows, footers */
+  --ink-3: #6b7280;            /* Tertiary grey — inactive tab labels, icon rail */
+  --strong: #111827;           /* Large stat numbers only. Rare. */
+  --muted: #7b8fa5;            /* Muted — field labels, captions, inactive icons */
+  --placeholder: #9ca3af;      /* Placeholder / disabled / empty values */
+  --muted-2: #9ca3af;          /* legacy alias of --placeholder; same role */
+
+  /* Radius — §3.1. The tiers are the point: a CONTROL and a SURFACE must not share a
+     corner, because the difference is what tells you which one you can click.
+       4px  every interactive control — buttons, inputs, selects, tabs, pills, chips
+       2px  status and severity badges ONLY (this is what separates a state from a control)
+       8px  surfaces — cards, dropdowns, popovers, modals, clickable record cards
+      12px  large grouped containers (a bordered section wrapping several cards)
+      full  avatars-as-circles, status dots, toggles, removable chips */
+  --r-sm: 2px;
+  --r: 4px;
+  --r-lg: 8px;
+  --r-xl: 12px;
   --r-pill: 999px;
 
-  /* Shadow */
-  --sh-sm: 0 1px 2px rgba(27, 28, 46, 0.06), 0 1px 1px rgba(27, 28, 46, 0.04);
-  --sh: 0 4px 14px rgba(27, 28, 46, 0.08);
-  --sh-lg: 0 12px 34px rgba(27, 28, 46, 0.14);
-  --sh-pop: 0 8px 28px rgba(27, 28, 46, 0.18);
+  /* Elevation — §3.4.
+       --sh-sm  a resting card that needs lift (most cards use a border instead)
+       --sh-pop dropdowns, popovers, inline menus — the default for anything floating
+       --sh-lg  side drawers and modals
+       --sh     the hover lift on a clickable card */
+  --sh-sm: 0 1px 2px 0 rgba(0, 0, 0, .05);
+  --sh: 0 1px 2px rgba(16, 24, 40, .04), 0 2px 8px rgba(16, 24, 40, .06);
+  --sh-pop: 0 10px 15px -3px rgba(0, 0, 0, .1), 0 4px 6px -4px rgba(0, 0, 0, .1);
+  --sh-lg: 0 20px 25px -5px rgba(0, 0, 0, .1), 0 8px 10px -6px rgba(0, 0, 0, .1);
 
-  /* Type — ServiceOps uses Poppins */
+  /* Type — §2. Inter, with a system fallback. */
   --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 
   /* Layout */
@@ -93,12 +137,21 @@
   --topbar-h: 56px;
 }
 
-/* ---------- Dark theme (ClickUp-style) ---------- */
+/* ---------- Dark theme ----------
+ * UI-STYLE-GUIDE defines no dark theme, so this block is NOT derived from it and is not
+ * expected to match §1. It keeps the values this product already shipped, with a
+ * counterpart added for every token the light palette gained or split. If the guide ever
+ * grows a dark section, this block is what it replaces. */
 [data-theme="dark"] {
   --primary-soft: #0e3346;
+  --primary-tint: #10293a;
   --primary-softer: #0c2937;
 
   --green-soft: #133227; --amber-soft: #332811; --red-soft: #3a1f1d; --blue-soft: #122844;
+  /* dots stay bright on dark — a status dot is the one mark that must not recede */
+  --green-dot: #34d399; --amber-dot: #fbbf24; --red-dot: #f87171;
+  --orange: #fb923c;
+  --neutral: #8e90a6; --neutral-dot: #6b7280; --neutral-soft: #25252f;
 
   /* Chart palette — dark: every stop lifted/desaturated so it clears 3:1 on
      --surface (#1d1d27) without blooming. --chart-5 lands on the same #a78bfa
@@ -109,6 +162,13 @@
   /* darker than the slate stop, not lighter — on dark the quiet colour is the
      recessive one, and #9aa8b8 sat only 3.7 ΔE from --chart-8 (indistinguishable) */
   --chart-other: #6d7a8a;
+
+  /* Note surface — dark. The warmth has to survive the dark theme or the note stops
+     reading as a different KIND of tile, so this is a warm-shifted surface rather than
+     the neutral --surface, and the highlight goes to a translucent amber. */
+  --note-bg: #24211a;
+  --note-line: #3a3527;
+  --note-mark: #6b5a16;
 
   /* Date-scope accent — dark */
   --df: #8b90ee;  --df-ink: #b6b9f4;  --df-soft: #1e2040;  --df-line: #363a6b;
@@ -129,11 +189,19 @@
   --surface: #1d1d27;
   --sidebar: #0f111a; --sidebar-hover: #1b1f2b; --sidebar-border: #282c3a;
   --surface-2: #25252f;
+  --row-hover: #22222d;
+  --icon-hover: #2a2a35;
+  --inset: #212129;
   --group-bg: #1a1a24;         /* same job as the light #fafbfd: just off the canvas */
   --border: #2f2f3b;
+  --border-control: #343441;
   --border-strong: #3a3a48;
+  --border-hairline: #26262f;
+  --rule: #2a2a34;
   --ink: #ececf3;
   --ink-2: #c4c5d4;
+  --ink-3: #a8aabb;
+  --strong: #ffffff;
   --muted: #8e90a6;
   --muted-2: #6a6c80;
   --placeholder: #8a8ca2;

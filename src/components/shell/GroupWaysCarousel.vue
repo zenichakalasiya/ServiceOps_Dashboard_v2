@@ -95,10 +95,10 @@ onBeforeUnmount(() => clearInterval(timer))
 .gwc-fade-enter-from, .gwc-fade-leave-to { opacity: 0; }
 
 /* shared canvas + primitives */
-.wa { position: relative; width: 300px; height: 138px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-.tile { position: absolute; border-radius: 8px; background: var(--surface); border: 1.5px solid var(--border); }
-.grp { position: absolute; opacity: 0; border: 1.5px solid var(--ai, #6d28d9); border-radius: 11px; background: color-mix(in srgb, var(--ai, #6d28d9) 6%, transparent); }
-.glabel { position: absolute; top: -9px; left: 10px; font-size: 9px; font-weight: 700; color: #fff; background: var(--ai, #6d28d9); border-radius: 5px; padding: 1px 6px; white-space: nowrap; }
+.wa { position: relative; width: 300px; height: 138px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+.tile { position: absolute; border-radius: 4px; background: var(--surface); border: 1.5px solid var(--border); }
+.grp { position: absolute; opacity: 0; border: 1.5px solid var(--ai, #6d28d9); border-radius: 4px; background: color-mix(in srgb, var(--ai, #6d28d9) 6%, transparent); }
+.glabel { position: absolute; top: -9px; left: 10px; font-size: 9px; font-weight: 700; color: #fff; background: var(--ai, #6d28d9); border-radius: 4px; padding: 1px 6px; white-space: nowrap; }
 .cur { position: absolute; width: 10px; height: 10px; border-radius: 50%; background: var(--ai, #6d28d9); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ai, #6d28d9) 25%, transparent); }
 .selfill { border-color: var(--ai, #6d28d9); background: color-mix(in srgb, var(--ai, #6d28d9) 10%, var(--surface)); }
 
@@ -108,7 +108,7 @@ onBeforeUnmount(() => clearInterval(timer))
 .shift .t2 { left: 110px; animation: sh-s2 5s ease-in-out infinite; }
 .shift .t3 { left: 204px; }
 .shift .grp { left: 8px; top: 30px; width: 192px; height: 84px; animation: sh-grp 5s ease-in-out infinite; }
-.shift .kbd { position: absolute; left: 12px; bottom: 10px; font-size: 10px; font-weight: 700; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 5px; padding: 2px 7px; animation: sh-kbd 5s ease-in-out infinite; }
+.shift .kbd { position: absolute; left: 12px; bottom: 10px; font-size: 10px; font-weight: 700; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 2px 7px; animation: sh-kbd 5s ease-in-out infinite; }
 .shift .cur { left: 14px; top: 30px; animation: sh-cur 5s ease-in-out infinite; }
 @keyframes sh-cur {
   0%, 6% { left: 14px; top: 30px; transform: scale(1); }
@@ -126,7 +126,7 @@ onBeforeUnmount(() => clearInterval(timer))
 /* ── 3 · empty group at the end ── */
 .endg .e1 { left: 16px; top: 14px; width: 82px; height: 46px; }
 .endg .e2 { left: 110px; top: 14px; width: 82px; height: 46px; }
-.endg .bar { position: absolute; left: 16px; top: 74px; width: 176px; height: 34px; border: 1.5px dashed var(--border-strong, #c9d2de); border-radius: 9px; display: grid; place-items: center; color: var(--muted); font-size: 11px; font-weight: 600; animation: en-bar 5s ease-in-out infinite; }
+.endg .bar { position: absolute; left: 16px; top: 74px; width: 176px; height: 34px; border: 1.5px dashed var(--border-strong, #c9d2de); border-radius: 4px; display: grid; place-items: center; color: var(--muted); font-size: 11px; font-weight: 600; animation: en-bar 5s ease-in-out infinite; }
 .endg .gbox { left: 12px; top: 70px; width: 184px; height: 44px; animation: en-grp 5s ease-in-out infinite; }
 .endg .cur { left: 40px; top: 40px; animation: en-cur 5s ease-in-out infinite; }
 @keyframes en-cur {
@@ -139,13 +139,13 @@ onBeforeUnmount(() => clearInterval(timer))
 @keyframes en-grp { 0%, 40% { opacity: 0; transform: scale(.97); } 48%, 92% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(.97); } }
 
 /* ── 4 · from the Add New Widget panel → Layout → Empty group ── */
-.addw .np { position: absolute; inset: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 11px; overflow: hidden; }
+.addw .np { position: absolute; inset: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 8px 11px; overflow: hidden; }
 .addw .np-tabs { display: flex; gap: 11px; font-size: 10px; border-bottom: 1px solid var(--border); padding-bottom: 6px; margin-bottom: 7px; }
 .addw .np-tabs b { color: var(--primary, #2563eb); font-weight: 700; border-bottom: 2px solid var(--primary, #2563eb); padding-bottom: 6px; margin-bottom: -7px; }
 .addw .np-tabs span { color: var(--muted-2); }
 .addw .np-lab { font-size: 8px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--muted-2); margin: 6px 0 4px; }
 .addw .np-row { display: flex; gap: 7px; }
-.addw .np-t { width: 36px; height: 26px; border: 1px solid var(--border); border-radius: 6px; display: grid; place-items: center; color: var(--muted); }
+.addw .np-t { width: 36px; height: 26px; border: 1px solid var(--border); border-radius: 4px; display: grid; place-items: center; color: var(--muted); }
 .addw .np-t :deep(.ico) { color: inherit; }
 .addw .np-t.wide { width: auto; padding: 0 11px; height: 28px; display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 600; color: var(--ink-2); }
 .addw .np-t.hot { animation: aw-hot 5s ease-in-out infinite; }
@@ -167,7 +167,7 @@ onBeforeUnmount(() => clearInterval(timer))
 .gwc-cap b { display: block; font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
 .gwc-cap span { font-size: 12px; line-height: 1.45; color: var(--ink-2); }
 .gwc-nav { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 10px; }
-.gwc-arrow { width: 28px; height: 28px; border: 1px solid var(--border); background: var(--surface); color: var(--ink-2); border-radius: 8px; display: grid; place-items: center; }
+.gwc-arrow { width: 28px; height: 28px; border: 1px solid var(--border); background: var(--surface); color: var(--ink-2); border-radius: 4px; display: grid; place-items: center; }
 .gwc-arrow:hover { background: var(--surface-2); color: var(--ink); border-color: var(--ai, #6d28d9); }
 .gwc-num { font-size: 12px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 40px; text-align: center; }
 

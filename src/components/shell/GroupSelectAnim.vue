@@ -21,30 +21,30 @@
 <style scoped>
 .gsa {
   position: relative; width: 300px; max-width: 100%; height: 138px;
-  background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
 }
 /* three widget tiles in a row */
-.tile { position: absolute; top: 38px; width: 82px; height: 64px; border-radius: 8px; background: var(--surface); border: 1.5px solid var(--border); }
+.tile { position: absolute; top: 38px; width: 82px; height: 64px; border-radius: 4px; background: var(--surface); border: 1.5px solid var(--border); }
 .t1 { left: 16px; } .t2 { left: 110px; } .t3 { left: 204px; }
 .t1, .t2 { animation: sel 5s ease-in-out infinite; }
 
 /* the drag-selection rectangle */
 .marquee {
   position: absolute; left: 18px; top: 40px; width: 4px; height: 4px; opacity: 0;
-  border: 1.5px dashed var(--ai, #6d28d9); border-radius: 5px;
+  border: 1.5px dashed var(--ai, #6d28d9); border-radius: 4px;
   background: color-mix(in srgb, var(--ai, #6d28d9) 10%, transparent);
   animation: marquee 5s ease-in-out infinite;
 }
 /* the resulting group container */
 .group {
   position: absolute; left: 8px; top: 28px; width: 192px; height: 84px; opacity: 0;
-  border: 1.5px solid var(--ai, #6d28d9); border-radius: 11px;
+  border: 1.5px solid var(--ai, #6d28d9); border-radius: 4px;
   background: color-mix(in srgb, var(--ai, #6d28d9) 6%, transparent);
   animation: grp 5s ease-in-out infinite;
 }
 .glabel {
   position: absolute; top: -9px; left: 10px; font-size: 9px; font-weight: 700; letter-spacing: .02em;
-  color: #fff; background: var(--ai, #6d28d9); border-radius: 5px; padding: 1px 6px; white-space: nowrap;
+  color: #fff; background: var(--ai, #6d28d9); border-radius: 4px; padding: 1px 6px; white-space: nowrap;
 }
 /* a little pointer following the drag */
 .cursor {

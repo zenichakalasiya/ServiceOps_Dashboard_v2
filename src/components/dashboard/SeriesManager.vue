@@ -169,7 +169,7 @@ watch(rows, () => { pickFor.value = null })
 
 /* one row: either the sort header (with a search icon) or the expanded search box */
 .sm-bar { display: flex; align-items: center; gap: 6px; min-height: 28px; padding: 0 2px 2px; border-bottom: 1px solid var(--border); flex: none; }
-.si { border: none; background: transparent; color: var(--muted); display: grid; place-items: center; padding: 3px; border-radius: 5px; flex: none; }
+.si { border: none; background: transparent; color: var(--muted); display: grid; place-items: center; padding: 3px; border-radius: 4px; flex: none; }
 .si:hover { background: var(--surface-2); color: var(--primary-700); }
 
 .sm-search { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; padding: 0 8px; height: 28px; background: var(--surface-2); border-radius: var(--r-sm); }
@@ -184,7 +184,7 @@ watch(rows, () => { pickFor.value = null })
 
 /* virtualisation would go here for 1000+ series; 63 scrolls fine */
 .sm-list { flex: 1; overflow: auto; min-height: 0; }
-.sm-row { display: flex; align-items: center; gap: 7px; padding: 4px; border-radius: 5px; cursor: pointer; user-select: none; }
+.sm-row { display: flex; align-items: center; gap: 7px; padding: 4px; border-radius: 4px; cursor: pointer; user-select: none; }
 .sm-row:hover { background: var(--surface-2); }
 .sm-row.off { opacity: .38; }
 .sm-row.off .nm { text-decoration: line-through; }
@@ -198,11 +198,11 @@ watch(rows, () => { pickFor.value = null })
 .cp { position: fixed; z-index: 321; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--sh-pop); padding: 9px; }
 .cp-h { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 7px; }
 .cp-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
-.cp-sw { width: 20px; height: 20px; border-radius: 5px; border: 1px solid rgba(0,0,0,.08); display: grid; place-items: center; padding: 0; }
+.cp-sw { width: 20px; height: 20px; border-radius: 4px; border: 1px solid rgba(0,0,0,.08); display: grid; place-items: center; padding: 0; }
 .cp-sw:hover { transform: scale(1.12); }
 .cp-sw.on { box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--ink); }
 .cp-sw :deep(.ico) { color: #fff; }
-.cp-custom { display: flex; align-items: center; gap: 7px; margin-top: 9px; padding-top: 8px; border-top: 1px solid var(--border); font-size: 11.5px; color: var(--ink-2); cursor: pointer; position: relative; }
+.cp-custom { display: flex; align-items: center; gap: 7px; margin-top: 9px; padding-top: 8px; border-top: 1px solid var(--border); font-size: 12px; color: var(--ink-2); cursor: pointer; position: relative; }
 .cp-cs { width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(0,0,0,.1); flex: none; }
 .cp-cl { flex: 1; }
 /* the native input is the escape hatch, not the affordance — it sits invisibly over the row */

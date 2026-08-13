@@ -49,9 +49,9 @@ function setValue(i, value) { set(rows.value.map((r, k) => (k === i ? { ...r, va
 .mc-empty { margin: 0; }
 .mc-row { display: flex; align-items: center; gap: 8px; }
 .mc-dd { flex: 1; min-width: 0; }
-.mc-is { flex: none; font-size: 12.5px; color: var(--muted); }
-.mc-x { flex: none; width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: 7px; display: grid; place-items: center; }
+.mc-is { flex: none; font-size: 13px; color: var(--muted); }
+.mc-x { flex: none; width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .mc-x:hover { background: var(--red-soft); color: var(--red); }
-.mc-add { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; border: 1px dashed var(--border-strong); background: transparent; color: var(--primary-700); border-radius: 8px; padding: 7px 12px; font-size: 12.5px; font-weight: 600; }
+.mc-add { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; border: 1px dashed var(--border-strong); background: transparent; color: var(--primary-700); border-radius: 4px; padding: 7px 12px; font-size: 13px; font-weight: 600; }
 .mc-add:hover { background: var(--primary-softer); border-color: var(--primary); }
 </style>

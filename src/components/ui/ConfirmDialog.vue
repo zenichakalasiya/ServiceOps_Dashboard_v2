@@ -56,8 +56,8 @@ onBeforeUnmount(() => removeEventListener('keydown', onKey, true))
 .cd-back { position: fixed; inset: 0; z-index: 400; background: rgba(27, 28, 46, .38); display: grid; place-items: center; padding: 20px; }
 .cd { width: 340px; max-width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-lg); padding: 16px 18px; }
 .cd-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-.cd-head b { font-size: 14.5px; color: var(--ink); }
-.cd-ico { width: 30px; height: 30px; flex: none; display: grid; place-items: center; border-radius: 9px; background: var(--surface-2); color: var(--muted); }
+.cd-head b { font-size: 14px; color: var(--ink); }
+.cd-ico { width: 30px; height: 30px; flex: none; display: grid; place-items: center; border-radius: 4px; background: var(--surface-2); color: var(--muted); }
 .cd-ico.danger { background: var(--red-soft); color: var(--red); }
 .cd-msg { margin: 0 0 16px; font-size: 13px; line-height: 1.55; color: var(--ink-2); }
 .cd-t { color: var(--ink); font-weight: 600; }

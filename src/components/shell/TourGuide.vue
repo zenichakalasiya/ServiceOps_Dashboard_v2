@@ -180,7 +180,7 @@ onBeforeUnmount(() => { window.removeEventListener('resize', reposition); window
 .tour-dim { position: fixed; inset: 0; background: rgba(14, 17, 28, .58); pointer-events: none; }
 /* the spotlight: a rounded rect whose enormous shadow dims everything around it */
 .tour-spot {
-  position: fixed; border-radius: 12px; pointer-events: none;
+  position: fixed; border-radius: 4px; pointer-events: none;
   box-shadow: 0 0 0 9999px rgba(14, 17, 28, .58), 0 0 0 2px var(--ai, #6d28d9), 0 0 0 6px color-mix(in srgb, var(--ai, #6d28d9) 30%, transparent);
   transition: top .28s cubic-bezier(.4, 0, .2, 1), left .28s cubic-bezier(.4, 0, .2, 1), width .28s cubic-bezier(.4, 0, .2, 1), height .28s cubic-bezier(.4, 0, .2, 1);
 }
@@ -188,7 +188,7 @@ onBeforeUnmount(() => { window.removeEventListener('resize', reposition); window
 .tour-tip {
   position: fixed; width: 322px; max-width: 92vw; z-index: 3001; pointer-events: auto;
   background: var(--surface); color: var(--ink);
-  border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--sh-lg);
+  border: 1px solid var(--border); border-radius: 4px; box-shadow: var(--sh-lg);
   padding: 14px 16px 13px; transition: top .28s cubic-bezier(.4, 0, .2, 1), left .28s cubic-bezier(.4, 0, .2, 1);
 }
 .tour-tip.centered { width: 380px; }
@@ -196,20 +196,20 @@ onBeforeUnmount(() => { window.removeEventListener('resize', reposition); window
 /* title row with a close (skip) icon beside the title */
 .tt-head { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 6px; }
 .tt-title { flex: 1; margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -.01em; color: var(--ink); }
-.tt-x { flex: none; width: 26px; height: 26px; margin: -2px -4px 0 0; border: none; background: transparent; color: var(--muted); border-radius: 7px; display: grid; place-items: center; }
+.tt-x { flex: none; width: 26px; height: 26px; margin: -2px -4px 0 0; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .tt-x:hover { background: var(--surface-2); color: var(--ink); }
 .tt-anim { margin: 6px 0 10px; }
-.tt-body { margin: 0; font-size: 12.75px; line-height: 1.5; color: var(--ink-2); }
+.tt-body { margin: 0; font-size: 13px; line-height: 1.5; color: var(--ink-2); }
 /* the extra guidance points (Create step) */
 .tt-points { list-style: none; margin: 9px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.tt-points li { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; line-height: 1.45; color: var(--ink-2); }
+.tt-points li { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.45; color: var(--ink-2); }
 .tt-points li :deep(.ico) { color: var(--ai, #6d28d9); flex: none; margin-top: 1px; }
 
 .tt-foot { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
 /* progress as a number, not dots */
 .tt-num { flex: 1; font-size: 12px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; letter-spacing: .03em; }
 .tt-btns { display: flex; align-items: center; gap: 7px; flex: none; }
-.tb { height: 32px; padding: 0 15px; border-radius: 8px; font-size: 12.5px; font-weight: 600; border: 1px solid var(--border); background: var(--surface); color: var(--ink-2); }
+.tb { height: 32px; padding: 0 15px; border-radius: 4px; font-size: 13px; font-weight: 600; border: 1px solid var(--border); background: var(--surface); color: var(--ink-2); }
 .tb.ghost:hover { background: var(--surface-2); color: var(--ink); }
 .tb.primary {
   border: 1.5px solid transparent; color: #fff; background: var(--ai-grad, linear-gradient(90deg, #2563eb, #7c3aed 45%, #db2777));

@@ -127,19 +127,19 @@ onBeforeUnmount(detach)
 
 <style scoped>
 .fm { position: relative; display: inline-flex; }
-.fm-btn { position: relative; width: 34px; height: 34px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--muted); border-radius: 8px; display: grid; place-items: center; }
+.fm-btn { position: relative; width: 34px; height: 32px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .fm-btn:hover { color: var(--ink); background: var(--surface-2); }
 .fm-btn.on { border-color: var(--primary); color: var(--primary-700); background: var(--primary-soft); }
-.fm-dot { position: absolute; top: -5px; right: -5px; min-width: 15px; height: 15px; padding: 0 3px; display: grid; place-items: center; background: var(--primary); color: #fff; border-radius: 999px; font-size: 9.5px; font-weight: 700; line-height: 1; }
+.fm-dot { position: absolute; top: -5px; right: -5px; min-width: 15px; height: 15px; padding: 0 3px; display: grid; place-items: center; background: var(--primary); color: #fff; border-radius: 999px; font-size: 10px; font-weight: 700; line-height: 1; }
 
 .fm-back { position: fixed; inset: 0; z-index: 149; }
-.fm-pop { position: fixed; z-index: 150; width: 210px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--sh-pop); padding: 6px; }
+.fm-pop { position: fixed; z-index: 150; width: 210px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-pop); padding: 6px; }
 
-.fm-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 7px 6px; font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); }
-.fm-clr { border: none; background: transparent; color: var(--primary-700); font-size: 10.5px; font-weight: 700; text-transform: none; letter-spacing: 0; }
+.fm-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 7px 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); }
+.fm-clr { border: none; background: transparent; color: var(--primary-700); font-size: 11px; font-weight: 700; text-transform: none; letter-spacing: 0; }
 .fm-clr:hover { text-decoration: underline; }
 
-.fm-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px 8px; border: none; background: transparent; border-radius: 7px; color: var(--ink-2); font-size: 13px; text-align: left; }
+.fm-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px 8px; border: none; background: transparent; border-radius: 4px; color: var(--ink-2); font-size: 13px; text-align: left; }
 .fm-item:hover, .fm-item.on { background: var(--surface-2); color: var(--ink); }
 .fm-l { flex: 1; min-width: 0; }
 .fm-n { flex: none; min-width: 16px; height: 16px; padding: 0 4px; display: grid; place-items: center; background: var(--primary); color: #fff; border-radius: 999px; font-size: 10px; font-weight: 700; }
@@ -150,7 +150,7 @@ onBeforeUnmount(detach)
 /* no room on the right (the panel is clamped to the viewport edge) → fly out left */
 .fm-sub.left { left: auto; right: calc(100% + 4px); }
 .fm-vals { flex: 1; overflow: auto; min-height: 0; display: flex; flex-direction: column; gap: 1px; }
-.fm-val { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 7px; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+.fm-val { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 4px; font-size: 13px; color: var(--ink-2); cursor: pointer; }
 .fm-val:hover { background: var(--surface-2); }
 .fm-val.on { color: var(--primary-700); font-weight: 500; }
 .fm-val input { accent-color: var(--primary); flex: none; }

@@ -2,15 +2,22 @@
 
 * { box-sizing: border-box; }
 html, body, #app { height: 100%; margin: 0; }
+/* §2: 13px is the workhorse — body text, table cells, buttons, inputs, field values.
+   The base was 14px, which put every unstyled string half a step above the scale. */
 body {
   font-family: var(--font);
   background: var(--bg);
   color: var(--ink);
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 a { color: inherit; text-decoration: none; }
+/* §18.1 — restore the pointer on anything clickable. */
+button:not(:disabled), [role='button']:not([aria-disabled='true']) { cursor: pointer; }
+/* §18.8 — list and heading styles are stripped inside contentEditable in some resets;
+   the note editor writes real <ul>/<ol>/<h3>, so they are restored explicitly in the
+   shared `.note-body` block further down rather than left to the UA sheet. */
 /* Form controls do NOT inherit font-family — the UA sheet sets its own. Only `button` was
    covered here, so every `input` fell back to Arial and every `textarea` to monospace:
    Inter everywhere except the places people actually type. */
@@ -22,45 +29,56 @@ button { cursor: pointer; }
 ::placeholder { color: var(--placeholder); opacity: 1; }
 ::selection { background: var(--primary-soft); }
 
-/* Scrollbars */
+/* Scrollbars — §17.5. The thumb is transparent until the pointer is over the scroll
+   area, so a dense screen never shows four bars at once; the gutter stays reserved so
+   nothing shifts when one appears. */
 *::-webkit-scrollbar { width: 10px; height: 10px; }
-*::-webkit-scrollbar-thumb { background: #d3d6e2; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
-*::-webkit-scrollbar-thumb:hover { background: #bfc3d4; background-clip: content-box; }
+*::-webkit-scrollbar-thumb { background: transparent; border-radius: var(--r-pill); border: 2px solid transparent; background-clip: content-box; }
+*:hover::-webkit-scrollbar-thumb { background: #cbd5e1; background-clip: content-box; }
+*::-webkit-scrollbar-thumb:hover, *::-webkit-scrollbar-thumb:active { background: #94a3b8; background-clip: content-box; }
 
 /* ---------- Reusable primitives ---------- */
-.btn {
-  display: inline-flex; align-items: center; gap: 7px;
-  height: 36px; padding: 0 14px; border-radius: var(--r);
-  border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink-2);
-  font-weight: 500; font-size: 13.5px; white-space: nowrap;
-  transition: background .15s, border-color .15s, box-shadow .15s, transform .05s;
-}
-.btn:hover { background: var(--surface-2); border-color: #c7cad9; }
-.btn:active { transform: translateY(1px); }
-.btn .ico { font-size: 17px; }
 
-/* Google Material Symbols (Rounded) base — used by the Icon component */
-.material-symbols-rounded {
-  font-family: 'Material Symbols Rounded';
-  font-weight: normal; font-style: normal; line-height: 1; letter-spacing: normal;
-  text-transform: none; white-space: nowrap; direction: ltr;
-  display: inline-flex; align-items: center; justify-content: center;
-  vertical-align: middle; user-select: none; flex: none;
-  -webkit-font-smoothing: antialiased; font-feature-settings: 'liga';
+/* §4.2 Secondary (bordered) — the default button. h-9 (36px) is the form/toolbar size;
+   `.btn-sm` is the h-8 (32px) detail/toolbar size. Border is --border-control, because a
+   button is a CONTROL: --border is for content edges (§1.4). */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 36px; padding: 0 16px; border-radius: var(--r);
+  border: 1px solid var(--border-control); background: var(--surface); color: var(--ink);
+  font-weight: 500; font-size: 13px; white-space: nowrap;
+  transition: background .15s, border-color .15s, box-shadow .15s;
 }
+.btn:hover { background: var(--surface-2); }
+
+/* §4.1 Primary. Disabled is a GREY FILL, not reduced opacity — opacity leaves white
+   label text unreadable on a washed-out blue. */
 .btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: var(--sh-sm); }
 .btn-primary:hover { background: var(--primary-600); border-color: var(--primary-600); }
-.btn-ghost { border-color: transparent; background: transparent; }
-.btn-ghost:hover { background: var(--primary-softer); color: var(--primary-700); }
-.btn-sm { height: 30px; padding: 0 10px; font-size: 12.5px; border-radius: 8px; }
-.btn-icon { width: 34px; height: 34px; padding: 0; justify-content: center; border-color: transparent; background: transparent; color: var(--muted); }
-.btn-icon:hover { background: var(--surface-2); color: var(--ink); border-color: var(--border); }
+.btn-primary:active { background: var(--primary-700); border-color: var(--primary-700); }
+.btn-primary:disabled { background: #cbd5e1; border-color: #cbd5e1; color: #fff; opacity: 1; }
+
+/* §4.3 Tertiary (text / link) */
+.btn-ghost { border-color: transparent; background: transparent; color: var(--primary); }
+.btn-ghost:hover { background: #f5faff; color: var(--primary-700); }
+
+/* §4.4 Destructive */
+.btn-danger { border-color: transparent; background: transparent; color: var(--red); }
+.btn-danger:hover { background: var(--red-soft); }
+
+.btn-sm { height: 32px; padding: 0 12px; font-size: 13px; }
+/* §4.5 Icon button — bare inside content areas, boxed where it sits beside bordered
+   controls (add `.btn` alongside for the boxed variant). */
+.btn-icon { width: 32px; height: 32px; padding: 0; justify-content: center; border-color: transparent; background: transparent; color: var(--muted); }
+.btn-icon:hover { background: var(--icon-hover); color: var(--ink); border-color: transparent; }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
 
+/* §7.6 Removable chip — a container, so `--r`. `.pill` in WidgetCard stays round: a
+   status pill is read by its shape before its text. */
 .chip {
   display: inline-flex; align-items: center; gap: 6px;
-  height: 24px; padding: 0 10px; border-radius: var(--r-pill);
-  font-size: 12px; font-weight: 500; background: var(--surface-2); color: var(--muted);
+  height: 24px; padding: 0 8px; border-radius: var(--r);
+  font-size: 12px; font-weight: 500; background: var(--inset); color: var(--ink);
   border: 1px solid var(--border);
 }
 .chip-primary { background: var(--primary-soft); color: var(--primary-700); border-color: transparent; }
@@ -68,55 +86,67 @@ button { cursor: pointer; }
 .chip-amber { background: var(--amber-soft); color: var(--amber); border-color: transparent; }
 .chip-blue { background: var(--blue-soft); color: var(--blue); border-color: transparent; }
 
-/* Predefined tag — minimal, ITSM-appropriate (no gradient), 4px radius */
-.badge-pre { background: var(--primary-soft); color: var(--primary-700); border: none; border-radius: 4px; height: 20px; font-size: 10.5px; font-weight: 500; padding: 0 7px; letter-spacing: .1px; }
+/* §7.3 Status badge — `--r-sm` (2px) is deliberate: it is what separates a state badge
+   from a control. Do not round this to 4px. */
+.badge-pre { background: var(--primary-soft); color: var(--primary-700); border: none; border-radius: var(--r-sm); height: 20px; font-size: 11px; font-weight: 500; padding: 0 8px; letter-spacing: .1px; }
 
+/* §9.1 Content card — a SURFACE, so `--r-lg` (8px). Most cards carry a border rather
+   than a shadow; `--sh-sm` is only for one that needs lift. */
 .card {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--r-lg); box-shadow: var(--sh-sm);
+  border-radius: var(--r-lg);
 }
 
+/* §6.1 Text input — 36px inside forms/panels, `--border-strong` (the input border),
+   focus ring 1px in the brand colour. */
 .input {
-  height: 38px; padding: 0 12px; border-radius: var(--r);
+  height: 36px; padding: 0 12px; border-radius: var(--r);
   border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink);
-  font-size: 13.5px; width: 100%; outline: none; transition: border-color .15s, box-shadow .15s;
+  font-size: 13px; width: 100%; outline: none; transition: border-color .15s, box-shadow .15s;
 }
-.input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
-textarea.input { height: auto; padding: 9px 12px; resize: vertical; }
-label.field { display:block; font-size:12.5px; font-weight: 500; color: var(--ink-2); margin-bottom:6px; }
+.input:focus { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+/* §6.8 Textarea — same treatment, px-3 py-2 */
+textarea.input { height: auto; padding: 8px 12px; resize: vertical; }
+/* §6.5 Label */
+label.field { display:block; font-size:13px; font-weight: 500; color: var(--ink); margin-bottom:6px; }
 
 .divider { height: 1px; background: var(--border); border: none; margin: 0; }
 
 .muted { color: var(--muted); }
 .tip { position: relative; }
 
-/* Popover / menu */
+/* §11 Dropdowns, popovers, menus — a floating SURFACE: 8px, control border, shadow-lg */
 .menu {
   position: absolute; z-index: 60; min-width: 200px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--r); box-shadow: var(--sh-pop); padding: 6px;
+  background: var(--surface); border: 1px solid var(--border-control);
+  border-radius: var(--r-lg); box-shadow: var(--sh-pop); padding: 4px 0;
 }
 .menu-item {
   display: flex; align-items: center; gap: 10px; width: 100%;
-  padding: 8px 10px; border-radius: 7px; border: none; background: transparent;
-  font-size: 13.5px; color: var(--ink-2); text-align: left;
+  padding: 8px 12px; border-radius: 0; border: none; background: transparent;
+  font-size: 13px; color: var(--ink); text-align: left;
 }
-.menu-item:hover { background: var(--surface-2); }
+.menu-item:hover { background: var(--row-hover); }
+.menu-item.on { background: #f5faff; color: var(--primary); font-weight: 500; }
 .menu-item.danger { color: var(--red); }
 .menu-item.danger:hover { background: var(--red-soft); }
-.menu-sep { height: 1px; background: var(--border); margin: 5px 2px; }
+.menu-sep { height: 1px; background: var(--border-hairline); margin: 4px 0; }
+/* §11: a section label inside a menu */
+.menu-label { padding: 6px 12px 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--placeholder); }
 
-/* Tabs */
-.tabs { display: inline-flex; gap: 2px; background: var(--surface-2); padding: 3px; border-radius: var(--r-pill); border: 1px solid var(--border); }
-.tab { height: 30px; padding: 0 14px; border-radius: var(--r-pill); border: none; background: transparent; font-weight: 500; font-size: 13px; color: var(--muted); }
-.tab.active { background: var(--surface); color: var(--primary-700); box-shadow: var(--sh-sm); }
+/* §10.2 Segmented toggle — a control: 4px track, 4px segments, active on the brand tint */
+.tabs { display: inline-flex; gap: 2px; background: var(--surface); padding: 2px; border-radius: var(--r); border: 1px solid var(--border-control); }
+.tab { height: 28px; padding: 0 10px; border-radius: var(--r); border: none; background: transparent; font-weight: 500; font-size: 12px; color: var(--ink-2); }
+.tab:hover { background: var(--surface-2); }
+.tab.active { background: var(--primary-soft); color: var(--primary); box-shadow: none; }
 
-/* Modal */
-.overlay { position: fixed; inset: 0; background: rgba(20,21,38,.42); backdrop-filter: blur(2px); z-index: 100; display: grid; place-items: center; padding: 24px; }
-.modal { background: var(--surface); border-radius: var(--r-xl); box-shadow: var(--sh-lg); width: 100%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
+/* §14 Modal — a surface (8px), shadow-xl, scrim per §3.4 */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 100; display: grid; place-items: center; padding: 24px; }
+.modal { background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--sh-lg); width: 100%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
 
-/* Tooltip */
-.tt { position: absolute; z-index: 80; background: #20223a; color:#fff; font-size:12px; font-weight:500; padding:8px 11px; border-radius:8px; box-shadow: var(--sh-pop); max-width: 280px; line-height:1.45; }
+/* §12 Tooltip — near-black surface. `--primary` in the guide's tooltip section means its
+   own `--primary` design token (#030213), not the brand blue. */
+.tt { position: absolute; z-index: 80; background: #030213; color:#fff; font-size:12px; font-weight:400; padding:6px 12px; border-radius:var(--r); box-shadow: var(--sh-pop); max-width: 280px; line-height:1.45; text-wrap: wrap; }
 .tt b { color:#cfc6ff; }
 
 /* utility */
@@ -129,6 +159,26 @@ label.field { display:block; font-size:12.5px; font-weight: 500; color: var(--in
 .pop-enter-active { transition: opacity .14s ease, transform .14s ease; }
 .pop-enter-from { opacity: 0; transform: translateY(-4px) scale(.98); }
 
+/* ---------- Note body ----------
+   ONE stylesheet for note content, shared by the editor and the placed tile, so what
+   you write is literally what you see. It has to live here rather than in either
+   component: markup produced by `contenteditable` and injected by `v-html` carries no
+   scope attribute, so a scoped rule can never reach it. */
+.note-body { color: var(--ink-2); font-size: 13px; line-height: 1.6; word-break: break-word; }
+.note-body > *:first-child { margin-top: 0; }
+.note-body > *:last-child { margin-bottom: 0; }
+.note-body p { margin: 0 0 8px; }
+.note-body h3 { font-size: 15px; font-weight: 600; color: var(--ink); margin: 14px 0 6px; }
+.note-body h4 { font-size: 13px; font-weight: 600; color: var(--ink); margin: 12px 0 5px; }
+.note-body ul, .note-body ol { margin: 0 0 8px; padding-left: 20px; }
+.note-body li { margin: 3px 0; }
+.note-body blockquote { margin: 8px 0; padding: 2px 0 2px 12px; border-left: 2px solid var(--border-strong); color: var(--muted); font-style: italic; }
+.note-body code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .92em; background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; }
+.note-body mark { background: var(--note-mark); color: inherit; border-radius: 2px; padding: 0 2px; }
+.note-body a { color: var(--primary-700); border-bottom: 1px solid var(--primary-soft); }
+.note-body a:hover { border-bottom-color: var(--primary); }
+.note-body u { text-underline-offset: 2px; }
+
 @keyframes shimmer { 100% { transform: translateX(100%); } }
-.skeleton { position: relative; overflow: hidden; background: #eef0f6; border-radius: 8px; }
+.skeleton { position: relative; overflow: hidden; background: #eef0f6; border-radius: 4px; }
 .skeleton::after { content:""; position:absolute; inset:0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.7), transparent); animation: shimmer 1.3s infinite; }

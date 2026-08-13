@@ -18,8 +18,8 @@ const col = { kpi: '#7b68ee', chart: '#2f80ed', shortcut: '#1f9d63' }
   </div>
 </template>
 <style scoped>
-.mini { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; padding: 9px; background: var(--surface-2); border-radius: 10px; height: 92px; overflow: hidden; }
-.blk { border: 1px solid; border-radius: 6px; padding: 6px; display: flex; align-items: flex-end; }
+.mini { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; padding: 9px; background: var(--surface-2); border-radius: 4px; height: 92px; overflow: hidden; }
+.blk { border: 1px solid; border-radius: 4px; padding: 6px; display: flex; align-items: flex-end; }
 .blk.kpi { align-items: center; }
 .num { width: 60%; height: 12px; border-radius: 3px; }
 .bars { display: flex; align-items: flex-end; gap: 3px; width: 100%; height: 100%; }

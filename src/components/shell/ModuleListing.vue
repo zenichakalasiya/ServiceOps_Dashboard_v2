@@ -65,14 +65,14 @@ function pick(it) {
 .mlist { --surface: var(--sidebar); --surface-2: var(--sidebar-hover); --border: var(--sidebar-border); width: 300px; background: var(--sidebar); border-right: 1px solid var(--sidebar-border); display: flex; flex-direction: column; height: 100%; }
 .ml-head { display: flex; align-items: center; gap: 8px; padding: 12px 8px 8px 14px; }
 .ml-head h2 { flex: 1; margin: 0; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ml-x { width: 30px; height: 30px; border: none; background: transparent; color: var(--muted); border-radius: 8px; display: grid; place-items: center; }
+.ml-x { width: 30px; height: 30px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .ml-x:hover { background: var(--surface-2); color: var(--ink); }
-.ml-search { display: flex; align-items: center; gap: 8px; margin: 0 12px 8px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 9px; padding: 0 10px; height: 34px; }
+.ml-search { display: flex; align-items: center; gap: 8px; margin: 0 12px 8px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 0 10px; height: 36px; }
 .ml-search input { border: none; outline: none; background: transparent; width: 100%; font-size: 13px; color: inherit; }
 .ml-body { flex: 1; overflow-y: auto; padding: 2px 8px 12px; }
 .ml-body::-webkit-scrollbar { width: 6px; } .ml-body::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
-.ml-g { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted-2); padding: 10px 6px 4px; }
-.ml-i { display: flex; align-items: center; gap: 9px; width: 100%; border: none; background: transparent; padding: 7px 8px; border-radius: 8px; color: var(--ink-2); text-align: left; }
+.ml-g { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted-2); padding: 10px 6px 4px; }
+.ml-i { display: flex; align-items: center; gap: 9px; width: 100%; border: none; background: transparent; padding: 7px 8px; border-radius: 4px; color: var(--ink-2); text-align: left; }
 .ml-i:hover { background: var(--surface-2); color: var(--ink); }
 .ml-i.on { background: var(--primary-soft); color: var(--primary-700); }
 .ml-ic { color: var(--muted-2); flex: none; }
@@ -82,12 +82,12 @@ function pick(it) {
 .ml-t { flex: 1; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ml-n { flex: none; font-size: 11px; font-weight: 600; color: var(--muted); background: var(--surface-2); border-radius: 999px; padding: 1px 7px; }
 .ml-i.on .ml-n { background: var(--surface); color: var(--primary-700); }
-.ml-pin { flex: none; width: 22px; height: 22px; border: none; background: transparent; color: var(--muted-2); border-radius: 6px; display: none; place-items: center; }
+.ml-pin { flex: none; width: 22px; height: 22px; border: none; background: transparent; color: var(--muted-2); border-radius: 4px; display: none; place-items: center; }
 .ml-i:hover .ml-pin { display: grid; }
 .ml-pin:hover { background: var(--surface); color: #f5a623; }
 .ml-none { padding: 24px 12px; text-align: center; color: var(--muted); font-size: 13px; }
 .ml-foot { border-top: 1px solid var(--border); padding: 8px; }
-.ml-foot button { display: flex; align-items: center; gap: 9px; width: 100%; border: none; background: transparent; padding: 9px 12px; border-radius: 8px; color: var(--ink-2); font-weight: 600; font-size: 13px; }
+.ml-foot button { display: flex; align-items: center; gap: 9px; width: 100%; border: none; background: transparent; padding: 9px 12px; border-radius: 4px; color: var(--ink-2); font-weight: 600; font-size: 13px; }
 .ml-foot button:hover { background: var(--surface-2); color: var(--ink); }
 .ml-fa { margin-left: auto; color: var(--muted); }
 </style>

@@ -6,6 +6,9 @@ import DateRangePicker from '../ui/DateRangePicker.vue'
 import ChartTile from './ChartTile.vue'
 import MeasureConditions from './MeasureConditions.vue'
 import FreeTextTile from './FreeTextTile.vue'
+import NoteEditor from './NoteEditor.vue'
+import Hint from '../ui/Hint.vue'
+import { noteTitle, noteIsEmpty } from '../../data/freeText.js'
 import { store } from '../../store/index.js'
 import { chart as mkChart, kpi as mkKpi, shortcut as mkShortcut, text as mkText, ACCESS } from '../../data/mock.js'
 import { CONDITION_FIELD_LABELS, NUMERIC_FIELD_LABELS, AGG_FNS, MAP_FNS } from '../../data/records.js'
@@ -114,7 +117,10 @@ const isText = computed(() => curType.value.type === 'text')
 const ctaLabel = computed(() => (isChart.value ? 'Widget' : curType.value.label))
 function switchType(t) {
   if (typeBlock(t)) return
-  if (!cfg.name || cfg.name === `New ${curType.value.label}`) cfg.name = `New ${t.label}`
+  // a note is filed under its own first line, so it never carries a placeholder name —
+  // and switching INTO one must not leave "New Free Text" behind as its title
+  if (t.type === 'text') cfg.name = ''
+  else if (!cfg.name || cfg.name === `New ${curType.value.label}`) cfg.name = `New ${t.label}`
   curType.value = t
 }
 
@@ -166,8 +172,8 @@ function initCfg() {
     excludeZero: false, sqlQuery: ex?.sql || '',
     access: ex?.access || 'public',   // Public / Private / Restricted — as a dashboard has
     // display properties, saved on the widget. undefined = on / off respectively.
-    // always on — the toggle is gone; a legend is what names the slices
-    legend: true,
+    // ON by default — a chart with no key is unreadable until you already know it
+    legend: ex?.legend !== false,
     dataLabels: ex?.dataLabels === true,
     donut: ex?.chart?.donut !== false,   // Pie/Donut split — ring by default (§4 pie)
     // ── PMG-ACT-01 additional-kind config (prefilled from the tile's saved spec) ──
@@ -245,8 +251,17 @@ function reset() { Object.assign(cfg, initCfg()) }
  * being edited is excluded by id (otherwise a widget would collide with itself),
  * and the current board is checked too: two widgets with the same name on the
  * SAME dashboard is the worst case, not an exemption. */
+/* A note has no Name field, so its title is derived from its own first line — the way
+ * every notes app files an untitled note. Everything downstream (the library, the
+ * listings, the duplicate check) still gets a real title; the person writing just never
+ * has to invent one before they can start writing. */
+const derivedNoteTitle = computed(() => noteTitle(cfg.content))
+/* The title this widget will actually be saved under. Read this, never `cfg.name`
+ * directly — for a note `cfg.name` is empty and always will be. */
+const effectiveName = computed(() => (isText.value ? derivedNoteTitle.value : (cfg.name || '').trim()))
+
 const dupBoards = computed(() => {
-  const n = cfg.name?.trim().toLowerCase()
+  const n = effectiveName.value.toLowerCase()
   if (!n) return []
   const selfId = props.duplicate ? null : props.existing?.id
   const names = new Set()
@@ -259,14 +274,20 @@ const dupBoards = computed(() => {
 })
 // a duplicate name BLOCKS the save — "must be unique" is a rule, not a suggestion
 const nameTaken = computed(() => dupBoards.value.length > 0)
-const canSave = computed(() => !!cfg.name?.trim() && !nameTaken.value)
+// what a note needs before it can be saved is WRITING, not a name
+const noteEmpty = computed(() => isText.value && noteIsEmpty(cfg.content))
+const canSave = computed(() => !!effectiveName.value && !nameTaken.value && !noteEmpty.value)
 const ctaHint = computed(() =>
-  !cfg.name?.trim() ? 'Give this widget a name'
-    : nameTaken.value ? 'That name is already taken — widget names must be unique'
-      : '')
+  noteEmpty.value ? 'Write something in the note first'
+    : !effectiveName.value ? (isText.value ? 'Write something in the note first' : 'Give this widget a name')
+      : nameTaken.value
+        ? (isText.value
+          ? 'Another widget is already filed under this note’s first line — change the opening line'
+          : 'That name is already taken — widget names must be unique')
+        : '')
 
 const previewTile = computed(() => {
-  const title = cfg.name || `New ${curType.value.label}`
+  const title = effectiveName.value || `New ${curType.value.label}`
   if (isText.value) return mkText(title, cfg.content, cfg.description)
   if (isKpi.value) {
     return ex
@@ -337,13 +358,13 @@ function save(place) {
   }
   // --- library duplicate/edit: hand the config back to the listing ---
   if (props.libItem) {
-    emit('librarySaved', { title: cfg.name, module: cfg.module, type: curType.value.type, access: cfg.access, place })
+    emit('librarySaved', { title: effectiveName.value, module: cfg.module, type: curType.value.type, access: cfg.access, place })
     return
   }
   // --- edit an existing board tile in place (type may change for a predefined edit) ---
   if (props.existing) {
     const t = props.existing
-    t.title = cfg.name || t.title
+    t.title = effectiveName.value || t.title
     t.info = cfg.description
     t.type = curType.value.type
     if (isChart.value) {
@@ -372,7 +393,7 @@ function save(place) {
     props.d.updated = new Date().toISOString()
     emit('created', pv.id)
   } else {
-    emit('savedToLibrary', { title: cfg.name, module: cfg.module, type: curType.value.type, access: cfg.access })
+    emit('savedToLibrary', { title: effectiveName.value, module: cfg.module, type: curType.value.type, access: cfg.access })
   }
 }
 </script>
@@ -383,7 +404,7 @@ function save(place) {
       <div class="builder">
         <!-- Header (ClickUp-style) -->
         <header class="bhead">
-          <div class="crumb"><span class="muted">Dashboard</span> <Icon name="chevron-right" :size="13" class="sep" /> <span v-if="duplicate" class="muted">Duplicate</span><span v-else-if="editing || libMode" class="muted">Edit</span> <b>{{ cfg.name || ('New ' + curType.label) }}</b></div>
+          <div class="crumb"><span class="muted">Dashboard</span> <Icon name="chevron-right" :size="13" class="sep" /> <span v-if="duplicate" class="muted">Duplicate</span><span v-else-if="editing || libMode" class="muted">Edit</span> <b>{{ effectiveName || ('New ' + curType.label) }}</b></div>
           <div class="hacts">
             <button class="ic" title="Refresh preview" @click="refreshPreview"><Icon name="refresh" :size="16" :class="{ spin: spinning }" /></button>
             <button class="ic" @click="emit('close')" title="Close"><Icon name="x" :size="18" /></button>
@@ -405,7 +426,9 @@ function save(place) {
             </div>
             <div class="pv-card">
               <div class="pv-canvas">
-                <div v-if="isKpi" class="pv-kpi">{{ previewTile.value }}<span v-if="previewTile.unit" class="u">{{ previewTile.unit }}</span><span class="d">▲ {{ previewTile.delta?.pct }}%</span></div>
+                <!-- the number only — the placed tile no longer shows a ▲/▼ %, and a
+                     preview that shows one would be previewing something else -->
+                <div v-if="isKpi" class="pv-kpi">{{ previewTile.value }}<span v-if="previewTile.unit" class="u">{{ previewTile.unit }}</span></div>
                 <ChartTile v-else-if="isChart" :chart="previewTile.chart" :legend="cfg.legend" :data-labels="cfg.dataLabels" :height="320" />
                 <div v-else-if="isText" class="pv-text"><FreeTextTile :content="cfg.content" /></div>
                 <table v-else class="pv-tbl"><thead><tr><th v-for="c in previewTile.columns" :key="c">{{ c }}</th></tr></thead><tbody><tr v-for="(r,i) in previewTile.rows" :key="i"><td v-for="(c,j) in r" :key="j">{{ c }}</td></tr></tbody></table>
@@ -443,14 +466,17 @@ function save(place) {
                 </div>
               </div>
               <template v-if="!predefinedEdit">
-              <!-- Basic Details -->
-              <div class="sec">
+              <!-- Basic Details — every family but a note. A note has no Name (it is
+                   filed under its own first line) and no Module (there is no data behind
+                   it), which left this section with nothing to ask, so its configuration
+                   opens at Visibility & sharing instead. -->
+              <div v-if="!isText" class="sec">
                 <div class="sec-h">{{ isShortcut ? 'Basic Shortcut Details' : 'Basic Widget Details' }}</div>
                 <div class="grid2">
                   <div class="fld"><label>Name <i>*</i></label><input class="input" :class="{ bad: nameTaken }" v-model="cfg.name" placeholder="Name" /></div>
                   <div class="fld"><label>Module <i>*</i></label><Dropdown v-model="cfg.module" :options="store.modules" /></div>
                 </div>
-                <p v-if="dupBoards.length" class="dup-warn"><Icon name="alert" :size="13" /> <span>A widget named “{{ cfg.name }}” already exists on {{ dupBoards.slice(0, 2).join(', ') }}<span v-if="dupBoards.length > 2"> +{{ dupBoards.length - 2 }} more</span>. <b>Widget names must be unique</b> — pick another.</span></p>
+                <p v-if="dupBoards.length" class="dup-warn"><Icon name="alert" :size="13" /> <span>A widget named “{{ effectiveName }}” already exists on {{ dupBoards.slice(0, 2).join(', ') }}<span v-if="dupBoards.length > 2"> +{{ dupBoards.length - 2 }} more</span>. <b>Widget names must be unique</b> — pick another.</span></p>
                 <div v-if="isShortcut" class="fld" style="margin-top:12px"><label>Description</label><textarea class="input" rows="2" v-model="cfg.description" placeholder="Description" /></div>
                 <template v-if="cfg.module==='Asset' && manualMode">
                   <div class="fld"><label>Asset type</label>
@@ -491,7 +517,6 @@ function save(place) {
                    there has to be somewhere the name still lives. -->
               <div v-if="showFamilies && isChart" class="sec">
                 <div class="sec-h">Chart Type</div>
-                <p class="hint">Pick how the data should be visualized.</p>
                 <div class="kinds">
                   <button
                     v-for="k in CHART_KINDS" :key="k.id" class="kind"
@@ -508,7 +533,6 @@ function save(place) {
                     <button class="seg-b" :class="{ on: cfg.mode==='manual' }" @click="cfg.mode='manual'">Manual</button>
                     <button class="seg-b" :class="{ on: cfg.mode==='query' }" @click="cfg.mode='query'">Query</button>
                   </div>
-                  <p class="hint">A widget counts the records that match its conditions.</p>
                 </template>
               </div>
               <!-- families without a chart type still need the Manual / Query switch -->
@@ -517,7 +541,6 @@ function save(place) {
                   <button class="seg-b" :class="{ on: cfg.mode==='manual' }" @click="cfg.mode='manual'">Manual</button>
                   <button class="seg-b" :class="{ on: cfg.mode==='query' }" @click="cfg.mode='query'">Query</button>
                 </div>
-                <p class="hint">A widget counts the records that match its conditions.</p>
               </div>
 
               <!-- Query — Shortcuts always; Widget/KPI when "Query Based" tab is active -->
@@ -550,9 +573,6 @@ function save(place) {
                     <button class="seg-b" :class="{ on: cfg.stackMode==='stacked' }" @click="cfg.stackMode='stacked'">Stacked</button>
                     <button class="seg-b" :class="{ on: cfg.stackMode==='grouped' }" @click="cfg.stackMode='grouped'">Grouped</button>
                   </div>
-                  <p class="hint">{{ cfg.stackMode === 'grouped'
-                    ? 'One column per split value, side by side within each X value — compares totals directly instead of composing them.'
-                    : 'One stacked column per X value, one colour per split value — two grouping dimensions on one chart.' }}</p>
                 </template>
                 <!-- Multi-line (§4.2) -->
                 <template v-else-if="curType.kind === 'multiline'">
@@ -560,7 +580,6 @@ function save(place) {
                     <div class="fld"><label>X-Axis <i>*</i></label><Dropdown v-model="cfg.mlXDim" :options="CONDITION_FIELD_LABELS" /></div>
                     <div class="fld"><label>Split by <i>*</i></label><Dropdown v-model="cfg.mlSplit" :options="CONDITION_FIELD_LABELS" /></div>
                   </div>
-                  <p class="hint">One line per split value, plotted across the same X-Axis — trends across a category compared side by side on a shared scale.</p>
                 </template>
                 <!-- Combo (§4.3) — count bars + an aggregate line on a second axis -->
                 <template v-else-if="curType.kind === 'combo'">
@@ -569,7 +588,6 @@ function save(place) {
                     <div class="fld"><label>Line Function <i>*</i></label><Dropdown v-model="cfg.comboFn" :options="AGG_FNS" /></div>
                     <div class="fld"><label>Line Field <i>*</i></label><Dropdown v-model="cfg.comboField" :options="NUMERIC_FIELD_LABELS" /></div>
                   </div>
-                  <p class="hint">Count bars on the left axis; the aggregate line rides the secondary axis.</p>
                 </template>
                 <!-- Histogram (§4.4) — gap-free equal-width bands over a numeric field -->
                 <template v-else-if="curType.kind === 'hist'">
@@ -577,12 +595,10 @@ function save(place) {
                     <div class="fld"><label>Field <i>*</i></label><Dropdown v-model="cfg.histField" :options="NUMERIC_FIELD_LABELS" /></div>
                     <div class="fld"><label>Bucket size <i>*</i></label><input class="input" type="number" min="0.5" step="0.5" v-model.number="cfg.histBucket" /></div>
                   </div>
-                  <p class="hint">Named, gap-free ranges in field order. Records without a value are excluded — never counted as zero.</p>
                 </template>
                 <!-- Funnel (§4.7) — cumulative stage counts in the field's defined order -->
                 <template v-else-if="curType.kind === 'funnel'">
-                  <div class="fld"><label>Stage field <i>*</i></label><Dropdown v-model="cfg.stageField" :options="CONDITION_FIELD_LABELS" /></div>
-                  <p class="hint">Stages keep the field's defined order — never alphabetical. Each band counts records that reached that stage or beyond, shown as a share of the first.</p>
+                  <div class="fld"><label>Stage field <i>*</i><Hint text="Stages keep the field’s defined order — never alphabetical. Each band counts records that reached that stage or beyond, shown as a share of the first." /></label><Dropdown v-model="cfg.stageField" :options="CONDITION_FIELD_LABELS" /></div>
                 </template>
                 <!-- Heatmap (§4.5) — Columns × Rows grid, cell = count or an aggregate -->
                 <template v-else-if="curType.kind === 'heatmap'">
@@ -633,11 +649,13 @@ function save(place) {
                       <MeasureConditions v-model="cfg.gaugeNumConds" empty-text="No numerator conditions yet." />
                     </div>
                   </template>
-                  <div v-else class="fld" style="margin-top:12px">
-                    <label>Conditions</label>
-                    <p class="hint" style="margin:0 0 8px">Filter the records this meter measures. If none are set, all records are counted.</p>
-                    <MeasureConditions v-model="cfg.conds" />
-                  </div>
+                </div>
+                <!-- Conditions is its own section here, titled exactly as it is on every other
+                     chart — it was a nested field label, so the same control answered to a
+                     different name depending on which widget you were building. -->
+                <div v-if="cfg.gaugeMode!=='percentage'" class="sec">
+                  <div class="sec-h">Conditions</div>
+                  <MeasureConditions v-model="cfg.conds" />
                 </div>
                 <div class="sec">
                   <div class="sec-h">Gauge Range</div>
@@ -657,11 +675,16 @@ function save(place) {
                 </div>
               </template>
 
-              <!-- Content — Free Text only (§4). The one section this family shows. -->
+              <!-- Note — Free Text only (§4). A full editor rather than a textarea: this
+                   family exists so somebody can leave a written note on the board, and a
+                   note that cannot hold a bold word or a list is a note nobody writes in. -->
               <div v-if="isText" class="sec">
-                <div class="sec-h">Content</div>
-                <textarea class="input" rows="7" v-model="cfg.content" placeholder="# Section heading&#10;- A bullet point&#10;A paragraph of note text, with a [link](https://example.com) inline." />
-                <p class="hint">Lines starting with '# ' render as headings, '- ' as bullets; [label](url) anywhere becomes a link. No data query behind this widget.</p>
+                <div class="sec-h">Free Text</div>
+                <NoteEditor v-model="cfg.content" :min-height="230" placeholder="Write a note for whoever opens this dashboard…" />
+                <p class="hint note-name-hint">
+                  <Icon name="info" :size="13" />
+                  <span>Notes aren’t named. This one is filed as <b>“{{ derivedNoteTitle }}”</b>, taken from its first line.</span>
+                </p>
               </div>
 
               <!-- Data Configuration -->
@@ -690,12 +713,10 @@ function save(place) {
                    get the real shared `field is value` editor bound to the engine (§5). -->
               <div v-if="manualMode && !isNewKind && !isText" class="sec">
                 <div class="sec-h">Conditions</div>
-                <p class="hint">Add conditions to filter records. If none are set, all records are counted.</p>
                 <button class="add-line"><Icon name="plus" :size="14" /> Add Condition</button>
               </div>
               <div v-if="isChart && manualMode && isNewKind && curType.kind !== 'gauge'" class="sec">
                 <div class="sec-h">Conditions</div>
-                <p class="hint">Filter the records this widget plots. Rows are ANDed; leave empty to count every record.</p>
                 <MeasureConditions v-model="cfg.conds" />
               </div>
               </template>
@@ -733,9 +754,17 @@ function save(place) {
                   </p>
                 </div>
 
-                <!-- The legend toggle is gone: the legend is what names the slices, and a
-                     chart whose legend can be switched off is a chart that can be made
-                     unreadable from its own settings. Manage Legend above bounds it instead. -->
+                <!-- Legend on/off. Manage Legend above bounds WHICH entries are drawn;
+                     this decides whether the key is printed beside the chart at all. On by
+                     default — a chart with no key is unreadable until you know it. -->
+                <label v-if="hasLegend" class="tgl-row">
+                  <span class="tgl-txt">
+                    <b>Legend</b>
+                    <em>Print the key beside the chart, naming each colour.</em>
+                  </span>
+                  <button class="tgl" :class="{ on: cfg.legend }" role="switch" :aria-checked="cfg.legend"
+                    @click.prevent="cfg.legend = !cfg.legend"><i /><b>{{ cfg.legend ? 'ON' : 'OFF' }}</b></button>
+                </label>
 
                 <label v-if="isPie" class="tgl-row">
                   <span class="tgl-txt">
@@ -809,7 +838,7 @@ function save(place) {
 .crumb { display: flex; align-items: center; gap: 8px; font-size: 14px; }
 .crumb .sep { color: var(--muted-2); }
 .hacts { display: flex; gap: 2px; }
-.ic { width: 34px; height: 34px; border: none; background: transparent; color: var(--muted); border-radius: 9px; display: grid; place-items: center; }
+.ic { width: 34px; height: 32px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .ic:hover { background: var(--surface-2); color: var(--ink); }
 .bbody { flex: 1; display: flex; min-height: 0; }
 /* Nothing divides the preview from the config panel — no rule AND no colour change.
@@ -821,8 +850,8 @@ function save(place) {
    same control the reference uses for every either/or in this panel (family, access,
    Manual/Query, Top/Bottom/All). Four loose outlined buttons with a blue fill read as
    four separate things you could each turn on. */
-.pv-tabs { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 4px; background: var(--surface-2); border-radius: 10px; margin-bottom: 14px; }
-.pv-tab { display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 13px; border: none; background: transparent; color: var(--ink-2); border-radius: 7px; font-weight: 500; font-size: 13px; }
+.pv-tabs { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 4px; background: var(--surface-2); border-radius: 4px; margin-bottom: 14px; }
+.pv-tab { display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 13px; border: none; background: transparent; color: var(--ink-2); border-radius: 4px; font-weight: 500; font-size: 13px; }
 .pv-tab:hover { color: var(--ink); }
 .pv-tab.on { background: var(--ink); color: #fff; font-weight: 600; box-shadow: var(--sh-sm); }
 .pv-tab.on :deep(.ico) { color: #fff; }
@@ -835,7 +864,7 @@ function save(place) {
    of a fixed 4-column grid stretching each cell to the column width. Fixed 48px keeps the
    padding even on every side — an aspect-ratio cell in a fluid grid does not. */
 .kinds { display: flex; flex-wrap: wrap; gap: 10px; }
-.kind { flex: none; display: grid; place-items: center; width: 48px; height: 48px; padding: 0; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink-2); border-radius: 10px; }
+.kind { flex: none; display: grid; place-items: center; width: 48px; height: 48px; padding: 0; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink-2); border-radius: 4px; }
 .kind:hover { background: var(--surface-2); border-color: var(--muted-2); }
 /* selected: a light primary wash, not a solid fill */
 .kind.on { background: var(--primary-soft); border-color: var(--primary); color: var(--primary-700); box-shadow: var(--sh-sm); }
@@ -843,13 +872,15 @@ function save(place) {
 .pv-card { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-sm); display: flex; flex-direction: column; overflow: hidden; }
 .pv-canvas { flex: 1; display: grid; place-items: center; padding: 22px; min-height: 0; }
 .pv-canvas > * { width: 100%; }
-.pv-text { align-self: stretch; max-height: 100%; overflow: auto; }
+.pv-text { align-self: stretch; max-height: 100%; overflow: auto; align-self: start; }
+/* the preview has to be the tile, and a note's tile is paper — showing it on the white
+   widget surface would preview something the board never renders */
+.pv-card:has(.pv-text) { background: var(--note-bg); border-color: var(--note-line); }
 .pv-kpi { font-size: 72px; font-weight: 700; letter-spacing: -2px; text-align: center; }
-.pv-kpi .d { font-size: 20px; color: var(--green); margin-left: 12px; font-weight: 600; }
 .pv-tbl { width: 100%; border-collapse: collapse; font-size: 13px; align-self: start; }
 .pv-tbl th { text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .4px; padding: 7px 10px; border-bottom: 1px solid var(--border); }
 .pv-tbl td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
-.pv-foot { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); margin-top: 12px; }
+.pv-foot { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); margin-top: 12px; }
 .config { width: 480px; flex: none; display: flex; flex-direction: column; min-height: 0; }
 .cfg-scroll { flex: 1; overflow: auto; padding: 18px 20px; }
 /* No rules between sections — the config sidebar had one under every section, so a Gauge
@@ -871,18 +902,18 @@ function save(place) {
 .tgl-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; cursor: pointer; margin-bottom: 12px; }
 .tgl-row:last-child { margin-bottom: 0; }
 .tgl-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.tgl-txt b { font-size: 12.5px; font-weight: 500; color: var(--ink-2); }
-.tgl-txt em { font-style: normal; font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+.tgl-txt b { font-size: 13px; font-weight: 500; color: var(--ink-2); }
+.tgl-txt em { font-style: normal; font-size: 12px; color: var(--muted); line-height: 1.4; }
 /* the ON/OFF pill, same as the dashboard panel's � a bare track says there are two states
    but not which one you are looking at */
 .tgl { flex: none; width: 58px; height: 24px; padding: 0; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface-2); position: relative; transition: background .15s, border-color .15s; }
 .tgl i { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--muted-2); box-shadow: var(--sh-sm); transition: left .15s, background .15s; }
-.tgl b { position: absolute; top: 0; right: 8px; line-height: 22px; font-size: 9.5px; font-weight: 700; letter-spacing: .4px; color: var(--muted); transition: color .15s; }
+.tgl b { position: absolute; top: 0; right: 8px; line-height: 22px; font-size: 10px; font-weight: 700; letter-spacing: .4px; color: var(--muted); transition: color .15s; }
 .tgl.on { background: var(--green-soft); border-color: color-mix(in srgb, var(--green) 40%, transparent); }
 .tgl.on i { left: 38px; background: var(--green); }
 .tgl.on b { right: auto; left: 9px; color: var(--green); }
 
-.pe-note { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; line-height: 1.5; color: var(--primary-700); background: var(--primary-softer); border: 1px solid var(--primary-soft); border-radius: 9px; padding: 10px 12px; }
+.pe-note { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; color: var(--primary-700); background: var(--primary-softer); border: 1px solid var(--primary-soft); border-radius: 4px; padding: 10px 12px; }
 .pe-note :deep(.ico) { flex: none; margin-top: 1px; }
 /* Duplicate-name warning. It belongs to the Name field, so it hugs it: the top
  * margin pulls back most of the field's 12px, and the gap it owns sits *below*.
@@ -891,12 +922,12 @@ function save(place) {
  * align-items: flex-start keeps the icon at the top-left when the text wraps to
  * two lines, instead of the icon drifting to the vertical centre. */
 /* Duplicate name reads as a WARNING, not an error — amber, not red. */
-.dup-warn { display: flex; align-items: flex-start; gap: 7px; font-size: 12px; line-height: 1.45; color: var(--amber); background: var(--amber-soft); border-radius: 7px; padding: 8px 10px; margin: -6px 0 10px; }
+.dup-warn { display: flex; align-items: flex-start; gap: 7px; font-size: 12px; line-height: 1.45; color: var(--amber); background: var(--amber-soft); border-radius: 4px; padding: 8px 10px; margin: -6px 0 10px; }
 .dup-warn .ico { flex: none; margin-top: 1px; }   /* optical-align with the first text line */
 .dup-warn b { font-weight: 600; color: var(--amber); }
 .input.bad { border-color: var(--amber); }
 .sec:last-child { padding-bottom: 0; }
-.sec-h { font-weight: 600; font-size: 13.5px; margin-bottom: 12px; }
+.sec-h { font-weight: 600; font-size: 13px; margin-bottom: 12px; }
 /* a heading that OWNS the line under it sits tight to it — 12px of air between a title
    and its own description reads as two separate things */
 .sec-h:has(+ .hint) { margin-bottom: 5px; }
@@ -910,34 +941,38 @@ function save(place) {
 .chev { position: absolute; right: 11px; top: 12px; color: var(--muted); pointer-events: none; }
 /* Manual / Query, and Manage Legend's All / Highest / Lowest. No bottom margin — what
    follows a segmented control is the configuration it governs, so it belongs against it. */
-.seg { display: inline-flex; gap: 2px; background: var(--surface-2); padding: 4px; border-radius: 10px; border: none; margin-bottom: 0; }
-.seg-b { border: none; background: transparent; padding: 0 14px; height: 30px; border-radius: 7px; font-weight: 500; font-size: 12.5px; color: var(--ink-2); }
+.seg { display: inline-flex; gap: 2px; background: var(--surface-2); padding: 4px; border-radius: 4px; border: none; margin-bottom: 0; }
+.seg-b { border: none; background: transparent; padding: 0 14px; height: 30px; border-radius: 4px; font-weight: 500; font-size: 13px; color: var(--ink-2); }
 .seg-b:hover { color: var(--ink); }
 .seg-b.on { background: var(--ink); color: #fff; font-weight: 600; box-shadow: var(--sh-sm); }
 /* No top margin. A hint is the DESCRIPTION of the heading above it, not a paragraph in
    its own right — it belongs against that heading, with the air below the pair. */
-.hint { font-size: 11.5px; color: var(--muted); margin: 0 0 10px; }
+.hint { font-size: 12px; color: var(--muted); margin: 0 0 10px; }
 /* Visibility & Sharing — the same three-way control the dashboard panel uses, sized for
    the narrower config column (the board's 38px pills would crowd it). */
 .acc-lbl { display: block; font-size: 12px; font-weight: 500; color: var(--ink-2); margin-bottom: 6px; }
 .acc-lbl i { color: var(--red); font-style: normal; }
-.acc-seg { display: flex; gap: 2px; padding: 4px; background: var(--surface-2); border-radius: 10px; }
-.acc-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; height: 30px; padding: 0 10px; border: none; background: transparent; color: var(--ink-2); border-radius: 7px; font-weight: 500; font-size: 12.5px; }
+.acc-seg { display: flex; gap: 2px; padding: 4px; background: var(--surface-2); border-radius: 4px; }
+.acc-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; height: 30px; padding: 0 10px; border: none; background: transparent; color: var(--ink-2); border-radius: 4px; font-weight: 500; font-size: 13px; }
 .acc-btn:hover { color: var(--ink); }
 .acc-btn.on { background: var(--ink); color: #fff; font-weight: 600; box-shadow: var(--sh-sm); }
 .acc-btn.on :deep(.ico) { color: #fff; }
 .acc-note { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; }
-.open-dd { display: flex; flex-direction: column; gap: 3px; border: 1px solid var(--primary-soft); border-radius: 9px; padding: 5px; background: var(--primary-softer); }
-.dd-opt { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border: none; background: transparent; border-radius: 6px; font-size: 13px; text-align: left; }
+.open-dd { display: flex; flex-direction: column; gap: 3px; border: 1px solid var(--primary-soft); border-radius: 4px; padding: 5px; background: var(--primary-softer); }
+.dd-opt { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border: none; background: transparent; border-radius: 4px; font-size: 13px; text-align: left; }
 .dd-opt:hover { background: var(--surface); } .dd-opt.on { background: var(--surface); color: var(--primary-700); font-weight: 600; }
 .toggle { display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--ink-2); }
 .sw { width: 38px; height: 22px; border-radius: 999px; border: none; background: var(--border-strong); position: relative; transition: background .15s; }
 .sw i { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: var(--sh-sm); }
 .sw.on { background: var(--primary); } .sw.on i { left: 18px; }
-.add-line { display: inline-flex; align-items: center; gap: 6px; border: 1px dashed var(--border-strong); background: transparent; border-radius: 8px; padding: 8px 12px; font-size: 12.5px; font-weight: 500; color: var(--primary-700); }
+.add-line { display: inline-flex; align-items: center; gap: 6px; border: 1px dashed var(--border-strong); background: transparent; border-radius: 4px; padding: 8px 12px; font-size: 13px; font-weight: 500; color: var(--primary-700); }
 .add-line:hover { background: var(--primary-softer); }
 .sec-h .req { color: var(--red); font-style: normal; }
-.sql { font-family: 'Consolas', ui-monospace, monospace; font-size: 12.5px; line-height: 1.55; background: var(--surface-2); color: var(--ink); }
+/* the derived-title note under the editor — states what the note will be filed as, so
+   the missing Name field never reads as something that was forgotten */
+.note-name-hint { display: flex; align-items: flex-start; gap: 6px; margin-top: 10px; }
+.note-name-hint b { color: var(--ink-2); font-weight: 600; }
+.sql { font-family: 'Consolas', ui-monospace, monospace; font-size: 13px; line-height: 1.55; background: var(--surface-2); color: var(--ink); }
 .sql::placeholder { color: var(--muted-2); opacity: 1; }
 .pv-kpi .u { font-size: 28px; font-weight: 600; color: var(--muted); margin-left: 4px; }
 .spin { animation: bsp .7s linear infinite; } @keyframes bsp { to { transform: rotate(360deg); } }

@@ -4,16 +4,19 @@ import Icon from '../ui/Icon.vue'
 import ChartTile from './ChartTile.vue'
 import DataTable from './DataTable.vue'
 import FreeTextTile from './FreeTextTile.vue'
-import ShareWidgetModal from './ShareWidgetModal.vue'
+import EmailWidgetModal from './EmailWidgetModal.vue'
 import ScheduleDialog from './ScheduleDialog.vue'
 import TableFilterBar from './TableFilterBar.vue'
 import ConfirmDialog from '../ui/ConfirmDialog.vue'
+import TimeRangePopover, { rectOf } from './TimeRangePopover.vue'
 import { typesFor, isFrozen, frozenReason, whyDisabled } from '../../data/chartTypes.js'
 import { conditionFields, matchesConds } from '../../data/filters.js'
-import { QUICK, windowFor, relativeFor, stampFor } from '../../data/timeRanges.js'
+import { windowFor, relativeFor, stampFor } from '../../data/timeRanges.js'
 import { widgetBrief } from '../../data/aiEngine.js'
 import { store, toast } from '../../store/index.js'
-const props = defineProps({ tile: Object, edit: Boolean })
+// `group` is the group object this tile sits in, or null when it is out on the canvas.
+// It is what makes a group-level date filter inheritable — see the date block below.
+const props = defineProps({ tile: Object, edit: Boolean, group: { type: Object, default: null } })
 // Per-widget AI: HOVER the sparkle → a mini AI summary card of this widget with two
 // type-specific suggestive actions; clicking one opens the ServiceOps AI panel and
 // generates the contextual answer for that widget (via store.ui.aiAsk).
@@ -70,61 +73,95 @@ function pillClass(v) {
   return ''
 }
 
-/* Per-widget date override. A widget with its own `dateFilter` reads a different time
- * range than the dashboard's global filter; it shows an always-visible date chip beside
- * its title. Clicking the chip opens a small time-filter popover (the topbar's, shrunk)
- * to change this widget's range. */
-const hasDateFilter = computed(() => !!props.tile.dateFilter)
+/* ── Which clock this widget is on ────────────────────────────────────────────────
+ * Three levels, most specific first:
+ *   1. the widget's own `dateFilter`   — set from this calendar, or the builder's
+ *                                        "Restrict Date Overrides" switch
+ *   2. its GROUP's `dateFilter`        — set once in the group header, inherited by
+ *                                        every widget the group holds
+ *   3. the dashboard's global filter   — the default, and what "follow" returns to
+ *
+ * The calendar is an affordance on any widget that sits in a group (you can put it on
+ * its own clock, or read the one it inherited) and stays an INDICATOR everywhere else —
+ * on an ungrouped widget it appears only when that widget actually overrides, so a
+ * calendar out on the canvas still means "this one is different".
+ */
+/* A Free Text tile is a NOTE, and a note is not a widget: it has no data, no time range,
+ * no refresh, and nothing an AI could summarise. It drops the whole header band and
+ * wears a paper surface instead, so what marks it out on the board is that it looks
+ * hand-written rather than that a header says "Free Text". */
+const isNote = computed(() => props.tile.type === 'text')
+
+const groupRange = computed(() => props.group?.dateFilter || null)
+const ownRange = computed(() => props.tile.dateFilter || null)
+// what the widget actually reads. null = the dashboard's global filter.
+const effRange = computed(() => ownRange.value || groupRange.value)
+// 'own' | 'group' | 'none' — drives both the styling and what the tooltip can claim
+const dfSource = computed(() => (ownRange.value ? 'own' : groupRange.value ? 'group' : 'none'))
+// shown at all? always inside a group; only when overridden outside one
+// …but never on a note, which has no query for a range to filter
+const showDf = computed(() => !isNote.value && (!!props.group || !!ownRange.value))
+
 const dfChipEl = ref(null)
 const dfOpen = ref(false)
-const dfPos = ref({ top: 0, left: 0 })
-const dfHover = ref(false)
-// the SAME popover the topbar's global Time Filter uses — absolute From/To on the left,
-// searchable quick ranges on the right. Both read `QUICK` and `windowFor` from
-// data/timeRanges.js, so the two pickers can never offer different ranges or resolve the
-// same range to different windows.
-const dfSearch = ref('')
-const dfQuick = computed(() => {
-  const q = dfSearch.value.trim().toLowerCase()
-  return q ? QUICK.filter((x) => x.label.toLowerCase().includes(q)) : QUICK
-})
+const dfRect = ref(null)
 
-/* The calendar states HOW FAR BACK this widget looks — 'today', '3 hours ago',
- * '2 months ago' — rather than repeating the range's proper name. "Last 30 days" is a
- * label; "30 days ago" is the answer to the question the icon actually raises. The
- * tooltip then resolves it to real timestamps, which is the part a name can never carry. */
-const dfRelative = (range) => relativeFor(range)
-const dfTitle = computed(() => {
-  if (!hasDateFilter.value) return 'Set a time range for this widget'
-  const { start, end } = windowFor(props.tile.dateFilter)
-  return `${stampFor(start)} → ${stampFor(end)}\nClick to change this widget’s range`
+/* The icon stays a plain square and says nothing at rest. Hovering it opens an INSTANT
+ * tooltip carrying the range — its name if it is a quick range ("Last 30 days"), the
+ * dates themselves if it is a custom one — then the window it resolves to, then where
+ * it came from if the widget inherited it.
+ *
+ * It used to widen on hover to slide a relative phrase in beside the glyph. That moved
+ * every icon to its right at the moment the pointer arrived, so the control you were
+ * about to click walked away from the cursor. A tooltip says strictly more and moves
+ * nothing. */
+const dfTipOpen = ref(false)
+const dfTipPos = ref({ top: 0, left: 0 })
+const dfTip = computed(() => {
+  if (!effRange.value) return { name: 'No time range set', stamps: '', from: 'Click to put this widget on its own range' }
+  const { start, end } = windowFor(effRange.value)
+  return {
+    name: effRange.value,
+    stamps: `${stampFor(start)} → ${stampFor(end)}`,
+    from: dfSource.value === 'group'
+      ? `Inherited from the “${props.group.name}” group`
+      : 'This widget’s own range',
+  }
 })
-// custom absolute range — the left pane of the popover
-const dfFrom = ref('')
-const dfTo = ref('')
+const TIP_W = 260
+function showDfTip() {
+  const r = dfChipEl.value?.getBoundingClientRect(); if (!r) return
+  dfTipPos.value = {
+    top: r.bottom + 7,
+    left: Math.max(8, Math.min(r.left + r.width / 2 - TIP_W / 2, window.innerWidth - TIP_W - 8)),
+  }
+  dfTipOpen.value = true
+}
+// what the popover's escape row returns to: the group's range if there is one to fall
+// back to, otherwise the dashboard's
+const dfFollowLabel = computed(() => {
+  if (!ownRange.value) return null                       // nothing of its own to clear
+  return groupRange.value ? `Follow the “${props.group.name}” group filter` : 'Follow dashboard filter'
+})
+const dfNote = computed(() =>
+  dfSource.value === 'group' && !ownRange.value
+    ? `This widget currently follows the “${props.group.name}” group filter. Picking a range here puts this widget on its own clock.`
+    : '')
+
 function toggleDf() {
   if (dfOpen.value) { dfOpen.value = false; return }
-  const r = dfChipEl.value?.getBoundingClientRect(); if (!r) return
-  // the two-pane popover is 496px; clamp so it never runs off the right edge
-  const W = 496
-  dfPos.value = { top: r.bottom + 6, left: Math.max(8, Math.min(r.left, window.innerWidth - W - 8)) }
-  dfSearch.value = ''
+  if (!dfChipEl.value) return
+  dfRect.value = rectOf(dfChipEl.value)
   dfOpen.value = true
 }
 function pickDf(range) { props.tile.dateFilter = range; dfOpen.value = false; toast(`“${props.tile.title}” → ${range}`) }
-// "Follow dashboard filter" clears the override; the chip then disappears
-function clearDf() { props.tile.dateFilter = null; dfOpen.value = false; toast(`“${props.tile.title}” follows the dashboard filter`) }
-// apply an absolute From→To range as this widget's own filter
-function applyDfCustom() {
-  if (!dfFrom.value || !dfTo.value) { toast('Pick both a From and a To date', 'warn'); return }
-  const fmt = (s) => { const [Y, M, D] = s.split('T')[0].split('-'); return `${D}/${M}/${Y.slice(2)}` }
-  props.tile.dateFilter = `${fmt(dfFrom.value)} – ${fmt(dfTo.value)}`
+function clearDf() {
+  props.tile.dateFilter = null
   dfOpen.value = false
-  toast(`“${props.tile.title}” → custom range`)
+  toast(groupRange.value
+    ? `“${props.tile.title}” follows the “${props.group.name}” group filter`
+    : `“${props.tile.title}” follows the dashboard filter`)
 }
-function openDfPicker(el) { try { el?.showPicker?.() } catch (e) { el?.focus() } }
-const dfFromEl = ref(null)
-const dfToEl = ref(null)
 
 const loading = ref(false)
 const menu = ref(false)
@@ -194,7 +231,13 @@ function setKind(ct) {
   menu.value = false; typeOpen.value = false
   toast(`“${props.tile.title}” → ${ct.label}`)
 }
-const EXPORTS = ['PDF', 'PNG', 'SVG']   // the three the prototype offers
+/* Export has three destinations, and they are the same three the dashboard offers, so a
+ * widget and the board it sits on export the same way. Image and PDF download; Email as
+ * PDF sends that same PDF instead of saving it, which is why it opens a dialog. */
+const EXPORTS = [
+  { id: 'image', label: 'Image', icon: 'image' },
+  { id: 'pdf', label: 'PDF', icon: 'file-text' },
+]
 const searchOpen = ref(false)
 const tableSearch = ref('')
 /* The Shortcut filter bar is its own component (TableFilterBar): one field that both
@@ -268,29 +311,15 @@ const canEdit = computed(() => true)
 const canDelete = computed(() => !props.tile.seeded)
 
 // Empty-widget states: unconfigured vs error vs no-data vs ok (distinct copy each)
-/* Arrow direction is the MOVE; colour is whether that move is good news. They are not the
- * same question — Overdue Requests rising 14% is an up-arrow and bad, Unassigned falling
- * 6% is a down-arrow and good. The tile's own `status` already carries that judgement
- * (the AI engine reads it too), so colour follows status and only falls back to
- * "up is green" when a KPI has no status at all. */
-const deltaTone = computed(() => {
-  const s = props.tile.status
-  if (s === 'bad') return 'bad'
-  if (s === 'warn') return 'warn'
-  if (s === 'good') return 'good'
-  return props.tile.delta?.dir === 'down' ? 'bad' : 'good'
-})
-const deltaTitle = computed(() => {
-  const d = props.tile.delta
-  if (!d) return ''
-  return `${d.dir === 'down' ? 'Down' : 'Up'} ${d.pct}% versus the previous period`
-})
-
+/* `tile.delta` is still carried in the data and still read by the AI engine — only the
+ * on-tile ▲/▼ % badge is gone. Nothing here derives a tone from it any more. */
 const tileState = computed(() => {
   if (props.tile.state === 'error') return 'error'
   if (props.tile.state === 'unconfigured') return 'unconfigured'
   if (props.tile.type === 'kpi') return (props.tile.value == null || props.tile.value === '') ? 'nodata' : 'ok'
-  if (props.tile.type === 'text') return props.tile.content && props.tile.content.trim() ? 'ok' : 'nodata'
+  /* A note is never "no data in this range" — it has no range and no query. An empty one
+   * is an empty note, and FreeTextTile says so in its own words. */
+  if (props.tile.type === 'text') return 'ok'
   if (props.tile.type === 'chart') {
     // the additional PMG-ACT-01 kinds carry a chartSpec and compute their own data
     if (props.tile.chart?.spec) return 'ok'
@@ -307,12 +336,11 @@ const WS = {
 }
 function retry() { loading.value = true; setTimeout(() => { props.tile.state = undefined; loading.value = false }, 800) }
 
-function download(fmt) { menu.value = false; exportOpen.value = false; toast(`Exporting “${props.tile.title}” as ${fmt}`) }
+function exportAs(f) { menu.value = false; exportOpen.value = false; toast(`Exporting “${props.tile.title}” as ${f.id === 'pdf' ? 'PDF' : 'an image'}`) }
 function duplicate() { menu.value = false; emit('duplicate', props.tile) }
 // deleting a widget is destructive and one click away — confirm it by name
 const confirmDel = ref(false)
-const shareOpen = ref(false)
-const emailOpen = ref(false)      // Export ▸ Email as PDF — the same dialog, email mode
+const emailOpen = ref(false)      // Export ▸ Email as PDF
 const scheduleOpen = ref(false)   // recurring delivery of this one widget
 // a disabled schedule delivers nothing, so it does not light the badge
 const activeSchedules = computed(() => (props.tile.schedules || []).filter((s) => s.enabled))
@@ -330,7 +358,7 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
   <!-- `acting` holds the cluster open while a popover this header owns is up: the menu
        and the date popover are teleported, so moving the pointer into them drops :hover
        and the icons would collapse out from under the thing the user just opened. -->
-  <div ref="cardEl" class="tile card" :class="{ ['span-' + (tile.w || 3)]: true, ['rows-' + (tile.h || 1)]: true, searching: searchOpen, acting: menu || dfOpen || aiHover }">
+  <div ref="cardEl" class="tile card" :class="{ ['span-' + (tile.w || 3)]: true, ['rows-' + (tile.h || 1)]: true, searching: searchOpen, acting: menu || dfOpen || aiHover, note: isNote }">
     <!-- Standardized header: title + info (left) · refresh · fullscreen · edit · ⋯ (right).
          EVERY tile uses this. The click-to-select floating toolbar three tiles used to
          have is gone — one board should not have two different ways to reach the same
@@ -358,28 +386,28 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
         <!-- AI opens to the LEFT of the calendar -->
         <div class="lrev">
           <div class="r-in">
-            <button v-if="!tiny" ref="aiBtn" class="ti ai" :class="{ on: aiHover }" @mouseenter="openAiHover" @mouseleave="closeAiHoverSoon" @click.stop="openAiHover" title="AI summary of this widget"><Icon name="sparkles" :size="15" /></button>
+            <!-- a note has no data behind it, so there is nothing to summarise -->
+            <button v-if="!tiny && !isNote" ref="aiBtn" class="ti ai" :class="{ on: aiHover }" @mouseenter="openAiHover" @mouseleave="closeAiHoverSoon" @click.stop="openAiHover" title="AI summary of this widget"><Icon name="sparkles" :size="15" /></button>
           </div>
         </div>
-        <!-- The date icon is an INDICATOR, not a control every tile carries. It appears
-             only on a tile that actually overrides the dashboard's time filter, so the
-             board can be read at a glance: a calendar means "this one is on its own
-             clock". Rendering it everywhere made the exception invisible. -->
+        <!-- The date control. Inside a GROUP it is always there — every widget in a group
+             can be put on its own clock, and one that has not been shows the group's
+             range so you can see what it is reading. Out on the canvas it stays an
+             INDICATOR, appearing only on a widget that actually overrides, so a calendar
+             there still means "this one is different". -->
         <button
-          v-if="hasDateFilter" ref="dfChipEl" class="ti df-btn" :class="{ on: hasDateFilter || dfOpen }"
-          @click.stop="toggleDf" @mouseenter="dfHover = true" @mouseleave="dfHover = false"
-          :title="dfTitle"
+          v-if="showDf" ref="dfChipEl" class="ti df-btn" :class="[dfSource, { on: dfOpen || dfSource !== 'none' }]"
+          @click.stop="toggleDf" @mouseenter="showDfTip" @mouseleave="dfTipOpen = false"
         >
-          <Icon name="calendar" :size="15" />
-          <!-- the relative phrase rides in on hover; the tooltip carries the timestamps -->
-          <span v-if="hasDateFilter" class="dfb-lbl" :class="{ show: dfHover || dfOpen }">{{ dfRelative(tile.dateFilter) }}</span>
+          <Icon name="calendar" :size="13" />
         </button>
         <!-- and the records filter, Refresh and ⋯ open to its RIGHT -->
         <div class="right">
           <div class="r-in">
             <!-- one control: the filter icon reveals search + column filters; closing clears them -->
             <button v-if="tile.type === 'shortcut'" class="ti" :class="{ on: searchOpen || hasTableFilters }" @click="toggleFilter" title="Filter records"><Icon name="filter" :size="15" /></button>
-            <button v-if="!tiny" class="ti" @click="refresh" title="Refresh"><Icon name="refresh" :size="15" :class="{ spin: loading }" /></button>
+            <!-- nothing to re-fetch on a note either -->
+            <button v-if="!tiny && !isNote" class="ti" @click="refresh" title="Refresh"><Icon name="refresh" :size="15" :class="{ spin: loading }" /></button>
             <div class="mwrap">
               <button ref="menuBtn" class="ti" @click.stop="toggleMenu" title="More"><Icon name="dots-v" :size="15" /></button>
             </div>
@@ -388,39 +416,24 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
       </div>
     </header>
 
-    <!-- small time-filter popover for THIS widget's range (teleported past the card's overflow) -->
+    <!-- the date icon's instant tooltip: the range, the window it resolves to, and where
+         it came from. Teleported so the card's overflow cannot clip it. -->
     <teleport to="body">
-      <div v-if="dfOpen" class="backdrop" @click="dfOpen = false" />
-      <transition name="pop">
-        <!-- the topbar Time Filter's popover, verbatim: absolute range on the left,
-             searchable quick ranges on the right. One extra row this one needs and the
-             topbar does not — "Follow dashboard filter", the way back out of an override. -->
-        <div v-if="dfOpen" class="df-pop" :style="{ top: dfPos.top + 'px', left: dfPos.left + 'px' }" @click.stop>
-          <div class="df-abs">
-            <div class="df-h">Absolute time range</div>
-            <div class="df-fb">
-              <label>From</label>
-              <div class="df-dt"><input ref="dfFromEl" class="input" type="datetime-local" v-model="dfFrom" /><button class="df-cal" @click="openDfPicker(dfFromEl)" title="Pick date"><Icon name="calendar" :size="15" /></button></div>
-            </div>
-            <div class="df-fb">
-              <label>To</label>
-              <div class="df-dt"><input ref="dfToEl" class="input" type="datetime-local" v-model="dfTo" /><button class="df-cal" @click="openDfPicker(dfToEl)" title="Pick date"><Icon name="calendar" :size="15" /></button></div>
-            </div>
-            <button class="btn btn-primary df-apply" @click="applyDfCustom"><Icon name="check" :size="15" /> Apply time range</button>
-            <button class="df-follow" @click="clearDf"><Icon name="x" :size="13" /> Follow dashboard filter</button>
-          </div>
-          <div class="df-quick">
-            <div class="df-qs"><Icon name="search" :size="14" class="muted" /><input v-model="dfSearch" placeholder="Search quick ranges" /></div>
-            <div class="df-ql">
-              <button v-for="q in dfQuick" :key="q.k" class="df-qi" :class="{ on: tile.dateFilter === q.label }" @click="pickDf(q.label)">
-                {{ q.label }} <Icon v-if="tile.dateFilter === q.label" name="check" :size="14" />
-              </button>
-              <div v-if="!dfQuick.length" class="df-qn">No matching ranges</div>
-            </div>
-          </div>
-        </div>
+      <transition name="fade">
+        <span v-if="dfTipOpen && !dfOpen" class="tt df-tt" :style="{ top: dfTipPos.top + 'px', left: dfTipPos.left + 'px' }">
+          <b class="dft-name">{{ dfTip.name }}</b>
+          <span v-if="dfTip.stamps" class="dft-stamps">{{ dfTip.stamps }}</span>
+          <span class="dft-from">{{ dfTip.from }}</span>
+        </span>
       </transition>
     </teleport>
+
+    <!-- the shared two-pane picker, the same one the topbar and a group header open -->
+    <TimeRangePopover
+      v-if="dfOpen" :value="effRange" :rect="dfRect"
+      :follow-label="dfFollowLabel" :note="dfNote"
+      @pick="pickDf" @clear="clearDf" @close="dfOpen = false"
+    />
 
     <!-- per-widget AI: hover mini-summary card, teleported so it overlays the board -->
     <teleport to="body">
@@ -517,14 +530,13 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
           </div>
           <button class="menu-item" @click="menu = false; present = true"><Icon name="maximize-tile" :size="15" /> Full screen</button>
           <button class="menu-item" @click="duplicate"><Icon name="copy" :size="15" /> Duplicate</button>
-          <!-- divider between the widget's own actions and the share / export group -->
+          <!-- divider between the widget's own actions and the export group -->
           <div class="menu-sep" />
-          <button class="menu-item" @click="menu = false; shareOpen = true"><Icon name="share" :size="15" /> Share widget</button>
-          <!-- Export → submenu (PDF / PNG / SVG) -->
+          <!-- Export → submenu (Image / PDF / Email as PDF) -->
           <div class="menu-item sub" @mouseenter="exportOpen = true; typeOpen = false" @mouseleave="exportOpen = false">
-            <span class="mi-l"><Icon name="download" :size="15" /> Export</span><Icon name="chevron-right" :size="14" class="mi-c" />
+            <span class="mi-l"><Icon name="export" :size="15" /> Export</span><Icon name="chevron-right" :size="14" class="mi-c" />
             <transition name="pop"><div v-if="exportOpen" class="submenu ex">
-              <button v-for="f in EXPORTS" :key="f" class="menu-item" @click="download(f)">{{ f }}</button>
+              <button v-for="f in EXPORTS" :key="f.id" class="menu-item" @click="exportAs(f)"><Icon :name="f.icon" :size="15" /> {{ f.label }}</button>
               <!-- Emailing is an export too — it produces the same PDF, it just leaves by
                    a different door. Ruled off because it opens a dialog rather than
                    downloading on the spot. -->
@@ -559,12 +571,11 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 
       <template v-else-if="tile.type === 'kpi'">
         <div class="kpi">
-          <!-- The trend rides beside the number, not under it: a KPI's period-on-period
-               move is the second half of the same sentence ("128, and rising"), and it
-               already existed in the data — the tile just never showed it. -->
-          <div class="kpinum">{{ tile.value }}<span v-if="tile.unit" class="unit">{{ tile.unit }}</span><span
-            v-if="tile.delta" class="kpidelta" :class="deltaTone" :title="deltaTitle"
-          >{{ tile.delta.dir === 'down' ? '▼' : '▲' }}{{ tile.delta.pct }}%</span></div>
+          <!-- The number alone. The ▲/▼ % against "the previous period" was withdrawn:
+               the period it compared to was never stated on the tile, and an arrow whose
+               baseline you cannot see is a claim the widget can't back up. The AI panel
+               still reports the same movement in prose, where it can name the window. -->
+          <div class="kpinum">{{ tile.value }}<span v-if="tile.unit" class="unit">{{ tile.unit }}</span></div>
         </div>
       </template>
 
@@ -603,10 +614,9 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
       </template>
     </div>
 
-    <!-- Share widget: preview + screenshot-style markup + recipients -->
+    <!-- Email as PDF: preview + screenshot-style markup + recipients -->
     <teleport to="body">
-      <ShareWidgetModal v-if="shareOpen" :tile="tile" @close="shareOpen = false" />
-      <ShareWidgetModal v-if="emailOpen" :tile="tile" mode="email" @close="emailOpen = false" />
+      <EmailWidgetModal v-if="emailOpen" :tile="tile" @close="emailOpen = false" />
       <ScheduleDialog v-if="scheduleOpen" :d="tile" @close="scheduleOpen = false" />
 
       <ConfirmDialog
@@ -627,7 +637,7 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
           <div class="phead"><b>{{ tile.title }}</b><button class="btn btn-icon" @click="present = false"><Icon name="x" :size="18" /></button></div>
           <div class="pbody">
             <ChartTile v-if="tile.type === 'chart'" :chart="tile.chart" :legend="showLegend" :data-labels="tile.dataLabels === true" :height="620" />
-            <div v-else-if="tile.type === 'kpi'" class="kpi big"><div class="kpinum">{{ tile.value }}<span class="unit">{{ tile.unit }}</span><span v-if="tile.delta" class="kpidelta" :class="deltaTone">{{ tile.delta.dir === 'down' ? '▼' : '▲' }}{{ tile.delta.pct }}%</span></div></div>
+            <div v-else-if="tile.type === 'kpi'" class="kpi big"><div class="kpinum">{{ tile.value }}<span class="unit">{{ tile.unit }}</span></div></div>
             <FreeTextTile v-else-if="tile.type === 'text'" :content="tile.content" />
             <div v-else class="stbl big">
               <!-- full screen: the same bar, always available (there is no header icon to
@@ -658,13 +668,51 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 /* Fill the grid cell (which sizes the footprint via min-height) so the body — and a
    fill-height chart inside it — get a real height to distribute. Without this the tile
    collapses to its header once the chart stops carrying a fixed pixel height. */
-/* 8px, not the --r-lg 14 the generic .card ships — a 14px arc on a tile this small eats
-   into the header band and reads as a bubble rather than a panel */
-.tile { display: flex; flex-direction: column; overflow: hidden; min-height: 130px; flex: 1; border-radius: 8px; }
+/* §9.1 — a widget tile IS a content card, so it takes the surface radius, not the
+   control one. */
+.tile { display: flex; flex-direction: column; overflow: hidden; min-height: 130px; flex: 1; border-radius: var(--r-lg); }
+
+/* ── A note ────────────────────────────────────────────────────────────────────────
+   The one tile with no header. Everything a widget header carries — a title, a data
+   source, a refresh, a time range — is something a note does not have, so the band was
+   a frame around an empty statement. What is left is the writing on a warm surface,
+   which is the whole affordance: you can tell at a glance which tiles a person wrote
+   and which ones the system computed, with nothing having to say so.
+
+   The actions do not disappear, they just stop occupying a permanent band: the header
+   is overlaid on the note's top-right and fades in on hover, the way it works in every
+   notes app. */
+/* the overlaid header is absolute, so the card has to be its containing block */
+.tile.note { position: relative; background: var(--note-bg); border-color: var(--note-line); }
+.tile.note .thead {
+  position: absolute; top: 0; right: 0; left: 0; height: 30px; z-index: 3;
+  background: transparent; padding: 5px 5px 0 0;
+  opacity: 0; transition: opacity .15s ease; pointer-events: none;
+}
+.tile.note:hover .thead, .tile.note.acting .thead { opacity: 1; }
+/* only the controls take the pointer — the strip itself must not sit over the text */
+.tile.note .thead .ractions, .tile.note .thead .draghandle { pointer-events: auto; }
+/* no title, no info, no provenance: a note is read, not identified */
+.tile.note .title, .tile.note .info { display: none; }
+.tile.note .left { position: static; }
+.tile.note .draghandle { left: 7px; top: 7px; transform: none; }
+/* the ⋯ floats over the paper, so it needs a surface behind it — the note's own, not
+   the white every other tile's header sits on */
+.tile.note .mwrap .ti { width: 24px; height: 24px; background: var(--note-bg); border: 1px solid var(--note-line); }
+.tile.note .mwrap .ti:hover { background: var(--surface-2); }
+.tile.note .ti:hover { background: var(--surface-2); }
+/* The strip's height is RESERVED in the body's top padding rather than overlaid on the
+   writing. Floating the controls over the text would put the drag grip through the
+   first letter of the first line, and padding the body only on hover would shift every
+   line down the moment the pointer arrived. Reserved space costs 30px of blank paper at
+   the top of a note, which is what a note's margin looks like anyway. */
+.tile.note .tbody { padding: 30px 18px 16px; }
 /* the title + action row sits in its own slight-neutral band, with room to breathe */
 /* --bg (#F6F9FC) at 37px tall — shorter than the old 46px, and lighter than the solid
    --surface-2 band that competed with the chart under it. */
-.thead { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 8px 4px 12px; background: var(--bg); border-bottom: 1px solid var(--border); }
+/* No rule under the header. The band's own background already separates it from the
+   body, so the line was a second divider drawing the same boundary. */
+.thead { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 8px 4px 12px; background: var(--bg); }
 .left { position: relative; display: flex; align-items: center; gap: 6px; min-width: 0; }
 /* 6-dot drag handle — OUT OF FLOW, drawn on top of the title's first characters, so the
    title never moves between rest and hover. The title is masked from under the grip
@@ -677,53 +725,13 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 .pinbadge { display: inline-grid; place-items: center; color: var(--primary); flex: none; transform: rotate(35deg); }
 .title { font-weight: 600; font-size: var(--tile-title, 13.5px); }
 
-/* ── Per-widget date override — a date pill beside the title, click to change ──────
-   Uses the indigo "time" hue (--df), distinct from primary blue, status colours and
-   the AI gradient. */
-.df-chip {
-  display: inline-flex; align-items: center; gap: 4px; flex: none;
-  height: 20px; padding: 0 7px 0 8px; border-radius: 999px; border: 1px solid var(--df-line);
-  background: var(--df-soft); color: var(--df-ink);
-  font-size: 10.5px; font-weight: 600; white-space: nowrap; cursor: pointer;
-}
-.df-chip :deep(.ico) { color: var(--df); }
-.df-chip:hover, .df-chip.on { background: var(--df); border-color: var(--df); color: #fff; }
-.df-chip:hover :deep(.ico), .df-chip.on :deep(.ico) { color: #fff; }
-/* the topbar Time Filter's two-pane popover, teleported so the card can't clip it.
-   Kept in step with components/dashboard/TimeFilter.vue — same 264/232 split. */
-.df-pop {
-  position: fixed; z-index: 160; display: grid; grid-template-columns: 264px 232px;
-  background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--sh-pop); overflow: hidden;
-}
-.df-abs { padding: 16px; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-.df-h { font-weight: 600; font-size: 13px; margin-bottom: 12px; }
-.df-fb { display: flex; flex-direction: column; margin-bottom: 12px; }
-.df-fb label { font-size: 12px; font-weight: 500; color: var(--ink-2); margin-bottom: 5px; }
-.df-apply { width: 100%; margin-top: 4px; }
-/* the one row the topbar has no need for: the way back to the dashboard's own filter */
-.df-follow { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px; padding: 7px; border: none; background: transparent; color: var(--muted); border-radius: 8px; font-size: 12px; }
-.df-follow:hover { background: var(--surface-2); color: var(--ink); }
-.df-quick { padding: 12px 10px; display: flex; flex-direction: column; min-height: 0; }
-.df-qs { display: flex; align-items: center; gap: 7px; border: 1px solid var(--border-strong); border-radius: 8px; padding: 0 9px; height: 34px; margin-bottom: 8px; }
-.df-qs input { border: none; outline: none; background: transparent; width: 100%; font-size: 12.5px; }
-.df-ql { display: flex; flex-direction: column; gap: 1px; overflow: auto; max-height: 300px; }
-.df-qi { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border: none; background: transparent; border-radius: 7px; font-size: 13px; color: var(--ink-2); text-align: left; }
-.df-qi:hover { background: var(--surface-2); }
-.df-qi.on { background: var(--primary-soft); color: var(--primary-700); font-weight: 600; }
-.df-qn { padding: 14px 10px; color: var(--muted-2); font-size: 12px; }
-/* absolute From/To inputs — same treatment as the topbar's */
-.df-dt { position: relative; }
-.df-dt .input { height: 36px; font-size: 12.5px; padding-right: 36px; width: 100%; }
-.df-dt .input::-webkit-calendar-picker-indicator { opacity: 0; }
-.df-cal { position: absolute; right: 4px; top: 4px; width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: 7px; display: grid; place-items: center; }
-.df-cal:hover { background: var(--surface-2); color: var(--ink); }
 /* info-icon tooltip: the DESCRIPTION leads, provenance sits under it as a left-aligned pill */
 .tt-desc { font-weight: 400; color: rgba(255,255,255,.88); line-height: 1.45; }
-.tt-tag { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px; font-size: 10.5px; font-weight: 600; letter-spacing: .2px; background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.2); color: #fff; }
+.tt-tag { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: .2px; background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.2); color: #fff; }
 .tt-tag.predefined { background: rgba(139,92,246,.3); border-color: rgba(139,92,246,.55); color: #ded3ff; }
 .tt-tag.shared { background: rgba(76,177,254,.26); border-color: rgba(76,177,254,.5); color: #cfe8ff; }
 /* the schedule badge is always on — it reports a fact, it is not a hover action */
-.sch-mark { flex: none; width: 20px; height: 20px; border: none; background: transparent; color: var(--green); border-radius: 5px; display: grid; place-items: center; }
+.sch-mark { flex: none; width: 20px; height: 20px; border: none; background: transparent; color: var(--green); border-radius: 4px; display: grid; place-items: center; }
 .sch-mark:hover { background: var(--green-soft); }
 .info { position: relative; color: var(--muted-2); display: inline-grid; place-items: center; cursor: help; opacity: 0; transition: opacity .14s; }
 .tile:hover .info, .tile.acting .info { opacity: 1; }
@@ -741,24 +749,38 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 .r-in { display: flex; align-items: center; gap: 1px; min-width: 0; overflow: hidden; }
 .tile:hover .right, .tile.searching .right, .tile.acting .right,
 .tile:hover .lrev, .tile.searching .lrev, .tile.acting .lrev { grid-template-columns: 1fr; opacity: 1; }
-/* the persistent per-widget time range — auto-width so the hover label fits.
-   `.ti` further down sets a fixed 28px `display: grid` box, so this has to beat it on
-   SPECIFICITY (.ti.df-btn), not source order: as a plain `.df-btn` the icon and label
-   became two grid ROWS — the label rendering under the icon — and the width stayed 28px
-   so the label spilled out to the left. Invisible to the build; only shows on screen. */
-.ti.df-btn { width: auto; min-width: 28px; padding: 0 6px; gap: 0; display: inline-flex; align-items: center; }
+/* The per-widget time range, deliberately SMALLER than the actions around it (22px to
+   their 28px). It is the one control that sits in the header at rest, and it reports a
+   state rather than doing something — sizing it down lets it stay legible without
+   competing with the title for the eye.
+   The header's height is unaffected: that comes from the 28px action buttons, which are
+   present at rest and only collapse their WIDTH on hover-out. */
+.ti.df-btn { width: 22px; height: 22px; }
 .ti.df-btn :deep(.ico) { color: var(--df); flex: none; }
 .ti.df-btn.on { background: var(--df-soft); color: var(--df-ink); }
 .ti.df-btn.on :deep(.ico) { color: var(--df); }
-/* the relative phrase ('7 days ago') opens on hover and closes with the same easing as
-   the cluster, so the header settles as one movement instead of two competing ones */
-.dfb-lbl { font-size: 11px; font-weight: 600; white-space: nowrap; max-width: 0; margin-left: 0; opacity: 0; overflow: hidden; transition: max-width .24s cubic-bezier(.2,.7,.3,1), margin-left .24s cubic-bezier(.2,.7,.3,1), opacity .16s ease; }
-.dfb-lbl.show { max-width: 110px; margin-left: 4px; opacity: 1; }
+/* Three states, and the difference between them has to be legible at a glance:
+   .own    — this widget set its own range: filled, the strongest of the three
+   .group  — it is reading the group's range: outlined, present but clearly borrowed
+   .none   — nothing set yet: a plain grey action like Refresh beside it, because an
+             indigo icon on a widget with no override would claim one it doesn't have */
+.ti.df-btn.own { background: var(--df-soft); color: var(--df-ink); }
+.ti.df-btn.group { background: transparent; color: var(--df-ink); box-shadow: inset 0 0 0 1px var(--df-line); }
+.ti.df-btn.group:hover { background: var(--df-soft); }
+.ti.df-btn.none { color: var(--muted); }
+.ti.df-btn.none :deep(.ico) { color: var(--muted); }
+.ti.df-btn.none:hover { background: var(--surface); color: var(--ink); }
+.ti.df-btn.none:hover :deep(.ico) { color: var(--ink); }
+/* the date icon's tooltip — range name, resolved window, then its source */
+.df-tt { position: fixed; z-index: 200; width: 260px; display: flex; flex-direction: column; gap: 4px; }
+.dft-name { color: #fff; font-weight: 600; }
+.dft-stamps { color: rgba(255,255,255,.9); font-variant-numeric: tabular-nums; }
+.dft-from { color: #b9bcd6; font-size: 11px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .right, .dfb-lbl { transition: none; }
+  .right, .lrev { transition: none; }
 }
-.ti { width: 28px; height: 28px; border-radius: 7px; border: none; background: transparent; color: var(--muted); display: grid; place-items: center; }
+.ti { width: 28px; height: 28px; border-radius: 4px; border: none; background: transparent; color: var(--muted); display: grid; place-items: center; }
 /* hover uses the card surface (white) so it reads against the neutral header band */
 .ti:hover { background: var(--surface); color: var(--ink); }
 .ti.on { background: var(--primary-soft); color: var(--primary-700); }
@@ -768,13 +790,13 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 .ti.ai { color: var(--ai); background: var(--ai-softer); }
 .ti.ai:hover, .ti.ai.on { background: var(--ai-soft); color: var(--ai-ink); }
 /* per-widget hover mini-summary card */
-.wai-card { position: fixed; z-index: 260; width: 384px; max-width: 92vw; padding: 12px 13px; border: 1px solid var(--ai-border); border-radius: var(--r); background: var(--surface); box-shadow: var(--sh-lg); }
+.wai-card { position: fixed; z-index: 260; width: 384px; max-width: 92vw; padding: 12px 13px; border: 1px solid var(--ai-border); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--sh-lg); }
 .wai-card.up { transform: translateY(-100%); }
 .wai-h { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--ink); }
 .wai-h .ellip { color: var(--ai-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.wai-spark { width: 22px; height: 22px; border-radius: 6px; flex: none; display: grid; place-items: center; background: var(--ai-softer); }
-.wai-spark :deep(.ico) { background: var(--ai-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
-.wai-sum { margin: 10px 0 12px; font-size: 12.5px; line-height: 1.55; color: var(--ink-2); }
+.wai-spark { width: 22px; height: 22px; border-radius: 4px; flex: none; display: grid; place-items: center; background: var(--ai-softer); }
+.wai-spark :deep(.ico) { stroke: url(#ai-grad); color: var(--ai); }
+.wai-sum { margin: 10px 0 12px; font-size: 13px; line-height: 1.55; color: var(--ink-2); }
 /* two actions, side by side */
 .wai-acts { display: flex; flex-direction: row; gap: 6px; }
 /* same rounded-pill treatment as the AI Summary card's CTAs */
@@ -804,7 +826,7 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 .menu-item.sub { justify-content: space-between; position: relative; }
 .mi-l { display: flex; align-items: center; gap: 10px; }
 .mi-c { color: var(--muted); }
-.submenu { position: absolute; top: -7px; right: 100%; min-width: 124px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--sh-pop); padding: 6px; }
+.submenu { position: absolute; top: -7px; right: 100%; min-width: 124px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-pop); padding: 6px; }
 /* near the left edge there is no room to fly out leftwards — go right instead */
 .tile-menu.sub-right .submenu { right: auto; left: 100%; }
 /* chart-type submenu: 8 items, current one checked, incompatible ones greyed */
@@ -821,23 +843,19 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 .loading { flex: 1; display: flex; flex-direction: column; justify-content: center; }
 /* empty-widget states */
 .wstate { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 5px; color: var(--muted); padding: 14px; }
-.wstate b { color: var(--ink-2); font-size: 13.5px; font-weight: 600; }
+.wstate b { color: var(--ink-2); font-size: 13px; font-weight: 600; }
 .ws-sub { font-size: 12px; max-width: 230px; line-height: 1.45; }
-.ws-ico { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); margin-bottom: 3px; }
+.ws-ico { width: 44px; height: 44px; border-radius: 4px; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); margin-bottom: 3px; }
 .wstate.err .ws-ico { background: var(--red-soft); color: var(--red); }
 .wstate .btn { margin-top: 9px; }
 /* full-area hover: the whole numeric region (below the title) fills on hover,
    with generous padding so the highlight surrounds the number on every side */
-.kpi { display: flex; flex-direction: column; justify-content: center; align-items: center; flex: 1; text-align: center; padding: 18px 16px; border-radius: 12px; background: transparent; transition: background .15s; }
-.tile:hover .kpi { background: var(--surface-2); }
+/* No hover fill behind the number. Hovering a KPI does nothing — the fill implied a
+   click target that was never there, and it moved the one figure the tile exists to
+   show onto a second background for no reason. */
+.kpi { display: flex; flex-direction: column; justify-content: center; align-items: center; flex: 1; text-align: center; padding: 18px 16px; }
 .kpinum { font-size: 46px; font-weight: 500; letter-spacing: -1px; line-height: 1; }
 .kpinum .unit { font-size: 20px; font-weight: 600; color: var(--muted); margin-left: 3px; }
-/* the delta is a footnote to the number, not a second number — a quarter of the size,
-   sitting on the same baseline so the pair reads as one figure */
-.kpinum .kpidelta { font-size: 14px; font-weight: 600; letter-spacing: 0; margin-left: 10px; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.kpidelta.good { color: var(--green); }
-.kpidelta.warn { color: var(--amber); }
-.kpidelta.bad { color: var(--red); }
 .stbl { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .stbl-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 /* the whole bar is ONE field: chips and the picker live inside the box, so it reads as a
@@ -848,14 +866,14 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 .stbl-bar .ti-fm :deep(.fm-btn) { width: 26px; height: 26px; border: none; background: transparent; }
 .stbl-bar .ti-fm :deep(.fm-btn:hover) { background: var(--surface-2); }
 /* an active filter, as the design states it: Field is Value */
-.fchip { display: inline-flex; align-items: center; gap: 4px; flex: none; max-width: 190px; height: 22px; padding: 0 4px 0 8px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--border); font-size: 11.5px; color: var(--ink-2); white-space: nowrap; }
+.fchip { display: inline-flex; align-items: center; gap: 4px; flex: none; max-width: 190px; height: 22px; padding: 0 4px 0 8px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--border); font-size: 12px; color: var(--ink-2); white-space: nowrap; }
 .fchip b { font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; }
 .fchip em { font-style: normal; color: var(--muted); }
 .fchip button { flex: none; width: 15px; height: 15px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .fchip button:hover { background: var(--border); color: var(--ink); }
-.sbox { display: flex; align-items: center; gap: 7px; width: 100%; height: 30px; border: 1px solid var(--border-strong); border-radius: 8px; padding: 0 8px; background: var(--surface); }
+.sbox { display: flex; align-items: center; gap: 7px; width: 100%; height: 30px; border: 1px solid var(--border-strong); border-radius: 4px; padding: 0 8px; background: var(--surface); }
 .sbox:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
-.sbox input { border: none; outline: none; background: transparent; width: 100%; font-size: 12.5px; }
+.sbox input { border: none; outline: none; background: transparent; width: 100%; font-size: 13px; }
 .sx { border: none; background: transparent; color: var(--muted); cursor: pointer; display: grid; place-items: center; padding: 0; }
 .sx:hover { color: var(--ink); }
 .stbl-scroll { flex: 1; overflow: auto; min-height: 0; max-height: 200px; }
@@ -863,9 +881,11 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 .stbl-scroll:has(.fltr) { max-height: 236px; }
 /* table/th/td/.nodata chrome lives in DataTable.vue — scoped CSS cannot reach
    a child component's internals. Only the root <table> is styleable from here. */
-table { font-size: 12.5px; }
+table { font-size: 13px; }
 /* soft status / priority pills in shortcut tables */
-.pill { display: inline-flex; align-items: center; height: 20px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: .2px; white-space: nowrap; }
+/* §7.3 status badge — 2px, NOT a pill. The square-ish corner is what separates a
+   state badge from a control; rounded-full here would read as a clickable chip. */
+.pill { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: var(--r-sm); font-size: 11px; font-weight: 500; white-space: nowrap; }
 .pill-blue { background: var(--blue-soft); color: var(--blue); }
 .pill-amber { background: var(--amber-soft); color: var(--amber); }
 .pill-green { background: var(--green-soft); color: var(--green); }
@@ -887,7 +907,6 @@ table { font-size: 12.5px; }
 .pbody { padding: 32px 40px; flex: 1; min-height: 62vh; display: grid; place-items: center; overflow: auto; }
 .pbody > * { width: 100%; }
 .kpi.big { padding: 0; } .kpi.big .kpinum { font-size: 150px; } .kpi.big .kpinum .unit { font-size: 48px; }
-.kpi.big .kpinum .kpidelta { font-size: 34px; margin-left: 22px; }
 .stbl.big { align-self: stretch; width: 100%; } .stbl.big table { font-size: 15px; }
 /* full screen: the record list scrolls within the dialog (sticky header) instead of
    a "View all" jump; taller than the tile so more rows show at once. */

@@ -103,13 +103,13 @@ function pickSub(m, sub) {
 /* retint the whole rail: remap the neutral tokens so every child follows, then paint it */
 .rail { --surface: var(--sidebar); --surface-2: var(--sidebar-hover); --border: var(--sidebar-border); background: var(--sidebar); border-right: 1px solid var(--sidebar-border); display: flex; flex-direction: column; padding: 8px; gap: 3px; width: 56px; transition: width .16s ease; overflow: hidden; }
 .rail.expanded { width: 208px; }
-.rail-toggle { display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 10px; border: none; background: transparent; color: var(--muted); border-radius: 9px; margin-bottom: 4px; white-space: nowrap; }
+.rail-toggle { display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 10px; border: none; background: transparent; color: var(--muted); border-radius: 4px; margin-bottom: 4px; white-space: nowrap; }
 .rail:not(.expanded) .rail-toggle { justify-content: center; padding: 0; }
 .rail-toggle:hover { background: var(--surface-2); color: var(--ink); }
 .rt-label { font-size: 12px; font-weight: 600; letter-spacing: .02em; color: var(--muted); }
 .mods { display: flex; flex-direction: column; gap: 2px; overflow-y: auto; overflow-x: hidden; flex: 1; }
 .mods::-webkit-scrollbar { width: 5px; } .mods::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
-.mod { position: relative; display: flex; align-items: center; gap: 11px; height: 40px; padding: 0 8px; border: none; background: transparent; color: var(--ink-2); border-radius: 10px; width: 100%; white-space: nowrap; }
+.mod { position: relative; display: flex; align-items: center; gap: 11px; height: 40px; padding: 0 8px; border: none; background: transparent; color: var(--ink-2); border-radius: 4px; width: 100%; white-space: nowrap; }
 .rail:not(.expanded) .mod { justify-content: center; padding: 0; }
 .mod:hover { background: var(--surface-2); color: var(--ink); }
 .mod.active { background: var(--primary-soft); color: var(--primary-700); }
@@ -120,12 +120,12 @@ function pickSub(m, sub) {
 .mod.ai { margin-top: 4px; color: var(--primary); }
 .mod.ai:hover { background: var(--primary-soft); color: var(--primary-700); }
 .mod.ai.active { background: var(--primary); color: #fff; }
-.tip { position: absolute; left: 46px; top: 50%; transform: translateY(-50%); white-space: nowrap; background: #20223a; color: #fff; font-size: 12px; font-weight: 500; padding: 5px 9px; border-radius: 7px; box-shadow: var(--sh-pop); z-index: 90; }
+.tip { position: absolute; left: 46px; top: 50%; transform: translateY(-50%); white-space: nowrap; background: #20223a; color: #fff; font-size: 12px; font-weight: 500; padding: 5px 9px; border-radius: 4px; box-shadow: var(--sh-pop); z-index: 90; }
 /* submodule flyout */
-.fly { position: fixed; z-index: 120; width: 250px; max-height: 78vh; overflow: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 11px; box-shadow: var(--sh-pop); padding: 7px; }
+.fly { position: fixed; z-index: 120; width: 250px; max-height: 78vh; overflow: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; box-shadow: var(--sh-pop); padding: 7px; }
 .fly-h { font-size: 13px; font-weight: 700; color: var(--ink); padding: 5px 8px 7px; }
 .fly-g { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted-2); padding: 8px 8px 4px; }
-.fly-i { display: flex; align-items: center; gap: 9px; width: 100%; border: none; background: transparent; padding: 7px 8px; border-radius: 8px; color: var(--ink-2); text-align: left; }
+.fly-i { display: flex; align-items: center; gap: 9px; width: 100%; border: none; background: transparent; padding: 7px 8px; border-radius: 4px; color: var(--ink-2); text-align: left; }
 .fly-i:hover { background: var(--surface-2); color: var(--ink); }
 .fly-ii { color: var(--muted-2); flex: none; }
 .fly-t { flex: 1; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

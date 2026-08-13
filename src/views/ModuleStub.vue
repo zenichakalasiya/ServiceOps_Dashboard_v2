@@ -42,13 +42,13 @@ const selected = computed(() => (mod.value.kind === 'views' ? store.ui.activeVie
 <style scoped>
 .stub { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 .sh { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--surface); }
-.sh-toggle { width: 34px; height: 34px; border: 1px solid var(--border); background: var(--surface); color: var(--ink-2); border-radius: 9px; display: grid; place-items: center; }
+.sh-toggle { width: 34px; height: 34px; border: 1px solid var(--border); background: var(--surface); color: var(--ink-2); border-radius: 4px; display: grid; place-items: center; }
 .sh-toggle:hover { background: var(--surface-2); color: var(--ink); border-color: var(--border-strong); }
 .sh h1 { margin: 0; font-size: 18px; font-weight: 600; }
 .sh-view { font-size: 14px; color: var(--muted); }
 .sh-view::before { content: '·'; margin-right: 10px; color: var(--muted-2); }
 .sh-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 40px; color: var(--muted); }
-.sh-orb { width: 64px; height: 64px; border-radius: 18px; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); }
+.sh-orb { width: 64px; height: 64px; border-radius: 4px; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); }
 .sh-body h2 { margin: 4px 0 0; font-size: 20px; color: var(--ink); font-weight: 600; }
 .sh-body p { margin: 0; max-width: 52ch; font-size: 14px; line-height: 1.6; }
 </style>
