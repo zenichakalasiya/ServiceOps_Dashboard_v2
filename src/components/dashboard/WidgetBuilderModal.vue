@@ -36,7 +36,7 @@ const TYPES = [
   { id: 'funnel', label: 'Funnel', icon: 'chart-funnel', type: 'chart', kind: 'funnel' },
   { id: 'heatmap', label: 'Heatmap', icon: 'chart-heatmap', type: 'chart', kind: 'heatmap' },
   { id: 'gauge', label: 'Gauge', icon: 'chart-gauge', type: 'chart', kind: 'gauge' },
-  { id: 'mapbubble', label: 'Map Bubble', icon: 'chart-map', type: 'chart', kind: 'mapbubble' },
+  // Map Bubble withdrawn — see AddWidgetModal. Renderer retained for existing tiles.
   { id: 'kpi', label: 'KPI', icon: 'kpi', type: 'kpi', kind: null },
   { id: 'shortcut', label: 'Shortcut', icon: 'table', type: 'shortcut', kind: null },
   { id: 'text', label: 'Free Text', icon: 'chart-text', type: 'text', kind: null },
@@ -166,7 +166,8 @@ function initCfg() {
     excludeZero: false, sqlQuery: ex?.sql || '',
     access: ex?.access || 'public',   // Public / Private / Restricted — as a dashboard has
     // display properties, saved on the widget. undefined = on / off respectively.
-    legend: ex?.legend !== false,
+    // always on — the toggle is gone; a legend is what names the slices
+    legend: true,
     dataLabels: ex?.dataLabels === true,
     donut: ex?.chart?.donut !== false,   // Pie/Donut split — ring by default (§4 pie)
     // ── PMG-ACT-01 additional-kind config (prefilled from the tile's saved spec) ──
@@ -224,6 +225,11 @@ const chartSpec = computed(() => {
 })
 // heatmap and gauge carry no legend / Top-N — their Display section is suppressed
 const noDisplay = computed(() => ['heatmap', 'gauge', 'mapbubble'].includes(curType.value.kind))
+/* Which kinds actually HAVE a legend to manage. A histogram is one bar per bucket and a
+ * gauge is a single needle — there is no set of named entries to rank, so offering them a
+ * rank window would be offering a control that does nothing. */
+const LEGEND_KINDS = ['line', 'bar', 'hbar', 'pie', 'donut', 'stack', 'multiline', 'combo', 'funnel']
+const hasLegend = computed(() => LEGEND_KINDS.includes(curType.value.kind))
 const rankN = computed({
   get: () => cfg.rankN,
   // keep it a number and never let it reach 0 — a chart of nothing is not a view
@@ -500,7 +506,7 @@ function save(place) {
                        and at 14 it read as a fifth row of the Chart Type control. -->
                   <div class="seg" style="margin-top:26px">
                     <button class="seg-b" :class="{ on: cfg.mode==='manual' }" @click="cfg.mode='manual'">Manual</button>
-                    <button class="seg-b" :class="{ on: cfg.mode==='query' }" @click="cfg.mode='query'">Query Based</button>
+                    <button class="seg-b" :class="{ on: cfg.mode==='query' }" @click="cfg.mode='query'">Query</button>
                   </div>
                   <p class="hint">A widget counts the records that match its conditions.</p>
                 </template>
@@ -509,7 +515,7 @@ function save(place) {
               <div v-else-if="!isShortcut && !isText" class="sec">
                 <div class="seg">
                   <button class="seg-b" :class="{ on: cfg.mode==='manual' }" @click="cfg.mode='manual'">Manual</button>
-                  <button class="seg-b" :class="{ on: cfg.mode==='query' }" @click="cfg.mode='query'">Query Based</button>
+                  <button class="seg-b" :class="{ on: cfg.mode==='query' }" @click="cfg.mode='query'">Query</button>
                 </div>
                 <p class="hint">A widget counts the records that match its conditions.</p>
               </div>
@@ -704,32 +710,32 @@ function save(place) {
 
                 <!-- Manage Legend — the same rank window the tile's legend pill offers, so
                      a chart can be bounded at build time instead of only after it is placed
-                     and already unreadable. All is an explicit segment, not "leave the box
-                     empty": blank-means-everything is a rule you have to be told. -->
-                <div v-if="manualMode && !isNewKind" class="fld">
+                     and already unreadable.
+
+                     "Top N" / "Bottom N" is chart jargon: N is a variable nobody outside
+                     analytics reads as one. Highest / Lowest says the same thing in words,
+                     and the sentence underneath states the actual outcome rather than
+                     naming the rule. Shown only for kinds that HAVE a legend — a histogram
+                     has one bar per bucket and nothing to rank. -->
+                <div v-if="manualMode && hasLegend" class="fld">
                   <label>Manage Legend</label>
                   <div class="rank-row">
-                    <div class="seg">
+                    <div class="seg rank-seg">
                       <button class="seg-b" :class="{ on: cfg.rank === 'all' }" @click="cfg.rank = 'all'">All</button>
-                      <button class="seg-b" :class="{ on: cfg.rank === 'top' }" @click="cfg.rank = 'top'">Top N</button>
-                      <button class="seg-b" :class="{ on: cfg.rank === 'bottom' }" @click="cfg.rank = 'bottom'">Bottom N</button>
+                      <button class="seg-b" :class="{ on: cfg.rank === 'top' }" @click="cfg.rank = 'top'">Highest</button>
+                      <button class="seg-b" :class="{ on: cfg.rank === 'bottom' }" @click="cfg.rank = 'bottom'">Lowest</button>
                     </div>
-                    <input class="input rank-n" type="text" inputmode="numeric" v-model="rankN" :disabled="cfg.rank === 'all'" :placeholder="cfg.rank === 'all' ? '—' : '10'" />
+                    <input class="input rank-n" type="text" inputmode="numeric" v-model="rankN" :disabled="cfg.rank === 'all'" :placeholder="cfg.rank === 'all' ? 'All shown' : 'Select value'" />
                   </div>
                   <p class="hint">
-                    <template v-if="cfg.rank === 'all'">Every category is plotted. Past about ten, colour stops separating them — the legend does the work.</template>
-                    <template v-else>The {{ cfg.rank === 'bottom' ? 'smallest' : 'largest' }} <b>{{ Number(cfg.rankN) || '—' }}</b> categories.</template>
+                    <template v-if="cfg.rank === 'all'">Every entry in the legend is drawn on the chart.</template>
+                    <template v-else>Out of every entry in the legend, only the <b>{{ Number(cfg.rankN) || '—' }}</b> with the {{ cfg.rank === 'bottom' ? 'lowest' : 'highest' }} values are drawn. The rest are left off the chart.</template>
                   </p>
                 </div>
 
-                <label class="tgl-row">
-                  <span class="tgl-txt">
-                    <b>Legend</b>
-                    <em>The key that names each series or slice.</em>
-                  </span>
-                  <button class="tgl" :class="{ on: cfg.legend }" role="switch" :aria-checked="cfg.legend"
-                    @click.prevent="cfg.legend = !cfg.legend"><i /><b>{{ cfg.legend ? 'ON' : 'OFF' }}</b></button>
-                </label>
+                <!-- The legend toggle is gone: the legend is what names the slices, and a
+                     chart whose legend can be switched off is a chart that can be made
+                     unreadable from its own settings. Manage Legend above bounds it instead. -->
 
                 <label v-if="isPie" class="tgl-row">
                   <span class="tgl-txt">
@@ -749,7 +755,16 @@ function save(place) {
                     @click.prevent="cfg.dataLabels = !cfg.dataLabels"><i /><b>{{ cfg.dataLabels ? 'ON' : 'OFF' }}</b></button>
                 </label>
 
-                <label v-if="manualMode && !predefinedEdit" class="toggle"><span>Exclude Zero Count Values</span><button class="sw" :class="{ on: cfg.excludeZero }" @click="cfg.excludeZero=!cfg.excludeZero"><i /></button></label>
+                <!-- was the one field in this panel still on the old bare switch, and the
+                     only toggle with no line explaining what it does -->
+                <label v-if="manualMode && !predefinedEdit" class="tgl-row">
+                  <span class="tgl-txt">
+                    <b>Exclude Zero Count Values</b>
+                    <em>Drop categories that matched no records, so the chart shows only what actually occurred.</em>
+                  </span>
+                  <button class="tgl" :class="{ on: cfg.excludeZero }" role="switch" :aria-checked="cfg.excludeZero"
+                    @click.prevent="cfg.excludeZero = !cfg.excludeZero"><i /><b>{{ cfg.excludeZero ? 'ON' : 'OFF' }}</b></button>
+                </label>
               </div>
 
               <!-- Highlights (also the only editable section for a predefined widget).
@@ -843,10 +858,14 @@ function save(place) {
    Applies to all four families (Widget · KPI · Shortcut · Free Text) since they share
    this one .sec class. */
 .sec { padding-bottom: 22px; margin-bottom: 0; border-bottom: none; }
-/* Display → rank window (Top N / Bottom N + a free number field) */
-.rank-row { display: flex; align-items: center; gap: 8px; }
+/* Manage Legend — the segmented control and the value field share the row and fill it
+   together, both at input height. The value box was 74px, which is a box for a number
+   rather than a field you are asked to fill in. */
+.rank-row { display: flex; align-items: stretch; gap: 10px; }
 .rank-row .seg { flex: 1; }
-.rank-n { width: 74px; flex: none; text-align: center; font-weight: 600; }
+.rank-row .seg .seg-b { flex: 1; }
+.rank-n { flex: 0 0 150px; text-align: center; font-weight: 600; }
+.rank-n:disabled { background: var(--surface-2); color: var(--muted-2); font-weight: 500; cursor: not-allowed; }
 
 /* Display → toggles */
 .tgl-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; cursor: pointer; margin-bottom: 12px; }
@@ -889,8 +908,9 @@ function save(place) {
 .selw { position: relative; }
 .selw select { appearance: none; padding-right: 30px; cursor: pointer; }
 .chev { position: absolute; right: 11px; top: 12px; color: var(--muted); pointer-events: none; }
-/* Manual / Query Based, and Display's Top / Bottom / All */
-.seg { display: inline-flex; gap: 2px; background: var(--surface-2); padding: 4px; border-radius: 10px; border: none; margin-bottom: 6px; }
+/* Manual / Query, and Manage Legend's All / Highest / Lowest. No bottom margin — what
+   follows a segmented control is the configuration it governs, so it belongs against it. */
+.seg { display: inline-flex; gap: 2px; background: var(--surface-2); padding: 4px; border-radius: 10px; border: none; margin-bottom: 0; }
 .seg-b { border: none; background: transparent; padding: 0 14px; height: 30px; border-radius: 7px; font-weight: 500; font-size: 12.5px; color: var(--ink-2); }
 .seg-b:hover { color: var(--ink); }
 .seg-b.on { background: var(--ink); color: #fff; font-weight: 600; box-shadow: var(--sh-sm); }

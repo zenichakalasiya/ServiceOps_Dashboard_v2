@@ -34,7 +34,9 @@ const GROUPS = [
     { id: 'funnel', label: 'Funnel', icon: 'chart-funnel', type: 'chart', kind: 'funnel' },
     { id: 'heatmap', label: 'Heatmap', icon: 'chart-heatmap', type: 'chart', kind: 'heatmap' },
     { id: 'gauge', label: 'Gauge', icon: 'chart-gauge', type: 'chart', kind: 'gauge' },
-    { id: 'mapbubble', label: 'Map Bubble', icon: 'chart-map', type: 'chart', kind: 'mapbubble' },
+    // Map Bubble is withdrawn from the pickers. The renderer and its lazy India geo stay
+    // in the codebase so any tile already built on it keeps drawing; it is simply no
+    // longer offered as a new choice.
   ] },
   { cat: 'KPI', types: [{ id: 'kpi', label: 'KPI', icon: 'kpi', type: 'kpi', kind: null }] },
   { cat: 'Shortcut', types: [{ id: 'shortcut', label: 'Shortcut', icon: 'table', type: 'shortcut', kind: null }] },
