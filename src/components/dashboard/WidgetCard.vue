@@ -228,6 +228,11 @@ function setKind(ct) {
   if (disabledFor(ct)) return
   if (props.tile.chart.kind === ct.id) { menu.value = false; return }
   props.tile.chart.kind = ct.id
+  /* `chart.donut` overrides the kind when it is present, so a tile that was ever
+   * explicitly set to a ring would stay a ring no matter which of Pie / Doughnut you
+   * picked. Switching inside the part-of-whole family has to move it too, or the two
+   * halves of the same fact disagree. */
+  if (ct.id === 'pie' || ct.id === 'donut') props.tile.chart.donut = ct.id === 'donut'
   menu.value = false; typeOpen.value = false
   toast(`“${props.tile.title}” → ${ct.label}`)
 }

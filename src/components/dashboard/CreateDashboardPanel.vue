@@ -134,31 +134,32 @@ function submit(openAdd = false) {
       </div>
 
       <div class="body">
-        <!-- predefined board: identity ships with the product, so Name / Description /
-             Visibility are removed outright and this line says why -->
+        <!-- A predefined board's identity ships with the product. These fields used to be
+             REMOVED, which answered "can I change this?" by also hiding what it currently
+             says — you couldn't read the board's own name from its settings. They are
+             shown disabled instead: the value is legible, and the control being dead is
+             what tells you it is fixed. -->
         <p v-if="lockedDash" class="pd-note">
           <Icon name="verified" :size="14" />
-          <span>This is a <b>predefined dashboard</b> — you can’t edit its <b>Name</b>, <b>Description</b> or <b>Visibility &amp; Sharing</b>. You can still change its Category, layout, and the widgets on it.</span>
+          <span>This is a <b>predefined dashboard</b> — its <b>Name</b>, <b>Description</b> and <b>Visibility &amp; Sharing</b> ship with the product and are shown here read-only. You can still change its Category, layout, and the widgets on it.</span>
         </p>
 
         <div class="sec-h">Basics</div>
 
-        <template v-if="!lockedDash">
-          <div class="grp">
-            <label class="field">Name <span class="req">*</span></label>
-            <input class="input" :class="{ bad: nameTaken }" v-model="name" placeholder="Name" autofocus @input="err = ''" />
-            <p v-if="nameTaken" class="dup-err">
-              <Icon name="alert" :size="13" />
-              <span>A dashboard named “{{ name.trim() }}” already exists. <b>Dashboard names must be unique</b> — pick another.</span>
-            </p>
-            <div v-else-if="err" class="err">{{ err }}</div>
-          </div>
+        <div class="grp">
+          <label class="field">Name <span v-if="!lockedDash" class="req">*</span><span v-else class="ro-tag">Read-only</span></label>
+          <input class="input" :class="{ bad: nameTaken }" v-model="name" placeholder="Name" :disabled="lockedDash" :autofocus="!lockedDash" @input="err = ''" />
+          <p v-if="nameTaken" class="dup-err">
+            <Icon name="alert" :size="13" />
+            <span>A dashboard named “{{ name.trim() }}” already exists. <b>Dashboard names must be unique</b> — pick another.</span>
+          </p>
+          <div v-else-if="err" class="err">{{ err }}</div>
+        </div>
 
-          <div class="grp">
-            <label class="field">Description <span class="req">*</span></label>
-            <textarea class="input" rows="3" v-model="description" placeholder="Description" />
-          </div>
-        </template>
+        <div class="grp">
+          <label class="field">Description <span v-if="!lockedDash" class="req">*</span><span v-else class="ro-tag">Read-only</span></label>
+          <textarea class="input" rows="3" v-model="description" placeholder="Description" :disabled="lockedDash" />
+        </div>
 
         <!-- Category + Add New -->
         <div class="grp">
@@ -180,11 +181,11 @@ function submit(openAdd = false) {
         </div>
 
         <!-- Access + one-liner -->
-        <div v-if="!lockedDash" class="sec-h">Visibility &amp; sharing</div>
-        <div v-if="!lockedDash" class="grp">
-          <label class="field">Dashboard Access Level <span class="req">*</span></label>
-          <div class="seg">
-            <button v-for="(a, k) in ACCESS" :key="k" class="seg-btn" :class="{ on: access === k }" @click="access = k">{{ a.label }}</button>
+        <div class="sec-h">Visibility &amp; sharing</div>
+        <div class="grp">
+          <label class="field">Dashboard Access Level <span v-if="!lockedDash" class="req">*</span><span v-else class="ro-tag">Read-only</span></label>
+          <div class="seg" :class="{ ro: lockedDash }">
+            <button v-for="(a, k) in ACCESS" :key="k" class="seg-btn" :class="{ on: access === k }" :disabled="lockedDash" @click="access = k">{{ a.label }}</button>
           </div>
           <p class="oneliner"><Icon name="info" :size="14" /> {{ ACC_DESC[access] }}</p>
         </div>
@@ -299,6 +300,19 @@ function submit(openAdd = false) {
 .seg-btn { display: flex; align-items: center; justify-content: center; height: 32px; padding: 0 22px; border-radius: 4px; border: none; background: transparent; color: var(--ink-2); font-weight: 500; font-size: 13px; }
 .seg-btn:hover { color: var(--ink); }
 .seg-btn.on { background: var(--ink); color: #fff; font-weight: 600; box-shadow: var(--sh-sm); }
+/* Read-only (a predefined board's identity). The value STAYS legible — the point is to
+   show what the board is, not to grey it into unreadability — so only the affordance is
+   removed: no hover, no pointer, and a quieter fill on the selected segment. */
+.seg.ro { opacity: 1; }
+.seg.ro .seg-btn { cursor: default; color: var(--muted); }
+.seg.ro .seg-btn:hover { color: var(--muted); }
+.seg.ro .seg-btn.on { background: var(--border-strong); color: var(--ink); box-shadow: none; }
+.input:disabled, textarea.input:disabled {
+  background: var(--surface-2); color: var(--ink-2); cursor: default;
+  border-color: var(--border); -webkit-text-fill-color: var(--ink-2); opacity: 1;
+}
+/* names the state without a tooltip, so "why can't I type here" is answered upfront */
+.ro-tag { margin-left: 6px; padding: 1px 6px; border-radius: var(--r-sm); background: var(--inset); color: var(--muted); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
 /* the access one-liner sits in its own soft box, not as loose grey text under the control */
 .oneliner { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; padding: 9px 11px; background: var(--surface-2); border-radius: 4px; font-size: 13px; color: var(--ink-2); }
 .oneliner :deep(.ico) { color: var(--muted); flex: none; }

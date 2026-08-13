@@ -13,6 +13,7 @@ import { store } from '../../store/index.js'
 import { chart as mkChart, kpi as mkKpi, shortcut as mkShortcut, text as mkText, ACCESS } from '../../data/mock.js'
 import { CONDITION_FIELD_LABELS, NUMERIC_FIELD_LABELS, AGG_FNS, MAP_FNS } from '../../data/records.js'
 import { NEW_KINDS } from '../../data/chartOptions.js'
+import { CHART_TYPES, FAMILIES as FAMILY_META, familyMembers, familyOf, frozenReason, whyDisabled } from '../../data/chartTypes.js'
 const props = defineProps({ d: Object, type: Object, existing: { type: Object, default: null }, libItem: { type: Object, default: null }, duplicate: { type: Boolean, default: false } }) // type: { id,label,type,kind }
 const emit = defineEmits(['close', 'created', 'saved', 'librarySaved', 'savedToLibrary', 'duplicated'])
 
@@ -30,7 +31,8 @@ const TYPES = [
   { id: 'line', label: 'Line', icon: 'chart-line', type: 'chart', kind: 'line' },
   { id: 'bar', label: 'Bar', icon: 'chart-bar', type: 'chart', kind: 'hbar' },
   { id: 'column', label: 'Column', icon: 'chart-bar', type: 'chart', kind: 'bar' },
-  { id: 'pie', label: 'Pie', icon: 'chart-pie', type: 'chart', kind: 'donut' },
+  { id: 'pie', label: 'Pie', icon: 'chart-pie', type: 'chart', kind: 'pie' },
+  { id: 'donut', label: 'Doughnut', icon: 'chart-donut', type: 'chart', kind: 'donut' },
   // PMG-ACT-01 additional chart kinds (each carries its own config + engine spec)
   { id: 'stack', label: 'Stacked', icon: 'chart-stack', type: 'chart', kind: 'stack' },
   { id: 'multiline', label: 'Multi-line', icon: 'chart-multiline', type: 'chart', kind: 'multiline' },
@@ -67,16 +69,29 @@ const predefinedEdit = computed(() => editing.value && ex?.prov === 'predefined'
  *
  * Creating a new widget is unconstrained — you're choosing what to build.
  */
-const SWITCH_IDS = ['line', 'bar', 'column']
-const frozenType = computed(() => predefinedEdit.value && !SWITCH_IDS.includes(curType.value.id))
+/* Editing offers this widget's FAMILY — the types that read the same configuration
+ * (data/chartTypes.js). Membership is by data shape, not by provenance, which is why
+ * a predefined Pie can now become a Doughnut: nothing but the inner radius changes.
+ * Within a family a member can still be unavailable if THIS widget lacks what it
+ * needs (Stacked with no split field) — that comes back as a reason, not a gap. */
+const familyIds = computed(() => {
+  const kinds = new Set(familyMembers(curType.value.kind).map((m) => m.id))
+  return TYPES.filter((t) => kinds.has(t.kind)).map((t) => t.id)
+})
+const frozenType = computed(() => editing.value && familyIds.value.length < 2)
 
 function typeBlock(t) {
   if (t.id === curType.value.id) return null                    // the current type is never blocked
   if (libMode.value || props.duplicate) return 'The type is fixed when cloning or duplicating'
   if (!editing.value) return null                               // creating: pick anything
-  if (frozenType.value) return `A predefined ${curType.value.label} can’t be converted to another type`
-  if (!SWITCH_IDS.includes(t.id)) return `${t.label} needs its own configuration — only Bar, Column and Line can be swapped for one another`
-  return null
+  if (frozenType.value) return frozenReason({ type: 'chart', chart: { kind: curType.value.kind } })
+  if (!familyIds.value.includes(t.id)) {
+    const fam = FAMILY_META[familyOf(curType.value.kind)]
+    return `${t.label} reads a different configuration — this widget can only become another type that ${fam ? fam.why : 'reads the same one'}`
+  }
+  // in-family, but does this widget have what the target needs?
+  const target = CHART_TYPES.find((m) => m.id === t.kind)
+  return target ? whyDisabled(target, previewTile.value?.chart) : null
 }
 
 /* ---- what the row above the preview offers ------------------------------------
@@ -101,7 +116,7 @@ const CHART_KINDS = TYPES.filter((t) => t.type === 'chart')
 const lastChartId = ref(props.type.type === 'chart' ? props.type.id : 'column')
 const editTabs = computed(() => {
   if (libMode.value || props.duplicate || !editing.value) return []
-  return SWITCH_IDS.includes(curType.value.id) ? TYPES.filter((t) => SWITCH_IDS.includes(t.id)) : []
+  return familyIds.value.length > 1 ? TYPES.filter((t) => familyIds.value.includes(t.id)) : []
 })
 const showFamilies = computed(() => !editing.value && !libMode.value && !props.duplicate)
 const familyOn = (f) => (f.type === 'chart' ? isChart.value : curType.value.type === f.type)
@@ -175,7 +190,8 @@ function initCfg() {
     // ON by default — a chart with no key is unreadable until you already know it
     legend: ex?.legend !== false,
     dataLabels: ex?.dataLabels === true,
-    donut: ex?.chart?.donut !== false,   // Pie/Donut split — ring by default (§4 pie)
+    // donut-ness is carried by the TYPE now (Pie vs Doughnut are two members of the
+    // part-of-whole family), so it is derived, not toggled in two places at once
     // ── PMG-ACT-01 additional-kind config (prefilled from the tile's saved spec) ──
     conds: (ex?.chart?.spec?.conds || ex?.chart?.spec?.measure?.conds || []).map((c) => ({ ...c })),
     stackXDim: ex?.chart?.spec?.xDim || 'Priority',
@@ -210,7 +226,7 @@ function initCfg() {
     content: ex?.content || '',
   }
 }
-const isPie = computed(() => curType.value.kind === 'donut')
+const isPie = computed(() => curType.value.kind === 'pie' || curType.value.kind === 'donut')
 // additional PMG-ACT-01 kinds render from a chartSpec through the records.js engine
 const isNewKind = computed(() => NEW_KINDS.has(curType.value.kind))
 const chartSpec = computed(() => {
@@ -306,7 +322,7 @@ const previewTile = computed(() => {
       labels = ex.chart.labels
       series = ex.chart.series.map((s) => ({ ...s, values: [...s.values] }))
     } else {
-      const donut = curType.value.kind === 'donut'
+      const donut = isPie.value
       labels = donut ? ['P1', 'P2', 'P3', 'P4'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
       series = [{ name: cfg.yFunc, values: donut ? [18, 64, 120, 46] : [42, 51, 38, 60, 55] }]
     }
@@ -327,7 +343,7 @@ const previewTile = computed(() => {
     t.legend = cfg.legend          // so the live preview reflects the toggle
     t.dataLabels = cfg.dataLabels
     t.rank = cfg.rank; t.rankN = cfg.rank === 'all' ? undefined : cfg.rankN
-    if (isPie.value) t.chart.donut = cfg.donut   // ring vs flat pie
+    if (isPie.value) t.chart.donut = curType.value.kind === 'donut'   // the type IS the ring
     return t
   }
   return ex
@@ -444,10 +460,10 @@ function save(place) {
               <div v-if="predefinedEdit" class="sec pe-note">
                 <Icon name="verified" :size="15" />
                 <span v-if="frozenType">
-                  This is a <b>predefined {{ curType.label }}</b> — its type can’t be changed, and only <b>Highlights</b> below are editable.
+                  This is a <b>predefined {{ curType.label }}</b>. Its details are shown below <b>read-only</b>, its type can’t be changed, and only <b>Highlights</b> are editable.
                 </span>
                 <span v-else>
-                  This is a <b>predefined</b> widget — you can switch it between <b>Bar, Column and Line</b> and edit <b>Highlights</b>, both below. Nothing else.
+                  This is a <b>predefined</b> widget. Its details are shown below <b>read-only</b>; you can change its <b>Chart Type</b> (within its family) and <b>Highlights</b>.
                 </span>
               </div>
               <!-- Editing a switchable chart (Bar/Column/Line): the type switch lives here as
@@ -465,16 +481,20 @@ function save(place) {
                   </button>
                 </div>
               </div>
-              <template v-if="!predefinedEdit">
               <!-- Basic Details — every family but a note. A note has no Name (it is
                    filed under its own first line) and no Module (there is no data behind
                    it), which left this section with nothing to ask, so its configuration
                    opens at Visibility & sharing instead. -->
+              <!-- Everything from here to Highlights DESCRIBES the widget rather than the
+                   way it is drawn. On a predefined widget it is shown read-only: a native
+                   disabled <fieldset> switches off every control inside it, including the
+                   ones in nested components, which per-field :disabled could not reach. -->
+              <fieldset class="ro-fs" :disabled="predefinedEdit">
               <div v-if="!isText" class="sec">
                 <div class="sec-h">{{ isShortcut ? 'Basic Shortcut Details' : 'Basic Widget Details' }}</div>
                 <div class="grid2">
-                  <div class="fld"><label>Name <i>*</i></label><input class="input" :class="{ bad: nameTaken }" v-model="cfg.name" placeholder="Name" /></div>
-                  <div class="fld"><label>Module <i>*</i></label><Dropdown v-model="cfg.module" :options="store.modules" /></div>
+                  <div class="fld"><label>Name <i v-if="!predefinedEdit">*</i><span v-else class="ro-tag">Read-only</span></label><input class="input" :class="{ bad: nameTaken }" v-model="cfg.name" placeholder="Name" :disabled="predefinedEdit" /></div>
+                  <div class="fld"><label>Module <i v-if="!predefinedEdit">*</i><span v-else class="ro-tag">Read-only</span></label><Dropdown v-model="cfg.module" :options="store.modules" :disabled="predefinedEdit" /></div>
                 </div>
                 <p v-if="dupBoards.length" class="dup-warn"><Icon name="alert" :size="13" /> <span>A widget named “{{ effectiveName }}” already exists on {{ dupBoards.slice(0, 2).join(', ') }}<span v-if="dupBoards.length > 2"> +{{ dupBoards.length - 2 }} more</span>. <b>Widget names must be unique</b> — pick another.</span></p>
                 <div v-if="isShortcut" class="fld" style="margin-top:12px"><label>Description</label><textarea class="input" rows="2" v-model="cfg.description" placeholder="Description" /></div>
@@ -491,11 +511,11 @@ function save(place) {
                    asking who may open a Public widget is a question with no answer. -->
               <div class="sec">
                 <div class="sec-h">Visibility &amp; sharing</div>
-                <label class="acc-lbl">Widget Access Level <i>*</i></label>
-                <div class="acc-seg">
+                <label class="acc-lbl">Widget Access Level <i v-if="!predefinedEdit">*</i><span v-else class="ro-tag">Read-only</span></label>
+                <div class="acc-seg" :class="{ ro: predefinedEdit }">
                   <button
                     v-for="(a, k) in ACCESS" :key="k" class="acc-btn" :class="{ on: cfg.access === k }"
-                    @click="cfg.access = k"
+                    :disabled="predefinedEdit" @click="cfg.access = k"
                   >
                     <Icon :name="a.icon" :size="15" /> {{ a.label }}
                   </button>
@@ -719,7 +739,6 @@ function save(place) {
                 <div class="sec-h">Conditions</div>
                 <MeasureConditions v-model="cfg.conds" />
               </div>
-              </template>
 
               <!-- Display — custom widgets only. A predefined widget is Highlights and
                    the chart type, nothing else; the legend and data-label toggles are
@@ -766,14 +785,10 @@ function save(place) {
                     @click.prevent="cfg.legend = !cfg.legend"><i /><b>{{ cfg.legend ? 'ON' : 'OFF' }}</b></button>
                 </label>
 
-                <label v-if="isPie" class="tgl-row">
-                  <span class="tgl-txt">
-                    <b>Donut</b>
-                    <em>Render as a ring with the record total in the centre.</em>
-                  </span>
-                  <button class="tgl" :class="{ on: cfg.donut }" role="switch" :aria-checked="cfg.donut"
-                    @click.prevent="cfg.donut = !cfg.donut"><i /><b>{{ cfg.donut ? 'ON' : 'OFF' }}</b></button>
-                </label>
+<!-- The Donut switch is gone: Pie and Doughnut are two chart TYPES in the same
+                     family now, so the ring is chosen where every other shape is chosen.
+                     Keeping both would have meant two controls setting one property, able
+                     to disagree about which one the widget is. -->
 
                 <label v-if="isPie" class="tgl-row">
                   <span class="tgl-txt">
@@ -798,6 +813,7 @@ function save(place) {
 
               <!-- Highlights (also the only editable section for a predefined widget).
                    New kinds carry their own (Gauge Range) or don't use it. -->
+              </fieldset>
               <div v-if="(manualMode && !isNewKind && !isText) || predefinedEdit" class="sec">
                 <div class="sec-h">Highlights</div>
                 <p class="hint">Color the value when it crosses a threshold.</p>
@@ -957,6 +973,26 @@ function save(place) {
 .acc-btn:hover { color: var(--ink); }
 .acc-btn.on { background: var(--ink); color: #fff; font-weight: 600; box-shadow: var(--sh-sm); }
 .acc-btn.on :deep(.ico) { color: #fff; }
+/* Read-only, on a predefined widget. The value stays legible — showing WHAT it is set
+   to is the entire reason these fields are rendered instead of hidden — so only the
+   affordance is removed: no hover, no pointer, a quieter fill on the active segment. */
+/* a fieldset is only a disabling MECHANISM here — it must not draw a box or
+   introduce its own layout */
+/* A fieldset is only a disabling MECHANISM here — it must not draw a box or bring
+   its own layout. NOT `display: contents`: Chrome stops propagating the disabled
+   state to descendants when a fieldset is taken out of the box tree, so half the
+   controls stayed live. `block` keeps the propagation and the reset does the rest. */
+.ro-fs { border: none; margin: 0; padding: 0; min-width: 0; display: block; }
+.acc-seg.ro .acc-btn { cursor: default; color: var(--muted); }
+.acc-seg.ro .acc-btn:hover { color: var(--muted); }
+.acc-seg.ro .acc-btn.on { background: var(--border-strong); color: var(--ink); box-shadow: none; }
+.acc-seg.ro .acc-btn.on :deep(.ico) { color: var(--ink); }
+.input:disabled, textarea.input:disabled {
+  background: var(--surface-2); color: var(--ink-2); cursor: default;
+  border-color: var(--border); -webkit-text-fill-color: var(--ink-2); opacity: 1;
+}
+/* names the state upfront, so "why can't I type here" never becomes a question */
+.ro-tag { margin-left: 6px; padding: 1px 6px; border-radius: var(--r-sm); background: var(--inset); color: var(--muted); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
 .acc-note { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; }
 .open-dd { display: flex; flex-direction: column; gap: 3px; border: 1px solid var(--primary-soft); border-radius: 4px; padding: 5px; background: var(--primary-softer); }
 .dd-opt { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border: none; background: transparent; border-radius: 4px; font-size: 13px; text-align: left; }

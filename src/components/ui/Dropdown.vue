@@ -8,6 +8,8 @@ const props = defineProps({
   placeholder: { type: String, default: 'Select' },
   size: { type: String, default: 'md' },           // md | sm
   multiple: { type: Boolean, default: false },
+  // read-only: the VALUE stays legible, only the affordance goes (see .dd-btn:disabled)
+  disabled: { type: Boolean, default: false },
 })
 const emit = defineEmits(['update:modelValue'])
 const open = ref(false)
@@ -28,7 +30,7 @@ function pick(o) {
 
 <template>
   <div class="dd" :class="[{ open }, 'dd-' + size]">
-    <button type="button" class="dd-btn" @click.stop="open = !open">
+    <button type="button" class="dd-btn" :disabled="disabled" @click.stop="disabled || (open = !open)">
       <span class="dd-val" :class="{ ph: !selectedLabel }">{{ selectedLabel || placeholder }}</span>
       <Icon name="chevron-down" :size="16" class="dd-chev" />
     </button>
@@ -48,6 +50,10 @@ function pick(o) {
 <style scoped>
 .dd { position: relative; }
 .dd-btn { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; height: 36px; padding: 0 12px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink); border-radius: var(--r); font-size: 13px; text-align: left; transition: border-color .15s, box-shadow .15s; }
+/* Disabled reads the same as a disabled .input: the chosen value must stay readable,
+   because on a predefined widget this field exists precisely so you can SEE it. */
+.dd-btn:disabled { background: var(--surface-2); color: var(--ink-2); border-color: var(--border); cursor: default; opacity: 1; }
+.dd-btn:disabled :deep(.ico) { opacity: .45; }
 .dd-sm .dd-btn { height: 32px; font-size: 13px; border-radius: 4px; padding: 0 10px; }
 .dd-btn:hover { border-color: #c7cad9; }
 .dd.open .dd-btn { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
