@@ -690,28 +690,27 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 /* the overlaid header is absolute, so the card has to be its containing block */
 .tile.note { position: relative; background: var(--note-bg); border-color: var(--note-line); }
 .tile.note .thead {
-  position: absolute; top: 0; right: 0; left: 0; height: 30px; z-index: 3;
-  background: transparent; padding: 5px 5px 0 0;
+  position: absolute; top: 0; right: 0; left: auto; width: auto; height: auto; z-index: 3;
+  background: transparent; padding: 6px 6px 0 0;
   opacity: 0; transition: opacity .15s ease; pointer-events: none;
 }
 .tile.note:hover .thead, .tile.note.acting .thead { opacity: 1; }
-/* only the controls take the pointer — the strip itself must not sit over the text */
 .tile.note .thead .ractions, .tile.note .thead .draghandle { pointer-events: auto; }
 /* no title, no info, no provenance: a note is read, not identified */
 .tile.note .title, .tile.note .info { display: none; }
+/* BOTH controls sit top-right, together. The grip used to live top-left, which is
+   exactly where the first line of writing starts — so either it covered the first
+   character or the body had to reserve 30px of blank paper above the text to get out of
+   its way. Moving it beside the ⋯ frees the whole left edge, so the note can have the
+   same 12px margin on every side and the writing starts where the card does. */
 .tile.note .left { position: static; }
-.tile.note .draghandle { left: 7px; top: 7px; transform: none; }
-/* the ⋯ floats over the paper, so it needs a surface behind it — the note's own, not
-   the white every other tile's header sits on */
-.tile.note .mwrap .ti { width: 24px; height: 24px; background: var(--note-bg); border: 1px solid var(--note-line); }
-.tile.note .mwrap .ti:hover { background: var(--surface-2); }
-.tile.note .ti:hover { background: var(--surface-2); }
-/* The strip's height is RESERVED in the body's top padding rather than overlaid on the
-   writing. Floating the controls over the text would put the drag grip through the
-   first letter of the first line, and padding the body only on hover would shift every
-   line down the moment the pointer arrived. Reserved space costs 30px of blank paper at
-   the top of a note, which is what a note's margin looks like anyway. */
-.tile.note .tbody { padding: 30px 18px 16px; }
+.tile.note .draghandle { position: static; transform: none; opacity: 1; }
+.tile.note .thead { gap: 4px; }
+/* the controls float over the paper, so they need a surface behind them — the note's
+   own, not the white every other tile's header sits on */
+.tile.note .mwrap .ti, .tile.note .draghandle { width: 24px; height: 24px; display: grid; place-items: center; background: var(--note-bg); border: 1px solid var(--note-line); border-radius: var(--r); }
+.tile.note .mwrap .ti:hover, .tile.note .draghandle:hover { background: var(--surface-2); }
+.tile.note .tbody { padding: 12px; }
 /* the title + action row sits in its own slight-neutral band, with room to breathe */
 /* --bg (#F6F9FC) at 37px tall — shorter than the old 46px, and lighter than the solid
    --surface-2 band that competed with the chart under it. */

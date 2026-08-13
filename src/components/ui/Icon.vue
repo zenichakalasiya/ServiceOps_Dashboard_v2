@@ -30,7 +30,7 @@ import {
   Bell, Settings, ArrowLeft, Pin, Wand2, Maximize2, GripVertical, Inbox, TrendingUp, FileOutput,
   Moon, Sun, CalendarDays, Rows3, LayoutTemplate, TriangleAlert, Package, Network,
   Lightbulb, UserCheck, ClipboardCheck, UsersRound, Menu, Keyboard, History, Monitor,
-  Ungroup, FolderPlus, BadgeCheck, Undo2, Redo2, ThumbsUp, ThumbsDown, ArrowUp, ArrowDown,
+  FolderMinus, FolderPlus, BadgeCheck, Undo2, Redo2, ThumbsUp, ThumbsDown, ArrowUp, ArrowDown,
   PenLine, Palette, Square, Circle, MoveUpRight, Eraser, Mail, MousePointer2, ChartArea,
   Filter, Triangle, ChartBarBig, ChartBarStacked, ChartSpline, ChartNoAxesCombined,
   ChartColumnBig, Grid3x3, Gauge, AlignLeft, Map, ArrowRight, MessageSquare,
@@ -68,7 +68,10 @@ const MAP = {
   template: LayoutTemplate, alert: TriangleAlert, package: Package, sitemap: Network,
   bulb: Lightbulb, 'user-check': UserCheck, clipboard: ClipboardCheck, team: UsersRound,
   menu: Menu, keyboard: Keyboard, history: History, 'predefined-monitor': Monitor,
-  ungroup: Ungroup, 'default-home': House, 'new-group': FolderPlus,
+  // Ungroup pairs with New group: FolderPlus creates one, FolderMinus dissolves it.
+  // lucide's own 'Ungroup' glyph is two dashed squares, which at 15px reads as a
+  // smudge and shares no vocabulary with the icon that made the group.
+  ungroup: FolderMinus, 'default-home': House, 'new-group': FolderPlus,
   verified: BadgeCheck, undo: Undo2, redo: Redo2,
   'thumb-up': ThumbsUp, 'thumb-down': ThumbsDown,
   'sort-asc': ArrowUp, 'sort-desc': ArrowDown,

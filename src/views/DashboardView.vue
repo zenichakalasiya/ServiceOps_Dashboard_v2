@@ -45,17 +45,11 @@ const gridEl = ref(null)
 
 // ---- drag-to-reorder / drag-into-group (armed from each card's 6-dot handle) ----
 const dragArmed = ref(null)      // tile id currently draggable
-/* Who this board reaches, in one sentence, under the access pill. Each access level
- * answers the question differently — Public reaches everyone with portal access, Private
- * reaches nobody but the owner, and only Restricted has a list worth counting. */
-const audienceLine = computed(() => {
-  const b = d.value
-  if (!b) return ''
-  if (b.access === 'public') return 'Everyone with portal access can open this dashboard.'
-  if (b.access === 'private') return `Private — only ${b.owner} can open this dashboard.`
-  const n = (b.techAccess || []).length + (b.groupAccess || []).length
-  return `Restricted — ${n} recipient${n === 1 ? '' : 's'} can open this dashboard.`
-})
+/* How many named recipients a RESTRICTED board has. Public and Private have no list —
+ * the access level IS the whole answer — which is why the pill only appears on a
+ * Restricted board at all. */
+const sharedCount = computed(() => (d.value?.techAccess || []).length + (d.value?.groupAccess || []).length)
+const initials = (n) => String(n).trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase()
 // access lives in the dashboard's own settings; this opens them rather than duplicating
 // the fields into a second form that could disagree with the first
 function editAccess() { store.ui.cloneTarget = null; store.ui.editTarget = d.value; store.ui.createOpen = true }
@@ -631,28 +625,40 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
                 </span>
               </transition>
             </span>
-            <!-- Who this board is shared with. This is the ONLY place that answers the
-                 question now: the Share button beside Export was withdrawn, because it
-                 offered to share a board that is already governed by its access level,
-                 and the two could disagree. The pill reports that access level, and
-                 opening it names the technicians and groups behind it. It shows on every
-                 board, not just Restricted ones — "who can see this" is a question a
-                 Public or Private board has an answer to as well. -->
-            <div class="acc-wrap">
-              <button class="restrict-ic" :class="d.access" @click.stop="accessOpen = !accessOpen" :title="`${ACCESS[d.access].label} — see who this is shared with`"><Icon :name="ACCESS[d.access].icon" :size="15" /></button>
+            <!-- RESTRICTED boards only. A Public board reaches everyone and a Private one
+                 reaches nobody — neither has a list, so the pill would open onto a
+                 sentence the access level already told you. It only earns its place where
+                 there are actual names behind it. -->
+            <div v-if="d.access === 'restricted'" class="acc-wrap">
+              <button class="restrict-ic" @click.stop="accessOpen = !accessOpen" :title="`Restricted — shared with ${sharedCount} recipient${sharedCount === 1 ? '' : 's'}`">
+                <Icon name="users" :size="15" />
+              </button>
               <div v-if="accessOpen" class="backdrop" @click="accessOpen = false" />
               <transition name="pop">
                 <div v-if="accessOpen" class="restrict-pop card" @click.stop>
-                  <div class="ap-h"><Icon :name="ACCESS[d.access].icon" :size="14" /> Shared with</div>
-                  <p class="ap-aud">{{ audienceLine }}</p>
-                  <div class="ap-sec">
-                    <label>Technicians</label>
-                    <div class="ap-chips"><span v-for="t in (d.techAccess || [])" :key="t" class="chip sm"><Icon name="user" :size="11" /> {{ t }}</span><span v-if="!(d.techAccess || []).length" class="muted small">None</span></div>
-                  </div>
-                  <div class="ap-sec">
+                  <div class="ap-h"><Icon name="users" :size="14" /> Shared with <span class="ap-n">{{ sharedCount }}</span></div>
+                  <!-- Named rows, not chips: these are people and teams, and a row with an
+                       avatar is how every other listing in the product shows one. Chips
+                       wrapped mid-name and read as filters. -->
+                  <div v-if="(d.groupAccess || []).length" class="ap-sec">
                     <label>Technician groups</label>
-                    <div class="ap-chips"><span v-for="g in (d.groupAccess || [])" :key="g" class="chip sm"><Icon name="users" :size="11" /> {{ g }}</span><span v-if="!(d.groupAccess || []).length" class="muted small">None</span></div>
+                    <div class="ap-rows">
+                      <div v-for="g in d.groupAccess" :key="g" class="ap-row">
+                        <span class="ap-av grp"><Icon name="users" :size="13" /></span>
+                        <span class="ap-nm ellip">{{ g }}</span>
+                      </div>
+                    </div>
                   </div>
+                  <div v-if="(d.techAccess || []).length" class="ap-sec">
+                    <label>Technicians</label>
+                    <div class="ap-rows">
+                      <div v-for="t in d.techAccess" :key="t" class="ap-row">
+                        <span class="ap-av">{{ initials(t) }}</span>
+                        <span class="ap-nm ellip">{{ t }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <p v-if="!sharedCount" class="ap-none">Restricted, but nobody has been added yet — only you can open it.</p>
                   <!-- the way to CHANGE any of this is the dashboard's own settings, which
                        is where the access level lives — not a second, parallel share form -->
                   <button v-if="!d.predefined" class="ap-edit" @click="accessOpen = false; editAccess()"><Icon name="edit" :size="13" /> Manage access</button>
@@ -675,7 +681,6 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
         <span class="vsep" />
         <TimeFilter />
         <AutoRefresh @refresh="onRefresh" />
-        <span class="vsep" />
         <!-- One button where Share and Download used to sit side by side. Both produced a
              file of this board; only the destination differed, and the split meant "email
              me a PDF" lived under Share while "save a PDF" lived under Download. -->
@@ -808,7 +813,7 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
         <!-- groups (each preceded by a hover-reveal "+ New group here" inserter) -->
         <template v-for="(g, gi) in (d.groups || [])" :key="g.id">
         <div v-if="gShowInserters" class="grp-insert" @click.stop="insertEmptyGroup(gi)"><span class="gi-line" /><span class="gi-btn"><Icon name="new-group" :size="13" /> New group here</span><span class="gi-line" /></div>
-        <section class="group" :class="{ 'drop-into': dropGroup === g.id, 'as-section': gSections }"
+        <section class="group" :class="{ 'drop-into': dropGroup === g.id, 'as-section': gSections, collapsed: g.collapsed }"
           @dragover.prevent="dropGroup = g.id" @drop="onDropGroup(g.id)">
           <header class="grp-head">
             <button class="grp-toggle" @click="g.collapsed = !g.collapsed"><Icon :name="g.collapsed ? 'chevron-right' : 'chevron-down'" :size="16" /></button>
@@ -983,21 +988,28 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 /* restricted → click the icon to see technician + group access */
 /* the pill now appears on every board, so it carries the access level's own colour —
    the glyph alone (globe / lock / people) is what has to say which one this is */
-.restrict-ic { display: inline-grid; place-items: center; width: 28px; height: 26px; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 4px; color: var(--muted); cursor: pointer; }
-.restrict-ic.restricted { color: var(--amber); }
-.restrict-ic.public { color: var(--blue); }
-.restrict-ic:hover { border-color: transparent; background: var(--surface-2); }
-.restrict-ic.restricted:hover { background: var(--amber-soft); }
-.restrict-ic.public:hover { background: var(--blue-soft); }
+/* Restricted is the only access level that shows a pill, so it carries that one hue */
+.restrict-ic { display: inline-grid; place-items: center; width: 28px; height: 26px; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 4px; color: var(--amber); cursor: pointer; }
+.restrict-ic:hover { border-color: transparent; background: var(--amber-soft); }
 .restrict-pop { position: absolute; top: 34px; left: 0; z-index: 60; width: 300px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
 .backdrop { position: fixed; inset: 0; z-index: 55; }
 .ap-h { display: flex; align-items: center; gap: 7px; font-weight: 600; font-size: 13px; }
 /* the one-line answer sits directly under the heading, before the lists that back it up */
-.ap-aud { margin: -6px 0 0; font-size: 12px; line-height: 1.5; color: var(--ink-2); }
+/* the recipient count, on the heading */
+.ap-n { margin-left: auto; min-width: 20px; height: 18px; padding: 0 6px; display: inline-grid; place-items: center; background: var(--inset); color: var(--ink-2); border-radius: var(--r-sm); font-size: 11px; font-weight: 600; }
 .ap-locked { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 12px; color: var(--muted); }
-.ap-sec label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted-2); font-weight: 600; margin-bottom: 7px; }
-.ap-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.ap-chips .chip.sm { height: 22px; font-size: 12px; padding: 0 8px; }
+.ap-none { margin: 0; font-size: 12px; line-height: 1.5; color: var(--muted); }
+.ap-sec label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); font-weight: 600; margin-bottom: 7px; }
+/* Named ROWS, not chips: a person is shown the way people are shown everywhere else in
+   the product — an avatar and a full name on one line. Chips wrapped mid-name and read
+   as removable filters rather than as a list of who can open the board. */
+.ap-rows { display: flex; flex-direction: column; gap: 2px; max-height: 190px; overflow: auto; }
+.ap-row { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: var(--r); }
+.ap-row:hover { background: var(--row-hover); }
+.ap-av { flex: none; width: 24px; height: 24px; display: grid; place-items: center; border-radius: var(--r); background: var(--primary); color: #fff; font-size: 10px; font-weight: 500; }
+/* a group is a set, not a person — square avatar, quieter fill, a glyph instead of initials */
+.ap-av.grp { background: var(--inset); color: var(--ink-2); }
+.ap-nm { font-size: 13px; color: var(--ink); min-width: 0; }
 .small { font-size: 12px; }
 .ap-desc { margin: 0; font-size: 13px; color: var(--ink-2); line-height: 1.5; }
 .ap-edit { display: flex; align-items: center; gap: 7px; justify-content: center; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 4px; padding: 7px; font-weight: 500; font-size: 13px; color: var(--ink-2); }
@@ -1080,6 +1092,12 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .group.drop-into, .grid.drop-into { border: 1px solid var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); border-radius: var(--r-lg); }
 .grid.drop-into { padding: 4px; }
 .grp-head { display: flex; align-items: center; gap: 8px; padding: 6px 0 12px; }
+/* Collapsed, the header IS the whole group — so its bottom padding (which exists to
+   separate it from the widget grid) and the group's own bottom padding stack into 26px
+   of empty space under a single row. Both drop to the 6px the top uses, so a collapsed
+   group is symmetrical. */
+.group.collapsed { padding-bottom: 6px; }
+.group.collapsed .grp-head { padding-bottom: 6px; }
 /* No hover fill and no 26px box. The rounded background needed padding around the glyph
    to look right, and that padding is what pushed the chevron in from the container's left
    edge — so the heading never lined up with the widgets below it. The icon is the target

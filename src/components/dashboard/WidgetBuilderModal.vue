@@ -822,7 +822,8 @@ function save(place) {
             </div>
 
             <footer class="cfg-foot">
-              <button class="btn" @click="reset">Reset</button>
+<!-- Reset removed: Cancel already discards everything, so the two sat side by
+                   side offering the same outcome by different names. -->
               <!-- Canvas duplicate → single Duplicate · Canvas edit → single Update ·
                    Library edit/clone + new create → both {prefix} and {prefix} & Add -->
               <!-- every save path is blocked while the name collides -->

@@ -107,7 +107,9 @@ onBeforeUnmount(() => removeEventListener('keydown', onEsc))
 <template>
   <div class="tfb">
     <div ref="boxEl" class="tfb-box" :class="{ act: fieldsOpen || editing >= 0 }" @click="openFields">
-      <Icon name="search" :size="14" class="mu" />
+      <!-- a FILTER icon, not a magnifier: typing here searches, but clicking builds a
+           typed condition, and the leading glyph is what says which control this is -->
+      <Icon name="filter" :size="15" class="mu" />
 
       <span
         v-for="(c, i) in conds" :key="i" :ref="(el) => (chipEls[i] = el)"
@@ -124,8 +126,10 @@ onBeforeUnmount(() => removeEventListener('keydown', onEsc))
         :placeholder="placeholder"
         @focus="openFields" @click.stop="openFields"
       />
+      <!-- inside the field, not beside it: the ✕ clears and closes THIS control, so it
+           belongs to the box rather than sitting outside as a sibling of it -->
+      <button v-if="closable" class="tfb-x" title="Clear and close" @click.stop="emit('close')"><Icon name="x" :size="14" /></button>
     </div>
-    <button v-if="closable" class="tfb-x" title="Close" @click="emit('close')"><Icon name="x" :size="16" /></button>
 
     <teleport to="body">
       <!-- fields -->
@@ -160,11 +164,12 @@ onBeforeUnmount(() => removeEventListener('keydown', onEsc))
 <style scoped>
 .tfb { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 /* the whole bar is ONE field — chips and the query share it, as the design draws it */
-.tfb-box { flex: 1; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-height: 36px; padding: 4px 8px; border: 1px solid var(--border-strong); border-radius: 4px; background: var(--surface); cursor: text; }
+.tfb-box { flex: 1; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-height: 36px; padding: 4px 6px 4px 10px; border: 1px solid var(--border-strong); border-radius: 4px; background: var(--surface); cursor: text; }
 .tfb-box.act, .tfb-box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
 .mu { color: var(--muted); flex: none; }
 .tfb-in { flex: 1; min-width: 120px; border: none; outline: none; background: transparent; font-size: 13px; color: var(--ink); }
-.tfb-x { flex: none; width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
+/* the trailing clear, inside the field — 24px so it never makes the 36px box taller */
+.tfb-x { flex: none; width: 24px; height: 24px; margin-left: auto; border: none; background: transparent; color: var(--muted); border-radius: var(--r); display: grid; place-items: center; }
 .tfb-x:hover { background: var(--surface-2); color: var(--ink); }
 
 /* a condition, stated the way the product states it: Field Operator Value */
