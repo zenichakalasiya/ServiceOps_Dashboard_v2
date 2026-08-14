@@ -84,6 +84,8 @@ const inheriting = computed(() =>
   store.dashboards.filter((d) => !d.archived && KEYS.every((k) => d[FIELD[k]] == null)).length)
 
 const titlePx = computed(() => SIZES.find((s) => s.id === val('titleSize'))?.px || 13)
+// the slider works in stop indexes; the stored value stays 'S' | 'M' | 'L'
+const sizeIdx = computed(() => Math.max(0, SIZES.findIndex((s) => s.id === val('titleSize'))))
 
 /* The CTA names the scope it will act on, so the button restates the decision the
  * cards above it record — you never have to look back up to know what Apply does. */
@@ -139,13 +141,20 @@ function cancel() {
       <!-- Two per row. Six fields stacked made the panel a column of sliders you had to
            scroll to compare; paired, the whole layout is one screenful. -->
       <div class="la-controls">
+        <!-- A slider, like the other three. It was a segmented control, which made the
+             one field that isn't a number look like a different kind of setting.
+             S/M/L is a scale — small to large in order — so a track reads it correctly;
+             the marks under it say what the three stops are before you drag. -->
         <div class="la-fld">
-          <label>Widget title size</label>
-          <div class="la-seg">
-            <button v-for="s in SIZES" :key="s.id" class="la-seg-b" :class="{ on: val('titleSize') === s.id }" @click="setVal('titleSize', s.id)">
-              {{ s.label }}
-            </button>
+          <label>Widget title size <Hint text="The size of every widget's title on the board" /></label>
+          <div class="la-rng-row">
+            <input
+              class="la-rng" type="range" min="0" max="2" step="1"
+              :value="sizeIdx" @input="setVal('titleSize', SIZES[+$event.target.value].id)"
+            />
+            <span class="la-val">{{ val('titleSize') }}</span>
           </div>
+          <div class="la-scale"><span v-for="s in SIZES" :key="s.id">{{ s.id }}</span></div>
         </div>
 
         <!-- What each slider does to the board now rides the label's info icon, the
@@ -259,12 +268,14 @@ function cancel() {
   font-size: 12px; font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums;
 }
 
-.la-seg { display: flex; gap: 2px; padding: 2px; background: var(--surface); border: 1px solid var(--border-control); border-radius: var(--r); }
-.la-seg-b { flex: 1; height: 28px; border: none; background: transparent; color: var(--ink-2); border-radius: var(--r); font-size: 12px; font-weight: 500; }
-.la-seg-b:hover { background: var(--surface-2); }
-.la-seg-b.on { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
+/* `margin: 0` overrides Chrome's UA 2px on range inputs — it made every track start
+   2px inside its column, and put the S/L marks 2px off the track they label. */
+.la-rng { flex: 1; min-width: 0; margin: 0; accent-color: var(--primary); }
 
-.la-rng { flex: 1; min-width: 0; accent-color: var(--primary); }
+/* the S · M · L stops. `margin-right` is the chip's 46px plus the row's 10px gap, so
+   the marks sit under the TRACK rather than under the track-plus-chip — the first and
+   last land on the thumb's actual end positions. */
+.la-scale { display: flex; justify-content: space-between; margin: 2px 56px 0 0; font-size: 11px; color: var(--muted); }
 
 /* ── the footer ───────────────────────────────────────────────────────────────── */
 .la-foot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
