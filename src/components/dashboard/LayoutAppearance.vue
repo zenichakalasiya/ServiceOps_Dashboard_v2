@@ -21,7 +21,7 @@
  */
 import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import Icon from '../ui/Icon.vue'
+import Hint from '../ui/Hint.vue'
 import {
   store, byId, toast,
   LAYOUT_FIELD as FIELD, LAYOUT_KEYS as KEYS,
@@ -109,8 +109,9 @@ function cancel() {
          each needs a sentence to be understood. A checkbox can only label one of them
          and leaves the other implied.
 
-         Stacked, not side by side: the drawer is 380px, and two columns would give each
-         description ~150px, which wraps a two-line sentence into four. -->
+         Side by side now that the drawer is 620px: each card gets ~280px, which holds
+         the description in two or three lines. At the old 380px they had to stack — two
+         columns of ~150px turned a two-line sentence into four. -->
     <div class="lsc" role="radiogroup" aria-label="Where these settings apply">
       <label
         class="lsc-opt" :class="{ on: scope === 'this', dis: !dash }"
@@ -134,6 +135,8 @@ function cancel() {
     </div>
 
     <div class="la-body">
+      <!-- Two per row. Six fields stacked made the panel a column of sliders you had to
+           scroll to compare; paired, the whole layout is one screenful. -->
       <div class="la-controls">
         <div class="la-fld">
           <label>Widget title size</label>
@@ -144,22 +147,26 @@ function cancel() {
           </div>
         </div>
 
+        <!-- What each slider does to the board now rides the label's info icon, the
+             product's standard place for it. A one-liner under all six fields cost a
+             line of prose per field to answer a question you have once. -->
         <div v-for="s in SLIDERS" :key="s.key" class="la-fld">
-          <label>{{ s.label }} <span class="la-val">{{ val(s.key) }}px</span></label>
-          <input
-            class="la-rng" type="range" :min="s.min" :max="s.max" :step="s.step"
-            :value="val(s.key)" @input="setVal(s.key, +$event.target.value)"
-          />
-          <span class="la-hint">{{ s.hint }}</span>
+          <label>{{ s.label }} <Hint :text="s.hint" /></label>
+          <div class="la-rng-row">
+            <input
+              class="la-rng" type="range" :min="s.min" :max="s.max" :step="s.step"
+              :value="val(s.key)" @input="setVal(s.key, +$event.target.value)"
+            />
+            <span class="la-val">{{ val(s.key) }}</span>
+          </div>
         </div>
-
       </div>
 
       <!-- A live preview, sized from the real values. A MODEL of the board, not a
            screenshot: four tiles is enough to show a gap, a padding and a title size
            changing together, and it stays legible at drawer width. -->
       <div class="la-preview">
-        <span class="la-pv-cap">Preview</span>
+        <span class="la-pv-cap">Live Preview</span>
         <div class="la-pv-frame" :style="{ padding: val('boardMargin') + 'px' }">
           <div class="la-pv-grid" :style="{ columnGap: val('hGap') + 'px', rowGap: val('vGap') + 'px' }">
             <div
@@ -195,10 +202,14 @@ function cancel() {
    footer can be a plain flex child that never moves. `min-height: 0` is what lets
    the scroll area actually shrink inside the flex column. */
 .la.drawer { height: 100%; }
-.la.drawer .la-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 16px; }
+/* 22px gutters, matching the Create Dashboard drawer this one now sits beside in width */
+.la.drawer .la-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 22px 20px; }
 
 /* ── the scope cards ───────────────────────────────────────────────────────────── */
-.lsc { display: flex; flex-direction: column; gap: 8px; }
+/* `align-items: stretch` (the grid default) is doing real work: the two descriptions
+   are different lengths, and without it the shorter card would be shorter, which reads
+   as the two options being unequal rather than alternatives. */
+.lsc { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .lsc-opt {
   display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
   padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--r-lg);
@@ -227,30 +238,42 @@ function cancel() {
 .la.panel .la-body { grid-template-columns: minmax(280px, 360px) 1fr; align-items: start; }
 .la.drawer .la-body { grid-template-columns: 1fr; }
 
-.la-controls { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-.la-fld { display: flex; flex-direction: column; gap: 6px; }
-.la-fld label { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--ink); }
-.la-val { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums; }
-.la-hint { font-size: 11px; color: var(--muted); }
+/* two per row; `align-items: start` so a wrapped label can't stretch its neighbour */
+.la-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 18px; align-items: start; min-width: 0; }
+.la-fld { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.la-fld label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--ink); }
+
+/* the value sits beside the track, not up in the label: at half width the label row is
+   short and a right-floated number drifted away from the control it belonged to */
+.la-rng-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+/* a FIXED width, not min-width: "14" and "140" in different chips gave their sliders
+   different lengths, and two tracks in the same column stopping at different points
+   reads as a mistake. 46px holds three digits. */
+.la-val {
+  flex: none; width: 46px; height: 26px;
+  display: inline-grid; place-items: center;
+  background: var(--surface-2); border-radius: var(--r);
+  font-size: 12px; font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums;
+}
 
 .la-seg { display: flex; gap: 2px; padding: 2px; background: var(--surface); border: 1px solid var(--border-control); border-radius: var(--r); }
 .la-seg-b { flex: 1; height: 28px; border: none; background: transparent; color: var(--ink-2); border-radius: var(--r); font-size: 12px; font-weight: 500; }
 .la-seg-b:hover { background: var(--surface-2); }
 .la-seg-b.on { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
 
-.la-rng { width: 100%; accent-color: var(--primary); }
+.la-rng { flex: 1; min-width: 0; accent-color: var(--primary); }
 
 /* ── the footer ───────────────────────────────────────────────────────────────── */
 .la-foot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
 .la.drawer .la-foot {
-  flex: none; padding: 12px 16px;
+  flex: none; padding: 12px 22px;
   background: var(--surface); border-top: 1px solid var(--border);
 }
 .la.panel .la-foot { margin-top: 18px; }
 .la-foot .btn { height: 32px; }
 
 /* ── the preview ──────────────────────────────────────────────────────────────── */
-.la-pv-cap { display: block; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-bottom: 6px; }
+.la-pv-cap { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 8px; }
 .la-pv-frame { background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-lg); }
 .la-pv-grid { display: grid; grid-template-columns: 1fr 1fr; }
 .la-pv-tile { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); display: flex; flex-direction: column; gap: 6px; overflow: hidden; }

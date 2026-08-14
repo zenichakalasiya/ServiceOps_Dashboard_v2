@@ -48,16 +48,11 @@ onBeforeUnmount(() => { cancelLayoutEdit(); window.removeEventListener('keydown'
       <!-- a div, not an <aside>: `role="dialog"` is not an allowed role on <aside>,
            and no `aria-modal` — the board behind stays live and interactive -->
       <div class="ld" role="dialog" aria-label="Dashboard layout">
+        <!-- Title only. The subtitle used to restate the scope, but the two scope cards
+             are the first thing in the panel and say it in full — the header was
+             answering a question the body answers three lines later. -->
         <header class="ld-h">
-          <div class="ld-t">
-            <Icon name="appearance" :size="16" />
-            <div>
-              <b>Dashboard layout</b>
-              <!-- the subtitle follows the SCOPE, so the header never claims a reach the
-                   selected option does not have -->
-              <span>{{ store.ui.layoutScope === 'this' ? 'This dashboard’s layout' : 'Your layout, on every dashboard' }}</span>
-            </div>
-          </div>
+          <h3>Dashboard layout</h3>
           <!-- Reset then Close, the same pairing the widget builder's header uses.
                Reset is part of the draft: it moves the sliders, and Cancel still
                takes it back. -->
@@ -77,18 +72,17 @@ onBeforeUnmount(() => { cancelLayoutEdit(); window.removeEventListener('keydown'
 
 <style scoped>
 .ld-catch { position: fixed; inset: 0; z-index: 110; }
+/* 620px — the Create Dashboard drawer's width. Two board-level side panels that open
+   from the same header should not be two different sizes, and the extra room is what
+   lets the scope cards and the six fields sit two to a row. */
 .ld {
   position: fixed; top: 0; right: 0; bottom: 0; z-index: 111;
-  width: 380px; max-width: 92vw; display: flex; flex-direction: column;
+  width: 620px; max-width: 96vw; display: flex; flex-direction: column;
   background: var(--surface); border-left: 1px solid var(--border);
   box-shadow: var(--sh-lg);
 }
-.ld-h { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border); flex: none; }
-.ld-t { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
-.ld-t :deep(.ico) { color: var(--muted); margin-top: 2px; }
-.ld-t div { display: flex; flex-direction: column; min-width: 0; }
-.ld-t b { font-size: 16px; font-weight: 600; color: var(--ink); }
-.ld-t span { font-size: 12px; color: var(--muted); margin-top: 1px; }
+.ld-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 22px; border-bottom: 1px solid var(--border); flex: none; }
+.ld-h h3 { margin: 0; font-size: 18px; font-weight: 600; color: var(--ink); }
 .ld-acts { display: flex; align-items: center; gap: 2px; flex: none; }
 .ld-x { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border: none; background: transparent; color: var(--muted); border-radius: var(--r); }
 .ld-x:hover:not(:disabled) { background: var(--icon-hover); color: var(--ink); }
