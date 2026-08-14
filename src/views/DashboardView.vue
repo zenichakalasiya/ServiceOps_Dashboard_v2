@@ -414,7 +414,9 @@ function onPin(t) { t.pinned = !t.pinned; d.value.updated = new Date().toISOStri
  * every board that never opted out. Sizes are the guide's integer scale. */
 const FONT_PX = { S: 12, M: 13, L: 15 }
 // EVERY layout field resolves the same way, so "apply to this dashboard only" can write
-// any of the six and be honoured — not just the three the old per-board form knew about.
+// any of the editable ones and be honoured. cardPad and boardMargin go through here too
+// even though the drawer no longer offers them: nothing writes them per-board, so they
+// fall through to store.layout and stay uniform with the rest rather than being special.
 const lay = (k, fallback) => d.value?.[k] ?? store.layout[fallback ?? k]
 const boardVars = computed(() => ({
   '--tile-title': (FONT_PX[lay('headerFont', 'titleSize')] || 13) + 'px',

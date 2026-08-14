@@ -99,15 +99,19 @@ export function dismissToast(id) { store.toasts = store.toasts.filter((t) => t.i
  * change stranded outside the undo.
  */
 
-/* A global layout key and its per-dashboard counterpart. Only `titleSize` differs:
- * a board has carried `headerFont` since before this setting existed, and renaming
- * a stored field to tidy a map would strand every board that already has one. */
+/* A global layout key and its per-dashboard counterpart — the EDITABLE ones only.
+ * Only `titleSize` differs in name: a board has carried `headerFont` since before this
+ * setting existed, and renaming a stored field to tidy a map would strand every board
+ * that already has one.
+ *
+ * `cardPad` and `boardMargin` are deliberately absent. They still live in store.layout
+ * and the board still renders from them; they are fixed product values now, not
+ * settings, so nothing may pin, snapshot or reset them. */
 export const LAYOUT_FIELD = {
-  titleSize: 'headerFont', cardPad: 'cardPad', hGap: 'hGap',
-  vGap: 'vGap', rowHeight: 'rowHeight', boardMargin: 'boardMargin',
+  titleSize: 'headerFont', hGap: 'hGap', vGap: 'vGap', rowHeight: 'rowHeight',
 }
 export const LAYOUT_KEYS = Object.keys(LAYOUT_FIELD)
-export const LAYOUT_DEFAULTS = { titleSize: 'M', cardPad: 12, hGap: 14, vGap: 14, rowHeight: 140, boardMargin: 16 }
+export const LAYOUT_DEFAULTS = { titleSize: 'M', hGap: 14, vGap: 14, rowHeight: 140 }
 
 let layoutSnap = null
 

@@ -67,13 +67,16 @@ const SIZES = [
   { id: 'L', label: 'Large', px: 15 },
 ]
 /* Each slider states what it does to the BOARD, not which property it sets. "Space
- * between widgets" is checkable by looking; "column-gap" is not. */
+ * between widgets" is checkable by looking; "column-gap" is not.
+ *
+ * Widget padding and Board margin were cut. They still exist as `store.layout.cardPad`
+ * and `store.layout.boardMargin` and the board still renders from them — they are now
+ * fixed product values rather than settings, so nothing on screen changed. Putting them
+ * back means one line here plus their key in LAYOUT_FIELD. */
 const SLIDERS = [
   { key: 'hGap', label: 'Horizontal spacing', hint: 'Between widgets, side to side', min: 4, max: 32, step: 2 },
   { key: 'vGap', label: 'Vertical spacing', hint: 'Between rows of widgets', min: 4, max: 32, step: 2 },
-  { key: 'cardPad', label: 'Widget padding', hint: 'Inside each widget, around its content', min: 6, max: 24, step: 2 },
   { key: 'rowHeight', label: 'Row height', hint: 'How tall one row of widgets is', min: 110, max: 260, step: 10 },
-  { key: 'boardMargin', label: 'Board margin', hint: 'Between the widgets and the edge of the page', min: 8, max: 40, step: 4 },
 ]
 
 // how many boards a GLOBAL change actually moves — the ones that haven't overridden
@@ -165,11 +168,14 @@ function cancel() {
            changing together, and it stays legible at drawer width. -->
       <div class="la-preview">
         <span class="la-pv-cap">Live Preview</span>
-        <div class="la-pv-frame" :style="{ padding: val('boardMargin') + 'px' }">
+        <!-- margin and padding come straight from store.layout: they are no longer
+             scoped settings, so routing them through val() would imply a board could
+             override them -->
+        <div class="la-pv-frame" :style="{ padding: store.layout.boardMargin + 'px' }">
           <div class="la-pv-grid" :style="{ columnGap: val('hGap') + 'px', rowGap: val('vGap') + 'px' }">
             <div
               v-for="t in ['Open Requests', 'By Priority', 'By Status', 'My Tasks']" :key="t"
-              class="la-pv-tile" :style="{ padding: val('cardPad') + 'px', minHeight: Math.round(val('rowHeight') * 0.42) + 'px' }"
+              class="la-pv-tile" :style="{ padding: store.layout.cardPad + 'px', minHeight: Math.round(val('rowHeight') * 0.42) + 'px' }"
             >
               <span class="la-pv-title" :style="{ fontSize: titlePx + 'px' }">{{ t }}</span>
               <span class="la-pv-bar" />
