@@ -157,7 +157,7 @@ function onDrop(target) {
       <div class="ph-acts">
         <!-- ENTRY 3 · a toolbar icon on the page that already means "all dashboards" -->
         <!-- left of the primary action, on the page that already means "all dashboards" -->
-        <button class="btn ico-only" :class="{ on: store.ui.layoutOpen }" title="Dashboard layout — applies to every board" @click="store.ui.layoutOpen = !store.ui.layoutOpen"><Icon name="appearance" :size="17" /></button>
+        <button class="btn ico-only" :class="{ on: store.ui.layoutOpen }" title="Dashboard layout — applies to every board" @click="store.ui.layoutScope = 'all'; store.ui.layoutOpen = !store.ui.layoutOpen"><Icon name="appearance" :size="17" /></button>
         <button class="btn btn-primary" @click="store.ui.cloneTarget = null; store.ui.editTarget = null; store.ui.createOpen = true"><Icon name="plus" :size="16" /> New dashboard</button>
       </div>
     </div>

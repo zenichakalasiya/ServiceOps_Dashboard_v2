@@ -54,9 +54,12 @@ export const store = reactive({
     focusTile: null,
     // guided spotlight tour of the revamped dashboard (top bar → "Take a tour")
     tourOpen: false,
-    // the global layout drawer's open state — opened from the board's ⋯ menu and from
-    // the Manage all dashboards toolbar; both land on the same panel
-    layoutOpen: false },
+    /* The layout drawer's open state, and the scope its opener MEANT. The two entries
+     * are asking different questions: the board's ⋯ menu is about THAT board, the Manage
+     * toolbar is about all of them — so each preselects its own answer rather than
+     * making the user restate what they already said by choosing that entry.
+     *   'this' → the open dashboard only   ·   'all' → the global layout */
+    layoutOpen: false, layoutScope: 'all' },
   // global view-time controls (per the rebuilt Time Filter + Auto-Refresh)
   timeFilter: { preset: 'last30', label: 'Last 30 days', from: null, to: null },
   autoRefresh: { interval: 'off', label: 'Off' },

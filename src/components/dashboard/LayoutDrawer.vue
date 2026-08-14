@@ -37,7 +37,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
             <Icon name="appearance" :size="16" />
             <div>
               <b>Dashboard layout</b>
-              <span>Your layout, on every dashboard</span>
+              <!-- the subtitle follows the SCOPE, so the header never claims a reach the
+                   selected option does not have -->
+              <span>{{ store.ui.layoutScope === 'this' ? 'This dashboard’s layout' : 'Your layout, on every dashboard' }}</span>
             </div>
           </div>
           <button class="ld-x" title="Close" @click="close"><Icon name="x" :size="18" /></button>

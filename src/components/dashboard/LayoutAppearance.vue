@@ -2,78 +2,77 @@
 /**
  * LayoutAppearance — the dashboard layout settings, as ONE component.
  *
- * Four entry points open this (see store.ui.layoutEntry): a tab on Manage all
- * dashboards, an icon in that page's toolbar, an icon beside "Manage all dashboards"
- * in the listing sidebar, and a live drawer over the board. They differ in WHERE you
- * reach the settings, never in what the settings are.
+ * Two entry points open it, and they are asking different questions:
+ *   · the board's ⋯ menu → "the layout of THIS dashboard"
+ *   · the Manage all dashboards toolbar → "the layout of ALL of them"
+ * So each preselects its own answer rather than making you restate what you already
+ * said by choosing that entry. The choice is still shown and still changeable — the
+ * entry sets the default, it does not remove the decision.
  *
- * ── Scope ───────────────────────────────────────────────────────────────────────
- * "Apply to all my dashboards" decides WHERE the values are written:
- *   checked   → store.layout, the global default every board inherits
- *   unchecked → the open dashboard's own fields, which win over the global
- *
- * The checkbox only exists when a dashboard is actually open. From the Manage page
- * there is no "this one" to apply to, so the panel is global by definition and says
- * so instead of offering a choice with one real option.
- *
- * Unticking SEEDS the board from whatever is currently in force, so the board does not
- * jump the moment you narrow the scope. Re-ticking DELETES the board's overrides, so
- * the box going back on genuinely returns it to the global — a checkbox that left the
- * old values behind would be a lie.
+ * ── Where the values go ─────────────────────────────────────────────────────────
+ *   'all'  → store.layout, the global default every board inherits
+ *   'this' → the open dashboard's own fields, which win over the global
  *
  * There is no Save. Layout is a preference: the value you can see is the value in
  * force, and an unsaved slider position would be a state nobody asked for.
  */
-import { ref, computed, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import Icon from '../ui/Icon.vue'
 import { store, byId, toast } from '../../store/index.js'
 
-const props = defineProps({
-  // 'panel'  full width, for the Manage page tab
-  // 'drawer' narrow column, for the board drawer and the two icon entries
-  variant: { type: String, default: 'panel' },
+defineProps({
+  // 'drawer' narrow column (both entries today) · 'panel' full width, if ever inlined
+  variant: { type: String, default: 'drawer' },
 })
 
-/* The board in context, from the route — so no entry point has to thread it down.
- * null anywhere that isn't a dashboard, which is exactly when the scope choice
- * should disappear. */
+/* The board in context, read from the route so no entry point has to thread it down.
+ * null anywhere that isn't a dashboard — which is exactly when "this one" stops being
+ * a real option. */
 const route = useRoute()
 const dash = computed(() => (route.params.id ? byId(route.params.id) : null))
 
-/* A global key and its per-dashboard counterpart. Only `titleSize` differs: the board
- * has carried `headerFont` since before this setting existed, and renaming a stored
- * field to tidy a map would break every board that already has one. */
+/* A global key and its per-dashboard counterpart. Only `titleSize` differs: a board has
+ * carried `headerFont` since before this setting existed, and renaming a stored field to
+ * tidy a map would strand every board that already has one. */
 const FIELD = {
   titleSize: 'headerFont', cardPad: 'cardPad', hGap: 'hGap',
   vGap: 'vGap', rowHeight: 'rowHeight', boardMargin: 'boardMargin',
 }
 const KEYS = Object.keys(FIELD)
 
-const applyToAll = ref(true)
-// leaving the board (or opening from Manage) can't leave a board-scoped panel behind
-watch(dash, (d) => { if (!d) applyToAll.value = true })
+// scope lives on the store so it survives the drawer closing and reopening
+const scope = computed(() => (dash.value ? store.ui.layoutScope : 'all'))
+// leaving the board can't leave a board-scoped panel pointing at nothing
+watch(dash, (d) => { if (!d) store.ui.layoutScope = 'all' })
 
-/** What a field currently resolves to, whichever scope is in force. */
-const val = (k) => (applyToAll.value ? store.layout[k] : (dash.value?.[FIELD[k]] ?? store.layout[k]))
-/** Write it wherever the scope says. */
+/** What a field currently resolves to, under whichever scope is in force. */
+const val = (k) => (scope.value === 'all' ? store.layout[k] : (dash.value?.[FIELD[k]] ?? store.layout[k]))
+
+/* Opening the drawer from the ⋯ menu must not, on its own, pin the board — that would
+ * make merely LOOKING at the settings an edit. The board is pinned lazily, on the first
+ * real change, and then pinned COMPLETELY: all six fields, not only the one being moved.
+ * Half-pinning would leave the untouched fields still following the global, so a later
+ * global change would drift a board somebody had deliberately scoped. */
+function pinBoard() {
+  const d = dash.value; if (!d) return
+  KEYS.forEach((k) => { if (d[FIELD[k]] == null) d[FIELD[k]] = store.layout[k] })
+}
 function setVal(k, v) {
-  if (applyToAll.value) store.layout[k] = v
-  else if (dash.value) dash.value[FIELD[k]] = v
+  if (scope.value === 'all') { store.layout[k] = v; return }
+  if (!dash.value) return
+  pinBoard()
+  dash.value[FIELD[k]] = v
 }
 
-function onScope(next) {
-  applyToAll.value = next
+function pickScope(next) {
   const d = dash.value
-  if (!d) return
-  if (next) {
-    // back to global — drop this board's overrides so it actually inherits again
+  if (!d || next === scope.value) return
+  store.ui.layoutScope = next
+  if (next === 'all') {
+    // back to global — drop this board's overrides so it genuinely inherits again
     KEYS.forEach((k) => { delete d[FIELD[k]] })
-    toast(`“${d.name}” follows the global layout again`)
-  } else {
-    // narrowing scope must not move the board: seed it from what is already showing
-    KEYS.forEach((k) => { if (d[FIELD[k]] == null) d[FIELD[k]] = store.layout[k] })
-    toast(`Changes now apply to “${d.name}” only`)
+    toast('“' + d.name + '” follows the global layout again')
   }
 }
 
@@ -96,40 +95,47 @@ const DEFAULTS = { titleSize: 'M', cardPad: 12, hGap: 14, vGap: 14, rowHeight: 1
 const isDefault = computed(() => KEYS.every((k) => val(k) === DEFAULTS[k]))
 function resetAll() {
   KEYS.forEach((k) => setVal(k, DEFAULTS[k]))
-  toast(applyToAll.value ? 'Global layout reset to defaults' : `“${dash.value?.name}” reset to defaults`)
+  toast(scope.value === 'all' ? 'Global layout reset to defaults' : '“' + dash.value.name + '” reset to defaults')
 }
 
 // how many boards a GLOBAL change actually moves — the ones that haven't overridden
 const inheriting = computed(() =>
   store.dashboards.filter((d) => !d.archived && KEYS.every((k) => d[FIELD[k]] == null)).length)
-const overriding = computed(() =>
-  store.dashboards.filter((d) => !d.archived && KEYS.some((k) => d[FIELD[k]] != null)).length)
 
 const titlePx = computed(() => SIZES.find((s) => s.id === val('titleSize'))?.px || 13)
 </script>
 
 <template>
   <div class="la" :class="variant">
-    <!-- SCOPE. A checkbox, because the two outcomes are not equal weight: applying to
-         everything is the norm and narrowing it is the exception you opt into. The line
-         underneath names the board, so the consequence is legible before you commit. -->
-    <label v-if="dash" class="la-scope-pick" :class="{ narrowed: !applyToAll }">
-      <input type="checkbox" :checked="applyToAll" @change="onScope($event.target.checked)" />
-      <span class="la-sp-txt">
-        <b>Apply to all my dashboards</b>
-        <em v-if="applyToAll">Every board that follows the global layout changes — {{ inheriting }} of them.</em>
-        <em v-else>Only <b>“{{ dash.name }}”</b> changes. Your other boards keep the global layout.</em>
-      </span>
-    </label>
+    <!-- SCOPE — two option cards, the product's standard radio-card pair.
+         Cards rather than a checkbox because the two outcomes are peers, not a thing
+         and its negation: "this board" and "every board" are both ordinary answers, and
+         each needs a sentence to be understood. A checkbox can only label one of them
+         and leaves the other implied.
 
-    <!-- no board in context (the Manage page) — global is the only thing it can mean -->
-    <p v-else class="la-scope">
-      <Icon name="info" :size="14" />
-      <span>
-        Applies to <b>all {{ inheriting }} dashboards</b> that follow the global layout.
-        <template v-if="overriding">{{ overriding }} board{{ overriding > 1 ? 's have' : ' has' }} its own layout and won’t change.</template>
-      </span>
-    </p>
+         Stacked, not side by side: the drawer is 380px, and two columns would give each
+         description ~150px, which wraps a two-line sentence into four. -->
+    <div class="lsc" role="radiogroup" aria-label="Where these settings apply">
+      <label
+        class="lsc-opt" :class="{ on: scope === 'this', dis: !dash }"
+        :title="dash ? '' : 'Open a dashboard to set its own layout'"
+      >
+        <span class="lsc-txt">
+          <b>This dashboard only</b>
+          <em v-if="dash">Only <b>“{{ dash.name }}”</b> changes. Every other board keeps the global layout.</em>
+          <em v-else>Open a dashboard to give it a layout of its own.</em>
+        </span>
+        <input type="radio" name="layout-scope" :checked="scope === 'this'" :disabled="!dash" @change="pickScope('this')" />
+      </label>
+
+      <label class="lsc-opt" :class="{ on: scope === 'all' }">
+        <span class="lsc-txt">
+          <b>Apply to all dashboards</b>
+          <em>Sets your global layout. Every board that follows it changes — <b>{{ inheriting }}</b> of them.</em>
+        </span>
+        <input type="radio" name="layout-scope" :checked="scope === 'all'" @change="pickScope('all')" />
+      </label>
+    </div>
 
     <div class="la-body">
       <div class="la-controls">
@@ -179,25 +185,34 @@ const titlePx = computed(() => SIZES.find((s) => s.id === val('titleSize'))?.px 
 </template>
 
 <style scoped>
-.la { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.la { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 
-/* the scope checkbox — a real row, not a stray tick beside a label */
-.la-scope-pick { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--r); background: var(--surface-2); cursor: pointer; }
-.la-scope-pick input { margin: 2px 0 0; accent-color: var(--primary); flex: none; width: 16px; height: 16px; }
-/* narrowed to one board is the EXCEPTION, so it is marked — otherwise a panel that
-   silently edits one board looks identical to one editing them all */
-.la-scope-pick.narrowed { border-color: var(--amber); background: var(--amber-soft); }
-.la-sp-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.la-sp-txt b { font-size: 13px; font-weight: 600; color: var(--ink); }
-.la-sp-txt em { font-style: normal; font-size: 11px; line-height: 1.45; color: var(--muted); }
-.la-scope-pick.narrowed .la-sp-txt em { color: var(--amber); }
-.la-scope-pick.narrowed .la-sp-txt em b { color: var(--amber); font-weight: 600; }
+/* ── the scope cards ───────────────────────────────────────────────────────────── */
+.lsc { display: flex; flex-direction: column; gap: 8px; }
+.lsc-opt {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--r-lg);
+  background: var(--surface); cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.lsc-opt:hover:not(.dis) { border-color: var(--border-strong); }
+/* Selected is a border and a tint, not a fill: the description has to stay readable,
+   and a solid brand fill would put 12px muted text on blue. */
+.lsc-opt.on { border-color: var(--primary); background: var(--primary-softer); }
+.lsc-opt.dis { opacity: .55; cursor: not-allowed; }
 
-.la-scope { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 10px 12px; font-size: 12px; line-height: 1.5; color: var(--primary-700); background: var(--primary-softer); border: 1px solid var(--primary-soft); border-radius: var(--r); }
-.la-scope :deep(.ico) { flex: none; margin-top: 1px; }
+.lsc-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.lsc-txt > b { font-size: 13px; font-weight: 600; color: var(--ink); }
+.lsc-txt em { font-style: normal; font-size: 12px; line-height: 1.5; color: var(--muted); }
+/* the board's name inside the sentence — emphasised without changing size */
+.lsc-txt em b { font-weight: 600; color: var(--ink-2); }
+.lsc-opt.on .lsc-txt em b { color: var(--primary-700); }
 
-/* Side by side when there is room (the Manage tab), stacked when there isn't (a
-   drawer). The preview never collapses away — it is worth more than the controls. */
+/* native radio: correct semantics, keyboard and a11y for free. `margin-top` lines the
+   circle up with the TITLE's cap-height rather than the block's top edge. */
+.lsc-opt input { flex: none; width: 16px; height: 16px; margin: 2px 0 0; accent-color: var(--primary); cursor: inherit; }
+
+/* ── the controls ─────────────────────────────────────────────────────────────── */
 .la-body { display: grid; gap: 18px; }
 .la.panel .la-body { grid-template-columns: minmax(280px, 360px) 1fr; align-items: start; }
 .la.drawer .la-body { grid-template-columns: 1fr; }
@@ -219,7 +234,7 @@ const titlePx = computed(() => SIZES.find((s) => s.id === val('titleSize'))?.px 
 .la-reset:hover:not(:disabled) { background: var(--surface-2); color: var(--ink); }
 .la-reset:disabled { opacity: .45; cursor: not-allowed; }
 
-/* the preview */
+/* ── the preview ──────────────────────────────────────────────────────────────── */
 .la-pv-cap { display: block; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-bottom: 6px; }
 .la-pv-frame { background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-lg); }
 .la-pv-grid { display: grid; grid-template-columns: 1fr 1fr; }
