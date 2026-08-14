@@ -26,7 +26,8 @@ import Hint from '../ui/Hint.vue'
 import {
   store, byId, toast,
   LAYOUT_FIELD as FIELD, LAYOUT_KEYS as KEYS,
-  layoutValue, setLayoutValue, commitLayoutEdit, cancelLayoutEdit,
+  layoutValue, setLayoutValue, resetLayoutValues, isLayoutDefault,
+  commitLayoutEdit, cancelLayoutEdit,
 } from '../../store/index.js'
 
 defineProps({
@@ -50,6 +51,7 @@ watch(dash, (d) => { if (!d) store.ui.layoutScope = 'all' })
 
 const val = (k) => layoutValue(dash.value, k)
 const setVal = (k, v) => setLayoutValue(dash.value, k, v)
+const atDefaults = computed(() => isLayoutDefault(dash.value))
 
 function pickScope(next) {
   const d = dash.value
@@ -196,12 +198,15 @@ function cancel() {
     </div>
    </div>
 
-    <!-- FOOTER — the commit pair only. Reset moved up beside Close in the drawer
-         header: it changes the draft rather than ending the session, so it is not a
-         peer of Cancel/Apply, and it now matches the widget builder's header, which
-         pairs the same two actions. It stays outside the scroll area so the commit
-         is reachable without scrolling past five sliders and a preview. -->
+    <!-- FOOTER — Reset at the left edge, the commit pair at the right. It is still a
+         different KIND of action from those two: it changes the draft rather than
+         ending the session, and it stays part of the draft, so Cancel undoes a Reset
+         too. The gap between them is what says so. Outside the scroll area, so the
+         commit is reachable without scrolling past the fields and the preview. -->
     <footer class="la-foot">
+      <button class="la-ghost" :disabled="atDefaults" title="Put every value back to its default" @click="resetLayoutValues(dash)">
+        <Icon name="reset" :size="14" /> Reset
+      </button>
       <button class="btn" @click="cancel">Cancel</button>
       <button class="btn btn-primary" @click="apply">{{ applyLabel }}</button>
     </footer>
@@ -278,7 +283,16 @@ function cancel() {
 .la-scale { display: flex; justify-content: space-between; margin: 2px 56px 0 0; font-size: 11px; color: var(--muted); }
 
 /* ── the footer ───────────────────────────────────────────────────────────────── */
-.la-foot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.la-foot { display: flex; align-items: center; gap: 8px; }
+/* Reset holds the left edge; `margin-right: auto` on it is what pushes the commit
+   pair right, so the gap between them carries the "different kind of action" */
+.la-ghost {
+  display: inline-flex; align-items: center; gap: 6px; margin-right: auto;
+  height: 32px; padding: 0 10px; border: none; background: transparent;
+  color: var(--ink-2); border-radius: var(--r); font-size: 13px; font-weight: 500;
+}
+.la-ghost:hover:not(:disabled) { background: var(--surface-2); color: var(--ink); }
+.la-ghost:disabled { opacity: .4; cursor: not-allowed; }
 .la.drawer .la-foot {
   flex: none; padding: 12px 22px;
   background: var(--surface); border-top: 1px solid var(--border);

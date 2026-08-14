@@ -14,18 +14,10 @@
  * time. Clicking outside closes it, so it is still dismissible without a scrim to
  * catch the click.
  */
-import { computed, onMounted, onBeforeUnmount } from 'vue'
-import { useRoute } from 'vue-router'
+import { onMounted, onBeforeUnmount } from 'vue'
 import Icon from '../ui/Icon.vue'
 import LayoutAppearance from './LayoutAppearance.vue'
-import { store, byId, beginLayoutEdit, cancelLayoutEdit, resetLayoutValues, isLayoutDefault } from '../../store/index.js'
-
-/* The header's Reset needs the same board the panel edits, so it reads it the same
- * way — from the route — rather than reaching into the child. The scope-aware rules
- * themselves live in the store, so the two can't disagree. */
-const route = useRoute()
-const dash = computed(() => (route.params.id ? byId(route.params.id) : null))
-const atDefaults = computed(() => isLayoutDefault(dash.value))
+import { store, beginLayoutEdit, cancelLayoutEdit } from '../../store/index.js'
 
 const close = () => { store.ui.layoutOpen = false }
 function onKey(e) { if (e.key === 'Escape') close() }
@@ -53,16 +45,9 @@ onBeforeUnmount(() => { cancelLayoutEdit(); window.removeEventListener('keydown'
              answering a question the body answers three lines later. -->
         <header class="ld-h">
           <h3>Dashboard layout</h3>
-          <!-- Reset then Close, the same pairing the widget builder's header uses.
-               Reset is part of the draft: it moves the sliders, and Cancel still
-               takes it back. -->
-          <div class="ld-acts">
-            <button
-              class="ld-x" :disabled="atDefaults"
-              title="Reset every value to its default" @click="resetLayoutValues(dash)"
-            ><Icon name="reset" :size="16" /></button>
-            <button class="ld-x" title="Close" @click="close"><Icon name="x" :size="18" /></button>
-          </div>
+          <!-- Close only. Reset lives at the footer's left edge, beside the other two
+               things you can do to this draft. -->
+          <button class="ld-x" title="Close" @click="close"><Icon name="x" :size="18" /></button>
         </header>
         <div class="ld-b"><LayoutAppearance variant="drawer" /></div>
       </div>
@@ -83,10 +68,8 @@ onBeforeUnmount(() => { cancelLayoutEdit(); window.removeEventListener('keydown'
 }
 .ld-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 22px; border-bottom: 1px solid var(--border); flex: none; }
 .ld-h h3 { margin: 0; font-size: 18px; font-weight: 600; color: var(--ink); }
-.ld-acts { display: flex; align-items: center; gap: 2px; flex: none; }
 .ld-x { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border: none; background: transparent; color: var(--muted); border-radius: var(--r); }
-.ld-x:hover:not(:disabled) { background: var(--icon-hover); color: var(--ink); }
-.ld-x:disabled { opacity: .35; cursor: not-allowed; }
+.ld-x:hover { background: var(--icon-hover); color: var(--ink); }
 /* No padding and no scrolling here: LayoutAppearance splits itself into a scrolling
    body and a pinned footer, and it can only do that if it owns the full height. A
    padded, scrolling wrapper would put the footer inside the scroll again. */
