@@ -265,7 +265,9 @@ function submit(openAdd = false) {
 .seg { display: inline-flex; gap: 2px; padding: 4px; background: var(--surface-2); border-radius: 4px; align-self: flex-start; }
 .seg-btn { display: flex; align-items: center; justify-content: center; height: 32px; padding: 0 22px; border-radius: 4px; border: none; background: transparent; color: var(--ink-2); font-weight: 500; font-size: 13px; }
 .seg-btn:hover { color: var(--ink); }
-.seg-btn.on { background: var(--ink); color: #fff; font-weight: 600; box-shadow: var(--sh-sm); }
+/* `--surface`, not #fff — `--ink` is near-white in dark, so a hardcoded white label
+   was invisible on its own fill. In light `--surface` is #ffffff, unchanged. */
+.seg-btn.on { background: var(--ink); color: var(--surface); font-weight: 600; box-shadow: var(--sh-sm); }
 /* Read-only (a predefined board's identity). The value STAYS legible — the point is to
    show what the board is, not to grey it into unreadability — so only the affordance is
    removed: no hover, no pointer, and a quieter fill on the selected segment. */

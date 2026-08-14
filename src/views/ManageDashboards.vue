@@ -310,7 +310,8 @@ function onDrop(target) {
 .tabs { display: inline-flex; gap: 2px; padding: 4px; background: var(--surface-2); border-radius: 4px; }
 .t { border: none; background: transparent; padding: 7px 14px; border-radius: 4px; font-weight: 500; font-size: 13px; color: var(--ink-2); }
 .t:hover { background: color-mix(in srgb, var(--surface) 70%, transparent); color: var(--ink); }
-.t.on { background: var(--ink); color: #fff; font-weight: 600; box-shadow: var(--sh-sm); }
+/* `--surface`, not #fff — `--ink` is near-white in dark and swallowed a white label */
+.t.on { background: var(--ink); color: var(--surface); font-weight: 600; box-shadow: var(--sh-sm); }
 .t .c { font-size: 11px; background: var(--surface); border-radius: 999px; padding: 0 6px; margin-left: 5px; color: var(--ink-2); }
 .t.on .c { background: rgba(255,255,255,.22); color: #fff; }
 .tr { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }

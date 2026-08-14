@@ -388,7 +388,8 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .tchip:hover { background: var(--surface-2); }
 /* the selected type filter is filled solid, matching the segmented control the reference
    uses — a soft tint read as "hovered", not "this is the filter in force" */
-.tchip.on { background: var(--ink); border-color: var(--ink); color: #fff; font-weight: 600; }
+/* `--surface`, not #fff — `--ink` is near-white in dark and swallowed a white label */
+.tchip.on { background: var(--ink); border-color: var(--ink); color: var(--surface); font-weight: 600; }
 .tc-count { font-size: 11px; font-weight: 600; background: var(--surface-2); border-radius: 999px; padding: 0 6px; color: var(--muted); }
 .tchip.on .tc-count { background: rgba(255,255,255,.22); color: #fff; }
 .aw-body { flex: 1; overflow: auto; padding: 14px 22px 22px; }

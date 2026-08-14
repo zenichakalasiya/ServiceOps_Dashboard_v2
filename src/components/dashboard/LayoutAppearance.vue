@@ -212,9 +212,16 @@ function cancel() {
 
 .seg { display: inline-flex; gap: 2px; padding: 4px; background: var(--surface-2); border-radius: 4px; align-self: flex-start; }
 .seg-btn { display: flex; align-items: center; justify-content: center; height: 32px; padding: 0 22px; border-radius: 4px; border: none; background: transparent; color: var(--ink-2); font-weight: 500; font-size: 13px; }
-.seg-btn:hover:not(:disabled) { color: var(--ink); }
-/* colour marks WHICH option is in force — a soft tint would read as "hovered" */
-.seg-btn.on { background: var(--ink); color: #fff; font-weight: 600; box-shadow: var(--sh-sm); }
+/* `:not(.on)` is load-bearing, not tidiness. Hover has to be excluded from the active
+   segment explicitly: `:hover:not(:disabled)` is (0,3,0) and outranks `.seg-btn.on` at
+   (0,2,0), so it repainted the white label near-black on the near-black fill. Naming
+   `.on` here settles it by specificity rather than by source order. */
+.seg-btn:not(.on):not(:disabled):hover { color: var(--ink); }
+/* colour marks WHICH option is in force — a soft tint would read as "hovered".
+   The label is `--surface`, NOT #fff: `--ink` is near-black in light but near-WHITE
+   in dark (#ececf3), so a hardcoded white label vanished on it — 1.18:1. `--surface`
+   inverts with the fill, and in light it resolves to #ffffff, exactly as before. */
+.seg-btn.on { background: var(--ink); color: var(--surface); font-weight: 600; box-shadow: var(--sh-sm); }
 .seg-btn:disabled { color: var(--muted-2); cursor: not-allowed; }
 
 /* `align-items: flex-start` not center: the sentence wraps to two lines at this width,

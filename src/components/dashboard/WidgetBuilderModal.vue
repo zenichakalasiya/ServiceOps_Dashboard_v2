@@ -891,7 +891,8 @@ function save(place) {
 .pv-tabs { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 4px; background: var(--surface-2); border-radius: 4px; }
 .pv-tab { display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 13px; border: none; background: transparent; color: var(--ink-2); border-radius: 4px; font-weight: 500; font-size: 13px; }
 .pv-tab:hover { color: var(--ink); }
-.pv-tab.on { background: var(--ink); color: #fff; font-weight: 600; box-shadow: var(--sh-sm); }
+/* `--surface`, not #fff — `--ink` is near-white in dark and swallowed a white label */
+.pv-tab.on { background: var(--ink); color: var(--surface); font-weight: 600; box-shadow: var(--sh-sm); }
 .pv-tab.on :deep(.ico) { color: #fff; }
 .pv-tab:disabled { opacity: .45; cursor: not-allowed; }
 .pv-tab.on:disabled { opacity: 1; }
@@ -990,7 +991,7 @@ function save(place) {
 .seg { display: inline-flex; gap: 2px; background: var(--surface-2); padding: 4px; border-radius: 4px; border: none; margin-bottom: 0; }
 .seg-b { border: none; background: transparent; padding: 0 14px; height: 30px; border-radius: 4px; font-weight: 500; font-size: 13px; color: var(--ink-2); }
 .seg-b:hover { color: var(--ink); }
-.seg-b.on { background: var(--ink); color: #fff; font-weight: 600; box-shadow: var(--sh-sm); }
+.seg-b.on { background: var(--ink); color: var(--surface); font-weight: 600; box-shadow: var(--sh-sm); }
 /* No top margin. A hint is the DESCRIPTION of the heading above it, not a paragraph in
    its own right — it belongs against that heading, with the air below the pair. */
 .hint { font-size: 12px; color: var(--muted); margin: 0 0 10px; }
@@ -1001,7 +1002,7 @@ function save(place) {
 .acc-seg { display: flex; gap: 2px; padding: 4px; background: var(--surface-2); border-radius: 4px; }
 .acc-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; height: 30px; padding: 0 10px; border: none; background: transparent; color: var(--ink-2); border-radius: 4px; font-weight: 500; font-size: 13px; }
 .acc-btn:hover { color: var(--ink); }
-.acc-btn.on { background: var(--ink); color: #fff; font-weight: 600; box-shadow: var(--sh-sm); }
+.acc-btn.on { background: var(--ink); color: var(--surface); font-weight: 600; box-shadow: var(--sh-sm); }
 .acc-btn.on :deep(.ico) { color: #fff; }
 /* Read-only, on a predefined widget. The value stays legible — showing WHAT it is set
    to is the entire reason these fields are rendered instead of hidden — so only the
