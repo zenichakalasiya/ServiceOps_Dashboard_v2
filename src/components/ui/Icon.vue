@@ -37,7 +37,7 @@ import {
   ChartNoAxesColumnIncreasing, Zap, Send, Paperclip, Brain, Flag, Telescope, Crosshair,
   MonitorSmartphone, Shield, Boxes, PanelLeftOpen, PanelLeftClose, Bold, Italic, Underline,
   Strikethrough, Highlighter, Heading, Quote, Code, ListOrdered, IndentIncrease,
-  IndentDecrease, RemoveFormatting, StickyNote,
+  IndentDecrease, RemoveFormatting, StickyNote, SlidersHorizontal,
 } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -96,6 +96,9 @@ const MAP = {
   'list-bullet': List, 'list-number': ListOrdered,
   indent: IndentIncrease, outdent: IndentDecrease,
   'clear-format': RemoveFormatting, note: StickyNote,
+  // Layout appearance — sliders, because this setting TUNES the board rather than
+  // recolouring it; a paint palette would promise theming it does not do.
+  appearance: SlidersHorizontal,
 }
 
 // the only filled glyph in the set — a favourited star reads as filled, not outlined

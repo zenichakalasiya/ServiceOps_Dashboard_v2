@@ -12,6 +12,27 @@ export const store = reactive({
   categories: [...CATEGORIES],
   currentUser: 'Aarav Mehta',
   toasts: [],
+
+  /* ── Global dashboard appearance ──────────────────────────────────────────────
+   * ONE layout for every board this user opens. Layout used to be per-dashboard,
+   * which meant setting your preferred density was a job you redid on each board
+   * and could never finish — nine boards, nine copies of the same preference.
+   *
+   * A board may still override any of these (the Layout section in Edit Dashboard
+   * writes the same field names onto the dashboard). Resolution is
+   * `dashboard.<field> ?? store.layout.<field>`, so a board is "inherit" until
+   * somebody deliberately makes it otherwise — which is what lets a NOC wallboard
+   * be denser than a leadership summary without forcing everyone to choose.
+   *
+   * Sizes are the guide's integer type scale (§2), not the old 12.5/13.5. */
+  layout: {
+    titleSize: 'M',     // S 12px · M 13px · L 15px — the widget title
+    cardPad: 12,        // padding inside a widget card
+    hGap: 14,           // space between widgets, horizontally
+    vGap: 14,           // …and vertically
+    rowHeight: 140,     // one grid row
+    boardMargin: 16,    // the board's own gutter against the app frame
+  },
   ui: { createOpen: false, cloneTarget: null, editTarget: null, pendingAddWidget: false, theme: 'light', listingOpen: true, listingQuery: '', groupStyle: 1, listStyle: 1, legendStyle: 6,
     // AI entry-point demo: which surface reveals the AI Summary/Assistant, and whether the panel is open.
     // Entry ids live in src/data/aiEntries.js; one at a time, switched from the on-board demo bar.
@@ -32,7 +53,16 @@ export const store = reactive({
     // { title, type } — a widget to scroll to and flash once the board has loaded
     focusTile: null,
     // guided spotlight tour of the revamped dashboard (top bar → "Take a tour")
-    tourOpen: false },
+    tourOpen: false,
+    /* APPEARANCE ENTRY demo: which of the four ways into the global layout settings is
+     * live. One at a time, switched from the floating demo bar — the same convention the
+     * grouping / legend / AI-entry demos already use.
+     *   'tab'     Appearance tab on Manage all dashboards
+     *   'toolbar' an icon in that page's toolbar
+     *   'sidebar' an icon beside "Manage all dashboards" in the listing sidebar
+     *   'board'   a live drawer over the real board
+     * `layoutOpen` is the shared open state every entry drives. */
+    layoutEntry: 'tab', layoutOpen: false },
   // global view-time controls (per the rebuilt Time Filter + Auto-Refresh)
   timeFilter: { preset: 'last30', label: 'Last 30 days', from: null, to: null },
   autoRefresh: { interval: 'off', label: 'Off' },
@@ -240,7 +270,14 @@ export function createDashboard({ name, access, category, folder, description, t
     techAccess: techAccess || (access === 'public' ? ['All technicians'] : access === 'private' ? [store.currentUser] : []),
     groupAccess: groupAccess || (access === 'public' ? ['All technician groups'] : []),
     // per-dashboard layout (from the create/clone panel)
-    headerFont: layout?.headerFont || 'M', hGap: layout?.hGap ?? 14, vGap: layout?.vGap ?? 14, rowHeight: layout?.rowHeight ?? 140,
+    /* Layout fields are written ONLY when the creator set them. Left undefined, the
+     * board inherits store.layout — so changing the global setting later moves this
+     * board too, which is the whole point of a global setting. Writing defaults here
+     * would have pinned every new board to 14/14/140 forever. */
+    ...(layout?.headerFont ? { headerFont: layout.headerFont } : {}),
+    ...(layout?.hGap != null ? { hGap: layout.hGap } : {}),
+    ...(layout?.vGap != null ? { vGap: layout.vGap } : {}),
+    ...(layout?.rowHeight != null ? { rowHeight: layout.rowHeight } : {}),
     // a per-dashboard freeze on widget position + size (create panel)
     layoutLock: layoutLock === true,
   }

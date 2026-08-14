@@ -451,16 +451,21 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .cat { margin-bottom: 18px; }
 .cat-h { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted-2); font-weight: 600; margin: 6px 0 10px; }
 .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-/* padding is 28, not 30, purely so the card's height is unchanged now that the icon box
-   went 60 → 64: the four extra pixels of glyph come out of the padding rather than out of
-   the grid. Card height stays 154. */
-.tc { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 28px 12px; border: 1px solid var(--border); background: var(--surface-2); border-radius: 4px; color: var(--ink-2); }
-.tc:hover { border-color: var(--primary); background: var(--primary-softer); color: var(--primary-700); box-shadow: var(--sh-sm); transform: translateY(-2px); }
+/* §9.2 clickable / module card. Three things follow from that section:
+   · it sits on --surface, not the grey --surface-2 — a card IS the surface, and a grey
+     one on a white drawer reads as disabled rather than as pickable;
+   · 8px, because a card is a SURFACE and only controls are 4px (§3.1) — this was the
+     one clickable card in the app still wearing a control's corner;
+   · hover is a primary border plus the guide's lift shadow, not a colour wash. The
+     wash tinted the whole card blue and the icon lost its own contrast against it.
+   The icon keeps --muted at rest and takes the primary on hover, per §5. */
+.tc { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 20px 12px; border: 1px solid var(--border); background: var(--surface); border-radius: var(--r-lg); color: var(--muted); transition: border-color .15s, box-shadow .15s, transform .1s, color .15s; }
+.tc:hover { border-color: var(--primary); color: var(--primary); box-shadow: var(--sh); transform: translateY(-2px); }
 .tc-group { border-style: dashed; border-color: var(--border-strong); }
-/* the icons paint with currentColor, so they inherit the card's ink at rest (--ink-2,
-   which IS the sheet's #516381) and pick up the primary on hover along with the label */
 .tc-ico { width: 64px; height: 64px; display: grid; place-items: center; }
-.tc-label { font-size: 13px; font-weight: 500; }
+/* the label is READ, so it holds the primary ink while the icon stays quiet beside it */
+.tc-label { font-size: 13px; font-weight: 500; color: var(--ink); }
+.tc:hover .tc-label { color: var(--primary); }
 .lst { display: flex; flex-direction: column; gap: 2px; }
 .lrow { display: flex; align-items: center; gap: 12px; padding: 10px 10px; border-radius: 4px; }
 .lrow:hover { background: var(--surface-2); }

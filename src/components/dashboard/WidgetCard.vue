@@ -843,7 +843,9 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 /* frozen: a predefined pie/KPI/shortcut can't be recast at all */
 .menu-item.sub.dis { opacity: .4; cursor: not-allowed; }
 .menu-item.sub.dis:hover { background: transparent; }
-.tbody { flex: 1; padding: 12px 14px; display: flex; flex-direction: column; min-height: 0; }
+/* --tile-pad is set on the board from the GLOBAL layout setting, so widget padding
+   is one preference rather than a number repeated in every tile. */
+.tbody { flex: 1; padding: var(--tile-pad, 12px); display: flex; flex-direction: column; min-height: 0; }
 .loading { flex: 1; display: flex; flex-direction: column; justify-content: center; }
 /* empty-widget states */
 .wstate { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 5px; color: var(--muted); padding: 14px; }

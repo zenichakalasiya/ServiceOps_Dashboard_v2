@@ -5,12 +5,15 @@ import Icon from '../components/ui/Icon.vue'
 import ScheduleDialog from '../components/dashboard/ScheduleDialog.vue'
 import HistoryDialog from '../components/dashboard/HistoryDialog.vue'
 import TableFilterBar from '../components/dashboard/TableFilterBar.vue'
+import LayoutAppearance from '../components/dashboard/LayoutAppearance.vue'
 import { matchesConds } from '../data/filters.js'
 import { store, manageable, archived, archiveDashboard, restoreDashboard, deleteForever, recordView,
   togglePublished, setPublished, moveDashboardsToCategory, archiveMany, markDefault, toggleFavorite } from '../store/index.js'
 import { ACCESS } from '../data/mock.js'
 const route = useRoute()
 const router = useRouter()
+// which appearance ENTRY is live (demo switcher) — see store.ui.layoutEntry
+const entry = computed(() => store.ui.layoutEntry)
 
 const tab = ref('all')                 // all | mine | shared | archive
 const q = ref('')
@@ -154,7 +157,11 @@ function onDrop(target) {
   <div class="page">
     <div class="page-head">
       <div><h1>Manage dashboards</h1></div>
-      <button class="btn btn-primary" @click="store.ui.cloneTarget = null; store.ui.editTarget = null; store.ui.createOpen = true"><Icon name="plus" :size="16" /> New dashboard</button>
+      <div class="ph-acts">
+        <!-- ENTRY 3 · a toolbar icon on the page that already means "all dashboards" -->
+        <button v-if="entry === 'toolbar'" class="btn ico-only" :class="{ on: store.ui.layoutOpen }" title="Layout appearance" @click="store.ui.layoutOpen = !store.ui.layoutOpen"><Icon name="appearance" :size="17" /></button>
+        <button class="btn btn-primary" @click="store.ui.cloneTarget = null; store.ui.editTarget = null; store.ui.createOpen = true"><Icon name="plus" :size="16" /> New dashboard</button>
+      </div>
     </div>
 
     <!-- Search + filter sits ABOVE the tabs, full width, exactly as the Shortcut tables
@@ -172,6 +179,13 @@ function onDrop(target) {
         <button class="t" :class="{ on: tab === 'mine' }" @click="tab = 'mine'; sel = new Set()">Created by me</button>
         <button class="t" :class="{ on: tab === 'shared' }" @click="tab = 'shared'; sel = new Set()">Shared with me</button>
         <button class="t" :class="{ on: tab === 'archive' }" @click="tab = 'archive'; sel = new Set()">Archive <span class="c">{{ archived.length }}</span></button>
+        <!-- ENTRY 1 · Appearance as a peer of the listing tabs. It is a different KIND of
+             thing from a filter over the list, so it carries an icon and sits after a
+             rule rather than pretending to be a fifth filter. -->
+        <template v-if="entry === 'tab'">
+          <span class="t-sep" />
+          <button class="t t-appearance" :class="{ on: tab === 'appearance' }" @click="tab = 'appearance'"><Icon name="appearance" :size="14" /> Appearance</button>
+        </template>
       </div>
     </div>
 
@@ -202,7 +216,12 @@ function onDrop(target) {
       </div>
     </transition>
 
-    <div class="tbl-wrap">
+    <!-- ENTRY 1 · the Appearance tab's own pane, in place of the listing -->
+    <div v-if="entry === 'tab' && tab === 'appearance'" class="appearance-pane">
+      <LayoutAppearance variant="panel" />
+    </div>
+
+    <div v-else class="tbl-wrap">
       <table class="mtbl">
         <thead>
           <tr>
@@ -340,6 +359,14 @@ function onDrop(target) {
 .btn.danger:hover { background: var(--red-soft); }
 /* table */
 .tbl-wrap { flex: 1; overflow: auto; border: 0; border-radius: 0; background: transparent; }
+.appearance-pane { flex: 1; overflow: auto; padding: 4px 2px 24px; min-height: 0; }
+.ph-acts { display: flex; align-items: center; gap: 8px; }
+.ph-acts .btn.ico-only { width: 38px; padding: 0; justify-content: center; }
+.ph-acts .btn.ico-only.on { background: var(--primary-soft); color: var(--primary); border-color: transparent; }
+/* Appearance is not a fifth filter over the list, so a rule separates it from the four
+   that are, and it carries an icon none of them have. */
+.t-sep { width: 1px; height: 18px; background: var(--border); margin: 0 4px; flex: none; }
+.t-appearance { display: inline-flex; align-items: center; gap: 6px; }
 .mtbl { width: 100%; border-collapse: collapse; font-size: 13px; }
 /* header row on the page's own white, in sentence case — the grey band was the only thing
    left implying a card once the container went */

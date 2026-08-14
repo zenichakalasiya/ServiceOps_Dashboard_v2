@@ -164,6 +164,9 @@ function doClone(d) { store.ui.editTarget = null; store.ui.cloneTarget = d; stor
          header now, and Archive already has its own nav item with a count -->
     <div class="ffoot">
       <button class="manage-link" @click="openFull()"><Icon name="rows" :size="15" /> Manage all dashboards <Icon name="chevron-right" :size="14" class="ml-arrow" /></button>
+      <!-- ENTRY 4 · beside the link that already means "all of them", so the scope is
+           borrowed from its neighbour instead of needing to be stated. -->
+      <button v-if="store.ui.layoutEntry === 'sidebar'" class="appearance-link" :class="{ on: store.ui.layoutOpen }" title="Dashboard layout — applies to every board" @click="store.ui.layoutOpen = !store.ui.layoutOpen"><Icon name="appearance" :size="15" /></button>
     </div>
 
     <!-- per-row actions menu (teleported so it overlays instead of being clipped) -->
@@ -212,8 +215,11 @@ function doClone(d) { store.ui.editTarget = null; store.ui.cloneTarget = d; stor
 .new-ic:hover { background: var(--primary-600); }
 .row { display: flex; align-items: center; } .gap-6 { gap: 6px; }
 /* footer: Manage all dashboards, on its own */
-.ffoot { border-top: 1px solid var(--border); padding: 10px; }
-.manage-link { width: 100%; display: flex; align-items: center; gap: 9px; padding: 9px 12px; border: none; background: transparent; color: var(--ink-2); font-weight: 600; font-size: 13px; border-radius: 4px; }
+.ffoot { border-top: 1px solid var(--border); padding: 10px; display: flex; align-items: center; gap: 4px; }
+.appearance-link { flex: none; width: 34px; height: 34px; display: grid; place-items: center; border: none; background: transparent; color: var(--muted); border-radius: var(--r); }
+.appearance-link:hover { background: var(--surface-2); color: var(--ink); }
+.appearance-link.on { background: var(--primary-soft); color: var(--primary); }
+.manage-link { flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px; padding: 9px 12px; border: none; background: transparent; color: var(--ink-2); font-weight: 600; font-size: 13px; border-radius: 4px; }
 .manage-link:hover { background: var(--surface-2); color: var(--ink); }
 .manage-link .ml-arrow { margin-left: auto; color: var(--muted); }
 /* inline underline tabs (matches the Add-Widget side popup). Four labels are wider than

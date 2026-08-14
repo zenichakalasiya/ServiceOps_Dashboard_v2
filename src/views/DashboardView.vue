@@ -408,16 +408,26 @@ function ownDated(gid) { return tilesIn(gid).filter((t) => t.dateFilter).length 
  * (it takes a null groupId for the whole canvas) if it is ever wanted back. */
 function onPin(t) { t.pinned = !t.pinned; d.value.updated = new Date().toISOString(); dirty.value = true; toast(t.pinned ? `Pinned “${t.title}”` : `Unpinned “${t.title}”`) }
 
-// ---- per-dashboard layout (from the create/clone panel) ----
-const FONT_PX = { S: 12.5, M: 13.5, L: 15 }
-const boardVars = computed(() => ({ '--tile-title': (FONT_PX[d.value?.headerFont] || 13.5) + 'px' }))
-const gridStyle = computed(() => ({ columnGap: (d.value?.hGap ?? 14) + 'px', rowGap: (d.value?.vGap ?? 14) + 'px' }))
+/* ---- layout: the board's own value, else the GLOBAL one ----------------------
+ * `dashboard.<field> ?? store.layout.<field>` — a board is "inherit" until somebody
+ * deliberately overrides it in Edit Dashboard, so changing the global setting moves
+ * every board that never opted out. Sizes are the guide's integer scale. */
+const FONT_PX = { S: 12, M: 13, L: 15 }
+const lay = (k, fallback) => d.value?.[k] ?? store.layout[fallback ?? k]
+const boardVars = computed(() => ({
+  '--tile-title': (FONT_PX[d.value?.headerFont || store.layout.titleSize] || 13) + 'px',
+  // read by WidgetCard's .tbody, so widget padding is a global setting too
+  '--tile-pad': store.layout.cardPad + 'px',
+}))
+const gridStyle = computed(() => ({ columnGap: lay('hGap') + 'px', rowGap: lay('vGap') + 'px' }))
+// the board's gutter against the app frame
+const boardPad = computed(() => store.layout.boardMargin + 'px')
 
 // ---- per-tile size (default span/height) + drag-to-resize from bottom-right ----
 function cellStyle(t) {
   const w = Math.min(12, Math.max(2, t.w || 3))
   const h = Math.max(1, t.h || 1)
-  const base = d.value?.rowHeight ?? 140
+  const base = lay('rowHeight')
   return { gridColumn: `span ${w}`, minHeight: (base + (h - 1) * 110) + 'px' }
 }
 let resizeCtx = null
@@ -688,6 +698,10 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
           <button class="btn ico-only" :class="{ on: showExport }" @click.stop="showExport = !showExport" title="Export"><Icon name="export" :size="17" /></button>
           <ExportDialog v-if="showExport" :d="d" @close="showExport = false" />
         </div>
+        <!-- ENTRY 4 · a control on the board itself. The drawer opens WITHOUT a scrim so
+             the widgets behind it keep rendering live as the sliders move — the only
+             entry where you judge the spacing against your own content. -->
+        <button v-if="store.ui.layoutEntry === 'board'" class="btn ico-only" :class="{ on: store.ui.layoutOpen }" title="Dashboard layout — applies to every board" @click.stop="store.ui.layoutOpen = !store.ui.layoutOpen"><Icon name="appearance" :size="17" /></button>
         <!-- A: the AI-insights chip lives in the header, immediately left of the ⋯ menu -->
         <AiInsightChip v-if="!loadingBoard && ap === 'A'" :board="aiBoard" @ask="onCardAsk" />
         <DashboardMenu :d="d" align="right" toolbar @present="presenting = true" @schedule="showSchedule = true" @history="showHistory = true" />
@@ -706,7 +720,7 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
     </transition>
 
     <!-- Body -->
-    <div class="bbody">
+    <div class="bbody" :style="{ paddingLeft: boardPad, paddingRight: boardPad, paddingTop: boardPad }">
       <!-- DEMO: switch between the 5 grouping designs to compare them live (hidden — default is ① Select) -->
       <div v-if="showGroupDemo && !loadingBoard" class="gstyle-bar">
         <span class="gsb-label"><Icon name="template" :size="14" /> Grouping demo</span>
@@ -1034,6 +1048,7 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 /* the canvas is white: tiles are --surface too, so the separation comes from their
    borders and shadow rather than a tinted ground */
 .bbody { flex: 1; padding: 16px 24px 28px; background: var(--surface); }
+/* the board gutter is set inline from store.layout.boardMargin — see boardPad */
 .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; align-items: start; }
 /* B placement: the AI card in the KPI row — ~3 KPI widths, height matched to a KPI tile */
 .ai-cell { grid-column: span 6; min-height: 140px; }
