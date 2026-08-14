@@ -13,13 +13,20 @@
  *   'all'  → store.layout, the global default every board inherits
  *   'this' → the open dashboard's own fields, which win over the global
  *
- * There is no Save. Layout is a preference: the value you can see is the value in
- * force, and an unsaved slider position would be a state nobody asked for.
+ * ── Preview now, commit on Apply ────────────────────────────────────────────────
+ * Every control still moves the REAL board as you drag it — that's why the drawer
+ * has no scrim. But nothing is kept until Apply. Cancel (and the X, Escape, or a
+ * click outside) restores the snapshot taken when the drawer opened, so the live
+ * preview costs you nothing if you change your mind.
  */
 import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import Icon from '../ui/Icon.vue'
-import { store, byId, toast } from '../../store/index.js'
+import {
+  store, byId, toast,
+  LAYOUT_FIELD as FIELD, LAYOUT_KEYS as KEYS, LAYOUT_DEFAULTS as DEFAULTS,
+  commitLayoutEdit, cancelLayoutEdit,
+} from '../../store/index.js'
 
 defineProps({
   // 'drawer' narrow column (both entries today) · 'panel' full width, if ever inlined
@@ -32,14 +39,8 @@ defineProps({
 const route = useRoute()
 const dash = computed(() => (route.params.id ? byId(route.params.id) : null))
 
-/* A global key and its per-dashboard counterpart. Only `titleSize` differs: a board has
- * carried `headerFont` since before this setting existed, and renaming a stored field to
- * tidy a map would strand every board that already has one. */
-const FIELD = {
-  titleSize: 'headerFont', cardPad: 'cardPad', hGap: 'hGap',
-  vGap: 'vGap', rowHeight: 'rowHeight', boardMargin: 'boardMargin',
-}
-const KEYS = Object.keys(FIELD)
+// FIELD / KEYS / DEFAULTS live in the store beside the snapshot that reads them —
+// one list, so a field can't be editable here and un-revertable there.
 
 // scope lives on the store so it survives the drawer closing and reopening
 const scope = computed(() => (dash.value ? store.ui.layoutScope : 'all'))
@@ -69,11 +70,10 @@ function pickScope(next) {
   const d = dash.value
   if (!d || next === scope.value) return
   store.ui.layoutScope = next
-  if (next === 'all') {
-    // back to global — drop this board's overrides so it genuinely inherits again
-    KEYS.forEach((k) => { delete d[FIELD[k]] })
-    toast('“' + d.name + '” follows the global layout again')
-  }
+  // back to global — drop this board's overrides so it genuinely inherits again.
+  // No toast: nothing has been applied yet, and announcing a change that Cancel can
+  // still take back would be claiming more than happened.
+  if (next === 'all') KEYS.forEach((k) => { delete d[FIELD[k]] })
 }
 
 const SIZES = [
@@ -91,22 +91,38 @@ const SLIDERS = [
   { key: 'boardMargin', label: 'Board margin', hint: 'Between the widgets and the edge of the page', min: 8, max: 40, step: 4 },
 ]
 
-const DEFAULTS = { titleSize: 'M', cardPad: 12, hGap: 14, vGap: 14, rowHeight: 140, boardMargin: 16 }
 const isDefault = computed(() => KEYS.every((k) => val(k) === DEFAULTS[k]))
-function resetAll() {
-  KEYS.forEach((k) => setVal(k, DEFAULTS[k]))
-  toast(scope.value === 'all' ? 'Global layout reset to defaults' : '“' + dash.value.name + '” reset to defaults')
-}
+// Reset only moves the sliders — it is part of the draft, so Cancel still undoes it
+function resetAll() { KEYS.forEach((k) => setVal(k, DEFAULTS[k])) }
 
 // how many boards a GLOBAL change actually moves — the ones that haven't overridden
 const inheriting = computed(() =>
   store.dashboards.filter((d) => !d.archived && KEYS.every((k) => d[FIELD[k]] == null)).length)
 
 const titlePx = computed(() => SIZES.find((s) => s.id === val('titleSize'))?.px || 13)
+
+/* The CTA names the scope it will act on, so the button restates the decision the
+ * cards above it record — you never have to look back up to know what Apply does. */
+const applyLabel = computed(() => (scope.value === 'all' ? 'Apply to all dashboards' : 'Apply to this dashboard'))
+
+function apply() {
+  commitLayoutEdit()
+  toast(scope.value === 'all'
+    ? `Layout applied to all dashboards — ${inheriting.value} updated`
+    : `Layout applied to “${dash.value.name}”`)
+  store.ui.layoutOpen = false
+}
+function cancel() {
+  cancelLayoutEdit()
+  store.ui.layoutOpen = false
+}
 </script>
 
 <template>
   <div class="la" :class="variant">
+   <!-- everything above the footer scrolls; the footer does not, so Apply is reachable
+        without scrolling past five sliders and a preview first -->
+   <div class="la-scroll">
     <!-- SCOPE — two option cards, the product's standard radio-card pair.
          Cards rather than a checkbox because the two outcomes are peers, not a thing
          and its negation: "this board" and "every board" are both ordinary answers, and
@@ -157,9 +173,6 @@ const titlePx = computed(() => SIZES.find((s) => s.id === val('titleSize'))?.px 
           <span class="la-hint">{{ s.hint }}</span>
         </div>
 
-        <button class="la-reset" :disabled="isDefault" @click="resetAll">
-          <Icon name="undo" :size="14" /> Reset to defaults
-        </button>
       </div>
 
       <!-- A live preview, sized from the real values. A MODEL of the board, not a
@@ -181,11 +194,32 @@ const titlePx = computed(() => SIZES.find((s) => s.id === val('titleSize'))?.px 
         </div>
       </div>
     </div>
+   </div>
+
+    <!-- FOOTER — Reset far left, then the commit pair.
+         Reset is separated from Cancel/Apply because it is a different KIND of
+         action: it changes the draft, it doesn't end the session. Sitting it next
+         to Cancel would put two "undo-ish" buttons side by side meaning different
+         things. It sticks to the bottom of the scroll area so the commit is
+         reachable without scrolling past five sliders and a preview. -->
+    <footer class="la-foot">
+      <button class="la-ghost" :disabled="isDefault" title="Put every value back to its default" @click="resetAll">
+        <Icon name="reset" :size="14" /> Reset
+      </button>
+      <button class="btn" @click="cancel">Cancel</button>
+      <button class="btn btn-primary" @click="apply">{{ applyLabel }}</button>
+    </footer>
   </div>
 </template>
 
 <style scoped>
-.la { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.la { display: flex; flex-direction: column; min-width: 0; }
+.la-scroll { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+/* In the drawer the panel owns the full height and does its own scrolling, so the
+   footer can be a plain flex child that never moves. `min-height: 0` is what lets
+   the scroll area actually shrink inside the flex column. */
+.la.drawer { height: 100%; }
+.la.drawer .la-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 16px; }
 
 /* ── the scope cards ───────────────────────────────────────────────────────────── */
 .lsc { display: flex; flex-direction: column; gap: 8px; }
@@ -230,9 +264,24 @@ const titlePx = computed(() => SIZES.find((s) => s.id === val('titleSize'))?.px 
 
 .la-rng { width: 100%; accent-color: var(--primary); }
 
-.la-reset { display: inline-flex; align-items: center; justify-content: center; gap: 6px; align-self: flex-start; height: 32px; padding: 0 12px; border: 1px solid var(--border-control); background: var(--surface); color: var(--ink-2); border-radius: var(--r); font-size: 13px; font-weight: 500; }
-.la-reset:hover:not(:disabled) { background: var(--surface-2); color: var(--ink); }
-.la-reset:disabled { opacity: .45; cursor: not-allowed; }
+/* ── the footer ───────────────────────────────────────────────────────────────── */
+.la-foot { display: flex; align-items: center; gap: 8px; }
+.la.drawer .la-foot {
+  flex: none; padding: 12px 16px;
+  background: var(--surface); border-top: 1px solid var(--border);
+}
+.la.panel .la-foot { margin-top: 18px; }
+/* Reset carries the left edge; the commit pair is pushed to the right */
+.la-foot .btn:first-of-type { margin-left: auto; }
+.la-foot .btn { height: 32px; }
+
+.la-ghost {
+  display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px;
+  border: none; background: transparent; color: var(--ink-2);
+  border-radius: var(--r); font-size: 13px; font-weight: 500;
+}
+.la-ghost:hover:not(:disabled) { background: var(--surface-2); color: var(--ink); }
+.la-ghost:disabled { opacity: .4; cursor: not-allowed; }
 
 /* ── the preview ──────────────────────────────────────────────────────────────── */
 .la-pv-cap { display: block; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-bottom: 6px; }

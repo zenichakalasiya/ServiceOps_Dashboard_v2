@@ -30,7 +30,7 @@ import {
   Bell, Settings, ArrowLeft, Pin, Wand2, Maximize2, GripVertical, Inbox, TrendingUp, FileOutput,
   Moon, Sun, CalendarDays, Rows3, LayoutTemplate, TriangleAlert, Package, Network,
   Lightbulb, UserCheck, ClipboardCheck, UsersRound, Menu, Keyboard, History, Monitor,
-  FolderMinus, FolderPlus, BadgeCheck, Undo2, Redo2, ThumbsUp, ThumbsDown, ArrowUp, ArrowDown,
+  FolderMinus, FolderPlus, BadgeCheck, Undo2, Redo2, RotateCcw, ThumbsUp, ThumbsDown, ArrowUp, ArrowDown,
   PenLine, Palette, Square, Circle, MoveUpRight, Eraser, Mail, MousePointer2, ChartArea,
   Filter, Triangle, ChartBarBig, ChartBarStacked, ChartSpline, ChartNoAxesCombined,
   ChartColumnBig, Grid3x3, Gauge, AlignLeft, Map, ArrowRight, MessageSquare,
@@ -73,6 +73,10 @@ const MAP = {
   // smudge and shares no vocabulary with the icon that made the group.
   ungroup: FolderMinus, 'default-home': House, 'new-group': FolderPlus,
   verified: BadgeCheck, undo: Undo2, redo: Redo2,
+  /* 'reset' is not 'undo': undo steps back through history, reset puts a form or a set
+     of settings back to where it started. Separate names so the two can never drift onto
+     the same glyph by accident. */
+  reset: RotateCcw,
   'thumb-up': ThumbsUp, 'thumb-down': ThumbsDown,
   'sort-asc': ArrowUp, 'sort-desc': ArrowDown,
   rearrange: LayoutGrid, pen: PenLine, palette: Palette,

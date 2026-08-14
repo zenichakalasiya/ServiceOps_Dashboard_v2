@@ -421,8 +421,11 @@ function save(place) {
         <!-- Header (ClickUp-style) -->
         <header class="bhead">
           <div class="crumb"><span class="muted">Dashboard</span> <Icon name="chevron-right" :size="13" class="sep" /> <span v-if="duplicate" class="muted">Duplicate</span><span v-else-if="editing || libMode" class="muted">Edit</span> <b>{{ effectiveName || ('New ' + curType.label) }}</b></div>
+          <!-- Reset, not Refresh. Refresh acts on the PREVIEW, so it now lives beside
+               the preview (below); what belongs up here next to Close is the action
+               that operates on the whole form. -->
           <div class="hacts">
-            <button class="ic" title="Refresh preview" @click="refreshPreview"><Icon name="refresh" :size="16" :class="{ spin: spinning }" /></button>
+            <button class="ic" title="Reset every field to how this widget opened" @click="reset"><Icon name="reset" :size="16" /></button>
             <button class="ic" @click="emit('close')" title="Close"><Icon name="x" :size="18" /></button>
           </div>
         </header>
@@ -430,14 +433,23 @@ function save(place) {
         <div class="bbody">
           <!-- LEFT: live preview (ServiceOps) -->
           <section class="preview">
-            <!-- creating: pick a family. editing: only the swaps that are actually
-                 possible. Neither renders a disabled tab. -->
-            <div v-if="showFamilies" class="pv-tabs">
-              <button
-                v-for="f in FAMILIES" :key="f.id" class="pv-tab"
-                :class="{ on: familyOn(f) }" :title="`Build a ${f.label}`" @click="pickFamily(f)"
-              >
-                <Icon :name="f.icon" :size="16" /> {{ f.label }}
+            <!-- The row above the preview. Refresh sits at its right end, on the same
+                 line as the tabs, because it acts on the thing directly below it —
+                 from the modal's top bar it was three regions away from what it
+                 refreshed. It renders even when there are no tabs to show. -->
+            <div class="pv-top">
+              <!-- creating: pick a family. editing: only the swaps that are actually
+                   possible. Neither renders a disabled tab. -->
+              <div v-if="showFamilies" class="pv-tabs">
+                <button
+                  v-for="f in FAMILIES" :key="f.id" class="pv-tab"
+                  :class="{ on: familyOn(f) }" :title="`Build a ${f.label}`" @click="pickFamily(f)"
+                >
+                  <Icon :name="f.icon" :size="16" /> {{ f.label }}
+                </button>
+              </div>
+              <button class="pv-refresh" title="Refresh preview" @click="refreshPreview">
+                <Icon name="refresh" :size="16" :class="{ spin: spinning }" />
               </button>
             </div>
             <div class="pv-card">
@@ -871,7 +883,12 @@ function save(place) {
    same control the reference uses for every either/or in this panel (family, access,
    Manual/Query, Top/Bottom/All). Four loose outlined buttons with a blue fill read as
    four separate things you could each turn on. */
-.pv-tabs { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 4px; background: var(--surface-2); border-radius: 4px; margin-bottom: 14px; }
+/* the tab track and Refresh share one line; `margin-left:auto` (not space-between)
+   keeps Refresh hard right even when there are no tabs to push it there */
+.pv-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.pv-refresh { flex: none; margin-left: auto; width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid var(--border-control); background: var(--surface); color: var(--muted); border-radius: var(--r); }
+.pv-refresh:hover { background: var(--surface-2); color: var(--ink); }
+.pv-tabs { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 4px; background: var(--surface-2); border-radius: 4px; }
 .pv-tab { display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 13px; border: none; background: transparent; color: var(--ink-2); border-radius: 4px; font-weight: 500; font-size: 13px; }
 .pv-tab:hover { color: var(--ink); }
 .pv-tab.on { background: var(--ink); color: #fff; font-weight: 600; box-shadow: var(--sh-sm); }

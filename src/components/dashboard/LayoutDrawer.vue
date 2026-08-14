@@ -17,12 +17,18 @@
 import { onMounted, onBeforeUnmount } from 'vue'
 import Icon from '../ui/Icon.vue'
 import LayoutAppearance from './LayoutAppearance.vue'
-import { store } from '../../store/index.js'
+import { store, beginLayoutEdit, cancelLayoutEdit } from '../../store/index.js'
 
 const close = () => { store.ui.layoutOpen = false }
 function onKey(e) { if (e.key === 'Escape') close() }
-onMounted(() => window.addEventListener('keydown', onKey))
-onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
+
+/* The drawer's lifetime IS the edit session, so the snapshot is taken and released
+ * here rather than by any one button. Every way out that isn't Apply — the X,
+ * Escape, a click outside, even navigating away — lands on the same unmount and
+ * reverts. Apply calls commitLayoutEdit() first, which drops the snapshot, so the
+ * cancel below finds nothing to undo and the change stands. */
+onMounted(() => { beginLayoutEdit(); window.addEventListener('keydown', onKey) })
+onBeforeUnmount(() => { cancelLayoutEdit(); window.removeEventListener('keydown', onKey) })
 </script>
 
 <template>
@@ -31,7 +37,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
          tinting the board the settings are being judged against -->
     <div class="ld-catch" @click="close" />
     <transition name="ld" appear>
-      <aside class="ld" role="dialog" aria-label="Dashboard layout">
+      <!-- a div, not an <aside>: `role="dialog"` is not an allowed role on <aside>,
+           and no `aria-modal` — the board behind stays live and interactive -->
+      <div class="ld" role="dialog" aria-label="Dashboard layout">
         <header class="ld-h">
           <div class="ld-t">
             <Icon name="appearance" :size="16" />
@@ -45,7 +53,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
           <button class="ld-x" title="Close" @click="close"><Icon name="x" :size="18" /></button>
         </header>
         <div class="ld-b"><LayoutAppearance variant="drawer" /></div>
-      </aside>
+      </div>
     </transition>
   </teleport>
 </template>
@@ -66,7 +74,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 .ld-t span { font-size: 12px; color: var(--muted); margin-top: 1px; }
 .ld-x { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border: none; background: transparent; color: var(--muted); border-radius: var(--r); }
 .ld-x:hover { background: var(--icon-hover); color: var(--ink); }
-.ld-b { flex: 1; overflow-y: auto; padding: 16px; min-height: 0; }
+/* No padding and no scrolling here: LayoutAppearance splits itself into a scrolling
+   body and a pinned footer, and it can only do that if it owns the full height. A
+   padded, scrolling wrapper would put the footer inside the scroll again. */
+.ld-b { flex: 1; min-height: 0; overflow: hidden; }
 
 .ld-enter-active, .ld-leave-active { transition: transform .2s cubic-bezier(.2,.7,.3,1); }
 .ld-enter-from, .ld-leave-to { transform: translateX(100%); }

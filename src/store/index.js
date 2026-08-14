@@ -87,6 +87,56 @@ export function toast(message, kind = 'info', action = null) {
 }
 export function dismissToast(id) { store.toasts = store.toasts.filter((t) => t.id !== id) }
 
+/* ---------- layout editing ------------------------------------------------------
+ *
+ * The layout drawer previews on the REAL board — no scrim, so you judge spacing
+ * against your own widgets rather than a mock. That is what makes Cancel a real
+ * job: the board has already moved by the time you press it, so cancelling has to
+ * put everything back exactly as it was.
+ *
+ * The snapshot covers every board, not just the one on screen. It's six numbers
+ * each, and it means a board switch or a scope change mid-edit can't leave a
+ * change stranded outside the undo.
+ */
+
+/* A global layout key and its per-dashboard counterpart. Only `titleSize` differs:
+ * a board has carried `headerFont` since before this setting existed, and renaming
+ * a stored field to tidy a map would strand every board that already has one. */
+export const LAYOUT_FIELD = {
+  titleSize: 'headerFont', cardPad: 'cardPad', hGap: 'hGap',
+  vGap: 'vGap', rowHeight: 'rowHeight', boardMargin: 'boardMargin',
+}
+export const LAYOUT_KEYS = Object.keys(LAYOUT_FIELD)
+export const LAYOUT_DEFAULTS = { titleSize: 'M', cardPad: 12, hGap: 14, vGap: 14, rowHeight: 140, boardMargin: 16 }
+
+let layoutSnap = null
+
+export function beginLayoutEdit() {
+  layoutSnap = {
+    global: { ...store.layout },
+    scope: store.ui.layoutScope,
+    // `undefined` here is meaningful — it records "this board had NO override",
+    // which cancel must restore by deleting the key, not by writing undefined into it
+    boards: store.dashboards.map((d) => [d, LAYOUT_KEYS.map((k) => d[LAYOUT_FIELD[k]])]),
+  }
+}
+
+export function commitLayoutEdit() { layoutSnap = null }
+
+export function cancelLayoutEdit() {
+  if (!layoutSnap) return
+  Object.assign(store.layout, layoutSnap.global)
+  layoutSnap.boards.forEach(([d, vals]) => {
+    LAYOUT_KEYS.forEach((k, i) => {
+      const f = LAYOUT_FIELD[k]
+      if (vals[i] === undefined) delete d[f]
+      else d[f] = vals[i]
+    })
+  })
+  store.ui.layoutScope = layoutSnap.scope
+  layoutSnap = null
+}
+
 // ---------- dashboard actions ----------
 export function toggleFavorite(d) {
   d.favorite = !d.favorite
