@@ -38,7 +38,7 @@ onUnmounted(() => timer && clearInterval(timer))
       <Icon name="refresh" :size="17" :class="{ spin }" />
     </button>
     <div class="rel">
-      <button class="interval" :class="{ on: open || store.autoRefresh.interval !== 'off' }" @click.stop="open = !open" title="Auto-refresh interval">
+      <button class="interval" :class="{ on: open }" @click.stop="open = !open" title="Auto-refresh interval">
         {{ store.autoRefresh.label }} <Icon name="chevron-down" :size="13" />
       </button>
       <div v-if="open" class="backdrop" @click="open = false" />
@@ -59,6 +59,9 @@ onUnmounted(() => timer && clearInterval(timer))
 .rel { position: relative; }
 .interval { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 11px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink-2); font-weight: 500; font-size: 13px; border-radius: 0 4px 4px 0; min-width: 62px; justify-content: space-between; }
 .interval:hover { background: var(--surface-2); }
+/* Only while the MENU is open. Having a set interval light the control up made a
+   normal resting state look like something needed attention — every board with
+   auto-refresh on wore a blue outline permanently. */
 .interval.on { border-color: var(--primary); color: var(--primary-700); }
 .backdrop { position: fixed; inset: 0; z-index: 55; }
 .menu { position: absolute; right: 0; top: 42px; z-index: 60; min-width: 130px; }

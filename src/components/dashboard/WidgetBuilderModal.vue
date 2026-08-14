@@ -493,8 +493,8 @@ function save(place) {
               <div v-if="!isText" class="sec">
                 <div class="sec-h">{{ isShortcut ? 'Basic Shortcut Details' : 'Basic Widget Details' }}</div>
                 <div class="grid2">
-                  <div class="fld"><label>Name <i v-if="!predefinedEdit">*</i><span v-else class="ro-tag">Read-only</span></label><input class="input" :class="{ bad: nameTaken }" v-model="cfg.name" placeholder="Name" :disabled="predefinedEdit" /></div>
-                  <div class="fld"><label>Module <i v-if="!predefinedEdit">*</i><span v-else class="ro-tag">Read-only</span></label><Dropdown v-model="cfg.module" :options="store.modules" :disabled="predefinedEdit" /></div>
+                  <div class="fld"><label>Name <i v-if="!predefinedEdit">*</i></label><input class="input" :class="{ bad: nameTaken }" v-model="cfg.name" placeholder="Name" :disabled="predefinedEdit" /></div>
+                  <div class="fld"><label>Module <i v-if="!predefinedEdit">*</i></label><Dropdown v-model="cfg.module" :options="store.modules" :disabled="predefinedEdit" /></div>
                 </div>
                 <p v-if="dupBoards.length" class="dup-warn"><Icon name="alert" :size="13" /> <span>A widget named “{{ effectiveName }}” already exists on {{ dupBoards.slice(0, 2).join(', ') }}<span v-if="dupBoards.length > 2"> +{{ dupBoards.length - 2 }} more</span>. <b>Widget names must be unique</b> — pick another.</span></p>
                 <div v-if="isShortcut" class="fld" style="margin-top:12px"><label>Description</label><textarea class="input" rows="2" v-model="cfg.description" placeholder="Description" /></div>
@@ -511,7 +511,7 @@ function save(place) {
                    asking who may open a Public widget is a question with no answer. -->
               <div class="sec">
                 <div class="sec-h">Visibility &amp; sharing</div>
-                <label class="acc-lbl">Widget Access Level <i v-if="!predefinedEdit">*</i><span v-else class="ro-tag">Read-only</span></label>
+                <label class="acc-lbl">Widget Access Level <i v-if="!predefinedEdit">*</i></label>
                 <div class="acc-seg" :class="{ ro: predefinedEdit }">
                   <button
                     v-for="(a, k) in ACCESS" :key="k" class="acc-btn" :class="{ on: cfg.access === k }"
@@ -556,7 +556,11 @@ function save(place) {
                 </template>
               </div>
               <!-- families without a chart type still need the Manual / Query switch -->
+              <!-- Editing, there is no Chart Type block above to hang this off, so it was
+                   rendering as an unlabelled pair of tabs floating between Visibility and
+                   Axes. It asks how the data is FETCHED, so it says so. -->
               <div v-else-if="!isShortcut && !isText" class="sec">
+                <div class="sec-h">Data source</div>
                 <div class="seg">
                   <button class="seg-b" :class="{ on: cfg.mode==='manual' }" @click="cfg.mode='manual'">Manual</button>
                   <button class="seg-b" :class="{ on: cfg.mode==='query' }" @click="cfg.mode='query'">Query</button>
@@ -905,7 +909,13 @@ function save(place) {
    it; the rule was drawing a border around something the type had already separated.
    Applies to all four families (Widget · KPI · Shortcut · Free Text) since they share
    this one .sec class. */
+/* A section owns its own bottom space. Its LAST child was adding a 12px margin on top
+   of that, so the gap between two sections was 22px or 34px depending on whether the
+   section happened to end in a field, a hint or a toggle. */
 .sec { padding-bottom: 22px; margin-bottom: 0; border-bottom: none; }
+.sec > *:last-child { margin-bottom: 0; }
+/* the predefined note is a banner, not a section — it sits closer to what it introduces */
+.sec.pe-note { padding-bottom: 10px; margin-bottom: 18px; }
 /* Manage Legend — the segmented control and the value field share the row and fill it
    together, both at input height. The value box was 74px, which is a box for a number
    rather than a field you are asked to fill in. */
@@ -944,7 +954,9 @@ function save(place) {
 .dup-warn b { font-weight: 600; color: var(--amber); }
 .input.bad { border-color: var(--amber); }
 .sec:last-child { padding-bottom: 0; }
-.sec-h { font-weight: 600; font-size: 13px; margin-bottom: 12px; }
+/* 14px matches Create/Edit Dashboard — the two panels sit one click apart and were
+   using different heading sizes for the same level of heading. */
+.sec-h { font-weight: 600; font-size: 14px; color: var(--ink); margin-bottom: 12px; }
 /* a heading that OWNS the line under it sits tight to it — 12px of air between a title
    and its own description reads as two separate things */
 .sec-h:has(+ .hint) { margin-bottom: 5px; }
@@ -992,8 +1004,6 @@ function save(place) {
   background: var(--surface-2); color: var(--ink-2); cursor: default;
   border-color: var(--border); -webkit-text-fill-color: var(--ink-2); opacity: 1;
 }
-/* names the state upfront, so "why can't I type here" never becomes a question */
-.ro-tag { margin-left: 6px; padding: 1px 6px; border-radius: var(--r-sm); background: var(--inset); color: var(--muted); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
 .acc-note { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; }
 .open-dd { display: flex; flex-direction: column; gap: 3px; border: 1px solid var(--primary-soft); border-radius: 4px; padding: 5px; background: var(--primary-softer); }
 .dd-opt { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border: none; background: transparent; border-radius: 4px; font-size: 13px; text-align: left; }

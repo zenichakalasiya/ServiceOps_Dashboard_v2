@@ -5,15 +5,12 @@ import Icon from '../components/ui/Icon.vue'
 import ScheduleDialog from '../components/dashboard/ScheduleDialog.vue'
 import HistoryDialog from '../components/dashboard/HistoryDialog.vue'
 import TableFilterBar from '../components/dashboard/TableFilterBar.vue'
-import LayoutAppearance from '../components/dashboard/LayoutAppearance.vue'
 import { matchesConds } from '../data/filters.js'
 import { store, manageable, archived, archiveDashboard, restoreDashboard, deleteForever, recordView,
   togglePublished, setPublished, moveDashboardsToCategory, archiveMany, markDefault, toggleFavorite } from '../store/index.js'
 import { ACCESS } from '../data/mock.js'
 const route = useRoute()
 const router = useRouter()
-// which appearance ENTRY is live (demo switcher) — see store.ui.layoutEntry
-const entry = computed(() => store.ui.layoutEntry)
 
 const tab = ref('all')                 // all | mine | shared | archive
 const q = ref('')
@@ -159,7 +156,8 @@ function onDrop(target) {
       <div><h1>Manage dashboards</h1></div>
       <div class="ph-acts">
         <!-- ENTRY 3 · a toolbar icon on the page that already means "all dashboards" -->
-        <button v-if="entry === 'toolbar'" class="btn ico-only" :class="{ on: store.ui.layoutOpen }" title="Layout appearance" @click="store.ui.layoutOpen = !store.ui.layoutOpen"><Icon name="appearance" :size="17" /></button>
+        <!-- left of the primary action, on the page that already means "all dashboards" -->
+        <button class="btn ico-only" :class="{ on: store.ui.layoutOpen }" title="Dashboard layout — applies to every board" @click="store.ui.layoutOpen = !store.ui.layoutOpen"><Icon name="appearance" :size="17" /></button>
         <button class="btn btn-primary" @click="store.ui.cloneTarget = null; store.ui.editTarget = null; store.ui.createOpen = true"><Icon name="plus" :size="16" /> New dashboard</button>
       </div>
     </div>
@@ -179,13 +177,6 @@ function onDrop(target) {
         <button class="t" :class="{ on: tab === 'mine' }" @click="tab = 'mine'; sel = new Set()">Created by me</button>
         <button class="t" :class="{ on: tab === 'shared' }" @click="tab = 'shared'; sel = new Set()">Shared with me</button>
         <button class="t" :class="{ on: tab === 'archive' }" @click="tab = 'archive'; sel = new Set()">Archive <span class="c">{{ archived.length }}</span></button>
-        <!-- ENTRY 1 · Appearance as a peer of the listing tabs. It is a different KIND of
-             thing from a filter over the list, so it carries an icon and sits after a
-             rule rather than pretending to be a fifth filter. -->
-        <template v-if="entry === 'tab'">
-          <span class="t-sep" />
-          <button class="t t-appearance" :class="{ on: tab === 'appearance' }" @click="tab = 'appearance'"><Icon name="appearance" :size="14" /> Appearance</button>
-        </template>
       </div>
     </div>
 
@@ -216,12 +207,7 @@ function onDrop(target) {
       </div>
     </transition>
 
-    <!-- ENTRY 1 · the Appearance tab's own pane, in place of the listing -->
-    <div v-if="entry === 'tab' && tab === 'appearance'" class="appearance-pane">
-      <LayoutAppearance variant="panel" />
-    </div>
-
-    <div v-else class="tbl-wrap">
+    <div class="tbl-wrap">
       <table class="mtbl">
         <thead>
           <tr>

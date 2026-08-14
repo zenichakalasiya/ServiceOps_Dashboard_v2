@@ -164,9 +164,6 @@ function doClone(d) { store.ui.editTarget = null; store.ui.cloneTarget = d; stor
          header now, and Archive already has its own nav item with a count -->
     <div class="ffoot">
       <button class="manage-link" @click="openFull()"><Icon name="rows" :size="15" /> Manage all dashboards <Icon name="chevron-right" :size="14" class="ml-arrow" /></button>
-      <!-- ENTRY 4 · beside the link that already means "all of them", so the scope is
-           borrowed from its neighbour instead of needing to be stated. -->
-      <button v-if="store.ui.layoutEntry === 'sidebar'" class="appearance-link" :class="{ on: store.ui.layoutOpen }" title="Dashboard layout — applies to every board" @click="store.ui.layoutOpen = !store.ui.layoutOpen"><Icon name="appearance" :size="15" /></button>
     </div>
 
     <!-- per-row actions menu (teleported so it overlays instead of being clipped) -->

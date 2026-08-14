@@ -32,6 +32,10 @@ const confirmDel = ref(false)
         <button v-if="!d.default" class="menu-item" @click="act(() => markDefault(d))"><Icon name="pin" :size="16" /> Mark as default</button>
         <button class="menu-item" @click="act(() => emit('schedule'))"><Icon name="calendar2" :size="16" /> Schedule Dashboard</button>
         <button class="menu-item" @click="act(() => emit('history'))"><Icon name="history" :size="16" /> Version History</button>
+        <!-- Layout is not an action ON this board — it opens a setting that spans every
+             board — so a divider separates it from the five above that are. -->
+        <div class="menu-sep" />
+        <button class="menu-item" @click="act(() => { store.ui.layoutOpen = true })"><Icon name="appearance" :size="16" /> Layout settings</button>
         <!-- predefined dashboards ship with the product: they cannot be deleted or
              archived, so the action is absent rather than disabled -->
         <template v-if="!d.predefined">

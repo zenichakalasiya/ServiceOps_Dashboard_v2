@@ -54,15 +54,9 @@ export const store = reactive({
     focusTile: null,
     // guided spotlight tour of the revamped dashboard (top bar → "Take a tour")
     tourOpen: false,
-    /* APPEARANCE ENTRY demo: which of the four ways into the global layout settings is
-     * live. One at a time, switched from the floating demo bar — the same convention the
-     * grouping / legend / AI-entry demos already use.
-     *   'tab'     Appearance tab on Manage all dashboards
-     *   'toolbar' an icon in that page's toolbar
-     *   'sidebar' an icon beside "Manage all dashboards" in the listing sidebar
-     *   'board'   a live drawer over the real board
-     * `layoutOpen` is the shared open state every entry drives. */
-    layoutEntry: 'tab', layoutOpen: false },
+    // the global layout drawer's open state — opened from the board's ⋯ menu and from
+    // the Manage all dashboards toolbar; both land on the same panel
+    layoutOpen: false },
   // global view-time controls (per the rebuilt Time Filter + Auto-Refresh)
   timeFilter: { preset: 'last30', label: 'Last 30 days', from: null, to: null },
   autoRefresh: { interval: 'off', label: 'Off' },

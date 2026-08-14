@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import Icon from '../ui/Icon.vue'
 import Dropdown from '../ui/Dropdown.vue'
@@ -51,14 +51,6 @@ const nameTaken = computed(() => {
 })
 const canSave = computed(() => lockedDash.value || (!!name.value.trim() && !nameTaken.value))
 
-// per-dashboard layout
-const FONTS = ['S', 'M', 'L']
-const FONT_PX = { S: 12, M: 13.5, L: 15 }
-const layout = reactive({
-  headerFont: src?.headerFont || 'M',
-  hGap: src?.hGap ?? 14, vGap: src?.vGap ?? 14, rowHeight: src?.rowHeight ?? 140,
-})
-const fontIdx = computed({ get: () => FONTS.indexOf(layout.headerFont), set: (v) => (layout.headerFont = FONTS[+v]) })
 
 const ACC_DESC = {
   public: 'Everyone with portal access can open this dashboard.',
@@ -78,7 +70,6 @@ function saveCat() {
   newCat.value = ''; catAdd.value = false
 }
 
-const PREVIEW = ['Top Server Monitors', 'Monitor Availability', 'CPU Utilisation', 'Logs by Severity']
 
 function close() { store.ui.createOpen = false; store.ui.cloneTarget = null; store.ui.editTarget = null }
 function submit(openAdd = false) {
@@ -96,7 +87,6 @@ function submit(openAdd = false) {
         ...(ta ? { techAccess: ta } : {}), ...(ga ? { groupAccess: ga } : {}),
       }),
       category: category.value,
-      headerFont: layout.headerFont, hGap: layout.hGap, vGap: layout.vGap, rowHeight: layout.rowHeight,
       layoutLock: layoutLock.value,
       updated: new Date().toISOString(),
     })
@@ -111,7 +101,7 @@ function submit(openAdd = false) {
     name: name.value, access: access.value, category: category.value, description: description.value,
     techAccess: ta, groupAccess: ga,
     makeDefault: defaultLanding.value,
-    layout: { ...layout }, layoutLock: layoutLock.value,
+    layoutLock: layoutLock.value,
   }
   if (isClone.value) opts.tiles = src.tiles.map((t) => ({ ...JSON.parse(JSON.stringify(t)), id: uid('t') }))
   const d = createDashboard(opts)
@@ -128,7 +118,7 @@ function submit(openAdd = false) {
       <div class="head">
         <div>
           <h3>{{ isEdit ? 'Edit Dashboard' : isClone ? 'Clone Dashboard' : 'Create Dashboard' }}</h3>
-          <p v-if="isEdit || isClone" class="muted">{{ isEdit ? 'Update this dashboard’s details and layout.' : 'Duplicate this board with its widgets, then tweak it.' }}</p>
+          <p v-if="isEdit || isClone" class="muted">{{ isEdit ? 'Update this dashboard’s details.' : 'Duplicate this board with its widgets, then tweak it.' }}</p>
         </div>
         <button class="x-btn" @click="close"><Icon name="x" :size="16" /></button>
       </div>
@@ -141,13 +131,13 @@ function submit(openAdd = false) {
              what tells you it is fixed. -->
         <p v-if="lockedDash" class="pd-note">
           <Icon name="verified" :size="14" />
-          <span>This is a <b>predefined dashboard</b> — its <b>Name</b>, <b>Description</b> and <b>Visibility &amp; Sharing</b> ship with the product and are shown here read-only. You can still change its Category, layout, and the widgets on it.</span>
+          <span>This is a <b>predefined dashboard</b> — its <b>Name</b>, <b>Description</b> and <b>Visibility &amp; Sharing</b> ship with the product and are shown here read-only. You can still change its Category and the widgets on it.</span>
         </p>
 
         <div class="sec-h">Basics</div>
 
         <div class="grp">
-          <label class="field">Name <span v-if="!lockedDash" class="req">*</span><span v-else class="ro-tag">Read-only</span></label>
+          <label class="field">Name <span v-if="!lockedDash" class="req">*</span></label>
           <input class="input" :class="{ bad: nameTaken }" v-model="name" placeholder="Name" :disabled="lockedDash" :autofocus="!lockedDash" @input="err = ''" />
           <p v-if="nameTaken" class="dup-err">
             <Icon name="alert" :size="13" />
@@ -157,7 +147,7 @@ function submit(openAdd = false) {
         </div>
 
         <div class="grp">
-          <label class="field">Description <span v-if="!lockedDash" class="req">*</span><span v-else class="ro-tag">Read-only</span></label>
+          <label class="field">Description <span v-if="!lockedDash" class="req">*</span></label>
           <textarea class="input" rows="3" v-model="description" placeholder="Description" :disabled="lockedDash" />
         </div>
 
@@ -183,7 +173,7 @@ function submit(openAdd = false) {
         <!-- Access + one-liner -->
         <div class="sec-h">Visibility &amp; sharing</div>
         <div class="grp">
-          <label class="field">Dashboard Access Level <span v-if="!lockedDash" class="req">*</span><span v-else class="ro-tag">Read-only</span></label>
+          <label class="field">Dashboard Access Level <span v-if="!lockedDash" class="req">*</span></label>
           <div class="seg" :class="{ ro: lockedDash }">
             <button v-for="(a, k) in ACCESS" :key="k" class="seg-btn" :class="{ on: access === k }" :disabled="lockedDash" @click="access = k">{{ a.label }}</button>
           </div>
@@ -220,38 +210,6 @@ function submit(openAdd = false) {
           <button class="sw" :class="{ on: layoutLock }" @click="layoutLock = !layoutLock"><i /><b>{{ layoutLock ? 'ON' : 'OFF' }}</b></button>
         </div>
 
-        <!-- Layout + live preview. Slider order follows the design: the two gaps sit
-             together, with the row height last. -->
-        <div class="grp">
-          <label class="field sec-title">Layout</label>
-          <div class="lay-grid">
-            <div class="lay-fld">
-              <span class="lay-lbl">Header font size</span>
-              <input type="range" min="0" max="2" step="1" v-model="fontIdx" class="rng" />
-              <div class="rng-ticks"><span>S</span><span>M</span><span>L</span></div>
-            </div>
-            <div class="lay-fld">
-              <span class="lay-lbl">Horizontal gap</span>
-              <div class="rng-row"><input type="range" min="4" max="32" step="2" v-model.number="layout.hGap" class="rng" /><span class="rng-num">{{ layout.hGap }}</span></div>
-            </div>
-            <div class="lay-fld">
-              <span class="lay-lbl">Vertical gap</span>
-              <div class="rng-row"><input type="range" min="4" max="32" step="2" v-model.number="layout.vGap" class="rng" /><span class="rng-num">{{ layout.vGap }}</span></div>
-            </div>
-            <div class="lay-fld">
-              <span class="lay-lbl">Row height</span>
-              <div class="rng-row"><input type="range" min="110" max="260" step="10" v-model.number="layout.rowHeight" class="rng" /><span class="rng-num">{{ layout.rowHeight }}</span></div>
-            </div>
-          </div>
-
-          <span class="lay-lbl" style="margin-top:14px; display:block">Live Preview</span>
-          <div class="lp" :style="{ columnGap: layout.hGap + 'px', rowGap: layout.vGap + 'px' }">
-            <div v-for="t in PREVIEW" :key="t" class="lp-tile" :style="{ minHeight: Math.round(layout.rowHeight * 0.5) + 'px' }">
-              <span class="lp-title" :style="{ fontSize: FONT_PX[layout.headerFont] + 'px' }">{{ t }}</span>
-              <div class="lp-body" />
-            </div>
-          </div>
-        </div>
       </div>
 
       <div class="foot">
@@ -282,7 +240,12 @@ function submit(openAdd = false) {
 .body { flex: 1; padding: 6px 22px 20px; display: flex; flex-direction: column; gap: 16px; overflow: auto; }
 /* section headings — Basics / Visibility & sharing / Layout, as the design groups them.
    The first one loses its top margin so it doesn't push away from the drawer header. */
-.sec-h { font-size: 14px; font-weight: 700; color: var(--ink); margin: 22px 0 -2px; }
+/* The .body already owns the vertical rhythm (gap: 16px). A heading carrying its own
+   22px top and -2px bottom margin fought that gap, so a section title sat 38px below
+   what preceded it and 14px above what followed — the spacing changed depending on
+   which block you were between. It now adds ONE deliberate step (8px, so 24px above a
+   heading) and nothing below, leaving the container to space everything else evenly. */
+.sec-h { font-size: 14px; font-weight: 600; color: var(--ink); margin: 8px 0 0; }
 .sec-h:first-of-type { margin-top: 2px; }
 .grp { display: flex; flex-direction: column; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -294,6 +257,9 @@ function submit(openAdd = false) {
 .dup-err b { font-weight: 600; color: var(--amber); }
 .input.bad { border-color: var(--amber); }
 .sec-title { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 10px; }
+/* the predefined info note is the first thing in the panel; it should not also carry
+   the heading step on top of the container gap */
+.pd-note + .sec-h { margin-top: 0; }
 /* one segmented control on a soft track, active segment filled solid — the same control
    the Manage tabs use, so "which of these three is in force" reads identically everywhere */
 .seg { display: inline-flex; gap: 2px; padding: 4px; background: var(--surface-2); border-radius: 4px; align-self: flex-start; }
@@ -311,8 +277,6 @@ function submit(openAdd = false) {
   background: var(--surface-2); color: var(--ink-2); cursor: default;
   border-color: var(--border); -webkit-text-fill-color: var(--ink-2); opacity: 1;
 }
-/* names the state without a tooltip, so "why can't I type here" is answered upfront */
-.ro-tag { margin-left: 6px; padding: 1px 6px; border-radius: var(--r-sm); background: var(--inset); color: var(--muted); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
 /* the access one-liner sits in its own soft box, not as loose grey text under the control */
 .oneliner { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; padding: 9px 11px; background: var(--surface-2); border-radius: 4px; font-size: 13px; color: var(--ink-2); }
 .oneliner :deep(.ico) { color: var(--muted); flex: none; }
@@ -344,19 +308,7 @@ function submit(openAdd = false) {
 .sw.on i { left: 38px; background: var(--green); }
 .sw.on b { right: auto; left: 9px; color: var(--green); }
 /* layout controls */
-.lay-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; }
-.lay-fld { display: flex; flex-direction: column; gap: 6px; }
-.lay-lbl { font-size: 12px; font-weight: 500; color: var(--ink-2); }
-.rng { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 999px; background: var(--surface-2); outline: none; }
-.rng::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--primary); cursor: pointer; box-shadow: var(--sh-sm); }
-.rng-row { display: flex; align-items: center; gap: 10px; }
-.rng-num { min-width: 30px; text-align: center; font-size: 12px; font-weight: 600; color: var(--ink-2); background: var(--surface-2); border-radius: 4px; padding: 2px 6px; }
-.rng-ticks { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); padding: 0 2px; }
 /* live preview */
-.lp { display: grid; grid-template-columns: 1fr 1fr; margin-top: 8px; padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-lg); }
-.lp-tile { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
-.lp-title { font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lp-body { flex: 1; border-radius: 4px; background: repeating-linear-gradient(135deg, var(--surface-2) 0 8px, transparent 8px 16px); }
 /* ---- Default landing scope: who does this become the home screen for? ---- */
 
 .foot { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 22px; border-top: 1px solid var(--border); background: var(--surface); }

@@ -8,7 +8,6 @@ import Toasts from './components/ui/Toasts.vue'
 import CreateDashboardPanel from './components/dashboard/CreateDashboardPanel.vue'
 import TourGuide from './components/shell/TourGuide.vue'
 import LayoutDrawer from './components/dashboard/LayoutDrawer.vue'
-import LayoutEntryDemo from './components/shell/LayoutEntryDemo.vue'
 import { store } from './store/index.js'
 watchEffect(() => { document.documentElement.dataset.theme = store.ui.theme })
 
@@ -59,8 +58,7 @@ watch(() => store.ui.listingOpen, (v) => { if (v) store.ui.railExpanded = false 
     <!-- ONE drawer for the whole app. Three of the four entries open it (toolbar,
          sidebar, board); only the Manage page's Appearance TAB renders inline. Mounting
          it per view would have given the sidebar entry no host outside Manage. -->
-    <LayoutDrawer v-if="store.ui.layoutOpen && store.ui.layoutEntry !== 'tab'" />
-    <LayoutEntryDemo />
+    <LayoutDrawer v-if="store.ui.layoutOpen" />
     <Toasts />
     <transition name="fade"><CreateDashboardPanel v-if="store.ui.createOpen" /></transition>
     <TourGuide />

@@ -549,7 +549,9 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
               <button class="menu-item" @click="menu = false; exportOpen = false; emailOpen = true"><Icon name="mail" :size="15" /> Email as PDF</button>
             </div></transition>
           </div>
-          <button class="menu-item" @click="menu = false; scheduleOpen = true"><Icon name="calendar2" :size="15" /> Schedule</button>
+          <!-- Schedule is absent on a NOTE: it delivers a rendered snapshot of data on a
+               cadence, and a note has no data to re-render. -->
+          <button v-if="!isNote" class="menu-item" @click="menu = false; scheduleOpen = true"><Icon name="calendar2" :size="15" /> Schedule</button>
           <template v-if="canDelete">
             <div class="menu-sep" />
             <button class="menu-item danger" @click="menu = false; confirmDel = true"><Icon name="trash" :size="15" /> Delete card</button>
@@ -722,10 +724,17 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
    title never moves between rest and hover. The title is masked from under the grip
    instead of being clipped by it: a hard cut swallows the first letter whole, the
    gradient reads as the text passing behind the handle. */
-.draghandle { position: absolute; left: -3px; top: 50%; transform: translateY(-50%); z-index: 2; display: inline-grid; place-items: center; color: var(--muted-2); cursor: grab; opacity: 0; transition: opacity .16s ease; }
+/* The grip sits ON TOP of the title, so it needs its own ground or the letters show
+   through the gaps between the six dots and the two read as one smudge. The fill is
+   the header band's own colour, and it runs the full width of the glyph — the title's
+   fade then starts where the grip ENDS, not underneath it. */
+.draghandle { position: absolute; left: 0; top: 50%; transform: translateY(-50%); z-index: 2; width: 20px; height: 20px; display: inline-grid; place-items: center; background: var(--bg); border-radius: var(--r-sm); color: var(--muted); cursor: grab; opacity: 0; transition: opacity .16s ease; }
 .draghandle:active { cursor: grabbing; }
 .tile:hover .draghandle, .tile.acting .draghandle { opacity: 1; }
-.tile:hover .title, .tile.acting .title { -webkit-mask-image: linear-gradient(90deg, transparent 0, transparent 4px, #000 22px); mask-image: linear-gradient(90deg, transparent 0, transparent 4px, #000 22px); }
+/* fully hidden for the grip's 20px, THEN a 10px ramp — so no glyph ever overlaps a
+   half-faded letter. It used to clear only 4px, which left the title at ~30% opacity
+   directly behind the dots. */
+.tile:hover .title, .tile.acting .title { -webkit-mask-image: linear-gradient(90deg, transparent 0, transparent 21px, #000 31px); mask-image: linear-gradient(90deg, transparent 0, transparent 21px, #000 31px); }
 .pinbadge { display: inline-grid; place-items: center; color: var(--primary); flex: none; transform: rotate(35deg); }
 .title { font-weight: 600; font-size: var(--tile-title, 13.5px); }
 
