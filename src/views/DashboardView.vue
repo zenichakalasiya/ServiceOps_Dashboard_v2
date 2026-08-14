@@ -413,15 +413,17 @@ function onPin(t) { t.pinned = !t.pinned; d.value.updated = new Date().toISOStri
  * deliberately overrides it in Edit Dashboard, so changing the global setting moves
  * every board that never opted out. Sizes are the guide's integer scale. */
 const FONT_PX = { S: 12, M: 13, L: 15 }
+// EVERY layout field resolves the same way, so "apply to this dashboard only" can write
+// any of the six and be honoured — not just the three the old per-board form knew about.
 const lay = (k, fallback) => d.value?.[k] ?? store.layout[fallback ?? k]
 const boardVars = computed(() => ({
-  '--tile-title': (FONT_PX[d.value?.headerFont || store.layout.titleSize] || 13) + 'px',
-  // read by WidgetCard's .tbody, so widget padding is a global setting too
-  '--tile-pad': store.layout.cardPad + 'px',
+  '--tile-title': (FONT_PX[lay('headerFont', 'titleSize')] || 13) + 'px',
+  // read by WidgetCard's .tbody
+  '--tile-pad': lay('cardPad') + 'px',
 }))
 const gridStyle = computed(() => ({ columnGap: lay('hGap') + 'px', rowGap: lay('vGap') + 'px' }))
 // the board's gutter against the app frame
-const boardPad = computed(() => store.layout.boardMargin + 'px')
+const boardPad = computed(() => lay('boardMargin') + 'px')
 
 // ---- per-tile size (default span/height) + drag-to-resize from bottom-right ----
 function cellStyle(t) {

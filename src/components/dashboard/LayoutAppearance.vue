@@ -1,21 +1,33 @@
 <script setup>
 /**
- * LayoutAppearance — the global dashboard layout settings, as ONE component.
+ * LayoutAppearance — the dashboard layout settings, as ONE component.
  *
- * Four different entry points open this (see store.ui.layoutEntry): a tab on Manage
- * all dashboards, an icon in that page's toolbar, an icon beside "Manage all
- * dashboards" in the listing sidebar, and a live drawer over the board itself. They
- * differ in WHERE you reach the settings, never in what the settings are — so this is
- * a single component with a `variant`, not four copies that drift apart.
+ * Four entry points open this (see store.ui.layoutEntry): a tab on Manage all
+ * dashboards, an icon in that page's toolbar, an icon beside "Manage all dashboards"
+ * in the listing sidebar, and a live drawer over the board. They differ in WHERE you
+ * reach the settings, never in what the settings are.
  *
- * Everything writes straight to `store.layout` with no Save step. Layout is a
- * preference, not a form: the value you can see is the value that is in force, and an
- * unsaved slider position would be a fifth state nobody asked for. `Reset to defaults`
- * is the undo.
+ * ── Scope ───────────────────────────────────────────────────────────────────────
+ * "Apply to all my dashboards" decides WHERE the values are written:
+ *   checked   → store.layout, the global default every board inherits
+ *   unchecked → the open dashboard's own fields, which win over the global
+ *
+ * The checkbox only exists when a dashboard is actually open. From the Manage page
+ * there is no "this one" to apply to, so the panel is global by definition and says
+ * so instead of offering a choice with one real option.
+ *
+ * Unticking SEEDS the board from whatever is currently in force, so the board does not
+ * jump the moment you narrow the scope. Re-ticking DELETES the board's overrides, so
+ * the box going back on genuinely returns it to the global — a checkbox that left the
+ * old values behind would be a lie.
+ *
+ * There is no Save. Layout is a preference: the value you can see is the value in
+ * force, and an unsaved slider position would be a state nobody asked for.
  */
-import { computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import Icon from '../ui/Icon.vue'
-import { store, toast } from '../../store/index.js'
+import { store, byId, toast } from '../../store/index.js'
 
 const props = defineProps({
   // 'panel'  full width, for the Manage page tab
@@ -23,18 +35,54 @@ const props = defineProps({
   variant: { type: String, default: 'panel' },
 })
 
-const L = store.layout
+/* The board in context, from the route — so no entry point has to thread it down.
+ * null anywhere that isn't a dashboard, which is exactly when the scope choice
+ * should disappear. */
+const route = useRoute()
+const dash = computed(() => (route.params.id ? byId(route.params.id) : null))
 
-/* S / M / L rather than a pixel slider: a title size is a choice between three
- * legible steps, and letting someone land on 11.5px would only produce a board that
- * looks subtly broken. The values are the guide's integer scale. */
+/* A global key and its per-dashboard counterpart. Only `titleSize` differs: the board
+ * has carried `headerFont` since before this setting existed, and renaming a stored
+ * field to tidy a map would break every board that already has one. */
+const FIELD = {
+  titleSize: 'headerFont', cardPad: 'cardPad', hGap: 'hGap',
+  vGap: 'vGap', rowHeight: 'rowHeight', boardMargin: 'boardMargin',
+}
+const KEYS = Object.keys(FIELD)
+
+const applyToAll = ref(true)
+// leaving the board (or opening from Manage) can't leave a board-scoped panel behind
+watch(dash, (d) => { if (!d) applyToAll.value = true })
+
+/** What a field currently resolves to, whichever scope is in force. */
+const val = (k) => (applyToAll.value ? store.layout[k] : (dash.value?.[FIELD[k]] ?? store.layout[k]))
+/** Write it wherever the scope says. */
+function setVal(k, v) {
+  if (applyToAll.value) store.layout[k] = v
+  else if (dash.value) dash.value[FIELD[k]] = v
+}
+
+function onScope(next) {
+  applyToAll.value = next
+  const d = dash.value
+  if (!d) return
+  if (next) {
+    // back to global — drop this board's overrides so it actually inherits again
+    KEYS.forEach((k) => { delete d[FIELD[k]] })
+    toast(`“${d.name}” follows the global layout again`)
+  } else {
+    // narrowing scope must not move the board: seed it from what is already showing
+    KEYS.forEach((k) => { if (d[FIELD[k]] == null) d[FIELD[k]] = store.layout[k] })
+    toast(`Changes now apply to “${d.name}” only`)
+  }
+}
+
 const SIZES = [
   { id: 'S', label: 'Small', px: 12 },
   { id: 'M', label: 'Medium', px: 13 },
   { id: 'L', label: 'Large', px: 15 },
 ]
-
-/* Each slider states what it does to the BOARD, not what property it sets. "Space
+/* Each slider states what it does to the BOARD, not which property it sets. "Space
  * between widgets" is checkable by looking; "column-gap" is not. */
 const SLIDERS = [
   { key: 'hGap', label: 'Horizontal spacing', hint: 'Between widgets, side to side', min: 4, max: 32, step: 2 },
@@ -45,24 +93,37 @@ const SLIDERS = [
 ]
 
 const DEFAULTS = { titleSize: 'M', cardPad: 12, hGap: 14, vGap: 14, rowHeight: 140, boardMargin: 16 }
-const isDefault = computed(() => Object.keys(DEFAULTS).every((k) => L[k] === DEFAULTS[k]))
-function resetAll() { Object.assign(store.layout, DEFAULTS); toast('Layout reset to defaults') }
+const isDefault = computed(() => KEYS.every((k) => val(k) === DEFAULTS[k]))
+function resetAll() {
+  KEYS.forEach((k) => setVal(k, DEFAULTS[k]))
+  toast(applyToAll.value ? 'Global layout reset to defaults' : `“${dash.value?.name}” reset to defaults`)
+}
 
-// how many boards this actually moves — the ones that haven't overridden the field
+// how many boards a GLOBAL change actually moves — the ones that haven't overridden
 const inheriting = computed(() =>
-  store.dashboards.filter((d) => !d.archived && d.hGap == null && d.vGap == null && d.rowHeight == null).length)
+  store.dashboards.filter((d) => !d.archived && KEYS.every((k) => d[FIELD[k]] == null)).length)
 const overriding = computed(() =>
-  store.dashboards.filter((d) => !d.archived && (d.hGap != null || d.vGap != null || d.rowHeight != null)).length)
+  store.dashboards.filter((d) => !d.archived && KEYS.some((k) => d[FIELD[k]] != null)).length)
 
-const titlePx = computed(() => SIZES.find((s) => s.id === L.titleSize)?.px || 13)
+const titlePx = computed(() => SIZES.find((s) => s.id === val('titleSize'))?.px || 13)
 </script>
 
 <template>
   <div class="la" :class="variant">
-    <!-- The scope line is the whole reason this reads as a GLOBAL setting rather than
-         one more per-board form. It names a number, because "all dashboards" is a claim
-         the user can check and a count is what makes it checkable. -->
-    <p class="la-scope">
+    <!-- SCOPE. A checkbox, because the two outcomes are not equal weight: applying to
+         everything is the norm and narrowing it is the exception you opt into. The line
+         underneath names the board, so the consequence is legible before you commit. -->
+    <label v-if="dash" class="la-scope-pick" :class="{ narrowed: !applyToAll }">
+      <input type="checkbox" :checked="applyToAll" @change="onScope($event.target.checked)" />
+      <span class="la-sp-txt">
+        <b>Apply to all my dashboards</b>
+        <em v-if="applyToAll">Every board that follows the global layout changes — {{ inheriting }} of them.</em>
+        <em v-else>Only <b>“{{ dash.name }}”</b> changes. Your other boards keep the global layout.</em>
+      </span>
+    </label>
+
+    <!-- no board in context (the Manage page) — global is the only thing it can mean -->
+    <p v-else class="la-scope">
       <Icon name="info" :size="14" />
       <span>
         Applies to <b>all {{ inheriting }} dashboards</b> that follow the global layout.
@@ -75,15 +136,18 @@ const titlePx = computed(() => SIZES.find((s) => s.id === L.titleSize)?.px || 13
         <div class="la-fld">
           <label>Widget title size</label>
           <div class="la-seg">
-            <button v-for="s in SIZES" :key="s.id" class="la-seg-b" :class="{ on: L.titleSize === s.id }" @click="L.titleSize = s.id">
+            <button v-for="s in SIZES" :key="s.id" class="la-seg-b" :class="{ on: val('titleSize') === s.id }" @click="setVal('titleSize', s.id)">
               {{ s.label }}
             </button>
           </div>
         </div>
 
         <div v-for="s in SLIDERS" :key="s.key" class="la-fld">
-          <label>{{ s.label }} <span class="la-val">{{ L[s.key] }}px</span></label>
-          <input class="la-rng" type="range" :min="s.min" :max="s.max" :step="s.step" v-model.number="L[s.key]" />
+          <label>{{ s.label }} <span class="la-val">{{ val(s.key) }}px</span></label>
+          <input
+            class="la-rng" type="range" :min="s.min" :max="s.max" :step="s.step"
+            :value="val(s.key)" @input="setVal(s.key, +$event.target.value)"
+          />
           <span class="la-hint">{{ s.hint }}</span>
         </div>
 
@@ -92,16 +156,16 @@ const titlePx = computed(() => SIZES.find((s) => s.id === L.titleSize)?.px || 13
         </button>
       </div>
 
-      <!-- A live preview, sized from the real values. It is a MODEL of the board, not a
-           screenshot of it: four tiles is enough to show a gap, a padding and a title
-           size changing together, and it stays legible at drawer width. -->
+      <!-- A live preview, sized from the real values. A MODEL of the board, not a
+           screenshot: four tiles is enough to show a gap, a padding and a title size
+           changing together, and it stays legible at drawer width. -->
       <div class="la-preview">
         <span class="la-pv-cap">Preview</span>
-        <div class="la-pv-frame" :style="{ padding: L.boardMargin + 'px' }">
-          <div class="la-pv-grid" :style="{ columnGap: L.hGap + 'px', rowGap: L.vGap + 'px' }">
+        <div class="la-pv-frame" :style="{ padding: val('boardMargin') + 'px' }">
+          <div class="la-pv-grid" :style="{ columnGap: val('hGap') + 'px', rowGap: val('vGap') + 'px' }">
             <div
               v-for="t in ['Open Requests', 'By Priority', 'By Status', 'My Tasks']" :key="t"
-              class="la-pv-tile" :style="{ padding: L.cardPad + 'px', minHeight: Math.round(L.rowHeight * 0.42) + 'px' }"
+              class="la-pv-tile" :style="{ padding: val('cardPad') + 'px', minHeight: Math.round(val('rowHeight') * 0.42) + 'px' }"
             >
               <span class="la-pv-title" :style="{ fontSize: titlePx + 'px' }">{{ t }}</span>
               <span class="la-pv-bar" />
@@ -116,12 +180,24 @@ const titlePx = computed(() => SIZES.find((s) => s.id === L.titleSize)?.px || 13
 
 <style scoped>
 .la { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+/* the scope checkbox — a real row, not a stray tick beside a label */
+.la-scope-pick { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--r); background: var(--surface-2); cursor: pointer; }
+.la-scope-pick input { margin: 2px 0 0; accent-color: var(--primary); flex: none; width: 16px; height: 16px; }
+/* narrowed to one board is the EXCEPTION, so it is marked — otherwise a panel that
+   silently edits one board looks identical to one editing them all */
+.la-scope-pick.narrowed { border-color: var(--amber); background: var(--amber-soft); }
+.la-sp-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.la-sp-txt b { font-size: 13px; font-weight: 600; color: var(--ink); }
+.la-sp-txt em { font-style: normal; font-size: 11px; line-height: 1.45; color: var(--muted); }
+.la-scope-pick.narrowed .la-sp-txt em { color: var(--amber); }
+.la-scope-pick.narrowed .la-sp-txt em b { color: var(--amber); font-weight: 600; }
+
 .la-scope { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 10px 12px; font-size: 12px; line-height: 1.5; color: var(--primary-700); background: var(--primary-softer); border: 1px solid var(--primary-soft); border-radius: var(--r); }
 .la-scope :deep(.ico) { flex: none; margin-top: 1px; }
 
 /* Side by side when there is room (the Manage tab), stacked when there isn't (a
-   drawer). The preview is worth more than the controls when space is short, so it
-   never collapses away — it just moves under them. */
+   drawer). The preview never collapses away — it is worth more than the controls. */
 .la-body { display: grid; gap: 18px; }
 .la.panel .la-body { grid-template-columns: minmax(280px, 360px) 1fr; align-items: start; }
 .la.drawer .la-body { grid-template-columns: 1fr; }
