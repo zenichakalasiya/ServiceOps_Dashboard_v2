@@ -24,8 +24,8 @@ import { useRoute } from 'vue-router'
 import Icon from '../ui/Icon.vue'
 import {
   store, byId, toast,
-  LAYOUT_FIELD as FIELD, LAYOUT_KEYS as KEYS, LAYOUT_DEFAULTS as DEFAULTS,
-  commitLayoutEdit, cancelLayoutEdit,
+  LAYOUT_FIELD as FIELD, LAYOUT_KEYS as KEYS,
+  layoutValue, setLayoutValue, commitLayoutEdit, cancelLayoutEdit,
 } from '../../store/index.js'
 
 defineProps({
@@ -39,32 +39,16 @@ defineProps({
 const route = useRoute()
 const dash = computed(() => (route.params.id ? byId(route.params.id) : null))
 
-// FIELD / KEYS / DEFAULTS live in the store beside the snapshot that reads them —
-// one list, so a field can't be editable here and un-revertable there.
+// The field map, the read/write rules and Reset all live in the store — the drawer's
+// HEADER drives Reset while this panel drives the sliders, and they have to agree.
 
 // scope lives on the store so it survives the drawer closing and reopening
 const scope = computed(() => (dash.value ? store.ui.layoutScope : 'all'))
 // leaving the board can't leave a board-scoped panel pointing at nothing
 watch(dash, (d) => { if (!d) store.ui.layoutScope = 'all' })
 
-/** What a field currently resolves to, under whichever scope is in force. */
-const val = (k) => (scope.value === 'all' ? store.layout[k] : (dash.value?.[FIELD[k]] ?? store.layout[k]))
-
-/* Opening the drawer from the ⋯ menu must not, on its own, pin the board — that would
- * make merely LOOKING at the settings an edit. The board is pinned lazily, on the first
- * real change, and then pinned COMPLETELY: all six fields, not only the one being moved.
- * Half-pinning would leave the untouched fields still following the global, so a later
- * global change would drift a board somebody had deliberately scoped. */
-function pinBoard() {
-  const d = dash.value; if (!d) return
-  KEYS.forEach((k) => { if (d[FIELD[k]] == null) d[FIELD[k]] = store.layout[k] })
-}
-function setVal(k, v) {
-  if (scope.value === 'all') { store.layout[k] = v; return }
-  if (!dash.value) return
-  pinBoard()
-  dash.value[FIELD[k]] = v
-}
+const val = (k) => layoutValue(dash.value, k)
+const setVal = (k, v) => setLayoutValue(dash.value, k, v)
 
 function pickScope(next) {
   const d = dash.value
@@ -90,10 +74,6 @@ const SLIDERS = [
   { key: 'rowHeight', label: 'Row height', hint: 'How tall one row of widgets is', min: 110, max: 260, step: 10 },
   { key: 'boardMargin', label: 'Board margin', hint: 'Between the widgets and the edge of the page', min: 8, max: 40, step: 4 },
 ]
-
-const isDefault = computed(() => KEYS.every((k) => val(k) === DEFAULTS[k]))
-// Reset only moves the sliders — it is part of the draft, so Cancel still undoes it
-function resetAll() { KEYS.forEach((k) => setVal(k, DEFAULTS[k])) }
 
 // how many boards a GLOBAL change actually moves — the ones that haven't overridden
 const inheriting = computed(() =>
@@ -196,16 +176,12 @@ function cancel() {
     </div>
    </div>
 
-    <!-- FOOTER — Reset far left, then the commit pair.
-         Reset is separated from Cancel/Apply because it is a different KIND of
-         action: it changes the draft, it doesn't end the session. Sitting it next
-         to Cancel would put two "undo-ish" buttons side by side meaning different
-         things. It sticks to the bottom of the scroll area so the commit is
-         reachable without scrolling past five sliders and a preview. -->
+    <!-- FOOTER — the commit pair only. Reset moved up beside Close in the drawer
+         header: it changes the draft rather than ending the session, so it is not a
+         peer of Cancel/Apply, and it now matches the widget builder's header, which
+         pairs the same two actions. It stays outside the scroll area so the commit
+         is reachable without scrolling past five sliders and a preview. -->
     <footer class="la-foot">
-      <button class="la-ghost" :disabled="isDefault" title="Put every value back to its default" @click="resetAll">
-        <Icon name="reset" :size="14" /> Reset
-      </button>
       <button class="btn" @click="cancel">Cancel</button>
       <button class="btn btn-primary" @click="apply">{{ applyLabel }}</button>
     </footer>
@@ -265,23 +241,13 @@ function cancel() {
 .la-rng { width: 100%; accent-color: var(--primary); }
 
 /* ── the footer ───────────────────────────────────────────────────────────────── */
-.la-foot { display: flex; align-items: center; gap: 8px; }
+.la-foot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
 .la.drawer .la-foot {
   flex: none; padding: 12px 16px;
   background: var(--surface); border-top: 1px solid var(--border);
 }
 .la.panel .la-foot { margin-top: 18px; }
-/* Reset carries the left edge; the commit pair is pushed to the right */
-.la-foot .btn:first-of-type { margin-left: auto; }
 .la-foot .btn { height: 32px; }
-
-.la-ghost {
-  display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px;
-  border: none; background: transparent; color: var(--ink-2);
-  border-radius: var(--r); font-size: 13px; font-weight: 500;
-}
-.la-ghost:hover:not(:disabled) { background: var(--surface-2); color: var(--ink); }
-.la-ghost:disabled { opacity: .4; cursor: not-allowed; }
 
 /* ── the preview ──────────────────────────────────────────────────────────────── */
 .la-pv-cap { display: block; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-bottom: 6px; }

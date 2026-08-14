@@ -123,6 +123,31 @@ export function beginLayoutEdit() {
 
 export function commitLayoutEdit() { layoutSnap = null }
 
+/* Reading and writing a layout value under whichever scope is in force. These live
+ * here, not in the panel, because the drawer's HEADER drives Reset while the panel
+ * body drives the sliders — two components, one set of rules. */
+export const layoutValue = (dash, k) =>
+  (store.ui.layoutScope === 'all' || !dash ? store.layout[k] : (dash[LAYOUT_FIELD[k]] ?? store.layout[k]))
+
+/* Opening the drawer must not, on its own, pin the board — that would make merely
+ * LOOKING at the settings an edit. The board is pinned lazily, on the first real
+ * change, and then pinned COMPLETELY: all six fields, not only the one being moved.
+ * Half-pinning would leave the untouched fields still following the global, so a
+ * later global change would drift a board somebody had deliberately scoped. */
+function pinBoardLayout(dash) {
+  LAYOUT_KEYS.forEach((k) => { if (dash[LAYOUT_FIELD[k]] == null) dash[LAYOUT_FIELD[k]] = store.layout[k] })
+}
+export function setLayoutValue(dash, k, v) {
+  if (store.ui.layoutScope === 'all') { store.layout[k] = v; return }
+  if (!dash) return
+  pinBoardLayout(dash)
+  dash[LAYOUT_FIELD[k]] = v
+}
+
+export const isLayoutDefault = (dash) => LAYOUT_KEYS.every((k) => layoutValue(dash, k) === LAYOUT_DEFAULTS[k])
+// part of the draft, so Cancel undoes a Reset too
+export function resetLayoutValues(dash) { LAYOUT_KEYS.forEach((k) => setLayoutValue(dash, k, LAYOUT_DEFAULTS[k])) }
+
 export function cancelLayoutEdit() {
   if (!layoutSnap) return
   Object.assign(store.layout, layoutSnap.global)

@@ -1,15 +1,13 @@
 <script setup>
-import { ref, computed, watch, onBeforeUnmount } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, watch } from 'vue'
 import Icon from '../ui/Icon.vue'
 import Dropdown from '../ui/Dropdown.vue'
 import ChartIcon from '../ui/ChartIcon.vue'
 import WidgetBuilderModal from './WidgetBuilderModal.vue'
-import { store, addTilesToDashboard, deleteLibTile, restoreLibTile, removeLibTileForever, libUsage, toast } from '../../store/index.js'
+import { store, addTilesToDashboard, deleteLibTile, restoreLibTile, removeLibTileForever, toast } from '../../store/index.js'
 import { uid } from '../../data/mock.js'
 const props = defineProps({ d: Object, group: { type: String, default: null } })
 const emit = defineEmits(['close', 'created', 'newgroup'])
-const router = useRouter()
 function tagGroup(id) { if (props.group && id != null) { const t = props.d.tiles.find((x) => x.id === id); if (t) t.group = props.group } }
 
 const tab = ref('chart')              // chart | predefined | user | shared | trash
@@ -179,44 +177,8 @@ const PROV_LABEL = { predefined: 'Predefined', user: 'Created by me', shared: 'S
 
 const TYPE_LABEL = { kpi: 'KPI', chart: 'Widget', shortcut: 'Shortcut' }
 
-/* ---- Where is this widget used? ------------------------------------------------
- * The count sits on the widget's NAME, and hovering it lists the dashboards. From
- * there you can jump straight to the widget on that board, or pull it off. This is
- * the impact view a tenant-wide library needs: the point of the count is to answer
- * "what will I break if I change this", and a number alone can't. */
-const usageOpen = ref(null)
-const usagePos = ref({ top: 0, left: 0 })
-let closeTimer = null
-
-function usageOf(l) { return libUsage(l) }
-function openUsage(l, e) {
-  clearTimeout(closeTimer)
-  const r = e.currentTarget.getBoundingClientRect()
-  const W = 250
-  usagePos.value = {
-    top: r.bottom + 6,
-    left: Math.max(8, Math.min(r.left - 8, window.innerWidth - W - 8)),
-  }
-  usageOpen.value = l.id
-}
-// a grace period, or the popover would vanish the moment the cursor left the badge
-// and there would be no way to reach the rows inside it
-function closeUsageSoon() { closeTimer = setTimeout(() => { usageOpen.value = null }, 180) }
-function keepUsage() { clearTimeout(closeTimer) }
-onBeforeUnmount(() => clearTimeout(closeTimer))
-
-const usageItem = computed(() => store.library.find((l) => l.id === usageOpen.value) || null)
-
-/* Jump to this widget where it lives. The tile is matched by title+type — the same
- * identity the library uses everywhere else — and DashboardView focuses it once the
- * board has finished its skeleton, so the scroll lands on a widget that exists. */
-function goToWidget(l, dash) {
-  usageOpen.value = null
-  store.ui.focusTile = { title: l.title, type: l.type }
-  emit('close')
-  if (dash.id === props.d.id) return    // already here — DashboardView's watcher picks it up
-  router.push(`/dashboard/${dash.id}`)
-}
+/* The placement count and its "Placed on" popover were removed from this listing.
+ * `libUsage` still exists in the store for anywhere that wants the impact view. */
 // short description shown in a left-pointing tooltip on hover of each library row
 function libDesc(l) {
   const kind = l.type === 'kpi' ? 'A headline KPI number' : l.type === 'shortcut' ? 'A record list / table' : 'A chart widget'
@@ -320,14 +282,10 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
               <div class="lt-main">
                 <div class="lt-name-row">
                   <span class="lt-name ellip">{{ l.title }}</span>
-                  <!-- usage lives beside the NAME: it is a property of the widget, not
-                       of its module. Hover it to see where, click a row to go there. -->
-                  <span
-                    v-if="!isTrash && usageOf(l).length" class="use-badge"
-                    :class="{ on: usageOpen === l.id }"
-                    :title="`On ${usageOf(l).length} dashboard${usageOf(l).length > 1 ? 's' : ''}`"
-                    @mouseenter="openUsage(l, $event)" @mouseleave="closeUsageSoon" @click.stop
-                  >{{ usageOf(l).length }}</span>
+                  <!-- No placement count. What matters when you are picking a widget to
+                       ADD is whether it is already on THIS board — which is what the tag
+                       below says. How many other boards carry it is a governance question,
+                       not one this listing has to answer. -->
                   <span v-if="isPlaced(l)" class="placed-tag"><Icon name="check" :size="11" /> On dashboard</span>
                 </div>
                 <div class="lt-meta">{{ TYPE_LABEL[l.type] }} · {{ l.module }}</div>
@@ -365,30 +323,10 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
     <!-- Centered builder — duplicate/edit a library tile (Update returns a copy to the listing) -->
     <WidgetBuilderModal v-if="libBuilder" :d="d" :type="libBuilder.type" :libItem="libBuilder.item" @close="libBuilder = null" @librarySaved="onLibrarySaved" />
 
-    <!-- Where the widget is used. Teleported: the list scrolls, and an in-flow popover
-         would be clipped by its overflow. -->
-    <teleport to="body">
-      <div
-        v-if="usageItem" class="usage-pop"
-        :style="{ top: usagePos.top + 'px', left: usagePos.left + 'px' }"
-        @mouseenter="keepUsage" @mouseleave="closeUsageSoon"
-      >
-        <!-- no count here: the badge beside the widget name is the count, and repeating it
-             two pixels away made the same number look like two different facts -->
-        <div class="up-h">Placed on</div>
-        <!-- names only. No remove action here: a predefined widget can't be pulled off,
-             and the arrow on hover already says the row is a link. -->
-        <button
-          v-for="dash in usageOf(usageItem)" :key="dash.id" class="up-row"
-          :title="`Go to “${usageItem.title}” on ${dash.name}`"
-          @click="goToWidget(usageItem, dash)"
-        >
-          <Icon name="layout" :size="13" class="up-ic" />
-          <span class="ellip">{{ dash.name }}</span>
-          <Icon name="open-in" :size="14" class="up-go" />
-        </button>
-      </div>
-    </teleport>
+    <!-- The "Placed on" popover lived here. It hung off the usage badge, which was its
+         only trigger, so it went when the count did rather than staying as unreachable
+         code. If the impact view is wanted back it needs a trigger of its own — the row
+         already uses hover for its description tooltip, so the two would collide. -->
 
     <!-- Row description tooltip — opens to the left of the hovered row, arrow points right -->
     <teleport to="body">
@@ -420,7 +358,13 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 
 <style scoped>
 .drawer-overlay { position: fixed; inset: 0; background: rgba(20,21,38,.42); backdrop-filter: blur(2px); z-index: 100; display: flex; justify-content: flex-end; }
-.aw { width: 720px; max-width: 96vw; height: 100%; background: var(--surface); box-shadow: var(--sh-lg); display: flex; flex-direction: column; overflow: hidden; animation: slideIn .22s cubic-bezier(.2,.8,.2,1); }
+/* 640px, not 720. The Create Widget cards are a fixed 4 per row, so the panel's width
+   IS the card's width — at 720 each card was 160px around a 64px icon and the artwork
+   swam in it. 640 pulls the card in to ~140 with the icon untouched.
+   It cannot go much lower: the tab strip (Create Widget → Archive) measures 622px, and
+   the active tab is bold, so its width shifts as you switch tabs — hence the headroom.
+   Below that the strip scrolls horizontally, which costs more than the cards gain. */
+.aw { width: 640px; max-width: 96vw; height: 100%; background: var(--surface); box-shadow: var(--sh-lg); display: flex; flex-direction: column; overflow: hidden; animation: slideIn .22s cubic-bezier(.2,.8,.2,1); }
 @keyframes slideIn { from { transform: translateX(30px); opacity: .4; } to { transform: translateX(0); opacity: 1; } }
 .aw-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px 12px; }
 .aw-head h3 { margin: 0; font-size: 17px; }
@@ -477,22 +421,6 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .lt-main { flex: 1; min-width: 0; }
 .lt-name-row { display: flex; align-items: center; gap: 7px; } .lt-name { font-weight: 500; font-size: 13px; }
 .lt-meta { position: relative; font-size: 12px; color: var(--muted); margin-top: 2px; }
-/* usage count — a pill on the widget's NAME */
-.use-badge { flex: none; min-width: 18px; height: 18px; padding: 0 5px; display: inline-grid; place-items: center;
-  background: var(--primary-soft); color: var(--primary-700); border-radius: 999px;
-  font-size: 11px; font-weight: 700; line-height: 1; cursor: pointer; }
-.use-badge:hover, .use-badge.on { background: var(--primary); color: #fff; }
-
-.usage-pop { position: fixed; z-index: 160; width: 250px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-pop); padding: 8px; }
-.up-h { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted-2); font-weight: 700; padding: 2px 6px 6px; }
-.up-row { display: flex; align-items: center; gap: 7px; width: 100%; padding: 6px; border: none; background: transparent; border-radius: 4px; font-size: 13px; color: var(--ink-2); text-align: left; cursor: pointer; }
-.up-row:hover { background: var(--primary-softer); color: var(--primary-700); }
-.up-ic { color: var(--muted-2); flex: none; }
-.up-row:hover .up-ic { color: var(--primary); }
-.up-row .ellip { flex: 1; min-width: 0; }
-/* the arrow IS the affordance — it appears on hover, so no explainer line is needed */
-.up-go { flex: none; color: var(--primary); opacity: 0; transform: translateX(-3px); transition: opacity .12s, transform .12s; }
-.up-row:hover .up-go { opacity: 1; transform: none; }
 /* left-pointing description tooltip (teleported, fixed to viewport) */
 .lib-tip { position: fixed; z-index: 200; transform: translateY(-50%); width: 232px; background: #20223a; color: #fff; font-size: 12px; line-height: 1.45; padding: 8px 11px; border-radius: 4px; box-shadow: var(--sh-pop); pointer-events: none; text-align: left; }
 .lib-tip-desc { display: block; color: rgba(255,255,255,.88); }
