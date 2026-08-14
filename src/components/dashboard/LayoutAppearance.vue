@@ -21,6 +21,7 @@
  */
 import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import Icon from '../ui/Icon.vue'
 import Hint from '../ui/Hint.vue'
 import {
   store, byId, toast,
@@ -103,35 +104,32 @@ function cancel() {
    <!-- everything above the footer scrolls; the footer does not, so Apply is reachable
         without scrolling past five sliders and a preview first -->
    <div class="la-scroll">
-    <!-- SCOPE — two option cards, the product's standard radio-card pair.
-         Cards rather than a checkbox because the two outcomes are peers, not a thing
-         and its negation: "this board" and "every board" are both ordinary answers, and
-         each needs a sentence to be understood. A checkbox can only label one of them
-         and leaves the other implied.
+    <!-- SCOPE — heading, segmented control, one-liner. The same three-part shape as
+         Create Dashboard's "Visibility & sharing", using the same values, because this
+         asks the same kind of question: one either/or whose consequence needs a sentence.
 
-         Side by side now that the drawer is 620px: each card gets ~280px, which holds
-         the description in two or three lines. At the old 380px they had to stack — two
-         columns of ~150px turned a two-line sentence into four. -->
-    <div class="lsc" role="radiogroup" aria-label="Where these settings apply">
-      <label
-        class="lsc-opt" :class="{ on: scope === 'this', dis: !dash }"
-        :title="dash ? '' : 'Open a dashboard to set its own layout'"
-      >
-        <span class="lsc-txt">
-          <b>This dashboard only</b>
-          <em v-if="dash">Only <b>“{{ dash.name }}”</b> changes. Every other board keeps the global layout.</em>
-          <em v-else>Open a dashboard to give it a layout of its own.</em>
-        </span>
-        <input type="radio" name="layout-scope" :checked="scope === 'this'" :disabled="!dash" @change="pickScope('this')" />
-      </label>
-
-      <label class="lsc-opt" :class="{ on: scope === 'all' }">
-        <span class="lsc-txt">
-          <b>Apply to all dashboards</b>
-          <em>Sets your global layout. Every board that follows it changes — <b>{{ inheriting }}</b> of them.</em>
-        </span>
-        <input type="radio" name="layout-scope" :checked="scope === 'all'" @change="pickScope('all')" />
-      </label>
+         The description belongs BELOW the control, not inside each option: only the
+         selected scope's consequence matters, and printing both at once asked you to
+         read the one you didn't pick. -->
+    <div class="la-scope">
+      <div class="sec-h">Apply to</div>
+      <div class="seg" role="radiogroup" aria-label="Where these settings apply">
+        <button
+          class="seg-btn" :class="{ on: scope === 'this' }" :disabled="!dash"
+          :title="dash ? '' : 'Open a dashboard to give it a layout of its own'"
+          role="radio" :aria-checked="scope === 'this'" @click="pickScope('this')"
+        >This dashboard only</button>
+        <button
+          class="seg-btn" :class="{ on: scope === 'all' }"
+          role="radio" :aria-checked="scope === 'all'" @click="pickScope('all')"
+        >All dashboards</button>
+      </div>
+      <p class="oneliner">
+        <Icon name="info" :size="14" />
+        <span v-if="scope === 'this'">Only <b>“{{ dash.name }}”</b> changes. Every other board keeps the global layout.</span>
+        <span v-else-if="dash">Sets your global layout. Every board that follows it changes — <b>{{ inheriting }}</b> of them.</span>
+        <span v-else>Sets your global layout — <b>{{ inheriting }}</b> boards follow it. Open a dashboard to give that one a layout of its own.</span>
+      </p>
     </div>
 
     <div class="la-body">
@@ -205,33 +203,25 @@ function cancel() {
 /* 22px gutters, matching the Create Dashboard drawer this one now sits beside in width */
 .la.drawer .la-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 22px 20px; }
 
-/* ── the scope cards ───────────────────────────────────────────────────────────── */
-/* `align-items: stretch` (the grid default) is doing real work: the two descriptions
-   are different lengths, and without it the shorter card would be shorter, which reads
-   as the two options being unequal rather than alternatives. */
-.lsc { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.lsc-opt {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
-  padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--r-lg);
-  background: var(--surface); cursor: pointer;
-  transition: border-color .15s, background .15s;
-}
-.lsc-opt:hover:not(.dis) { border-color: var(--border-strong); }
-/* Selected is a border and a tint, not a fill: the description has to stay readable,
-   and a solid brand fill would put 12px muted text on blue. */
-.lsc-opt.on { border-color: var(--primary); background: var(--primary-softer); }
-.lsc-opt.dis { opacity: .55; cursor: not-allowed; }
+/* ── the scope block ──────────────────────────────────────────────────────────── */
+/* Values copied from CreateDashboardPanel's Visibility & sharing rather than
+   approximated — scoped CSS can't share them, so the numbers have to match by hand
+   for the two panels to read as one product. */
+.la-scope { display: flex; flex-direction: column; }
+.sec-h { font-size: 14px; font-weight: 600; color: var(--ink); margin: 0 0 8px; }
 
-.lsc-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.lsc-txt > b { font-size: 13px; font-weight: 600; color: var(--ink); }
-.lsc-txt em { font-style: normal; font-size: 12px; line-height: 1.5; color: var(--muted); }
-/* the board's name inside the sentence — emphasised without changing size */
-.lsc-txt em b { font-weight: 600; color: var(--ink-2); }
-.lsc-opt.on .lsc-txt em b { color: var(--primary-700); }
+.seg { display: inline-flex; gap: 2px; padding: 4px; background: var(--surface-2); border-radius: 4px; align-self: flex-start; }
+.seg-btn { display: flex; align-items: center; justify-content: center; height: 32px; padding: 0 22px; border-radius: 4px; border: none; background: transparent; color: var(--ink-2); font-weight: 500; font-size: 13px; }
+.seg-btn:hover:not(:disabled) { color: var(--ink); }
+/* colour marks WHICH option is in force — a soft tint would read as "hovered" */
+.seg-btn.on { background: var(--ink); color: #fff; font-weight: 600; box-shadow: var(--sh-sm); }
+.seg-btn:disabled { color: var(--muted-2); cursor: not-allowed; }
 
-/* native radio: correct semantics, keyboard and a11y for free. `margin-top` lines the
-   circle up with the TITLE's cap-height rather than the block's top edge. */
-.lsc-opt input { flex: none; width: 16px; height: 16px; margin: 2px 0 0; accent-color: var(--primary); cursor: inherit; }
+/* `align-items: flex-start` not center: the sentence wraps to two lines at this width,
+   and a vertically-centred icon would float in the middle of the paragraph */
+.oneliner { display: flex; align-items: flex-start; gap: 8px; margin: 10px 0 0; padding: 9px 11px; background: var(--surface-2); border-radius: 4px; font-size: 13px; line-height: 1.5; color: var(--ink-2); }
+.oneliner :deep(.ico) { color: var(--muted); flex: none; margin-top: 2px; }
+.oneliner b { font-weight: 600; color: var(--ink); }
 
 /* ── the controls ─────────────────────────────────────────────────────────────── */
 .la-body { display: grid; gap: 18px; }
