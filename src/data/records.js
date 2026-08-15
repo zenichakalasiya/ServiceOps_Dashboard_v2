@@ -255,7 +255,10 @@ function pieData(spec) {
 export function chartData(spec) {
   if (!spec) return { labels: [], series: [] }
   switch (spec.kind) {
+    // Stacked, Grouped and Multi-line are three drawings of the same two-dimension
+    // result — one categorical axis split by a second field
     case 'stack':
+    case 'grouped':
     case 'multiline': return chartTwoDim(spec.xDim, spec.splitDim, spec.conds)
     case 'combo': return chartCombo(spec.xDim, spec.comboFn, spec.comboField, spec.conds)
     case 'hist': return chartHistogram(spec.histField, spec.histBucket, spec.conds)

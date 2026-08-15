@@ -13,7 +13,7 @@
  */
 import { gaugeBands, niceCeil } from './records.js'
 
-export const NEW_KINDS = new Set(['stack', 'multiline', 'combo', 'hist', 'funnel', 'heatmap', 'gauge', 'mapbubble'])
+export const NEW_KINDS = new Set(['stack', 'grouped', 'multiline', 'combo', 'hist', 'funnel', 'heatmap', 'gauge', 'mapbubble'])
 
 // a native ECharts legend, styled to match the product (used by the multi-series
 // new kinds; single-series kinds omit it, funnel prints its labels on the bands)
@@ -346,6 +346,12 @@ export function optMapBubble(out, spec, t) {
 // kind → option builder. ChartTile calls CHART_OPT[kind](out, spec, t). Grows per batch.
 export const CHART_OPT = {
   stack: optStacked,
+  /* Grouped is Stacked's other reading of the same two-dimension data — same engine,
+   * same option builder, bars side by side instead of piled. It is its own KIND rather
+   * than a mode of Stacked so the picker can offer it as a peer, which is also why the
+   * mode is forced here: the kind IS the choice, and a spec that disagreed with its own
+   * kind would draw a "Grouped" widget stacked. */
+  grouped: (out, spec, t) => optStacked(out, { ...spec, stackMode: 'grouped' }, t),
   multiline: optMultiline,
   combo: optCombo,
   hist: optHist,

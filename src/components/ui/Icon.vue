@@ -32,7 +32,7 @@ import {
   Lightbulb, UserCheck, ClipboardCheck, UsersRound, Menu, Keyboard, History, Monitor,
   FolderMinus, FolderPlus, BadgeCheck, Undo2, Redo2, RotateCcw, ThumbsUp, ThumbsDown, ArrowUp, ArrowDown,
   PenLine, Palette, Square, Circle, MoveUpRight, Eraser, Mail, MousePointer2, ChartArea,
-  Filter, Triangle, ChartBarBig, ChartBarStacked, ChartSpline, ChartNoAxesCombined,
+  Filter, Triangle, ChartBarBig, ChartBarStacked, ChartNoAxesColumn, ChartSpline, ChartNoAxesCombined,
   ChartColumnBig, Grid3x3, Gauge, AlignLeft, Map, ArrowRight, MessageSquare,
   ChartNoAxesColumnIncreasing, Zap, Send, Paperclip, Brain, Flag, Telescope, Crosshair,
   MonitorSmartphone, Shield, Boxes, PanelLeftOpen, PanelLeftClose, Bold, Italic, Underline,
@@ -85,7 +85,11 @@ const MAP = {
   'chart-area': ChartArea, 'chart-donut': ChartPie, 'chart-funnel': Filter,
   'chart-pyramid': Triangle, 'chart-hbar': ChartBarBig,
   // PMG-ACT-01 additional chart kinds
-  'chart-stack': ChartBarStacked, 'chart-multiline': ChartSpline,
+  'chart-stack': ChartBarStacked,
+  // bars standing side by side, against chart-stack's piled ones — the pair has to be
+  // told apart at 22px in the builder's kind row
+  'chart-grouped': ChartNoAxesColumn,
+  'chart-multiline': ChartSpline,
   'chart-combo': ChartNoAxesCombined, 'chart-hist': ChartColumnBig, 'chart-heatmap': Grid3x3,
   'chart-gauge': Gauge, 'chart-text': AlignLeft, 'chart-map': Map,
   'open-in': ArrowRight, chat: MessageSquare, 'auto-graph': ChartNoAxesColumnIncreasing,

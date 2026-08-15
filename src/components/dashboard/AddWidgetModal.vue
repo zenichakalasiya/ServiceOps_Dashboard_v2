@@ -17,28 +17,48 @@ const search = ref('')
 const TYPE_FILTERS = [{ v: '', label: 'All' }, { v: 'kpi', label: 'KPI' }, { v: 'chart', label: 'Widget' }, { v: 'shortcut', label: 'Shortcut' }]
 const builder = ref(null)             // selected chart type → opens centered builder
 
-// ---- Chart type tab: AIOps-style category grid ----
+/* ---- Chart type tab -------------------------------------------------------------
+ * Grouped by what a type DOES, not by when it was added. The order is also the order
+ * of commitment: Statistics and Coverage are the two convertible groups, so they come
+ * first — pick either and you can still change your mind afterwards. Everything below
+ * is frozen once created, which is the more considered choice.
+ *
+ * The group a type sits in here matches its family in data/chartTypes.js, and that
+ * file decides convertibility. Don't let the two drift.
+ *
+ * Map Bubble is withdrawn. The renderer and its lazy India geo stay in the codebase so
+ * any tile already built on it keeps drawing; it is simply no longer offered.
+ */
 const GROUPS = [
-  { cat: 'Widget', types: [
+  { cat: 'Statistics', types: [
     { id: 'line', label: 'Line', icon: 'chart-line', type: 'chart', kind: 'line' },
     { id: 'bar', label: 'Bar', icon: 'chart-bar', type: 'chart', kind: 'hbar' },
     { id: 'column', label: 'Column', icon: 'chart-bar', type: 'chart', kind: 'bar' },
-    { id: 'pie', label: 'Pie', icon: 'chart-pie', type: 'chart', kind: 'donut' },
-    // PMG-ACT-01 additional chart kinds
+  ] },
+  { cat: 'Coverage', types: [
+    // Pie now builds a PIE. It used to build a doughnut, which meant the one kind you
+    // could pick by name was the one you couldn't get.
+    { id: 'pie', label: 'Pie', icon: 'chart-pie', type: 'chart', kind: 'pie' },
+    { id: 'donut', label: 'Donut', icon: 'chart-donut', type: 'chart', kind: 'donut' },
+  ] },
+  { cat: 'Multi-Series', types: [
     { id: 'stack', label: 'Stacked', icon: 'chart-stack', type: 'chart', kind: 'stack' },
+    { id: 'grouped', label: 'Grouped', icon: 'chart-grouped', type: 'chart', kind: 'grouped' },
     { id: 'multiline', label: 'Multi-line', icon: 'chart-multiline', type: 'chart', kind: 'multiline' },
     { id: 'combo', label: 'Combo', icon: 'chart-combo', type: 'chart', kind: 'combo' },
-    { id: 'hist', label: 'Histogram', icon: 'chart-hist', type: 'chart', kind: 'hist' },
-    { id: 'funnel', label: 'Funnel', icon: 'chart-funnel', type: 'chart', kind: 'funnel' },
-    { id: 'heatmap', label: 'Heatmap', icon: 'chart-heatmap', type: 'chart', kind: 'heatmap' },
-    { id: 'gauge', label: 'Gauge', icon: 'chart-gauge', type: 'chart', kind: 'gauge' },
-    // Map Bubble is withdrawn from the pickers. The renderer and its lazy India geo stay
-    // in the codebase so any tile already built on it keeps drawing; it is simply no
-    // longer offered as a new choice.
   ] },
-  { cat: 'KPI', types: [{ id: 'kpi', label: 'KPI', icon: 'kpi', type: 'kpi', kind: null }] },
-  { cat: 'Shortcut', types: [{ id: 'shortcut', label: 'Shortcut', icon: 'table', type: 'shortcut', kind: null }] },
-  { cat: 'Text', types: [{ id: 'text', label: 'Free Text', icon: 'chart-text', type: 'text', kind: null }] },
+  { cat: 'Advanced', types: [
+    { id: 'gauge', label: 'Gauge', icon: 'chart-gauge', type: 'chart', kind: 'gauge' },
+    { id: 'hist', label: 'Histogram', icon: 'chart-hist', type: 'chart', kind: 'hist' },
+    { id: 'heatmap', label: 'Heatmap', icon: 'chart-heatmap', type: 'chart', kind: 'heatmap' },
+    { id: 'funnel', label: 'Funnel', icon: 'chart-funnel', type: 'chart', kind: 'funnel' },
+  ] },
+  // KPI and Shortcut join Free Text here: they are the tiles that aren't charts.
+  { cat: 'Non-chart', types: [
+    { id: 'kpi', label: 'KPI', icon: 'kpi', type: 'kpi', kind: null },
+    { id: 'shortcut', label: 'Shortcut', icon: 'table', type: 'shortcut', kind: null },
+    { id: 'text', label: 'Free Text', icon: 'chart-text', type: 'text', kind: null },
+  ] },
 ]
 const filteredGroups = computed(() => GROUPS.map((g) => ({
   cat: g.cat, types: g.types.filter((t) => t.label.toLowerCase().includes(search.value.toLowerCase())),

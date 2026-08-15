@@ -35,6 +35,7 @@ const TYPES = [
   { id: 'donut', label: 'Doughnut', icon: 'chart-donut', type: 'chart', kind: 'donut' },
   // PMG-ACT-01 additional chart kinds (each carries its own config + engine spec)
   { id: 'stack', label: 'Stacked', icon: 'chart-stack', type: 'chart', kind: 'stack' },
+  { id: 'grouped', label: 'Grouped', icon: 'chart-grouped', type: 'chart', kind: 'grouped' },
   { id: 'multiline', label: 'Multi-line', icon: 'chart-multiline', type: 'chart', kind: 'multiline' },
   { id: 'combo', label: 'Combo', icon: 'chart-combo', type: 'chart', kind: 'combo' },
   { id: 'hist', label: 'Histogram', icon: 'chart-hist', type: 'chart', kind: 'hist' },
@@ -198,7 +199,7 @@ function initCfg() {
     conds: (ex?.chart?.spec?.conds || ex?.chart?.spec?.measure?.conds || []).map((c) => ({ ...c })),
     stackXDim: ex?.chart?.spec?.xDim || 'Priority',
     stackSplit: ex?.chart?.spec?.splitDim || 'Status',
-    stackMode: ex?.chart?.spec?.stackMode || 'stacked',
+    // stackMode retired — the kind ('stack' | 'grouped') carries it now
     mlXDim: ex?.chart?.spec?.xDim || 'Priority',
     mlSplit: ex?.chart?.spec?.splitDim || 'Status',
     comboXDim: ex?.chart?.spec?.xDim || 'Priority',
@@ -233,7 +234,9 @@ const isPie = computed(() => curType.value.kind === 'pie' || curType.value.kind 
 const isNewKind = computed(() => NEW_KINDS.has(curType.value.kind))
 const chartSpec = computed(() => {
   const k = curType.value.kind
-  if (k === 'stack') return { kind: 'stack', xDim: cfg.stackXDim, splitDim: cfg.stackSplit, stackMode: cfg.stackMode, conds: cfg.conds }
+  // Stacked and Grouped share every field; the KIND is what decides how it draws, so
+  // the spec carries no stackMode of its own to contradict it.
+  if (k === 'stack' || k === 'grouped') return { kind: k, xDim: cfg.stackXDim, splitDim: cfg.stackSplit, conds: cfg.conds }
   if (k === 'multiline') return { kind: 'multiline', xDim: cfg.mlXDim, splitDim: cfg.mlSplit, conds: cfg.conds }
   if (k === 'combo') return { kind: 'combo', xDim: cfg.comboXDim, comboFn: cfg.comboFn, comboField: cfg.comboField, conds: cfg.conds }
   if (k === 'hist') return { kind: 'hist', histField: cfg.histField, histBucket: cfg.histBucket, conds: cfg.conds }
@@ -613,15 +616,15 @@ function save(place) {
               <!-- Series / Buckets / Stages / Matrix — the additional PMG-ACT-01 kinds (§4). -->
               <div v-if="isChart && manualMode && isNewKind && curType.kind !== 'gauge'" class="sec">
                 <div class="sec-h">{{ curType.kind === 'hist' ? 'Buckets' : curType.kind === 'funnel' ? 'Stages' : curType.kind === 'heatmap' ? 'Matrix' : curType.kind === 'mapbubble' ? 'Bubbles' : 'Series' }}</div>
-                <!-- Stacked / Grouped (§4.1) -->
-                <template v-if="curType.kind === 'stack'">
+                <!-- Stacked / Grouped (§4.1) — one form, two types. The Stacked|Grouped
+                     segmented control that used to sit here is gone: they are separate
+                     types in the picker now, so the toggle offered a second way to
+                     answer a question already answered, and a "Grouped" widget switched
+                     to Stacked would have carried a name it no longer drew. -->
+                <template v-if="curType.kind === 'stack' || curType.kind === 'grouped'">
                   <div class="grid2">
                     <div class="fld"><label>X-Axis <i>*</i></label><Dropdown v-model="cfg.stackXDim" :options="CONDITION_FIELD_LABELS" /></div>
                     <div class="fld"><label>Split by <i>*</i></label><Dropdown v-model="cfg.stackSplit" :options="CONDITION_FIELD_LABELS" /></div>
-                  </div>
-                  <div class="seg">
-                    <button class="seg-b" :class="{ on: cfg.stackMode==='stacked' }" @click="cfg.stackMode='stacked'">Stacked</button>
-                    <button class="seg-b" :class="{ on: cfg.stackMode==='grouped' }" @click="cfg.stackMode='grouped'">Grouped</button>
                   </div>
                 </template>
                 <!-- Multi-line (§4.2) -->

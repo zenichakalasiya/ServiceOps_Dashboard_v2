@@ -33,6 +33,7 @@ const T = {
   hist: 'translate(-4 -7.0) scale(1.5)',
   heatmap: 'translate(-4 -5.5) scale(1.5)',
   stack: 'translate(-4 -5.5) scale(1.5)',
+  grouped: 'translate(-4 -5.5) scale(1.5)',
   combo: 'translate(-4 -7.0) scale(1.5)',
   funnel: 'translate(-4 -4.0) scale(1.5)',
   mapbubble: 'translate(-4 -4.0) scale(1.5)',
@@ -198,6 +199,19 @@ const T = {
       </template>
 
       <!-- Empty group -->
+      <!-- Grouped — the one type the supplied contact sheet had no artwork for, drawn
+           to its rules: same 8→40 span and baseline as Stacked, same 0.4/0.6 ramp, but
+           the pairs stand SIDE BY SIDE instead of piling up. That contrast is the whole
+           job of the icon — next to Stacked it has to be the difference you notice. -->
+      <template v-else-if="name === 'grouped'">
+        <rect x="8" y="22" width="4.5" height="18" fill="currentColor" fill-opacity="0.4" />
+        <rect x="13.5" y="16" width="4.5" height="24" fill="currentColor" fill-opacity="0.6" />
+        <rect x="19" y="14" width="4.5" height="26" fill="currentColor" fill-opacity="0.4" />
+        <rect x="24.5" y="20" width="4.5" height="20" fill="currentColor" fill-opacity="0.6" />
+        <rect x="30" y="26" width="4.5" height="14" fill="currentColor" fill-opacity="0.4" />
+        <rect x="35.5" y="29" width="4.5" height="11" fill="currentColor" fill-opacity="0.6" />
+      </template>
+
       <template v-else-if="name === 'group'">
         <path d="M10 13H20.5L24 17H38A2 2 0 0 1 40 19V34A2 2 0 0 1 38 36H10A2 2 0 0 1 8 34V15A2 2 0 0 1 10 13Z" fill="currentColor" fill-opacity="0.2" />
         <path d="M8 21H40V34A2 2 0 0 1 38 36H10A2 2 0 0 1 8 34Z" fill="currentColor" fill-opacity="0.4" />

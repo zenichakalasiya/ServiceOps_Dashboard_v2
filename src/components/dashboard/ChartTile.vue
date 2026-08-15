@@ -338,7 +338,14 @@ const option = computed(() => {
     return {
       tooltip: sliceTip,
       legend: { show: false },
-      graphic: isDonut ? [centre] : [{ id: 'donut-total', $action: 'remove' }],
+      /* Declared always, hidden on a flat pie. It used to be deleted with
+       * `{ id: 'donut-total', $action: 'remove' }`, which throws on a pie's FIRST
+       * render: nothing carries that id yet, and ECharts dereferences the element it
+       * was told to remove (`__ec_inner_*` of undefined). Unreachable for as long as
+       * the picker's "Pie" card actually built a donut; it surfaced the moment Pie
+       * meant pie. Declaring it and toggling `invisible` keeps the id stable, so
+       * switching Pie ↔ Doughnut still updates one element instead of adding one. */
+      graphic: [{ ...centre, invisible: !isDonut }],
       series: [{
         type: 'pie',
         radius: isDonut ? ['52%', '78%'] : ['0%', '74%'],

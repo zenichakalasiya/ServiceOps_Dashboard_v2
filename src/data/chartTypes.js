@@ -12,59 +12,76 @@
  * Offering Heatmap next to Pie there would be offering a conversion that cannot
  * work, because the heatmap needs two dimensions the pie was never given.
  *
- * ── The families ────────────────────────────────────────────────────────────────
- *   category    one categorical dimension × one measure, on an axis
- *               Column · Bar · Line · Area — plus Stacked and Multi-line, which
- *               need a SECOND (split) dimension and so are config-gated.
- *   part-whole  one dimension × one measure, drawn as shares of a total
- *               Pie · Doughnut
- *   value       a single scalar
- *               KPI · Gauge
- *   distribution / matrix / stages / records / note — one member each. Nothing
- *               else reads their configuration, so they have nothing to convert to.
+ * ── The groups, and which of them convert ───────────────────────────────────────
+ * The picker shows five groups. Only TWO of them are convertible, and only within
+ * themselves:
  *
- * ── Config gating ───────────────────────────────────────────────────────────────
- * Membership says a conversion is *conceivable*; `whyDisabled()` says whether THIS
- * widget has what it needs. A Column with no split field can't become Stacked —
- * there is nothing to stack by. Those appear disabled WITH THE REASON rather than
- * missing, so the answer to "why can't I pick that?" is on screen (the same call
- * Dynatrace makes) instead of being left to guess.
+ *   Statistics    Line · Bar · Column          ← interchangeable
+ *   Coverage      Pie · Doughnut               ← interchangeable
+ *   Multi-Series  Stacked · Grouped · Multi-line · Combo
+ *   Advanced      Gauge · Histogram · Heatmap · Funnel
+ *   Non-chart     KPI · Shortcut · Free Text
+ *
+ * Statistics all draw one categorical dimension against one measure, so a switch is
+ * a repaint. Coverage's two differ only by an inner radius. Everything else is
+ * frozen: each carries configuration nothing else reads — Grouped and Stacked look
+ * closest, but they are offered as separate types precisely so the choice is made
+ * once, at creation, rather than flipped afterwards.
+ *
+ * Freezing is expressed the same way throughout: a type in a family of ONE has
+ * nothing to become. There is no separate "is it locked" flag to fall out of sync.
  */
 import { NEW_KINDS } from './chartOptions.js'
 
 /* Every chart kind, with the family it belongs to. `slice` marks part-of-whole:
- * those encode ONE series as shares, so a multi-series widget can't become one. */
+ * those encode ONE series as shares, so a multi-series widget can't become one.
+ *
+ * A family of one is a frozen type. That is why Stacked, Grouped, Multi-line and
+ * Combo each sit alone even though they are neighbours in the picker.
+ *
+ * `area` is deliberately absent. It is not offered anywhere and nothing seeds it;
+ * listing it would have put a fourth conversion inside Statistics. Any legacy area
+ * tile still RENDERS — this file only decides what a tile may convert to, and an
+ * unknown kind resolves to frozen, which is the right answer for it. */
 export const CHART_TYPES = [
-  { id: 'bar', label: 'Column', icon: 'chart-bar', family: 'category', slice: false },
-  { id: 'hbar', label: 'Bar', icon: 'chart-hbar', family: 'category', slice: false },
-  { id: 'line', label: 'Line', icon: 'chart-line', family: 'category', slice: false },
-  { id: 'area', label: 'Area', icon: 'chart-area', family: 'category', slice: false },
-  // need a split dimension — see needsSplit below
-  { id: 'stack', label: 'Stacked', icon: 'chart-stack', family: 'category', slice: false, needsSplit: true },
-  { id: 'multiline', label: 'Multi-line', icon: 'chart-multiline', family: 'category', slice: false, needsSplit: true },
+  // ── Statistics — one category against one value, on an axis
+  { id: 'line', label: 'Line', icon: 'chart-line', family: 'statistics', slice: false },
+  { id: 'hbar', label: 'Bar', icon: 'chart-hbar', family: 'statistics', slice: false },
+  { id: 'bar', label: 'Column', icon: 'chart-bar', family: 'statistics', slice: false },
 
-  { id: 'pie', label: 'Pie', icon: 'chart-pie', family: 'part-whole', slice: true },
-  { id: 'donut', label: 'Doughnut', icon: 'chart-donut', family: 'part-whole', slice: true },
+  // ── Coverage — one series drawn as shares of a total
+  { id: 'pie', label: 'Pie', icon: 'chart-pie', family: 'coverage', slice: true },
+  { id: 'donut', label: 'Doughnut', icon: 'chart-donut', family: 'coverage', slice: true },
 
-  { id: 'gauge', label: 'Gauge', icon: 'chart-gauge', family: 'value', slice: false },
-
-  // solo families — nothing reads the same configuration
+  // ── Multi-Series — each alone in its family, so each is frozen
+  { id: 'stack', label: 'Stacked', icon: 'chart-stack', family: 'stacked', slice: false },
+  { id: 'grouped', label: 'Grouped', icon: 'chart-grouped', family: 'grouped', slice: false },
+  { id: 'multiline', label: 'Multi-line', icon: 'chart-multiline', family: 'multiline', slice: false },
   { id: 'combo', label: 'Combo', icon: 'chart-combo', family: 'combo', slice: false },
+
+  // ── Advanced — likewise
+  { id: 'gauge', label: 'Gauge', icon: 'chart-gauge', family: 'value', slice: false },
   { id: 'hist', label: 'Histogram', icon: 'chart-hist', family: 'distribution', slice: false },
-  { id: 'funnel', label: 'Funnel', icon: 'chart-funnel', family: 'stages', slice: true },
   { id: 'heatmap', label: 'Heatmap', icon: 'chart-heatmap', family: 'matrix', slice: false },
+  { id: 'funnel', label: 'Funnel', icon: 'chart-funnel', family: 'stages', slice: true },
+
+  // withdrawn from the pickers; the renderer stays for tiles already built on it
   { id: 'mapbubble', label: 'Map Bubble', icon: 'chart-map', family: 'geo', slice: false },
 ]
 
+/* `why` completes the sentence "…it <why>", printed when a widget can't convert. */
 export const FAMILIES = {
-  category: { label: 'Axis charts', why: 'plot one category against one value, so they read the same configuration' },
-  'part-whole': { label: 'Part of a whole', why: 'draw one series as shares of a total' },
-  value: { label: 'Single value', why: 'reduce the data to one number' },
-  combo: { label: 'Combo', why: 'pairs a count with an aggregate on a second axis' },
-  distribution: { label: 'Distribution', why: 'bins a numeric field into ranges' },
-  stages: { label: 'Stages', why: 'counts records reaching each stage of an ordered field' },
-  matrix: { label: 'Matrix', why: 'crosses two dimensions into a grid' },
-  geo: { label: 'Geographic', why: 'positions values on a map' },
+  statistics: { label: 'Statistics', why: 'plots one category against one value, so they read the same configuration' },
+  coverage: { label: 'Coverage', why: 'draws one series as shares of a total' },
+  stacked: { label: 'Multi-Series', why: 'piles a second field on each category' },
+  grouped: { label: 'Multi-Series', why: 'sets a second field side by side within each category' },
+  multiline: { label: 'Multi-Series', why: 'plots one line per value of a second field' },
+  combo: { label: 'Multi-Series', why: 'pairs a count with an aggregate on a second axis' },
+  value: { label: 'Advanced', why: 'reduces the data to one number' },
+  distribution: { label: 'Advanced', why: 'bins a numeric field into ranges' },
+  matrix: { label: 'Advanced', why: 'crosses two dimensions into a grid' },
+  stages: { label: 'Advanced', why: 'counts records reaching each stage of an ordered field' },
+  geo: { label: 'Advanced', why: 'positions values on a map' },
 }
 
 const byId = new Map(CHART_TYPES.map((t) => [t.id, t]))
@@ -75,15 +92,6 @@ export const familyOf = (kind) => byId.get(kind)?.family || null
 export function familyMembers(kind) {
   const fam = familyOf(kind)
   return fam ? CHART_TYPES.filter((t) => t.family === fam) : []
-}
-
-/* Does this widget carry a second dimension to split by? A spec-driven Stacked /
- * Multi-line names it in its spec; a legacy chart has one only if it was built with
- * more than one series (Created vs Resolved). */
-function splitOf(chart) {
-  if (!chart) return null
-  const s = chart.spec || {}
-  return s.stackSplit || s.mlSplit || s.split || ((chart.series || []).length > 1 ? 'its series' : null)
 }
 
 /**
@@ -117,19 +125,18 @@ export function frozenReason(tile) {
  * Rendered as the disabled item's tooltip.
  */
 export function whyDisabled(type, chart) {
-  // part-of-whole can only show ONE series
+  // Coverage can only show ONE series. Reachable now that Pie ↔ Doughnut is offered:
+  // a two-series pie would have to drop a series to draw, which is data loss, not a
+  // repaint. (The old needsSplit gate went with the families it guarded — Stacked and
+  // Multi-line are no longer conversion targets, so nothing can ask for them.)
   if (type.slice) {
     const n = (chart?.series || []).length
     if (n > 1) return `${type.label} shows a single series — this widget plots ${n}`
   }
-  // stacked / multi-line need something to split by
-  if (type.needsSplit && !splitOf(chart)) {
-    return `${type.label} needs a second field to split by, and this widget doesn’t have one`
-  }
   return null
 }
 
-/* Kept for callers that still ask "is this one of the three simple kinds?".
+/* Kept for callers that still ask "is this one of the simple kinds?".
  * NEW_KINDS remains the authority for "is this spec-driven?" — see chartOptions.js. */
-export const SWITCHABLE_KINDS = ['bar', 'hbar', 'line', 'area']
+export const SWITCHABLE_KINDS = ['bar', 'hbar', 'line']
 export { NEW_KINDS }
