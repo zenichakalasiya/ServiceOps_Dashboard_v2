@@ -478,6 +478,9 @@ const KIND_TO_TYPE = {
 function typeForTile(t) {
   if (t.type === 'kpi') return { id: 'kpi', label: 'KPI', type: 'kpi', kind: null }
   if (t.type === 'shortcut') return { id: 'shortcut', label: 'Shortcut', type: 'shortcut', kind: null }
+  // A note has no chart, so without this it fell through to the `|| 'bar'` below and
+  // editing one opened the Column builder — a chart form over text content.
+  if (t.type === 'text') return { id: 'text', label: 'Free Text', type: 'text', kind: null }
   const kind = t.chart?.kind || 'bar'
   const m = KIND_TO_TYPE[kind] || KIND_TO_TYPE.bar
   return { id: m.id, label: m.label, type: 'chart', kind }

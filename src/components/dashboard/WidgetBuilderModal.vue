@@ -169,7 +169,9 @@ const DATEF_OPTS = ['Created date', 'Updated date', 'Resolved date', 'Due date']
 function initCfg() {
   return {
     name: props.duplicate ? `Copy of ${ex.title}` : ex?.title || props.libItem?.title || `New ${curType.value.label}`,
-    module: 'Request', techAccess: [store.currentUser], groupAccess: '',
+    module: 'Request',
+    // read back off the tile, so re-opening a restricted widget shows who it reaches
+    techAccess: ex?.techAccess || [store.currentUser], groupAccess: ex?.groupAccess || '',
     mode: ex?.sql ? 'query' : 'manual',   // Manual | Query Based
     xAxis: 'Priority', yFunc: 'Count Of', yColumn: 'Requests',
     assetType: '', dateFilter: 'Created date', description: ex?.info || '',
@@ -360,6 +362,18 @@ const previewTile = computed(() => {
  * filter and its calendar disappears — the same state as every widget that never had one. */
 function applySticky(t) { t.dateFilter = cfg.stickyDate ? cfg.dateRange : null }
 
+/* Access is THREE fields, not one. "Restricted" only means something alongside the
+ * technicians and groups it is restricted TO, and only `access` was ever written to
+ * the tile — so a widget knew it was restricted but not to whom, and its info tooltip
+ * had a level it could not explain. Cleared when the level isn't restricted, so a
+ * widget switched back to Public doesn't carry a stale audience underneath. */
+function applyAccess(t) {
+  const restricted = cfg.access === 'restricted'
+  t.access = cfg.access
+  t.techAccess = restricted ? [...(cfg.techAccess || [])] : undefined
+  t.groupAccess = restricted ? cfg.groupAccess : undefined
+}
+
 function save(place) {
   const pv = previewTile.value
   // --- duplicate a board tile: build a NEW copy from the (re)configured data ---
@@ -367,7 +381,7 @@ function save(place) {
     pv.w = ex.w; pv.h = ex.h
     if (ex.group != null) pv.group = ex.group
     if (queryMode.value) pv.sql = cfg.sqlQuery
-    pv.access = cfg.access
+    applyAccess(pv)
     applySticky(pv)
     emit('duplicated', { tile: pv, afterId: ex.id })
     return
@@ -392,7 +406,7 @@ function save(place) {
     else if (isKpi.value) { t.value = pv.value; t.unit = pv.unit; t.chart = undefined; t.columns = undefined; t.rows = undefined }
     else if (isText.value) { t.content = cfg.content; t.chart = undefined; t.columns = undefined; t.rows = undefined; t.value = undefined }
     if (!isShortcut.value && !isText.value) t.sql = cfg.mode === 'query' ? cfg.sqlQuery : undefined
-    t.access = cfg.access
+    applyAccess(t)
     applySticky(t)
     props.d.updated = new Date().toISOString()
     emit('saved', { id: t.id, place })
@@ -403,7 +417,7 @@ function save(place) {
     if (isText.value) { pv.w = 4; pv.h = 1 }
     else { pv.w = isChart.value ? 6 : isShortcut.value ? 6 : 3; pv.h = isKpi.value ? 1 : 2 }
     if (queryMode.value) pv.sql = cfg.sqlQuery
-    pv.access = cfg.access
+    applyAccess(pv)
     applySticky(pv)
     props.d.tiles.push(pv)
     props.d.updated = new Date().toISOString()
@@ -717,10 +731,6 @@ function save(place) {
               <div v-if="isText" class="sec">
                 <div class="sec-h">Free Text</div>
                 <NoteEditor v-model="cfg.content" :min-height="230" placeholder="Write a note for whoever opens this dashboard…" />
-                <p class="hint note-name-hint">
-                  <Icon name="info" :size="13" />
-                  <span>Notes aren’t named. This one is filed as <b>“{{ derivedNoteTitle }}”</b>, taken from its first line.</span>
-                </p>
               </div>
 
               <!-- Data Configuration -->

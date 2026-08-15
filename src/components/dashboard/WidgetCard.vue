@@ -265,6 +265,14 @@ function closeFilter() { searchOpen.value = false; tableSearch.value = ''; table
 
 // row filtering + sorting now live in DataTable (TanStack); we only own the query
 const present = ref(false)
+/* Who a restricted widget reaches. Normalised to arrays because the two fields don't
+ * agree on shape — technicians are multi-select (an array), groups are single-select
+ * (a string) — and the tooltip shouldn't have to care which. */
+const asList = (v) => (Array.isArray(v) ? v.filter(Boolean) : v ? [v] : [])
+const techList = computed(() => asList(props.tile.techAccess))
+const groupList = computed(() => asList(props.tile.groupAccess))
+const audienceCount = computed(() => techList.value.length + groupList.value.length)
+
 const infoHover = ref(false)
 const infoEl = ref(null)
 const infoPos = ref({ top: 0, left: 0 })
@@ -468,6 +476,16 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
           <!-- description leads; provenance rides below it as a pill -->
           <span class="tt-desc">{{ tile.info || 'No description has been added for this widget yet.' }}</span>
           <span class="tt-tag" :class="prov">{{ provMeta.label }}</span>
+          <!-- Restricted only, and folded below a rule so it reads as a second fact
+               about the widget rather than more of the description. Public reaches
+               everyone and Private reaches nobody, so neither has a list worth naming —
+               the same rule the dashboard's info card follows. -->
+          <span v-if="tile.access === 'restricted'" class="tt-acc">
+            <span class="tt-acc-h"><Icon name="users" :size="12" /> Shared with {{ audienceCount }}</span>
+            <span v-if="groupList.length" class="tt-acc-row">{{ groupList.join(' · ') }}</span>
+            <span v-if="techList.length" class="tt-acc-row">{{ techList.join(' · ') }}</span>
+            <span v-if="!audienceCount" class="tt-acc-row">Nobody added yet — only you can see it.</span>
+          </span>
         </span>
       </transition>
     </teleport>
@@ -750,6 +768,12 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 .tile:hover .info, .tile.acting .info { opacity: 1; }
 .info:hover { color: var(--primary); }
 .info-tt { position: fixed; z-index: 200; width: 240px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+/* the audience, folded in below a rule — mirrors the dashboard info card's .dinfo-acc.
+   `width: 100%` because it is a flex child of an `align-items: flex-start` column, and
+   without it the rule would only span the text. */
+.tt-acc { display: flex; flex-direction: column; gap: 3px; width: 100%; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.16); }
+.tt-acc-h { display: flex; align-items: center; gap: 6px; font-weight: 600; color: #fff; }
+.tt-acc-row { color: rgba(255,255,255,.82); line-height: 1.45; }
 /* the right cluster: a persistent date control, then the hover-revealed actions.
    At rest the action cluster takes NO width, so the calendar sits at the far right of
    the header. On hover the cluster opens to its natural width and the calendar slides
