@@ -32,7 +32,7 @@ import {
   Lightbulb, UserCheck, ClipboardCheck, UsersRound, Menu, Keyboard, History, Monitor,
   FolderMinus, FolderPlus, BadgeCheck, Undo2, Redo2, RotateCcw, ThumbsUp, ThumbsDown, ArrowUp, ArrowDown,
   PenLine, Palette, Square, Circle, MoveUpRight, Eraser, Mail, MousePointer2, ChartArea,
-  Filter, Triangle, ChartBarBig, ChartBarStacked, ChartNoAxesColumn, ChartSpline, ChartNoAxesCombined,
+  Donut, Filter, Triangle, ChartBarBig, ChartBarStacked, ChartNoAxesColumn, ChartSpline, ChartNoAxesCombined,
   ChartColumnBig, Grid3x3, Gauge, AlignLeft, Map, ArrowRight, MessageSquare,
   ChartNoAxesColumnIncreasing, Zap, Send, Paperclip, Brain, Flag, Telescope, Crosshair,
   MonitorSmartphone, Shield, Boxes, PanelLeftOpen, PanelLeftClose, Bold, Italic, Underline,
@@ -82,7 +82,11 @@ const MAP = {
   rearrange: LayoutGrid, pen: PenLine, palette: Palette,
   'shape-rect': Square, 'shape-ellipse': Circle, 'shape-arrow': MoveUpRight,
   erase: Eraser, mail: Mail, cursor: MousePointer2,
-  'chart-area': ChartArea, 'chart-donut': ChartPie, 'chart-funnel': Filter,
+  'chart-area': ChartArea,
+  // its OWN glyph, not ChartPie again: Pie and Donut are two adjacent choices in the
+  // Coverage group now, and two identical icons made the pair unreadable
+  'chart-donut': Donut,
+  'chart-funnel': Filter,
   'chart-pyramid': Triangle, 'chart-hbar': ChartBarBig,
   // PMG-ACT-01 additional chart kinds
   'chart-stack': ChartBarStacked,

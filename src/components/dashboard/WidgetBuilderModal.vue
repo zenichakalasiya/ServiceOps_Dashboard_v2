@@ -13,7 +13,7 @@ import { store } from '../../store/index.js'
 import { chart as mkChart, kpi as mkKpi, shortcut as mkShortcut, text as mkText, ACCESS } from '../../data/mock.js'
 import { CONDITION_FIELD_LABELS, NUMERIC_FIELD_LABELS, AGG_FNS, MAP_FNS } from '../../data/records.js'
 import { NEW_KINDS } from '../../data/chartOptions.js'
-import { CHART_TYPES, FAMILIES as FAMILY_META, familyMembers, familyOf, frozenReason, whyDisabled } from '../../data/chartTypes.js'
+import { CHART_TYPES, FAMILIES as FAMILY_META, familyMembers, familyOf, frozenReason, whyDisabled, groupPickerTypes } from '../../data/chartTypes.js'
 const props = defineProps({ d: Object, type: Object, existing: { type: Object, default: null }, libItem: { type: Object, default: null }, duplicate: { type: Boolean, default: false } }) // type: { id,label,type,kind }
 const emit = defineEmits(['close', 'created', 'saved', 'librarySaved', 'savedToLibrary', 'duplicated'])
 
@@ -32,7 +32,7 @@ const TYPES = [
   { id: 'bar', label: 'Bar', icon: 'chart-bar', type: 'chart', kind: 'hbar' },
   { id: 'column', label: 'Column', icon: 'chart-bar', type: 'chart', kind: 'bar' },
   { id: 'pie', label: 'Pie', icon: 'chart-pie', type: 'chart', kind: 'pie' },
-  { id: 'donut', label: 'Doughnut', icon: 'chart-donut', type: 'chart', kind: 'donut' },
+  { id: 'donut', label: 'Donut', icon: 'chart-donut', type: 'chart', kind: 'donut' },
   // PMG-ACT-01 additional chart kinds (each carries its own config + engine spec)
   { id: 'stack', label: 'Stacked', icon: 'chart-stack', type: 'chart', kind: 'stack' },
   { id: 'grouped', label: 'Grouped', icon: 'chart-grouped', type: 'chart', kind: 'grouped' },
@@ -112,6 +112,8 @@ const FAMILIES = [
   { id: 'text', label: 'Free Text', icon: 'chart-text', type: 'text' },
 ]
 const CHART_KINDS = TYPES.filter((t) => t.type === 'chart')
+// same buckets, same order as the Create Widget grid — one list, two renderers
+const kindGroups = groupPickerTypes(CHART_KINDS)
 // remembers which chart you were on, so leaving the Widget family and coming back
 // returns you to it rather than resetting to a default
 const lastChartId = ref(props.type.type === 'chart' ? props.type.id : 'column')
@@ -566,13 +568,22 @@ function save(place) {
                    there has to be somewhere the name still lives. -->
               <div v-if="showFamilies && isChart" class="sec">
                 <div class="sec-h">Chart Type</div>
-                <div class="kinds">
-                  <button
-                    v-for="k in CHART_KINDS" :key="k.id" class="kind"
-                    :class="{ on: curType.id === k.id }" :title="k.label" :aria-label="k.label" @click="pickKind(k)"
-                  >
-                    <Icon :name="k.icon" :size="22" :class="{ rot90: k.id === 'bar' }" />
-                  </button>
+                <!-- Grouped, in the same buckets and the same order as the Create Widget
+                     card grid, off one shared list (PICKER_GROUPS). Thirteen icon-only
+                     squares in one wrapping row asked you to recognise every glyph before
+                     you could choose; under a heading you find "the stacked one" by
+                     reading four words instead of scanning all thirteen. It also puts the
+                     two convertible groups first, so the reversible choices come first. -->
+                <div v-for="g in kindGroups" :key="g.cat" class="kind-grp">
+                  <div class="kind-grp-h">{{ g.cat }}</div>
+                  <div class="kinds">
+                    <button
+                      v-for="k in g.types" :key="k.id" class="kind"
+                      :class="{ on: curType.id === k.id }" :title="k.label" :aria-label="k.label" @click="pickKind(k)"
+                    >
+                      <Icon :name="k.icon" :size="22" :class="{ rot90: k.id === 'bar' }" />
+                    </button>
+                  </div>
                 </div>
                 <template v-if="!isShortcut && !isText">
                   <!-- 26px, not 14: Manual / Query Based is a different question from the
@@ -915,6 +926,11 @@ function save(place) {
 /* Icon-only squares that WRAP, so all twelve kinds show at the reference's size instead
    of a fixed 4-column grid stretching each cell to the column width. Fixed 48px keeps the
    padding even on every side — an aspect-ratio cell in a fluid grid does not. */
+/* A group of kinds: a quiet caption over its own row of squares. The caption is
+   deliberately lighter and smaller than .sec-h — "Chart Type" is the field, these
+   are subdivisions of it, and matching weights would have read as four fields. */
+.kind-grp + .kind-grp { margin-top: 14px; }
+.kind-grp-h { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
 .kinds { display: flex; flex-wrap: wrap; gap: 10px; }
 .kind { flex: none; display: grid; place-items: center; width: 48px; height: 48px; padding: 0; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink-2); border-radius: 4px; }
 .kind:hover { background: var(--surface-2); border-color: var(--muted-2); }

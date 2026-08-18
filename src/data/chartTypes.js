@@ -51,7 +51,7 @@ export const CHART_TYPES = [
 
   // ── Coverage — one series drawn as shares of a total
   { id: 'pie', label: 'Pie', icon: 'chart-pie', family: 'coverage', slice: true },
-  { id: 'donut', label: 'Doughnut', icon: 'chart-donut', family: 'coverage', slice: true },
+  { id: 'donut', label: 'Donut', icon: 'chart-donut', family: 'coverage', slice: true },
 
   // ── Multi-Series — each alone in its family, so each is frozen
   { id: 'stack', label: 'Stacked', icon: 'chart-stack', family: 'stacked', slice: false },
@@ -140,3 +140,31 @@ export function whyDisabled(type, chart) {
  * NEW_KINDS remains the authority for "is this spec-driven?" — see chartOptions.js. */
 export const SWITCHABLE_KINDS = ['bar', 'hbar', 'line']
 export { NEW_KINDS }
+
+/* ── How the two pickers GROUP the types ─────────────────────────────────────────
+ * The Create Widget card grid and the builder's Chart Type row (shown beside the live
+ * preview while you configure) both render from this, so a type can't sit under
+ * "Advanced" in one and "Multi-Series" in the other.
+ *
+ * The ids here are the PICKER's ids, not the kind ids used by CHART_TYPES above. The
+ * two spaces genuinely differ: the product calls the horizontal one Bar and the
+ * vertical one Column, while the renderer calls them 'hbar' and 'bar'. Mapping picker
+ * id → kind stays in each component's own type table.
+ *
+ * Grouping is presentation. `family` above is what decides convertibility, and the two
+ * are deliberately separate — Multi-Series reads as one group but each of its members
+ * is frozen alone.
+ */
+export const PICKER_GROUPS = [
+  { cat: 'Statistics', ids: ['line', 'bar', 'column'] },
+  { cat: 'Coverage', ids: ['pie', 'donut'] },
+  { cat: 'Multi-Series', ids: ['stack', 'grouped', 'multiline', 'combo'] },
+  { cat: 'Advanced', ids: ['gauge', 'hist', 'heatmap', 'funnel'] },
+]
+
+/** Slot a flat list of picker types into PICKER_GROUPS, dropping empty groups. */
+export function groupPickerTypes(types) {
+  return PICKER_GROUPS
+    .map((g) => ({ cat: g.cat, types: g.ids.map((id) => types.find((t) => t.id === id)).filter(Boolean) }))
+    .filter((g) => g.types.length)
+}

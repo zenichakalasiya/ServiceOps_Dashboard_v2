@@ -6,6 +6,7 @@ import ChartIcon from '../ui/ChartIcon.vue'
 import WidgetBuilderModal from './WidgetBuilderModal.vue'
 import { store, addTilesToDashboard, deleteLibTile, restoreLibTile, removeLibTileForever, toast } from '../../store/index.js'
 import { uid } from '../../data/mock.js'
+import { groupPickerTypes } from '../../data/chartTypes.js'
 const props = defineProps({ d: Object, group: { type: String, default: null } })
 const emit = defineEmits(['close', 'created', 'newgroup'])
 function tagGroup(id) { if (props.group && id != null) { const t = props.d.tiles.find((x) => x.id === id); if (t) t.group = props.group } }
@@ -29,31 +30,32 @@ const builder = ref(null)             // selected chart type → opens centered 
  * Map Bubble is withdrawn. The renderer and its lazy India geo stay in the codebase so
  * any tile already built on it keeps drawing; it is simply no longer offered.
  */
+// Every chart card. Which GROUP each falls into, and in what order, comes from
+// PICKER_GROUPS in data/chartTypes.js — the builder's Chart Type row reads the same
+// list, so the two can never disagree about where a type belongs.
+const CHART_CARDS = [
+  { id: 'line', label: 'Line', icon: 'chart-line', type: 'chart', kind: 'line' },
+  { id: 'bar', label: 'Bar', icon: 'chart-bar', type: 'chart', kind: 'hbar' },
+  { id: 'column', label: 'Column', icon: 'chart-bar', type: 'chart', kind: 'bar' },
+  // Pie now builds a PIE. It used to build a doughnut, which meant the one kind you
+  // could pick by name was the one you couldn't get.
+  { id: 'pie', label: 'Pie', icon: 'chart-pie', type: 'chart', kind: 'pie' },
+  { id: 'donut', label: 'Donut', icon: 'chart-donut', type: 'chart', kind: 'donut' },
+  { id: 'stack', label: 'Stacked', icon: 'chart-stack', type: 'chart', kind: 'stack' },
+  { id: 'grouped', label: 'Grouped', icon: 'chart-grouped', type: 'chart', kind: 'grouped' },
+  { id: 'multiline', label: 'Multi-line', icon: 'chart-multiline', type: 'chart', kind: 'multiline' },
+  { id: 'combo', label: 'Combo', icon: 'chart-combo', type: 'chart', kind: 'combo' },
+  { id: 'gauge', label: 'Gauge', icon: 'chart-gauge', type: 'chart', kind: 'gauge' },
+  { id: 'hist', label: 'Histogram', icon: 'chart-hist', type: 'chart', kind: 'hist' },
+  { id: 'heatmap', label: 'Heatmap', icon: 'chart-heatmap', type: 'chart', kind: 'heatmap' },
+  { id: 'funnel', label: 'Funnel', icon: 'chart-funnel', type: 'chart', kind: 'funnel' },
+  // Map Bubble is withdrawn. The renderer and its lazy India geo stay in the codebase
+  // so any tile already built on it keeps drawing; it is simply no longer offered.
+]
+
+// KPI and Shortcut join Free Text here: they are the tiles that are not charts.
 const GROUPS = [
-  { cat: 'Statistics', types: [
-    { id: 'line', label: 'Line', icon: 'chart-line', type: 'chart', kind: 'line' },
-    { id: 'bar', label: 'Bar', icon: 'chart-bar', type: 'chart', kind: 'hbar' },
-    { id: 'column', label: 'Column', icon: 'chart-bar', type: 'chart', kind: 'bar' },
-  ] },
-  { cat: 'Coverage', types: [
-    // Pie now builds a PIE. It used to build a doughnut, which meant the one kind you
-    // could pick by name was the one you couldn't get.
-    { id: 'pie', label: 'Pie', icon: 'chart-pie', type: 'chart', kind: 'pie' },
-    { id: 'donut', label: 'Donut', icon: 'chart-donut', type: 'chart', kind: 'donut' },
-  ] },
-  { cat: 'Multi-Series', types: [
-    { id: 'stack', label: 'Stacked', icon: 'chart-stack', type: 'chart', kind: 'stack' },
-    { id: 'grouped', label: 'Grouped', icon: 'chart-grouped', type: 'chart', kind: 'grouped' },
-    { id: 'multiline', label: 'Multi-line', icon: 'chart-multiline', type: 'chart', kind: 'multiline' },
-    { id: 'combo', label: 'Combo', icon: 'chart-combo', type: 'chart', kind: 'combo' },
-  ] },
-  { cat: 'Advanced', types: [
-    { id: 'gauge', label: 'Gauge', icon: 'chart-gauge', type: 'chart', kind: 'gauge' },
-    { id: 'hist', label: 'Histogram', icon: 'chart-hist', type: 'chart', kind: 'hist' },
-    { id: 'heatmap', label: 'Heatmap', icon: 'chart-heatmap', type: 'chart', kind: 'heatmap' },
-    { id: 'funnel', label: 'Funnel', icon: 'chart-funnel', type: 'chart', kind: 'funnel' },
-  ] },
-  // KPI and Shortcut join Free Text here: they are the tiles that aren't charts.
+  ...groupPickerTypes(CHART_CARDS),
   { cat: 'Non-chart', types: [
     { id: 'kpi', label: 'KPI', icon: 'kpi', type: 'kpi', kind: null },
     { id: 'shortcut', label: 'Shortcut', icon: 'table', type: 'shortcut', kind: null },
