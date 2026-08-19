@@ -250,7 +250,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
         <button class="awt" :class="{ on: tab === 'user' }" @click="tab = 'user'">Created by me</button>
         <button class="awt" :class="{ on: tab === 'shared' }" @click="tab = 'shared'">Shared with me</button>
         <!-- "Archive" in the UI; the state key stays `trash` so nothing downstream moves -->
-        <button class="awt" :class="{ on: tab === 'trash' }" @click="tab = 'trash'"><Icon name="archive" :size="13" /> Archive <span v-if="trashCount" class="awt-count">{{ trashCount }}</span></button>
+        <button class="awt" :class="{ on: tab === 'trash' }" @click="tab = 'trash'">Archive <span v-if="trashCount" class="awt-count">{{ trashCount }}</span></button>
       </div>
 
       <!-- module filter + search (reuse tabs only — the Create Widget tab has no search) -->
