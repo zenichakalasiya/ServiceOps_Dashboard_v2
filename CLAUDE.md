@@ -39,6 +39,13 @@ npx playwright test --ui                      # interactive runner
 There is **no lint step and no unit-test suite** — don't invent one. Playwright was added for e2e
 only; the app itself has no in-repo assertions.
 
+**Driving a browser:** prefer the **Playwright MCP** (`plugin:playwright:playwright`) over
+hand-written throwaway scripts — it hands back an accessibility snapshot with stable `ref=`
+handles instead of CSS selectors guessed from the source, which is where ad-hoc scripts here
+kept going wrong (one class matching thirteen elements, another matching two components).
+**Ask before each use** — it launches a real browser against live pages. Use `browser_snapshot`
+to find and act on elements and screenshots only to judge how something looks.
+
 **Deploy:** commit + push to `main` → GitHub Actions rebuilds → live at
 `https://zenichakalasiya.github.io/ServiceOps_Dashboard_v2/`. Vite `base` is `/ServiceOps_Dashboard_v2/`,
 so all asset paths assume that prefix — never hardcode a root-absolute `/foo` URL.
@@ -275,8 +282,9 @@ own. All three pickers are the same component (`TimeRangePopover.vue`) reading t
 - **Never `resize()` an ECharts instance on mount.** A resize re-lays-out the series and snaps a
   running entrance animation to its end state — the chart looks static with nothing in the build or
   DOM to explain why.
-- **Verify UI changes in a real browser.** Several bugs here (a self-deleting chip, a card-clipped
-  popover, a broken row rule) were invisible to DOM inspection and to the build.
+- **Verify UI changes in a real browser** — see the Playwright MCP note under Commands.
+  Several bugs here (a self-deleting chip, a card-clipped popover, a broken row rule) were
+  invisible to DOM inspection and to the build.
 - **Two sibling `<transition>` elements toggled in the same tick can race** — both mount at once
   and a leave animation hangs with `enter-from` still applied, so the node never unmounts. If two
   popovers are mutually exclusive, render them through **one** transitioned element.
