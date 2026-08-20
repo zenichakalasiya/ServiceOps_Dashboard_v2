@@ -225,7 +225,10 @@ watch([gs, () => d.value?.tiles?.length, () => (d.value?.groups || []).length], 
 watch(ugGridEl, (el) => { ugRO?.disconnect(); if (el) ugRO?.observe(el); nextTick(computeRowGaps) })
 onBeforeUnmount(() => ugRO?.disconnect())
 const gShowFabGroup = computed(() => false)       // sidebar Empty group covers this instead
-const gShowTip = computed(() => true)             // "drag a box (or Shift-click)" hint
+// The "Tip: drag a box…" line was removed — marquee-select is discoverable by doing it,
+// and a permanent instruction strip above the grid spends board height on something a
+// user reads once. The flag stays so the toolbar's other demo hints keep their guard.
+const gShowTip = computed(() => false)
 const gShowEmptyGroupCta = computed(() => true)   // empty-state "or create a group"
 const gRightClick = computed(() => false)
 const gHoverIcon = computed(() => false)
@@ -663,8 +666,8 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
              other button along with it, so the toolbar shifts under the pointer the
              first time you change anything. -->
         <div class="udr">
-          <button class="udr-b" :disabled="!canUndo" @click="undo"><Icon name="undo" :size="17" /><span class="udr-tip">Undo <kbd>Ctrl + Z</kbd></span></button>
-          <button class="udr-b" :disabled="!canRedo" @click="redo"><Icon name="redo" :size="17" /><span class="udr-tip">Redo <kbd>Ctrl + Y</kbd></span></button>
+          <button class="udr-b" :disabled="!canUndo" @click="undo"><Icon name="undo" :size="17" /><span class="tt udr-tip">Undo <kbd>Ctrl + Z</kbd></span></button>
+          <button class="udr-b" :disabled="!canRedo" @click="redo"><Icon name="redo" :size="17" /><span class="tt udr-tip">Redo <kbd>Ctrl + Y</kbd></span></button>
         </div>
         <TimeFilter />
         <AutoRefresh @refresh="onRefresh" />
@@ -748,7 +751,6 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
       <!-- tiles (ungrouped + collapsible groups) — drag a box anywhere to marquee-select -->
       <div v-else class="board-groups" ref="gridEl" :class="{ selecting, revealing }" @mousedown="boardMouseDown">
         <div v-if="gShowTip || gShowAddGroupBtn || gRightClick || gHoverIcon || gAutoBy" class="bg-toolbar">
-          <span v-if="gShowTip && tilesIn(null).length" class="bg-hint">Tip: drag a box (or Shift-click) across widgets to group them</span>
           <span v-if="gRightClick" class="bg-hint">Right-click any widget → New group / Add to group</span>
           <span v-if="gHoverIcon" class="bg-hint">Hover a widget and click its ⊞ chip → New group / Add to group</span>
           <template v-if="gAutoBy">
@@ -1015,7 +1017,8 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .udr-b { position: relative; width: 34px; height: 32px; border: 1px solid var(--border); background: var(--surface); color: var(--ink-2); border-radius: 4px; display: grid; place-items: center; }
 .udr-b:hover:not(:disabled) { background: var(--surface-2); color: var(--ink); }
 .udr-b:disabled { color: var(--muted); opacity: .85; cursor: not-allowed; }
-.udr-tip { position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #20223a; color: #fff; font-size: 12px; white-space: nowrap; padding: 5px 9px; border-radius: 4px; display: none; align-items: center; gap: 6px; z-index: 60; box-shadow: var(--sh-pop); }
+/* placement only — surface, padding and colour come from .tt */
+.udr-tip { position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); white-space: nowrap; display: none; align-items: center; gap: 6px; z-index: 60; }
 .udr-b:hover .udr-tip { display: inline-flex; }
 .udr-tip kbd { font-family: inherit; font-size: 11px; background: rgba(255,255,255,.16); border-radius: 4px; padding: 1px 5px; }
 .btn.ico-only { width: 38px; padding: 0; justify-content: center; }

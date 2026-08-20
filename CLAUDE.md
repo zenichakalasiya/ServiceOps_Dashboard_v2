@@ -43,8 +43,10 @@ only; the app itself has no in-repo assertions.
 hand-written throwaway scripts — it hands back an accessibility snapshot with stable `ref=`
 handles instead of CSS selectors guessed from the source, which is where ad-hoc scripts here
 kept going wrong (one class matching thirteen elements, another matching two components).
-**Ask before each use** — it launches a real browser against live pages. Use `browser_snapshot`
-to find and act on elements and screenshots only to judge how something looks.
+No need to ask before using it here — browser verification is implied whenever this
+prototype's UI changes. Use `browser_snapshot` to find and act on elements, and screenshots
+only to judge how something looks. Delete the `.playwright-mcp/` folder and any named
+screenshot it drops in the working directory; they are not part of the project.
 
 **Deploy:** commit + push to `main` → GitHub Actions rebuilds → live at
 `https://zenichakalasiya.github.io/ServiceOps_Dashboard_v2/`. Vite `base` is `/ServiceOps_Dashboard_v2/`,

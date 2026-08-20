@@ -146,7 +146,26 @@ label.field { display:block; font-size:13px; font-weight: 500; color: var(--ink)
 
 /* §12 Tooltip — near-black surface. `--primary` in the guide's tooltip section means its
    own `--primary` design token (#030213), not the brand blue. */
-.tt { position: absolute; z-index: 80; background: #030213; color:#fff; font-size:12px; font-weight:400; padding:6px 12px; border-radius:var(--r); box-shadow: var(--sh-pop); max-width: 280px; line-height:1.45; text-wrap: wrap; }
+/* THE tooltip. One surface for the whole product: #030213 and 12px/8px padding, what the
+   ticket detail pages render. Everything that used to roll its own — the tile library row
+   tip, the module rail tip, the undo/redo tips — now wears this class.
+   Anything richer than a sentence (a description plus a tag, an audience list) stacks with
+   .tt-stack, whose row gap is what gives the tag its breathing room. */
+.tt { position: absolute; z-index: 80; background: #030213; color:#fff; font-size:12px; font-weight:400; padding:8px 12px; border-radius:var(--r); box-shadow: var(--sh-pop); max-width: 280px; line-height:1.45; text-wrap: wrap; }
+.tt-stack { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+
+/* A TAG inside a tooltip — Predefined, Default, User-defined.
+   Not a 999px pill: section 7.3 makes a small radius the thing that separates a state
+   badge from a control, and a pill on a dark surface read as something clickable. 4px per
+   the brief; 2/8 padding and 11px/500 are the detail page badge dimensions. The tints are
+   the product palette lifted for a dark ground — the light-background versions vanish
+   against #030213. */
+.tt-tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--r);
+  font-size: 11px; font-weight: 500; letter-spacing: .2px;
+  background: rgba(255,255,255,.14); color: #fff; border: none; }
+.tt-tag.predefined { background: rgba(139,92,246,.28); color: #ded3ff; }
+.tt-tag.user       { background: rgba(76,177,254,.24); color: #cfe8ff; }
+.tt-tag.shared     { background: rgba(34,197,94,.24);  color: #bbf7d0; }
 .tt b { color:#cfc6ff; }
 
 /* utility */

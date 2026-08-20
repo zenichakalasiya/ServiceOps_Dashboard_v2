@@ -68,7 +68,7 @@ function pickSub(m, sub) {
         <Icon v-if="store.ui.railExpanded && m.submodules" name="chevron-right" :size="14" class="mod-caret" />
         <!-- collapsed tooltip (only when the rail has no labels and the item has no flyout) -->
         <transition name="fade">
-          <span v-if="!store.ui.railExpanded && hoverKey === m.key && !m.submodules" class="tip">{{ m.label }}</span>
+          <span v-if="!store.ui.railExpanded && hoverKey === m.key && !m.submodules" class="tt tip">{{ m.label }}</span>
         </transition>
       </button>
     </div>
@@ -78,7 +78,7 @@ function pickSub(m, sub) {
       @click="router.push('/ai')" @mouseenter="hoverKey = 'ai'" @mouseleave="hoverKey = ''">
       <span class="mod-ic"><Icon name="sparkles" :size="19" /></span>
       <span v-if="store.ui.railExpanded" class="mod-nm">AI Capabilities</span>
-      <transition name="fade"><span v-if="!store.ui.railExpanded && hoverKey === 'ai'" class="tip">AI Capabilities</span></transition>
+      <transition name="fade"><span v-if="!store.ui.railExpanded && hoverKey === 'ai'" class="tt tip">AI Capabilities</span></transition>
     </button>
 
     <!-- submodule flyout (Assets / CMDB / Patches / Packages) -->
@@ -120,7 +120,8 @@ function pickSub(m, sub) {
 .mod.ai { margin-top: 4px; color: var(--primary); }
 .mod.ai:hover { background: var(--primary-soft); color: var(--primary-700); }
 .mod.ai.active { background: var(--primary); color: #fff; }
-.tip { position: absolute; left: 46px; top: 50%; transform: translateY(-50%); white-space: nowrap; background: #20223a; color: #fff; font-size: 12px; font-weight: 500; padding: 5px 9px; border-radius: 4px; box-shadow: var(--sh-pop); z-index: 90; }
+/* placement only — surface, padding and weight come from .tt */
+.tip { position: absolute; left: 46px; top: 50%; transform: translateY(-50%); white-space: nowrap; z-index: 90; }
 /* submodule flyout */
 .fly { position: fixed; z-index: 120; width: 250px; max-height: 78vh; overflow: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; box-shadow: var(--sh-pop); padding: 7px; }
 .fly-h { font-size: 13px; font-weight: 700; color: var(--ink); padding: 5px 8px 7px; }

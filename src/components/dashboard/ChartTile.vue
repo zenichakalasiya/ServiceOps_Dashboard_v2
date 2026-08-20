@@ -805,7 +805,9 @@ onBeforeUnmount(() => {
 /* the popover's title reads as a title: sentence case at panel-heading size, and ruled
    off from the controls under it. At 10.5px uppercase muted it looked like a field label
    for the Sort Order row rather than the name of the panel. */
-.mp-h { display: flex; align-items: center; justify-content: space-between; flex: none; font-size: 13px; font-weight: 600; letter-spacing: -.1px; color: var(--ink); padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 2px; }
+/* No rule under the title. The gap alone groups it away from the controls (Gestalt:
+   proximity), and a divider two rows above another divider read as a boxed-in header. */
+.mp-h { display: flex; align-items: center; justify-content: space-between; flex: none; font-size: 13px; font-weight: 600; letter-spacing: -.1px; color: var(--ink); margin-bottom: 14px; }
 .mp-x { border: none; background: transparent; color: var(--muted); display: grid; place-items: center; padding: 2px; border-radius: 4px; }
 .mp-x:hover { background: var(--surface-2); color: var(--ink); }
 

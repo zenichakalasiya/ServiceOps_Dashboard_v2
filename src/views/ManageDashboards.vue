@@ -155,9 +155,10 @@ function onDrop(target) {
     <div class="page-head">
       <div><h1>Manage dashboards</h1></div>
       <div class="ph-acts">
-        <!-- ENTRY 3 · a toolbar icon on the page that already means "all dashboards" -->
-        <!-- left of the primary action, on the page that already means "all dashboards" -->
-        <button class="btn ico-only" :class="{ on: store.ui.layoutOpen }" title="Dashboard layout — applies to every board" @click="store.ui.layoutScope = 'all'; store.ui.layoutOpen = !store.ui.layoutOpen"><Icon name="appearance" :size="17" /></button>
+        <!-- No layout entry here. Layout is reached from a board's ⋯ menu, where you can
+             see what you are changing; this page shows no board, so the drawer opened from
+             here previewed against nothing and had to disable its own "this dashboard"
+             option. One entry, in the place where the preview means something. -->
         <button class="btn btn-primary" @click="store.ui.cloneTarget = null; store.ui.editTarget = null; store.ui.createOpen = true"><Icon name="plus" :size="16" /> New dashboard</button>
       </div>
     </div>
@@ -313,7 +314,9 @@ function onDrop(target) {
 /* `--surface`, not #fff — `--ink` is near-white in dark and swallowed a white label */
 .t.on { background: var(--ink); color: var(--surface); font-weight: 600; box-shadow: var(--sh-sm); }
 .t .c { font-size: 11px; background: var(--surface); border-radius: 999px; padding: 0 6px; margin-left: 5px; color: var(--ink-2); }
-.t.on .c { background: rgba(255,255,255,.22); color: #fff; }
+/* --ink inverts to near-white in dark, so #fff here measured 1.13:1 — invisible. The
+   fill and the label both have to follow the theme, not just the parent. */
+.t.on .c { background: color-mix(in srgb, var(--surface) 22%, transparent); color: var(--surface); }
 .tr { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .srch { display: flex; align-items: center; gap: 7px; background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 4px; padding: 0 10px; height: 36px; width: 200px; }
 .srch input { border: none; outline: none; background: transparent; width: 100%; font-size: 13px; }

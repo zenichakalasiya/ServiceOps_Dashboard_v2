@@ -2,12 +2,12 @@
 /**
  * LayoutAppearance — the dashboard layout settings, as ONE component.
  *
- * Two entry points open it, and they are asking different questions:
- *   · the board's ⋯ menu → "the layout of THIS dashboard"
- *   · the Manage all dashboards toolbar → "the layout of ALL of them"
- * So each preselects its own answer rather than making you restate what you already
- * said by choosing that entry. The choice is still shown and still changeable — the
- * entry sets the default, it does not remove the decision.
+ * ONE entry point: the board's ⋯ menu. The Manage-all-dashboards toolbar icon was
+ * removed — that page shows no board, so the drawer opened from there previewed against
+ * nothing and had to disable its own "this dashboard" option.
+ *
+ * It opens on "All dashboards", the broader and more common intent. Pinning a single
+ * board away from the global is the deliberate second choice, not the default.
  *
  * ── Where the values go ─────────────────────────────────────────────────────────
  *   'all'  → store.layout, the global default every board inherits
@@ -121,15 +121,19 @@ function cancel() {
     <div class="la-scope">
       <div class="sec-h">Apply to</div>
       <div class="seg" role="radiogroup" aria-label="Where these settings apply">
+        <!-- "All dashboards" leads and is the default. It is the broader, more common
+             intent — most layout tuning is meant to stick everywhere — and putting the
+             narrower option second means the destructive-ish choice (pinning ONE board
+             away from the global) is the deliberate one. -->
+        <button
+          class="seg-btn" :class="{ on: scope === 'all' }"
+          role="radio" :aria-checked="scope === 'all'" @click="pickScope('all')"
+        >All dashboards</button>
         <button
           class="seg-btn" :class="{ on: scope === 'this' }" :disabled="!dash"
           :title="dash ? '' : 'Open a dashboard to give it a layout of its own'"
           role="radio" :aria-checked="scope === 'this'" @click="pickScope('this')"
         >This dashboard only</button>
-        <button
-          class="seg-btn" :class="{ on: scope === 'all' }"
-          role="radio" :aria-checked="scope === 'all'" @click="pickScope('all')"
-        >All dashboards</button>
       </div>
       <p class="oneliner">
         <Icon name="info" :size="14" />

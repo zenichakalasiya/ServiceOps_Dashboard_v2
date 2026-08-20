@@ -917,7 +917,7 @@ function save(place) {
 .pv-tab:hover { color: var(--ink); }
 /* `--surface`, not #fff — `--ink` is near-white in dark and swallowed a white label */
 .pv-tab.on { background: var(--ink); color: var(--surface); font-weight: 600; box-shadow: var(--sh-sm); }
-.pv-tab.on :deep(.ico) { color: #fff; }
+.pv-tab.on :deep(.ico) { color: var(--surface); }
 .pv-tab:disabled { opacity: .45; cursor: not-allowed; }
 .pv-tab.on:disabled { opacity: 1; }
 .pv-tab .rot90 { transform: rotate(90deg); }
@@ -1032,7 +1032,7 @@ function save(place) {
 .acc-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; height: 30px; padding: 0 10px; border: none; background: transparent; color: var(--ink-2); border-radius: 4px; font-weight: 500; font-size: 13px; }
 .acc-btn:hover { color: var(--ink); }
 .acc-btn.on { background: var(--ink); color: var(--surface); font-weight: 600; box-shadow: var(--sh-sm); }
-.acc-btn.on :deep(.ico) { color: #fff; }
+.acc-btn.on :deep(.ico) { color: var(--surface); }
 /* Read-only, on a predefined widget. The value stays legible — showing WHAT it is set
    to is the entire reason these fields are rendered instead of hidden — so only the
    affordance is removed: no hover, no pointer, a quieter fill on the active segment. */

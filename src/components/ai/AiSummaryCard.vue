@@ -79,9 +79,13 @@ function toggle() { open.value = !open.value }
    answer; it just makes one pill twice the height of its neighbour */
 .ac-ctas { display: flex; align-items: center; gap: 8px; }
 .ac-cta {
-  display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; white-space: nowrap;
-  border: 1px solid var(--ai-border); border-radius: var(--r-pill);
-  background: var(--ai-grad-soft); color: var(--ai-ink); font-weight: 600; font-size: 13px;
+  /* Sized as a product button, not a pill. §3.1: "Every interactive control is rounded
+     (4px). Buttons… No exceptions." 999px made a primary action read as a chip, and
+     36/14 matched neither the 32/12 toolbar button nor the 36/16 panel one. The gradient
+     border stays — that is AI identity, not a deviation. */
+  display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; white-space: nowrap;
+  border: 1px solid var(--ai-border); border-radius: var(--r);
+  background: var(--ai-grad-soft); color: var(--ai-ink); font-weight: 500; font-size: 13px;
 }
 .ac-cta :deep(.ico) { color: var(--ai); }
 .ac-cta:hover { border-color: var(--ai); background: var(--ai-soft); }

@@ -90,8 +90,11 @@ function openPicker(el) { try { el?.showPicker?.() } catch (e) { el?.focus() } }
 .trigger.on { border-color: var(--primary); color: var(--primary-700); }
 .lbl-1 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* compact two-line From/To range inside the trigger */
-.trigger.is-range { padding-top: 0; padding-bottom: 0; }
-.rng { display: flex; flex-direction: column; justify-content: center; line-height: 1.2; font-size: 11px; font-variant-numeric: tabular-nums; text-align: left; }
+.trigger.is-range { padding-top: 0; padding-bottom: 0; max-width: 300px; }
+/* One line, not two. Stacked, the applied range made the trigger taller than every other
+   control in the header row, so the whole toolbar grew whenever a custom range was set. */
+.rng { display: inline-flex; align-items: center; gap: 6px; line-height: 1.2; font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rng .rl + .rl::before { content: '–'; margin-right: 6px; color: var(--muted-2); }
 .rl { white-space: nowrap; }
 .backdrop { position: fixed; inset: 0; z-index: 55; }
 .pop { position: absolute; top: 42px; right: 0; z-index: 60; display: grid; grid-template-columns: 264px 232px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-pop); overflow: hidden; }

@@ -259,11 +259,15 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
         <div v-if="fType !== 'shortcut'" class="modsel"><Dropdown v-model="fModule" :options="moduleOptions" placeholder="All modules" /></div>
       </div>
 
-      <!-- type filter (reuse tabs) — bifurcate KPI / Widget / Shortcut -->
-      <div v-if="tab !== 'chart'" class="type-chips">
-        <button v-for="t in TYPE_FILTERS" :key="t.v" class="tchip" :class="{ on: fType === t.v }" @click="fType = t.v">
-          {{ t.label }} <span class="tc-count">{{ typeCounts[t.v] }}</span>
-        </button>
+      <!-- type filter inside a reuse tab. Section 10.1 content tabs, the same switcher the
+           detail pages use for their inner sections — not pills. Two rows of pills stacked
+           above each other read as two filters of equal weight; an underline row reads as
+           a level below the tabs it sits under, which is what it is. -->
+      <div v-if="tab !== 'chart'" class="type-tabs" role="tablist">
+        <button
+          v-for="t in TYPE_FILTERS" :key="t.v" class="ttab" :class="{ on: fType === t.v }"
+          role="tab" :aria-selected="fType === t.v" @click="fType = t.v"
+        >{{ t.label }} <span class="ttab-c">{{ typeCounts[t.v] }}</span></button>
       </div>
 
       <div class="aw-body">
@@ -353,7 +357,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
     <!-- Row description tooltip — opens to the left of the hovered row, arrow points right -->
     <teleport to="body">
       <transition name="fade">
-        <div v-if="tip.show" class="lib-tip" :style="{ top: tip.top + 'px', right: tip.right + 'px' }">
+        <div v-if="tip.show" class="tt lib-tip tt-stack" :style="{ top: tip.top + 'px', right: tip.right + 'px' }">
           <span class="lib-tip-desc">{{ tip.text }}</span>
           <span v-if="tip.prov" class="tt-tag" :class="tip.prov">{{ PROV_LABEL[tip.prov] || tip.prov }}</span>
           <span class="lib-tip-arrow" />
@@ -405,15 +409,15 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .srch { display: flex; align-items: center; gap: 8px; background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 4px; padding: 0 11px; height: 36px; flex: 1; }
 .srch input { border: none; outline: none; background: transparent; width: 100%; font-size: 13px; }
 .modsel { width: 172px; flex: none; }
-.type-chips { display: flex; gap: 7px; padding: 10px 22px 2px; }
-.tchip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 11px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink-2); border-radius: 999px; font-size: 13px; font-weight: 500; }
-.tchip:hover { background: var(--surface-2); }
-/* the selected type filter is filled solid, matching the segmented control the reference
-   uses — a soft tint read as "hovered", not "this is the filter in force" */
-/* `--surface`, not #fff — `--ink` is near-white in dark and swallowed a white label */
-.tchip.on { background: var(--ink); border-color: var(--ink); color: var(--surface); font-weight: 600; }
-.tc-count { font-size: 11px; font-weight: 600; background: var(--surface-2); border-radius: 999px; padding: 0 6px; color: var(--muted); }
-.tchip.on .tc-count { background: rgba(255,255,255,.22); color: #fff; }
+/* section 10.1 content tabs — underline, no fill. Every tab carries a transparent 2px
+   bottom border so selection does not shift the row. */
+.type-tabs { display: flex; align-items: center; gap: 10px; padding: 10px 22px 0; border-bottom: 1px solid var(--border); }
+.ttab { display: inline-flex; align-items: center; gap: 7px; border: none; border-bottom: 2px solid transparent; background: transparent; padding: 0 6px 9px; color: var(--muted); font-size: 14px; font-weight: 500; white-space: nowrap; }
+.ttab:hover { color: var(--ink); border-bottom-color: var(--border-strong); }
+.ttab.on { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+/* section 7.4 count badge: rounded-sm, never a pill — and no white-on-ink to invert in dark */
+.ttab-c { font-size: 11px; font-weight: 600; background: var(--surface-2); color: var(--muted); border-radius: var(--r-sm); padding: 1px 6px; }
+.ttab.on .ttab-c { background: var(--primary-soft); color: var(--primary-700); }
 .aw-body { flex: 1; overflow: auto; padding: 14px 22px 22px; }
 .cat { margin-bottom: 18px; }
 .cat-h { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted-2); font-weight: 600; margin: 6px 0 10px; }
@@ -445,14 +449,14 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .lt-name-row { display: flex; align-items: center; gap: 7px; } .lt-name { font-weight: 500; font-size: 13px; }
 .lt-meta { position: relative; font-size: 12px; color: var(--muted); margin-top: 2px; }
 /* left-pointing description tooltip (teleported, fixed to viewport) */
-.lib-tip { position: fixed; z-index: 200; transform: translateY(-50%); width: 232px; background: #20223a; color: #fff; font-size: 12px; line-height: 1.45; padding: 8px 11px; border-radius: 4px; box-shadow: var(--sh-pop); pointer-events: none; text-align: left; }
+/* surface, padding and colour come from .tt now — only the placement is local */
+.lib-tip { position: fixed; z-index: 200; transform: translateY(-50%); width: 232px; pointer-events: none; text-align: left; }
 .lib-tip-desc { display: block; color: rgba(255,255,255,.88); }
 /* provenance as a tag under the description — mirrors WidgetCard's .tt-tag */
-.tt-tag { display: inline-flex; align-items: center; margin-top: 8px; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: .2px; background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.2); color: #fff; }
 .tt-tag.predefined { background: rgba(139,92,246,.3); border-color: rgba(139,92,246,.55); color: #ded3ff; }
 .tt-tag.shared { background: rgba(76,177,254,.26); border-color: rgba(76,177,254,.5); color: #cfe8ff; }
 .tt-tag.user { background: rgba(31,157,99,.3); border-color: rgba(31,157,99,.55); color: #b9edd3; }
-.lib-tip-arrow { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); border: 6px solid transparent; border-left-color: #20223a; }
+.lib-tip-arrow { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); border: 6px solid transparent; border-left-color: #030213; }
 /* Hover actions (Duplicate / Edit / Delete) — each in its own outlined box rather than a
    bare glyph, so on a tinted hovered row they still read as three separate buttons. Delete
    is red at rest, not only on its own hover: it is the one action here you cannot undo. */

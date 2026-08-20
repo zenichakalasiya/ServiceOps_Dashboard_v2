@@ -19,15 +19,24 @@ import { toast } from '../../store/index.js'
 const props = defineProps({ d: Object })
 const emit = defineEmits(['close'])
 
-const FORMATS = [
+/* Two levels, not three flat segments. The three destinations were never siblings:
+ * Image and PDF both put a file on your disk, Email puts it in someone's inbox. The
+ * top level is therefore WHERE it goes (Download | Export) and the format switcher
+ * lives inside Download, where it is the only remaining question. It also stops the
+ * longest label — "Email as PDF" — from setting the width of the whole control. */
+const MODES = [
+  { id: 'download', label: 'Download' },
+  { id: 'export', label: 'Export' },
+]
+const DL_FORMATS = [
   { id: 'image', label: 'Image', icon: 'image' },
   { id: 'pdf', label: 'PDF', icon: 'file-text' },
-  { id: 'email', label: 'Email as PDF', icon: 'mail' },
 ]
-const fmt = ref('pdf')
-// an image has no container to encrypt, so protection only exists on the two PDF routes
-const isPdf = computed(() => fmt.value !== 'image')
-const isEmail = computed(() => fmt.value === 'email')
+const mode = ref('download')
+const dlFmt = ref('pdf')
+const isEmail = computed(() => mode.value === 'export')
+// an image has no container to encrypt, so protection only exists on the PDF routes
+const isPdf = computed(() => isEmail.value || dlFmt.value === 'pdf')
 
 const pwd = ref(false)
 const password = ref('')
@@ -58,7 +67,7 @@ function run() {
     if (!emails.value.length) { toast('Add at least one email address', 'warn'); return }
     toast(`“${props.d.name}” sent as PDF to ${emails.value.length} recipient${emails.value.length > 1 ? 's' : ''}${prot}`, 'success')
   } else {
-    toast(`Exporting “${props.d.name}” as ${fmt.value === 'pdf' ? 'PDF' : 'an image'}${prot}`, 'success')
+    toast(`Exporting “${props.d.name}” as ${dlFmt.value === 'pdf' ? 'PDF' : 'an image'}${prot}`, 'success')
   }
   emit('close')
 }
@@ -69,14 +78,28 @@ function run() {
   <div class="pv card" @click.stop>
     <header class="pv-head"><span class="pv-title">Export dashboard</span></header>
 
-    <div class="tabs">
-      <button v-for="f in FORMATS" :key="f.id" class="tab" :class="{ on: fmt === f.id }" @click="fmt = f.id">
-        <Icon :name="f.icon" :size="15" /> {{ f.label }}
-      </button>
+    <!-- §10.1 content tabs: underline, transparent 2px border when inactive so nothing
+         shifts on selection. The same tab pattern the detail pages use. -->
+    <div class="ctabs" role="tablist">
+      <button
+        v-for="m in MODES" :key="m.id" class="ctab" :class="{ on: mode === m.id }"
+        role="tab" :aria-selected="mode === m.id" @click="mode = m.id"
+      >{{ m.label }}</button>
     </div>
 
-    <!-- Email as PDF: who it goes to -->
+    <!-- Download: the only question left is which file -->
+    <template v-if="!isEmail">
+      <div class="seg">
+        <button
+          v-for="f in DL_FORMATS" :key="f.id" class="seg-b" :class="{ on: dlFmt === f.id }"
+          @click="dlFmt = f.id"
+        ><Icon :name="f.icon" :size="15" /> {{ f.label }}</button>
+      </div>
+    </template>
+
+    <!-- Export: one destination, named in full so the tab label can stay short -->
     <template v-if="isEmail">
+      <div class="sec-h">Export (Email as a PDF)</div>
       <label class="fl">Add Email <i>*</i></label>
       <div class="emails">
         <div v-for="(e, i) in emails" :key="i" class="erow">
@@ -119,14 +142,26 @@ function run() {
 <style scoped>
 .pv-back { position: fixed; inset: 0; z-index: 55; }
 /* anchored directly under the Export button, right-aligned to it */
-.pv { position: absolute; top: 44px; right: 0; z-index: 60; width: 380px; padding: 14px 16px 12px; }
+/* 420, not 380: at 380 the recipient rows and the password field crowded their own
+   labels, and the footer's two buttons sat tight against the edges. */
+.pv { position: absolute; top: 44px; right: 0; z-index: 60; width: 420px; padding: 14px 16px 12px; }
 .pv-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .pv-title { font-weight: 700; font-size: 15px; color: var(--ink); }
 
-.tabs { display: flex; gap: 4px; margin: 12px 0 4px; padding: 3px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; }
-.tab { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px; border: none; background: transparent; color: var(--muted); border-radius: 4px; font-size: 13px; font-weight: 600; white-space: nowrap; }
-.tab:hover { color: var(--ink); }
-.tab.on { background: var(--primary); color: #fff; box-shadow: var(--sh-sm); }
+/* §10.1 content tabs (underline) — the detail-page pattern */
+.ctabs { display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); margin: 12px 0 14px; }
+.ctab { border: none; border-bottom: 2px solid transparent; background: transparent; padding: 0 8px 10px; font-size: 14px; font-weight: 500; color: var(--muted); }
+.ctab:hover { color: var(--ink); border-bottom-color: var(--border-strong); }
+.ctab.on { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+
+/* the format switcher inside Download — §10.2 segmented toggle */
+.seg { display: inline-flex; align-items: center; gap: 2px; padding: 3px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 4px; }
+.seg-b { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 30px; padding: 0 16px; border: none; background: transparent; color: var(--ink-2); border-radius: 4px; font-size: 13px; font-weight: 500; }
+.seg-b:not(.on):hover { color: var(--ink); }
+.seg-b.on { background: var(--primary-soft); color: var(--primary-700); font-weight: 600; }
+
+/* the destination, spelled out where the short tab label could not */
+.sec-h { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 12px; }
 
 .fl { display: block; font-size: 12px; font-weight: 500; color: var(--ink-2); margin: 14px 0 6px; }
 .fl i { color: var(--red); font-style: normal; }

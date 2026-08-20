@@ -48,9 +48,11 @@ const CTAS = AI_TEASER_CTAS
 /* both CTAs on one row, each on one line — see AiSummaryCard for why wrapping loses */
 .acb-acts { display: flex; gap: 7px; }
 .acb-cta {
-  display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 11px; white-space: nowrap;
-  border: 1px solid var(--ai-border); border-radius: var(--r-pill);
-  background: var(--ai-grad-soft); color: var(--ai-ink); font-weight: 600; font-size: 12px;
+  /* matches .ac-cta on the board card; 28px because it sits inside a tile, which is the
+     one legal step below 32 (§3.2 "compact"). Radius 4px like every other control. */
+  display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; white-space: nowrap;
+  border: 1px solid var(--ai-border); border-radius: var(--r);
+  background: var(--ai-grad-soft); color: var(--ai-ink); font-weight: 500; font-size: 12px;
 }
 .acb-cta :deep(.ico) { color: var(--ai); }
 .acb-cta:hover { border-color: var(--ai); background: var(--ai-soft); }

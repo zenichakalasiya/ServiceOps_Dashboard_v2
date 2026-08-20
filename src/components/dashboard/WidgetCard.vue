@@ -243,7 +243,8 @@ const EXPORTS = [
   { id: 'image', label: 'Image', icon: 'image' },
   { id: 'pdf', label: 'PDF', icon: 'file-text' },
 ]
-const searchOpen = ref(false)
+// searchOpen/toggleFilter went with the tile's filter icon (#10). Full screen renders the
+// bar unconditionally, so nothing toggles it any more.
 const tableSearch = ref('')
 /* The Shortcut filter bar is its own component (TableFilterBar): one field that both
  * searches records and builds typed conditions — Field · Operator · Value — the way the
@@ -260,8 +261,6 @@ function matchedRows(rows) {
   return rows.filter((r) => matchesConds((key) => r[+key], tableConds.value, filterFields.value))
 }
 const hasTableFilters = computed(() => tableConds.value.length > 0)
-function toggleFilter() { if (searchOpen.value) closeFilter(); else searchOpen.value = true }
-function closeFilter() { searchOpen.value = false; tableSearch.value = ''; tableConds.value = [] }
 
 // row filtering + sorting now live in DataTable (TanStack); we only own the query
 const present = ref(false)
@@ -371,7 +370,7 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
   <!-- `acting` holds the cluster open while a popover this header owns is up: the menu
        and the date popover are teleported, so moving the pointer into them drops :hover
        and the icons would collapse out from under the thing the user just opened. -->
-  <div ref="cardEl" class="tile card" :class="{ ['span-' + (tile.w || 3)]: true, ['rows-' + (tile.h || 1)]: true, searching: searchOpen, acting: menu || dfOpen || aiHover, note: isNote }">
+  <div ref="cardEl" class="tile card" :class="{ ['span-' + (tile.w || 3)]: true, ['rows-' + (tile.h || 1)]: true, acting: menu || dfOpen || aiHover, note: isNote }">
     <!-- Standardized header: title + info (left) · refresh · fullscreen · edit · ⋯ (right).
          EVERY tile uses this. The click-to-select floating toolbar three tiles used to
          have is gone — one board should not have two different ways to reach the same
@@ -418,7 +417,6 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
         <div class="right">
           <div class="r-in">
             <!-- one control: the filter icon reveals search + column filters; closing clears them -->
-            <button v-if="tile.type === 'shortcut'" class="ti" :class="{ on: searchOpen || hasTableFilters }" @click="toggleFilter" title="Filter records"><Icon name="filter" :size="15" /></button>
             <!-- nothing to re-fetch on a note either -->
             <button v-if="!tiny && !isNote" class="ti" @click="refresh" title="Refresh"><Icon name="refresh" :size="15" :class="{ spin: loading }" /></button>
             <div class="mwrap">
@@ -472,7 +470,7 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
     <!-- info tooltip: teleported so it isn't clipped by the card's overflow -->
     <teleport to="body">
       <transition name="fade">
-        <span v-if="infoHover" class="tt info-tt" :style="{ top: infoPos.top + 'px', left: infoPos.left + 'px' }">
+        <span v-if="infoHover" class="tt tt-stack info-tt" :style="{ top: infoPos.top + 'px', left: infoPos.left + 'px' }">
           <!-- description leads; provenance rides below it as a pill -->
           <span class="tt-desc">{{ tile.info || 'No description has been added for this widget yet.' }}</span>
           <span class="tt-tag" :class="prov">{{ provMeta.label }}</span>
@@ -614,16 +612,11 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 
       <template v-else>
         <div class="stbl">
-          <!-- filter bar (toggled from the header filter icon): free-text search + the
-               column filters, side by side. ✕ closes and clears both. -->
-          <transition name="fade">
-            <TableFilterBar
-              v-if="searchOpen"
-              :columns="tile.columns || []" :rows="tile.rows || []"
-              v-model="tableConds" v-model:search="tableSearch"
-              @close="closeFilter"
-            />
-          </transition>
+          <!-- No filter bar on the board tile. A Shortcut here shows a short, scrolling
+               preview of its records; filtering a preview narrows something you cannot see
+               the whole of, and the bar cost two rows of the tile's height to do it. Search
+               and filter both live in Full screen, where the entire record set is present
+               and narrowing it means something. -->
           <!-- scrollable table container (sticky header); click a header to sort. No
                "View all" — the list scrolls in place, and Full screen shows all of it. -->
           <div class="stbl-scroll">
@@ -758,16 +751,15 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 
 /* info-icon tooltip: the DESCRIPTION leads, provenance sits under it as a left-aligned pill */
 .tt-desc { font-weight: 400; color: rgba(255,255,255,.88); line-height: 1.45; }
-.tt-tag { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: .2px; background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.2); color: #fff; }
-.tt-tag.predefined { background: rgba(139,92,246,.3); border-color: rgba(139,92,246,.55); color: #ded3ff; }
-.tt-tag.shared { background: rgba(76,177,254,.26); border-color: rgba(76,177,254,.5); color: #cfe8ff; }
+/* .tt-tag lives in global.css — one tag definition for every tooltip in the product.
+   A scoped copy here would out-specify it and silently reintroduce the pill. */
 /* the schedule badge is always on — it reports a fact, it is not a hover action */
 .sch-mark { flex: none; width: 20px; height: 20px; border: none; background: transparent; color: var(--green); border-radius: 4px; display: grid; place-items: center; }
 .sch-mark:hover { background: var(--green-soft); }
 .info { position: relative; color: var(--muted-2); display: inline-grid; place-items: center; cursor: help; opacity: 0; transition: opacity .14s; }
 .tile:hover .info, .tile.acting .info { opacity: 1; }
 .info:hover { color: var(--primary); }
-.info-tt { position: fixed; z-index: 200; width: 240px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.info-tt { position: fixed; z-index: 200; width: 240px; }
 /* the audience, folded in below a rule — mirrors the dashboard info card's .dinfo-acc.
    `width: 100%` because it is a flex child of an `align-items: flex-start` column, and
    without it the rule would only span the text. */
@@ -868,6 +860,10 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 .tile-menu.sub-right .submenu { right: auto; left: 100%; }
 /* chart-type submenu: 8 items, current one checked, incompatible ones greyed */
 .submenu.types { min-width: 178px; top: -80px; }
+/* wide enough for "Email as PDF" on ONE line. At the generic 124px it wrapped, and a
+   wrapped row is double-height — the item looked like a different kind of thing. */
+.submenu.ex { min-width: 180px; }
+.submenu.ex .menu-item { white-space: nowrap; }
 .ct { justify-content: flex-start; gap: 10px; }
 .ct .ct-ck { margin-left: auto; color: var(--primary); }
 .ct.on { color: var(--primary-700); font-weight: 600; }
