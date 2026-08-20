@@ -6,7 +6,6 @@ import { QUICK } from '../../data/timeRanges.js'
 const open = ref(false)
 const from = ref(''); const to = ref('')
 const fromEl = ref(null); const toEl = ref(null)
-const search = ref('')
 
 // Applied absolute range → compact two-line (From / To) display, like the reference.
 const isCustom = computed(() => store.timeFilter.preset === 'custom' && store.timeFilter.from && store.timeFilter.to)
@@ -69,13 +68,15 @@ function openPicker(el) { try { el?.showPicker?.() } catch (e) { el?.focus() } }
 
         <!-- Quick ranges -->
         <div class="quick">
-          <div class="qsearch"><Icon name="search" :size="14" class="muted" /><input v-model="search" placeholder="Search quick ranges" /></div>
+          <!-- No search box. The list is a fixed, short, ordered set — searching a dozen
+               visible rows costs a keystroke to reach what is already on screen, and the
+               ordering (shortest window first) is itself how you find a range. It also
+               means no empty state to design. -->
           <div class="qlist">
-            <button v-for="q in QUICK.filter(x => x.label.toLowerCase().includes(search.toLowerCase()))" :key="q.k"
+            <button v-for="q in QUICK" :key="q.k"
               class="qitem" :class="{ on: store.timeFilter.preset === q.k }" @click="pick(q)">
               {{ q.label }} <Icon v-if="store.timeFilter.preset === q.k" name="check" :size="14" />
             </button>
-            <div v-if="!QUICK.filter(x => x.label.toLowerCase().includes(search.toLowerCase())).length" class="qnone">No matching ranges</div>
           </div>
         </div>
       </div>
@@ -106,11 +107,8 @@ function openPicker(el) { try { el?.showPicker?.() } catch (e) { el?.focus() } }
 .cal:hover { background: var(--surface-2); color: var(--ink); }
 .apply { width: 100%; margin-top: 4px; }
 .quick { padding: 12px 10px; display: flex; flex-direction: column; min-height: 0; }
-.qsearch { display: flex; align-items: center; gap: 7px; border: 1px solid var(--border-strong); border-radius: 4px; padding: 0 9px; height: 36px; margin-bottom: 8px; }
-.qsearch input { border: none; outline: none; background: transparent; width: 100%; font-size: 13px; }
 .qlist { display: flex; flex-direction: column; gap: 1px; overflow: auto; max-height: 300px; }
 .qitem { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border: none; background: transparent; border-radius: 4px; font-size: 13px; color: var(--ink-2); text-align: left; }
 .qitem:hover { background: var(--surface-2); }
 .qitem.on { background: var(--primary-soft); color: var(--primary-700); font-weight: 600; }
-.qnone { padding: 14px 10px; color: var(--muted-2); font-size: 12px; }
 </style>

@@ -11,7 +11,7 @@ export function rectOf(el) {
 /**
  * TimeRangePopover — the two-pane date picker, in one place.
  *
- * Absolute From/To on the left, searchable quick ranges on the right. It is the SAME
+ * Absolute From/To on the left, the quick ranges on the right. It is the SAME
  * popover the topbar's global Time Filter shows; a widget's own override and a group's
  * override open it too, so a range can never exist in one picker and not another, or
  * resolve to a different window depending on where it was chosen. `QUICK` and
@@ -50,11 +50,13 @@ const pos = computed(() => ({
   left: Math.max(8, Math.min(props.rect.left, window.innerWidth - W - 8)),
 }))
 
-const search = ref('')
-const quick = computed(() => {
-  const q = search.value.trim().toLowerCase()
-  return q ? QUICK.filter((x) => x.label.toLowerCase().includes(q)) : QUICK
-})
+/* The search box used to be what took focus when this opened, so removing it would have
+ * left the popover with no keyboard entry at all — it is teleported to the end of <body>,
+ * so Tab from the trigger does not walk into it. Focus the panel itself instead: a
+ * keyboard user lands inside and tabs on to the fields, and no quick range is pre-selected
+ * the way focusing the first row would have implied. */
+const panelEl = ref(null)
+onMounted(() => panelEl.value?.focus())
 
 const from = ref('')
 const to = ref('')
@@ -68,15 +70,16 @@ function applyAbs() {
   const fmt = (s) => { const [Y, M, D] = s.split('T')[0].split('-'); return `${D}/${M}/${Y.slice(2)}` }
   emit('pick', `${fmt(from.value)} – ${fmt(to.value)}`)
 }
-const searchEl = ref(null)
-onMounted(() => searchEl.value?.focus())
 </script>
 
 <template>
   <teleport to="body">
     <div class="backdrop" @click="emit('close')" />
     <transition name="pop" appear>
-      <div class="trp" :style="{ top: pos.top + 'px', left: pos.left + 'px' }" @click.stop>
+      <div
+        ref="panelEl" class="trp" tabindex="-1" role="dialog" aria-label="Time range"
+        :style="{ top: pos.top + 'px', left: pos.left + 'px' }" @click.stop
+      >
         <p v-if="note" class="trp-note">{{ note }}</p>
         <div class="trp-panes">
           <div class="abs">
@@ -102,12 +105,14 @@ onMounted(() => searchEl.value?.focus())
             <button v-if="followLabel" class="follow" @click="emit('clear')"><Icon name="x" :size="13" /> {{ followLabel }}</button>
           </div>
           <div class="quick">
-            <div class="qsearch"><Icon name="search" :size="14" class="muted" /><input ref="searchEl" v-model="search" placeholder="Search quick ranges" /></div>
+            <!-- No search box. The list is a fixed, short, ordered set — searching a
+                 dozen visible rows costs a keystroke to reach what is already on screen,
+                 and the ordering (shortest window first) is itself the way you find a
+                 range. It also means no empty state to design. -->
             <div class="qlist">
-              <button v-for="q in quick" :key="q.k" class="qitem" :class="{ on: value === q.label }" @click="emit('pick', q.label)">
+              <button v-for="q in QUICK" :key="q.k" class="qitem" :class="{ on: value === q.label }" @click="emit('pick', q.label)">
                 {{ q.label }} <Icon v-if="value === q.label" name="check" :size="14" />
               </button>
-              <div v-if="!quick.length" class="qnone">No matching ranges</div>
             </div>
           </div>
         </div>
@@ -140,11 +145,10 @@ onMounted(() => searchEl.value?.focus())
 .follow { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px; padding: 7px; border: none; background: transparent; color: var(--muted); border-radius: 4px; font-size: 12px; }
 .follow:hover { background: var(--surface-2); color: var(--ink); }
 .quick { padding: 12px 10px; display: flex; flex-direction: column; min-height: 0; }
-.qsearch { display: flex; align-items: center; gap: 7px; border: 1px solid var(--border-strong); border-radius: 4px; padding: 0 9px; height: 36px; margin-bottom: 8px; }
-.qsearch input { border: none; outline: none; background: transparent; width: 100%; font-size: 13px; }
 .qlist { display: flex; flex-direction: column; gap: 1px; overflow: auto; max-height: 300px; }
 .qitem { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border: none; background: transparent; border-radius: 4px; font-size: 13px; color: var(--ink-2); text-align: left; }
 .qitem:hover { background: var(--surface-2); }
 .qitem.on { background: var(--primary-soft); color: var(--primary-700); font-weight: 600; }
-.qnone { padding: 14px 10px; color: var(--muted-2); font-size: 12px; }
+/* the panel takes focus on open; it is a landing spot, not a control, so no visible ring */
+.trp:focus { outline: none; }
 </style>
