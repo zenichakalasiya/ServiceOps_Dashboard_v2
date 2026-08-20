@@ -171,7 +171,7 @@ positioned in viewport coordinates — follow that pattern for any new floating 
 | `data/aiAssistant.js` | Intent routing, tile/fact resolution, and `resolveWidget` (description → configured widget). |
 | `data/freeText.js` | Note content: allowlist sanitiser, markdown-lite upgrade, derived title. |
 | `components/dashboard/NoteEditor.vue` | The note rich-text editor — contenteditable + execCommand, no dependency. |
-| `components/dashboard/TimeRangePopover.vue` | The ONE two-pane date picker (topbar · widget · group). |
+| `components/dashboard/TimeRangePopover.vue` | The two-pane date picker for **per-widget and per-group** overrides. NOT the topbar — `TimeFilter.vue` has its own copy of the markup and does not import this. Change one and check the other. |
 | `components/dashboard/ExportDialog.vue` | Board Export — Image / PDF / Email as PDF. |
 | `components/ui/Hint.vue` | Info icon beside a field label, carrying what was once a one-liner. |
 
