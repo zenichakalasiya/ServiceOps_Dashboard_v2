@@ -1,17 +1,21 @@
 <script setup>
 /**
- * AiSummaryCard — the upfront "AI insights" card.
+ * AiSummaryCard — the board's "AI insights" card.
  *
- * COLLAPSED (default) it is a thin bar: the AI glyph, the title "AI insights", and a
- * dropdown chevron on the right — so it costs a dashboard almost no height.
- * EXPANDED it shows a small grounded summary of the board, with the three CTAs beneath
- * it at the bottom-left. The depth still lives behind the CTAs, in the side panel.
+ * Its UI is the ServiceOps ticket detail page's **AI Summary** card, measured off the real
+ * thing rather than approximated:
  *
- *   Insights with AI       → opens the panel and shows the FULL dashboard insights
- *   Every widget explained → the widget-by-widget read, in the panel
- *   Add a new widget       → opens the chat and suggests widgets to add
+ *   shell      1px --border-control, --r-lg, a 3% gradient WASH (not a filled surface)
+ *   header     24/12 padding · bare 18px gradient sparkle · 14px/600 title · 11px meta right
+ *   body       24px gutters · 13px summary · "KEY POINTS" 11px/600 muted · dotted list
+ *   CTA        32px · 0/12 · 4px · 12px/500 · ink text · 12% gradient tint · NO border
  *
- * Grounded: the summary is computed from the engine (no LLM invents it).
+ * COLLAPSED it is the header row alone, so an unopened card costs the board ~46px.
+ * EXPANDED it adds the summary, the key points and the CTAs — the same order the ticket
+ * card uses, because a user who has read one should not have to re-learn the other.
+ *
+ * Everything shown is grounded: the summary and the key points are `facts()` from the
+ * deterministic engine (data/aiTeaser.js). Nothing here invents a number.
  */
 import { ref, computed } from 'vue'
 import Icon from '../ui/Icon.vue'
@@ -24,32 +28,53 @@ const emit = defineEmits(['ask'])
 
 const open = ref(false)
 
-// grounded teaser (count + one-line summary), shared with the chip and KPI-card placements
-const { summary } = useAiTeaser(() => props.board)
+const { summary, attention, count } = useAiTeaser(() => props.board)
 const CTAS = computed(() => (props.hideAddWidget ? AI_TEASER_CTAS.filter((c) => c.intent !== 'suggestwidget') : AI_TEASER_CTAS))
+
+/* The reference card's header carries a status line on the right ("New conversations have
+ * been added"). Ours says what the engine actually found, so the line is a fact rather
+ * than a decoration — and it is the one piece of information worth having while collapsed. */
+const meta = computed(() => {
+  if (!props.board?.tiles?.length) return 'No widgets yet'
+  return count.value ? `${count.value} need${count.value === 1 ? 's' : ''} attention` : 'All widgets within range'
+})
+
+// three is what fits without the card becoming a list; the panel has the rest
+const points = computed(() => attention.value.slice(0, 3))
 
 function toggle() { open.value = !open.value }
 </script>
 
 <template>
   <section class="ai-card" :class="{ open }">
-    <!-- collapsed bar: AI glyph · "AI insights" · dropdown chevron. The whole row toggles. -->
-    <div class="ac-head" role="button" tabindex="0" :aria-expanded="open"
-      @click="toggle" @keydown.enter.prevent="toggle" @keydown.space.prevent="toggle">
+    <div
+      class="ac-head" role="button" tabindex="0" :aria-expanded="open"
+      @click="toggle" @keydown.enter.prevent="toggle" @keydown.space.prevent="toggle"
+    >
       <span class="ac-spark"><Icon name="sparkles" :size="18" /></span>
       <span class="ac-title">AI insights</span>
-      <span class="ac-arrow" :title="open ? 'Collapse' : 'Expand'"><Icon :name="open ? 'chevron-up' : 'chevron-down'" :size="18" /></span>
+      <span class="ac-meta">{{ meta }}</span>
+      <span class="ac-arrow" :title="open ? 'Collapse' : 'Expand'">
+        <Icon :name="open ? 'chevron-up' : 'chevron-down'" :size="16" />
+      </span>
     </div>
 
     <transition name="acx">
       <div v-if="open" class="ac-body">
         <p class="ac-summary">{{ summary }}</p>
+
+        <template v-if="points.length">
+          <div class="ac-kp">KEY POINTS</div>
+          <ul class="ac-points">
+            <li v-for="p in points" :key="p.text"><span class="ac-dot" /><span>{{ p.text }}</span></li>
+          </ul>
+        </template>
+
+        <div class="ac-gen">Generated from this board’s live data</div>
+
         <div class="ac-ctas">
-          <button
-            v-for="c in CTAS" :key="c.intent" class="ac-cta" :class="{ primary: c.primary }"
-            @click="emit('ask', c.intent, c.label)"
-          >
-            <Icon :name="c.icon" :size="15" /><span>{{ c.label }}</span>
+          <button v-for="c in CTAS" :key="c.intent" class="ac-cta" @click="emit('ask', c.intent, c.label)">
+            <Icon :name="c.icon" :size="13" /><span>{{ c.label }}</span>
           </button>
         </div>
       </div>
@@ -58,45 +83,50 @@ function toggle() { open.value = !open.value }
 </template>
 
 <style scoped>
+/* The wash is a ::before rather than a background, exactly as the reference layers it —
+   a translucent gradient OVER the surface, so the card still reads as white/dark card
+   stock with a tint on it rather than as a coloured panel. */
 .ai-card {
-  border: 1px solid var(--ai-border); border-radius: var(--r-lg);
-  background: var(--ai-grad-card); padding: 11px 14px; margin-bottom: 14px;
+  position: relative; margin-bottom: 14px; overflow: hidden;
+  border: 1px solid var(--border-control); border-radius: var(--r-lg); background: var(--surface);
 }
-/* collapsed row — glyph, title, and the dropdown chevron pinned right */
-.ac-head { display: flex; align-items: center; gap: 11px; cursor: pointer; }
-.ac-head:focus-visible { outline: 2px solid var(--ai); outline-offset: 3px; border-radius: 4px; }
-.ac-spark { flex: none; width: 34px; height: 34px; border-radius: 4px; display: grid; place-items: center; background: var(--ai-softer); }
-.ac-spark :deep(.ico) { stroke: url(#ai-grad); color: var(--ai); }
-.ac-title { flex: 1; font-size: 15px; font-weight: 600; color: var(--ink); }
-.ac-arrow { flex: none; width: 28px; height: 28px; border-radius: 4px; display: grid; place-items: center; color: var(--ai); }
-.ac-head:hover .ac-arrow { background: var(--ai-soft); }
+.ai-card::before { content: ''; position: absolute; inset: 0; background: var(--ai-wash); pointer-events: none; }
 
-/* expanded: the small summary, then the CTAs beneath it at the bottom-left */
-.ac-body { padding: 10px 0 2px 45px; }
-.ac-summary { margin: 0 0 12px; font-size: 13px; line-height: 1.55; color: var(--ink-2); max-width: 80ch; }
-/* the two CTAs sit side by side on one row and each stays on one line — this card is
-   full-width, so there is no width at which wrapping "What needs attention" is the right
-   answer; it just makes one pill twice the height of its neighbour */
-.ac-ctas { display: flex; align-items: center; gap: 8px; }
+.ac-head { position: relative; display: flex; align-items: center; gap: 8px; padding: 12px 24px; cursor: pointer; }
+.ac-head:focus-visible { outline: 2px solid var(--ai); outline-offset: -2px; }
+/* a bare gradient glyph, not a tinted square — the reference gives it no container */
+.ac-spark { flex: none; display: grid; place-items: center; }
+.ac-spark :deep(.ico) { stroke: url(#ai-grad); color: var(--ai); }
+.ac-title { font-size: 14px; font-weight: 600; color: var(--ink); }
+.ac-meta { margin-left: auto; font-size: 11px; color: var(--muted-2); white-space: nowrap; }
+.ac-arrow { flex: none; width: 22px; height: 22px; display: grid; place-items: center; color: var(--muted); border-radius: var(--r); }
+.ac-head:hover .ac-arrow { background: var(--surface-2); color: var(--ink); }
+
+.ac-body { position: relative; padding: 0 24px 16px; }
+.ac-summary { margin: 0 0 16px; font-size: 13px; line-height: 1.6; color: var(--ink); max-width: 90ch; }
+.ac-kp { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+.ac-points { list-style: none; margin: 0; padding: 0; }
+.ac-points li { display: flex; gap: 8px; margin-bottom: 12px; font-size: 13px; line-height: 1.5; color: var(--ink); }
+.ac-dot { flex: none; width: 4px; height: 4px; margin-top: 7px; border-radius: 50%; background: var(--ai); }
+.ac-gen { font-size: 11px; color: var(--muted-2); margin-bottom: 16px; }
+
+/* THE CTA, verbatim from the reference: a 12% gradient tint over the surface and no border
+   at all. The tint is what groups them, which is why adding a border made them read as
+   three separate secondary buttons. There is no "primary" variant — the reference gives
+   all of its actions the same weight, and so does this. */
+.ac-ctas { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .ac-cta {
-  /* Sized as a product button, not a pill. §3.1: "Every interactive control is rounded
-     (4px). Buttons… No exceptions." 999px made a primary action read as a chip, and
-     36/14 matched neither the 32/12 toolbar button nor the 36/16 panel one. The gradient
-     border stays — that is AI identity, not a deviation. */
-  display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; white-space: nowrap;
-  border: 1px solid var(--ai-border); border-radius: var(--r);
-  background: var(--ai-grad-soft); color: var(--ai-ink); font-weight: 500; font-size: 13px;
+  display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px;
+  border: none; border-radius: var(--r); white-space: nowrap;
+  background: var(--ai-cta), var(--surface);
+  color: var(--ink); font-weight: 500; font-size: 12px;
+  transition: color .2s, box-shadow .2s;
 }
-.ac-cta :deep(.ico) { color: var(--ai); }
-.ac-cta:hover { border-color: var(--ai); background: var(--ai-soft); }
-/* primary: gradient border AND gradient label on a white fill */
-.ac-cta.primary { border: 1.5px solid transparent; background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--ai-grad-line) border-box; }
-.ac-cta.primary span { background: var(--ai-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
-.ac-cta.primary :deep(.ico) { stroke: url(#ai-grad); color: var(--ai); }
-.ac-cta.primary:hover { background: linear-gradient(var(--ai-soft), var(--ai-soft)) padding-box, var(--ai-grad-line) border-box; }
+.ac-cta :deep(.ico) { flex: none; }
+.ac-cta:hover { color: var(--primary); box-shadow: var(--sh-sm); }
 
 .acx-enter-active, .acx-leave-active { transition: opacity .16s ease; }
 .acx-enter-from, .acx-leave-to { opacity: 0; }
 @media (prefers-reduced-motion: reduce) { .acx-enter-active, .acx-leave-active { transition: none; } }
-@media (max-width: 620px) { .ac-body { padding-left: 0; } }
+@media (max-width: 620px) { .ac-head, .ac-body { padding-left: 16px; padding-right: 16px; } }
 </style>

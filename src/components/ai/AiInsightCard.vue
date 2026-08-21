@@ -22,12 +22,13 @@ const CTAS = AI_TEASER_CTAS
 <template>
   <div class="ai-card-b card">
     <div class="acb-head">
-      <span class="acb-spark"><Icon name="sparkles" :size="15" /></span> AI insights
-      <span v-if="count" class="acb-badge">{{ count }}</span>
+      <span class="acb-spark"><Icon name="sparkles" :size="18" /></span>
+      <span class="acb-title">AI insights</span>
+      <span class="acb-meta">{{ count ? count + ' need' + (count === 1 ? 's' : '') + ' attention' : 'Within range' }}</span>
     </div>
     <p class="acb-sum">{{ summary }}</p>
     <div class="acb-acts">
-      <button v-for="c in CTAS" :key="c.intent" class="acb-cta" :class="{ primary: c.primary }" @click="emit('ask', c.intent, c.label)">
+      <button v-for="c in CTAS" :key="c.intent" class="acb-cta" @click="emit('ask', c.intent, c.label)">
         <Icon :name="c.icon" :size="13" /> <span>{{ c.label }}</span>
       </button>
     </div>
@@ -35,29 +36,33 @@ const CTAS = AI_TEASER_CTAS
 </template>
 
 <style scoped>
+/* Same anatomy as the board card and the ticket detail page's AI Summary — shell, washed
+   header, body, CTA row — at tile scale: 16px gutters instead of 24 because this sits in
+   a KPI column, not across the board. */
 .ai-card-b {
-  align-self: stretch; display: flex; flex-direction: column; text-align: left;
-  padding: 12px 15px; border: 1px solid var(--ai-border); border-radius: var(--r-lg);
-  background: var(--ai-grad-card); height: 100%;
+  position: relative; align-self: stretch; display: flex; flex-direction: column; text-align: left;
+  padding: 12px 16px; border: 1px solid var(--border-control); border-radius: var(--r-lg);
+  background: var(--surface); height: 100%; overflow: hidden;
 }
-.acb-head { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--ink); }
-.acb-spark { width: 26px; height: 26px; border-radius: 4px; flex: none; display: grid; place-items: center; background: var(--ai-softer); }
+.ai-card-b::before { content: ''; position: absolute; inset: 0; background: var(--ai-wash); pointer-events: none; }
+.acb-head { position: relative; display: flex; align-items: center; gap: 8px; }
+.acb-title { font-size: 14px; font-weight: 600; color: var(--ink); }
+.acb-meta { margin-left: auto; font-size: 11px; color: var(--muted-2); white-space: nowrap; }
+.acb-spark { flex: none; display: grid; place-items: center; }
 .acb-spark :deep(.ico) { stroke: url(#ai-grad); color: var(--ai); }
-.acb-badge { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--ai-grad); color: #fff; font-size: 11px; font-weight: 700; }
-.acb-sum { flex: 1; margin: 8px 0 10px; font-size: 13px; line-height: 1.5; color: var(--ink-2); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.acb-sum { position: relative; flex: 1; margin: 10px 0 12px; font-size: 13px; line-height: 1.6; color: var(--ink); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 /* both CTAs on one row, each on one line — see AiSummaryCard for why wrapping loses */
-.acb-acts { display: flex; gap: 7px; }
+/* identical to .ac-cta on the board card, which is identical to the reference: 12% gradient
+   tint over the surface, no border, ink label that goes blue on hover. No primary variant —
+   the reference weights all of its actions the same. */
+.acb-acts { position: relative; display: flex; gap: 8px; }
 .acb-cta {
-  /* matches .ac-cta on the board card; 28px because it sits inside a tile, which is the
-     one legal step below 32 (§3.2 "compact"). Radius 4px like every other control. */
-  display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; white-space: nowrap;
-  border: 1px solid var(--ai-border); border-radius: var(--r);
-  background: var(--ai-grad-soft); color: var(--ai-ink); font-weight: 500; font-size: 12px;
+  display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; white-space: nowrap;
+  border: none; border-radius: var(--r);
+  background: var(--ai-cta), var(--surface);
+  color: var(--ink); font-weight: 500; font-size: 12px;
+  transition: color .2s, box-shadow .2s;
 }
-.acb-cta :deep(.ico) { color: var(--ai); }
-.acb-cta:hover { border-color: var(--ai); background: var(--ai-soft); }
-.acb-cta.primary { border: 1.5px solid transparent; background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--ai-grad-line) border-box; }
-.acb-cta.primary span { background: var(--ai-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
-.acb-cta.primary :deep(.ico) { stroke: url(#ai-grad); color: var(--ai); }
-.acb-cta.primary:hover { background: linear-gradient(var(--ai-soft), var(--ai-soft)) padding-box, var(--ai-grad-line) border-box; }
+.acb-cta :deep(.ico) { flex: none; }
+.acb-cta:hover { color: var(--primary); box-shadow: var(--sh-sm); }
 </style>

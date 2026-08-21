@@ -73,6 +73,11 @@
   /* the 8% wash over white — secondary CTAs, suggested items, AI summary surfaces */
   --ai-grad-soft: linear-gradient(90deg, #f1f9ff 0%, #f4edff 41.49%, #feecfd 100%);
   --ai-grad-card: linear-gradient(90deg, #f1f9ff 0%, #f4edff 41.49%, #feecfd 100%);
+  /* Measured off the ticket detail page's AI Summary card. The shell carries the identity
+     as a 3% wash rather than a filled surface, and its CTAs a 12% tint over white — which
+     is why those buttons need no border to read as a group. */
+  --ai-wash: linear-gradient(90deg, rgba(76,177,254,.03) 0%, rgba(115,30,251,.03) 24.52%, rgba(249,17,227,.03) 100%);
+  --ai-cta:  linear-gradient(90deg, rgba(76,177,254,.12) 0%, rgba(115,30,251,.12) 41.49%, rgba(249,17,227,.12) 100%);
 
   /* Surfaces — §1.4 */
   --bg: #f7f9fc;               /* Page background (app shell) */
@@ -183,6 +188,9 @@
   --ai-grad: linear-gradient(90deg, #4cb1fe 0%, #8b5cf6 24.52%, #f472b6 100%);
   --ai-grad-line: linear-gradient(90deg, rgba(76,177,254,.85) 0%, rgba(139,92,246,.85) 41.49%, rgba(244,114,182,.85) 100%);
   --ai-grad-soft: linear-gradient(90deg, #1e2733 0%, #221c31 41.49%, #2b1a30 100%);
+  /* lifted for dark: 3% and 12% of a bright gradient vanish against a near-black surface */
+  --ai-wash: linear-gradient(90deg, rgba(76,177,254,.07) 0%, rgba(139,92,246,.07) 24.52%, rgba(244,114,182,.07) 100%);
+  --ai-cta:  linear-gradient(90deg, rgba(76,177,254,.20) 0%, rgba(139,92,246,.20) 41.49%, rgba(244,114,182,.20) 100%);
   --ai-grad-card: linear-gradient(90deg, #1e2733 0%, #221c31 41.49%, #2b1a30 100%);
 
   --bg: #14141c;

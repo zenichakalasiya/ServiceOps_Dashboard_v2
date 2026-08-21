@@ -18,6 +18,7 @@ import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import Icon from '../components/ui/Icon.vue'
 import WidgetCard from '../components/dashboard/WidgetCard.vue'
 import AiSummaryCard from '../components/ai/AiSummaryCard.vue'
+import AiInsightCard from '../components/ai/AiInsightCard.vue'
 import AiAssistant from '../components/ai/AiAssistant.vue'
 import { store } from '../store/index.js'
 import { AI_INSIGHTS, leadInsight, insightCount } from '../data/aiInsights.mock.js'
@@ -165,15 +166,11 @@ watch([variant, panelOpen], () => nextTick(measure))
         <div ref="gridEl" class="grid" :class="{ vb: variant === 'B' }">
           <!-- Variant B: a summary card two KPIs wide, with the summary + CTAs; two KPIs sit
                beside it and the rest flow onto the row below. -->
-          <div v-if="variant === 'B'" class="ai-card-b card">
-            <div class="acb-head"><span class="acb-spark"><Icon name="sparkles" :size="15" /></span> AI insights <span class="acb-badge">{{ count }}</span></div>
-            <p class="acb-sum">{{ dashSummary }}</p>
-            <div class="acb-acts">
-              <button v-for="c in CTAS" :key="c.label" class="acb-cta" :class="{ primary: c.primary }" @click="openAi(c.intent, c.label)">
-                <Icon :name="c.icon" :size="13" /> <span>{{ c.label }}</span>
-              </button>
-            </div>
-          </div>
+          <!-- The REAL component, not a lookalike. This lab used to carry its own inline
+               copy of the KPI card, which is how it kept rendering the old design after the
+               component was restyled — the exact duplicate-markup trap that made the two
+               tooltips drift. The lab may size it (.grid.vb below); it may not restyle it. -->
+          <AiInsightCard v-if="variant === 'B'" :board="board" @ask="openAi" />
           <WidgetCard v-for="t in tiles" :key="t.id" :tile="t" />
         </div>
       </div>
@@ -260,29 +257,8 @@ watch([variant, panelOpen], () => nextTick(measure))
 
 /* ── Variant B: KPIs narrow to 4-per-row; a wide summary card takes slot 1 ── */
 .grid.vb :deep(.span-2) { grid-column: span 3; }   /* KPI tiles → 4 per row */
-.ai-card-b {
-  grid-column: span 6;                              /* = two KPI widths */
-  align-self: stretch; display: flex; flex-direction: column; text-align: left;
-  padding: 12px 15px; border: 1px solid var(--ai-border); border-radius: var(--r-lg);
-  background: var(--ai-grad-card);
-}
-.acb-head { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--ink); }
-.acb-spark { width: 26px; height: 26px; border-radius: 4px; flex: none; display: grid; place-items: center; background: var(--ai-softer); }
-.acb-spark :deep(.ico) { stroke: url(#ai-grad); color: var(--ai); }
-.acb-badge { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--ai-grad); color: #fff; font-size: 11px; font-weight: 700; }
-.acb-sum { flex: 1; margin: 8px 0 10px; font-size: 13px; line-height: 1.5; color: var(--ink-2); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.acb-acts { display: flex; gap: 7px; flex-wrap: wrap; }
-.acb-cta {
-  display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 11px;
-  border: 1px solid var(--ai-border); border-radius: var(--r-pill);
-  background: var(--ai-grad-soft); color: var(--ai-ink); font-weight: 600; font-size: 12px;
-}
-.acb-cta :deep(.ico) { color: var(--ai); }
-.acb-cta:hover { border-color: var(--ai); background: var(--ai-soft); }
-.acb-cta.primary { border: 1.5px solid transparent; background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--ai-grad-line) border-box; }
-.acb-cta.primary span { background: var(--ai-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
-.acb-cta.primary :deep(.ico) { stroke: url(#ai-grad); color: var(--ai); }
-.acb-cta.primary:hover { background: linear-gradient(var(--ai-soft), var(--ai-soft)) padding-box, var(--ai-grad-line) border-box; }
+/* layout only — the card styles itself (components/ai/AiInsightCard.vue) */
+:deep(.ai-card-b) { grid-column: span 6; }        /* = two KPI widths */
 
 /* the 12-col grid, mirroring the real dashboard's tile sizing + reflow */
 .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; align-items: start; }
