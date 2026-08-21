@@ -85,9 +85,10 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
 .ai-pop-sum { margin: 0; font-size: 13px; line-height: 1.55; color: var(--ink-2); }
 .ai-pop-acts { display: flex; flex-direction: column; gap: 8px; margin-top: 13px; }
 .ai-pop-cta {
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 36px; padding: 0 14px;
-  border: 1px solid var(--ai-border); border-radius: var(--r-pill);
-  background: var(--ai-grad-soft); color: var(--ai-ink); font-weight: 600; font-size: 13px;
+  /* 32/12/4px/500 — the product button (see .ac-cta) */
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px; padding: 0 12px;
+  border: 1px solid var(--ai-border); border-radius: var(--r);
+  background: var(--ai-grad-soft); color: var(--ai-ink); font-weight: 500; font-size: 13px;
 }
 .ai-pop-cta :deep(.ico) { color: var(--ai); }
 .ai-pop-cta:hover { border-color: var(--ai); background: var(--ai-soft); }

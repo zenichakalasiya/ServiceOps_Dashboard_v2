@@ -2381,8 +2381,8 @@ tr:last-child td { border-bottom: none; }
 /* Primary AI CTA — a gradient BORDER and gradient label on a white fill, never a
    solid gradient slab. The label needs its own <span> because the border trick
    already owns the button's `background`. */
-.add { display: inline-flex; align-items: center; gap: 7px; margin-top: 11px; height: 34px; padding: 0 16px; font-weight: 600; font-size: 13px;
-  border: 1.5px solid transparent; border-radius: var(--r-pill);
+.add { display: inline-flex; align-items: center; gap: 6px; margin-top: 11px; height: 32px; padding: 0 12px; font-weight: 500; font-size: 13px;
+  border: 1.5px solid transparent; border-radius: var(--r);
   background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--ai-grad-line) border-box; }
 .add span { background: var(--ai-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
 .add :deep(.ico) { stroke: url(#ai-grad); color: var(--ai); }

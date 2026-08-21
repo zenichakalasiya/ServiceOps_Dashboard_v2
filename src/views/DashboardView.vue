@@ -1161,7 +1161,7 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .an-txt b { color: var(--ink); }
 .an-sub { display: flex; align-items: center; gap: 4px; margin-top: 3px; font-size: 12px; color: var(--muted); }
 .an-sub :deep(.ico) { color: var(--ai); }
-.an-try { flex: none; height: 32px; padding: 0 15px; border: none; border-radius: var(--r-pill); background: var(--ai-grad); color: #fff; font-weight: 600; font-size: 13px; }
+.an-try { flex: none; height: 32px; padding: 0 12px; border: none; border-radius: var(--r); background: var(--ai-grad); color: #fff; font-weight: 500; font-size: 13px; }
 .an-try:hover { filter: brightness(1.06); }
 .an-x { flex: none; width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .an-x:hover { background: var(--ai-soft); color: var(--ai-ink); }

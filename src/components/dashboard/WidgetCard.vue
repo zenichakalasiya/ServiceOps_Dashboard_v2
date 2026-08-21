@@ -829,7 +829,10 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 /* two actions, side by side */
 .wai-acts { display: flex; flex-direction: row; gap: 6px; }
 /* same rounded-pill treatment as the AI Summary card's CTAs */
-.wai-a { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 34px; padding: 0 12px; border: 1px solid var(--ai-border); border-radius: var(--r-pill); background: var(--ai-grad-soft); color: var(--ai-ink); font-weight: 600; font-size: 12px; text-align: center; white-space: nowrap; }
+/* 32/12/4px/500 — the product button, like every other AI CTA. Was 34px and a 999px
+   pill, which made the two most-used AI actions the one control on the board that did
+   not look like a button. */
+.wai-a { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px; padding: 0 12px; border: 1px solid var(--ai-border); border-radius: var(--r); background: var(--ai-grad-soft); color: var(--ai-ink); font-weight: 500; font-size: 12px; text-align: center; white-space: nowrap; }
 .wai-a:hover { border-color: var(--ai); background: var(--ai-soft); }
 /* Deep dive leads — it is the one that opens the conversation; the other is a shortcut
    to the ranked list, which the thread can also reach on its own. */

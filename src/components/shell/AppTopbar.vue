@@ -49,7 +49,9 @@ function openAi() { store.ui.aiPanelOpen = true }
 .right { display: flex; align-items: center; gap: 6px; }
 .ic { width: 36px; height: 36px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .ic:hover { background: var(--surface-2); color: var(--ink); }
-.askai { display: flex; align-items: center; gap: 7px; height: 34px; padding: 0 13px; border-radius: var(--r-pill); border: 1.5px solid transparent; background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--ai-grad-line) border-box; color: var(--ai-ink); font-weight: 600; font-size: 13px; margin-right: 2px; }
+/* 36px to match every other control in the topbar row, 4px like every other button.
+   At 34 it sat 2px short of its neighbours, so the whole right cluster misaligned. */
+.askai { display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: var(--r); border: 1.5px solid transparent; background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--ai-grad-line) border-box; color: var(--ai-ink); font-weight: 500; font-size: 13px; margin-right: 2px; }
 .askai :deep(.ico) { color: var(--ai); }
 .askai:hover { background: linear-gradient(var(--ai-soft), var(--ai-soft)) padding-box, var(--ai-grad-line) border-box; }
 .plus { width: 36px; height: 36px; border-radius: 4px; border: none; background: var(--primary); color: #fff; display: grid; place-items: center; box-shadow: var(--sh-sm); }
