@@ -358,7 +358,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
     <teleport to="body">
       <transition name="fade">
         <div v-if="tip.show" class="tt lib-tip tt-stack" :style="{ top: tip.top + 'px', right: tip.right + 'px' }">
-          <span class="lib-tip-desc">{{ tip.text }}</span>
+          <span class="tt-desc">{{ tip.text }}</span>
           <span v-if="tip.prov" class="tt-tag" :class="tip.prov">{{ PROV_LABEL[tip.prov] || tip.prov }}</span>
           <span class="lib-tip-arrow" />
         </div>
@@ -451,11 +451,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 /* left-pointing description tooltip (teleported, fixed to viewport) */
 /* surface, padding and colour come from .tt now — only the placement is local */
 .lib-tip { position: fixed; z-index: 200; transform: translateY(-50%); width: 232px; pointer-events: none; text-align: left; }
-.lib-tip-desc { display: block; color: rgba(255,255,255,.88); }
 /* provenance as a tag under the description — mirrors WidgetCard's .tt-tag */
-.tt-tag.predefined { background: rgba(139,92,246,.3); border-color: rgba(139,92,246,.55); color: #ded3ff; }
-.tt-tag.shared { background: rgba(76,177,254,.26); border-color: rgba(76,177,254,.5); color: #cfe8ff; }
-.tt-tag.user { background: rgba(31,157,99,.3); border-color: rgba(31,157,99,.55); color: #b9edd3; }
 .lib-tip-arrow { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); border: 6px solid transparent; border-left-color: #030213; }
 /* Hover actions (Duplicate / Edit / Delete) — each in its own outlined box rather than a
    bare glyph, so on a tinted hovered row they still read as three separate buttons. Delete

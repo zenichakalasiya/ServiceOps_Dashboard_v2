@@ -750,7 +750,6 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 .title { font-weight: 600; font-size: var(--tile-title, 13.5px); }
 
 /* info-icon tooltip: the DESCRIPTION leads, provenance sits under it as a left-aligned pill */
-.tt-desc { font-weight: 400; color: rgba(255,255,255,.88); line-height: 1.45; }
 /* .tt-tag lives in global.css — one tag definition for every tooltip in the product.
    A scoped copy here would out-specify it and silently reintroduce the pill. */
 /* the schedule badge is always on — it reports a fact, it is not a hover action */
@@ -763,9 +762,6 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 /* the audience, folded in below a rule — mirrors the dashboard info card's .dinfo-acc.
    `width: 100%` because it is a flex child of an `align-items: flex-start` column, and
    without it the rule would only span the text. */
-.tt-acc { display: flex; flex-direction: column; gap: 3px; width: 100%; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.16); }
-.tt-acc-h { display: flex; align-items: center; gap: 6px; font-weight: 600; color: #fff; }
-.tt-acc-row { color: rgba(255,255,255,.82); line-height: 1.45; }
 /* the right cluster: a persistent date control, then the hover-revealed actions.
    At rest the action cluster takes NO width, so the calendar sits at the far right of
    the header. On hover the cluster opens to its natural width and the calendar slides

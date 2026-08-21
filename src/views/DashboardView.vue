@@ -640,19 +640,19 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
             <span class="dinfo" @mouseenter="descHover = true" @mouseleave="descHover = false">
               <Icon name="info" :size="15" />
               <transition name="fade">
-                <span v-if="descHover" class="tt dinfo-tt">
-                  <span class="dinfo-desc">{{ d.description || 'No description has been added for this dashboard yet.' }}</span>
-                  <span v-if="d.predefined || d.default" class="dinfo-tags">
+                <span v-if="descHover" class="tt tt-stack dinfo-tt">
+                  <span class="tt-desc">{{ d.description || 'No description has been added for this dashboard yet.' }}</span>
+                  <span v-if="d.predefined || d.default" class="tt-tags">
                     <span v-if="d.predefined" class="tt-tag predefined">Predefined</span>
                     <span v-if="d.default" class="tt-tag def"><Icon name="default-home" :size="11" /> Default</span>
                   </span>
                   <!-- Restricted only: Public reaches everyone and Private reaches nobody,
                        so neither has a list worth naming. -->
-                  <span v-if="d.access === 'restricted'" class="dinfo-acc">
-                    <span class="dinfo-acc-h"><Icon name="users" :size="12" /> Shared with {{ sharedCount }}</span>
-                    <span v-if="(d.groupAccess || []).length" class="dinfo-row">{{ d.groupAccess.join(' · ') }}</span>
-                    <span v-if="(d.techAccess || []).length" class="dinfo-row">{{ d.techAccess.join(' · ') }}</span>
-                    <span v-if="!sharedCount" class="dinfo-row">Nobody added yet — only you can open it.</span>
+                  <span v-if="d.access === 'restricted'" class="tt-acc">
+                    <span class="tt-acc-h"><Icon name="users" :size="12" /> Shared with {{ sharedCount }}</span>
+                    <span v-if="(d.groupAccess || []).length" class="tt-acc-row">{{ d.groupAccess.join(' · ') }}</span>
+                    <span v-if="(d.techAccess || []).length" class="tt-acc-row">{{ d.techAccess.join(' · ') }}</span>
+                    <span v-if="!sharedCount" class="tt-acc-row">Nobody added yet — only you can open it.</span>
                   </span>
                 </span>
               </transition>
@@ -968,17 +968,12 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .dinfo { position: relative; color: var(--muted-2); display: inline-grid; place-items: center; cursor: help; }
 .dinfo:hover { color: var(--primary); }
 .dinfo-tt { top: 26px; left: -8px; width: 260px; }
-.dinfo-desc { display: block; font-weight: 400; color: rgba(255,255,255,.88); line-height: 1.45; }
 /* pills sit BELOW the description, left-aligned — mirrors WidgetCard's .tt-tag */
-.dinfo-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
 /* the audience, folded in below a rule so it reads as a second fact about the board
    rather than more of the description */
-.dinfo-acc { display: flex; flex-direction: column; gap: 3px; margin-top: 9px; padding-top: 9px; border-top: 1px solid rgba(255,255,255,.16); }
-.dinfo-acc-h { display: flex; align-items: center; gap: 6px; font-weight: 600; color: #fff; }
-.dinfo-row { color: rgba(255,255,255,.82); line-height: 1.45; }
-.tt-tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: .2px; background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.2); color: #fff; }
-.tt-tag.predefined { background: rgba(139,92,246,.3); border-color: rgba(139,92,246,.55); color: #ded3ff; }
-.tt-tag.def { background: rgba(76,177,254,.26); border-color: rgba(76,177,254,.5); color: #cfe8ff; }
+/* .tt-desc / .tt-tag / .tt-acc* all live in global.css. A scoped copy here is what made
+   this tooltip's tags a bordered 999px pill while the widget tooltip's were 4px — scoped
+   styles carry a data attribute and out-specify the global rule. Do not reintroduce one. */
 /* restricted → click the icon to see technician + group access */
 /* the pill now appears on every board, so it carries the access level's own colour —
    the glyph alone (globe / lock / people) is what has to say which one this is */
