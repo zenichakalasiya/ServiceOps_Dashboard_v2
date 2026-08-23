@@ -52,8 +52,8 @@ const WIDGET_CTAS = computed(() => {
   if (props.tile?.type === 'text') return []
   const title = props.tile?.title || 'this widget'
   return [
-    { label: 'Deep dive', intent: 'deepdive', text: `Deep dive into ${title}` },
-    { label: 'What needs attention', intent: 'focus', text: `What needs attention in ${title}` },
+    { label: 'Deep dive', intent: 'deepdive', icon: 'insights', text: `Deep dive into ${title}` },
+    { label: 'What needs attention', intent: 'focus', icon: 'auto-graph', text: `What needs attention in ${title}` },
   ]
 })
 // When the tile is too small to show the header AI sparkle, the same two ride inside the
@@ -450,18 +450,18 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
     <teleport to="body">
       <transition name="wai">
         <div
-          v-if="aiHover" class="wai-card" :class="{ up: aiPos.flip }"
+          v-if="aiHover" class="wai-card aic" :class="{ up: aiPos.flip }"
           :style="{ top: aiPos.top + 'px', left: aiPos.left + 'px' }"
           @mouseenter="keepAiHover" @mouseleave="closeAiHoverSoon"
         >
           <!-- no widget name here: you're hovering that widget, so repeating it is noise -->
-          <div class="wai-h"><span class="wai-spark"><Icon name="sparkles" :size="14" /></span> AI summary</div>
+          <div class="wai-h"><span class="wai-spark"><Icon name="sparkles" :size="16" /></span> AI insights</div>
           <p class="wai-sum">{{ brief.summary }}</p>
           <div v-if="WIDGET_CTAS.length" class="wai-acts">
             <button
-              v-for="a in WIDGET_CTAS" :key="a.label" class="wai-a"
+              v-for="a in WIDGET_CTAS" :key="a.label" class="ai-cta"
               :class="{ primary: a.intent === 'deepdive' }" @click="runWidgetAction(a)"
-            >{{ a.label }}</button>
+            ><Icon :name="a.icon" :size="13" /><span>{{ a.label }}</span></button>
           </div>
         </div>
       </transition>
@@ -508,13 +508,13 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
             <span class="mi-l"><Icon name="sparkles" :size="15" /> AI Insights</span><Icon name="chevron-right" :size="14" class="mi-c" />
             <transition name="pop"><div v-if="aiSubOpen" class="submenu ai-sub">
               <!-- no widget name: you opened this from that widget's own menu -->
-              <div class="wai-h"><span class="wai-spark"><Icon name="sparkles" :size="14" /></span> AI summary</div>
+              <div class="wai-h"><span class="wai-spark"><Icon name="sparkles" :size="16" /></span> AI insights</div>
               <p class="wai-sum">{{ brief.summary }}</p>
               <div class="wai-acts">
                 <button
-                  v-for="a in WIDGET_CTAS" :key="a.label" class="wai-a"
+                  v-for="a in WIDGET_CTAS" :key="a.label" class="ai-cta"
                   :class="{ primary: a.intent === 'deepdive' }" @click="askWidgetAi(a)"
-                >{{ a.label }}</button>
+                ><Icon :name="a.icon" :size="13" /><span>{{ a.label }}</span></button>
               </div>
             </div></transition>
           </div>
@@ -815,25 +815,23 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 .ti.ai { color: var(--ai); background: var(--ai-softer); }
 .ti.ai:hover, .ti.ai.on { background: var(--ai-soft); color: var(--ai-ink); }
 /* per-widget hover mini-summary card */
-.wai-card { position: fixed; z-index: 260; width: 384px; max-width: 92vw; padding: 12px 13px; border: 1px solid var(--ai-border); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--sh-lg); }
+/* Shell, wash and both CTA types come from `.aic` / `.ai-cta` in global.css —
+   the same card the ticket detail page shows. Only geometry stays here. */
+.wai-card { position: fixed; z-index: 260; width: 384px; max-width: 92vw; padding: 12px 16px 16px; box-shadow: var(--sh-lg); }
 .wai-card.up { transform: translateY(-100%); }
-.wai-h { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--ink); }
+.wai-h { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--ink); }
 .wai-h .ellip { color: var(--ai-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.wai-spark { width: 22px; height: 22px; border-radius: 4px; flex: none; display: grid; place-items: center; background: var(--ai-softer); }
+.wai-spark { flex: none; display: grid; place-items: center; }
 .wai-spark :deep(.ico) { stroke: url(#ai-grad); color: var(--ai); }
-.wai-sum { margin: 10px 0 12px; font-size: 13px; line-height: 1.55; color: var(--ink-2); }
+.wai-sum { margin: 10px 0 16px; font-size: 13px; line-height: 1.6; color: var(--ink); }
 /* two actions, side by side */
-.wai-acts { display: flex; flex-direction: row; gap: 6px; }
+.wai-acts { display: flex; flex-wrap: wrap; gap: 8px; }
 /* same rounded-pill treatment as the AI Summary card's CTAs */
 /* 32/12/4px/500 — the product button, like every other AI CTA. Was 34px and a 999px
    pill, which made the two most-used AI actions the one control on the board that did
    not look like a button. */
-.wai-a { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px; padding: 0 12px; border: 1px solid var(--ai-border); border-radius: var(--r); background: var(--ai-grad-soft); color: var(--ai-ink); font-weight: 500; font-size: 12px; text-align: center; white-space: nowrap; }
-.wai-a:hover { border-color: var(--ai); background: var(--ai-soft); }
 /* Deep dive leads — it is the one that opens the conversation; the other is a shortcut
    to the ranked list, which the thread can also reach on its own. */
-.wai-a.primary { border: 1.5px solid transparent; background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--ai-grad-line) border-box; }
-.wai-a.primary:hover { background: linear-gradient(var(--ai-soft), var(--ai-soft)) padding-box, var(--ai-grad-line) border-box; }
 .wai-enter-active, .wai-leave-active { transition: opacity .14s ease; }
 .wai-enter-from, .wai-leave-to { opacity: 0; }
 .spin { animation: sp 0.75s linear infinite; } @keyframes sp { to { transform: rotate(360deg); } }

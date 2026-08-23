@@ -131,11 +131,29 @@ widget/group chrome and the dark theme are outside its scope and keep their own 
   > referencing the `<linearGradient>` declared once in `App.vue`.
 - `--ai-grad-line` — the same ramp at 80% alpha, for **gradient borders** on primary CTAs
   (`linear-gradient(var(--surface),var(--surface)) padding-box, var(--ai-grad-line) border-box`
-  over a `1.5px solid transparent` border).
-- `--ai-grad-soft` — an 8%-over-white wash, for **secondary** CTAs, suggested items and AI
-  summary surfaces.
+  over a `1px solid transparent` border).
+- `--ai-grad-soft` — an 8%-over-white wash, for suggested items and the assistant panel’s
+  own surfaces (options, picks, chips). **Not** for insight-card CTAs — those have their
+  own pair, below.
+- `--ai-wash` (3%) and `--ai-cta` (12%) — the insight **card** wash and its secondary CTA
+  tint, both measured off the real ServiceOps ticket-detail AI Summary card.
 - Follow-up pills are deliberately **monochrome** (`--surface-2`) — colour there competes with
   the answer above it.
+
+**The AI insights card has exactly ONE definition — `.aic` / `.ai-cta` in `global.css`.**
+Four components render that card (the board `AiSummaryCard`, the KPI-row `AiInsightCard`,
+the header popover `AiInsightChip`, and the widget hover card in `WidgetCard`), and every
+previous attempt to keep them in step by copying the rules into each scoped block drifted
+inside a single session — five spellings of one button, three of them a different radius.
+Add `class="aic"` to the shell and `class="ai-cta"` to each action; never restate the
+border, the wash, the height or the tint locally. A scoped `.foo-cta` out-specifies the
+global rule, so a local copy does not merely duplicate it, it silently wins.
+
+The card carries **two CTA types, and the order is the hierarchy**: the FIRST action is
+`.primary` (the 80% ramp as a gradient border over the surface), every other is secondary
+(the flat 12% tint). Both are 32px so their labels share a baseline. Hover changes the
+**label** colour and adds `--sh-sm` — never the background, because the tint IS the
+resting state and re-tinting on hover reads as "selected".
 
 **Popovers/menus** that a card's `overflow:hidden` would clip are **teleported to `<body>`** and
 positioned in viewport coordinates — follow that pattern for any new floating UI.

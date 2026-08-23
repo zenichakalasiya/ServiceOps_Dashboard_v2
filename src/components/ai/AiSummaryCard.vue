@@ -8,7 +8,9 @@
  *   shell      1px --border-control, --r-lg, a 3% gradient WASH (not a filled surface)
  *   header     24/12 padding · bare 18px gradient sparkle · 14px/600 title · 11px meta right
  *   body       24px gutters · 13px summary · "KEY POINTS" 11px/600 muted · dotted list
- *   CTA        32px · 0/12 · 4px · 12px/500 · ink text · 12% gradient tint · NO border
+ *   CTA        32px · 0/12 · 4px · 12px/500 · ink text, in TWO types — the first action
+ *              wears the 80% gradient ramp as its border over the surface, the rest a
+ *              flat 12% gradient tint. The pair is the card's whole hierarchy.
  *
  * COLLAPSED it is the header row alone, so an unopened card costs the board ~46px.
  * EXPANDED it adds the summary, the key points and the CTAs — the same order the ticket
@@ -46,7 +48,7 @@ function toggle() { open.value = !open.value }
 </script>
 
 <template>
-  <section class="ai-card" :class="{ open }">
+  <section class="ai-card aic" :class="{ open }">
     <div
       class="ac-head" role="button" tabindex="0" :aria-expanded="open"
       @click="toggle" @keydown.enter.prevent="toggle" @keydown.space.prevent="toggle"
@@ -73,7 +75,10 @@ function toggle() { open.value = !open.value }
         <div class="ac-gen">Generated from this board’s live data</div>
 
         <div class="ac-ctas">
-          <button v-for="c in CTAS" :key="c.intent" class="ac-cta" @click="emit('ask', c.intent, c.label)">
+          <button
+            v-for="(c, i) in CTAS" :key="c.intent"
+            class="ai-cta" :class="{ primary: i === 0 }" @click="emit('ask', c.intent, c.label)"
+          >
             <Icon :name="c.icon" :size="13" /><span>{{ c.label }}</span>
           </button>
         </div>
@@ -83,14 +88,9 @@ function toggle() { open.value = !open.value }
 </template>
 
 <style scoped>
-/* The wash is a ::before rather than a background, exactly as the reference layers it —
-   a translucent gradient OVER the surface, so the card still reads as white/dark card
-   stock with a tint on it rather than as a coloured panel. */
-.ai-card {
-  position: relative; margin-bottom: 14px; overflow: hidden;
-  border: 1px solid var(--border-control); border-radius: var(--r-lg); background: var(--surface);
-}
-.ai-card::before { content: ''; position: absolute; inset: 0; background: var(--ai-wash); pointer-events: none; }
+/* Shell, wash and both CTA types come from `.aic` / `.ai-cta` in global.css. Only the
+   board-specific bits stay here — the margin, and the overflow the collapse needs. */
+.ai-card { margin-bottom: 14px; overflow: hidden; }
 
 .ac-head { position: relative; display: flex; align-items: center; gap: 8px; padding: 12px 24px; cursor: pointer; }
 .ac-head:focus-visible { outline: 2px solid var(--ai); outline-offset: -2px; }
@@ -110,20 +110,7 @@ function toggle() { open.value = !open.value }
 .ac-dot { flex: none; width: 4px; height: 4px; margin-top: 7px; border-radius: 50%; background: var(--ai); }
 .ac-gen { font-size: 11px; color: var(--muted-2); margin-bottom: 16px; }
 
-/* THE CTA, verbatim from the reference: a 12% gradient tint over the surface and no border
-   at all. The tint is what groups them, which is why adding a border made them read as
-   three separate secondary buttons. There is no "primary" variant — the reference gives
-   all of its actions the same weight, and so does this. */
 .ac-ctas { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-.ac-cta {
-  display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px;
-  border: none; border-radius: var(--r); white-space: nowrap;
-  background: var(--ai-cta), var(--surface);
-  color: var(--ink); font-weight: 500; font-size: 12px;
-  transition: color .2s, box-shadow .2s;
-}
-.ac-cta :deep(.ico) { flex: none; }
-.ac-cta:hover { color: var(--primary); box-shadow: var(--sh-sm); }
 
 .acx-enter-active, .acx-leave-active { transition: opacity .16s ease; }
 .acx-enter-from, .acx-leave-to { opacity: 0; }

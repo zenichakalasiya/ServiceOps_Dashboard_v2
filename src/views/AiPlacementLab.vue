@@ -19,6 +19,7 @@ import Icon from '../components/ui/Icon.vue'
 import WidgetCard from '../components/dashboard/WidgetCard.vue'
 import AiSummaryCard from '../components/ai/AiSummaryCard.vue'
 import AiInsightCard from '../components/ai/AiInsightCard.vue'
+import AiInsightChip from '../components/ai/AiInsightChip.vue'
 import AiAssistant from '../components/ai/AiAssistant.vue'
 import { store } from '../store/index.js'
 import { AI_INSIGHTS, leadInsight, insightCount } from '../data/aiInsights.mock.js'
@@ -43,35 +44,15 @@ const dashSummary = computed(() => {
   return `${b} has ${count} insights worth your attention. ${lead.title} and ${AI_INSIGHTS[1].title.toLowerCase()} are the most pressing, and ${AI_INSIGHTS[2].title.toLowerCase()}.`
 })
 
-// the three CTAs shown in Variant A's popover and Variant B's card — each opens the real
-// assistant with its own intent, matching the on-board AiSummaryCard exactly
-const CTAS = [
-  { label: 'Insights with AI', icon: 'sparkles', intent: 'analyzing', primary: true },
-  { label: 'Every widget explained', icon: 'auto-graph', intent: 'widgets' },
-  { label: 'Add a new widget', icon: 'plus', intent: 'suggestwidget' },
-]
-
 // ---- the real assistant overlay: every variant opens THIS, the same panel the dashboard
 //      runs, via store.ui.aiPanelOpen + trigger(intent) — mirrors DashboardView.onCardAsk ----
 const aiRole = ref('technician')
 const aiPanel = ref(null)
 const panelOpen = computed(() => store.ui.aiPanelOpen)
 function openAi(intent, text) {
-  popoverOpen.value = false
   store.ui.aiPanelOpen = true
   if (intent && intent !== 'open') nextTick(() => aiPanel.value?.trigger(intent, text))
 }
-
-// ---- Variant A: the header chip's popover (never open at the same time as the panel) ----
-const popoverOpen = ref(false)
-function togglePopover() {
-  if (store.ui.aiPanelOpen) return   // assistant and popover are never both open
-  popoverOpen.value = !popoverOpen.value
-}
-// Esc closes the popover
-function onKey(e) { if (e.key === 'Escape' && popoverOpen.value) popoverOpen.value = false }
-onMounted(() => document.addEventListener('keydown', onKey))
-onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
 
 // ---- live readout: px above the KPI row, and whether widget row 3 clears a 900px fold ----
 const aboveEl = ref(null)
@@ -135,24 +116,7 @@ watch([variant, panelOpen], () => nextTick(measure))
             <h1>{{ board?.name }}</h1>
             <div class="fhead-actions">
               <!-- Variant A: AI insight chip → popover -->
-              <div v-if="variant === 'A'" class="chip-wrap">
-                <button class="ai-chip" :class="{ on: popoverOpen }" :aria-expanded="popoverOpen"
-                  title="AI insights" @click.stop="togglePopover">
-                  <Icon name="sparkles" :size="15" /><span v-if="count" class="ai-chip-n">{{ count }}</span>
-                </button>
-                <div v-if="popoverOpen" class="pop-backdrop" @click="popoverOpen = false" />
-                <transition name="pop">
-                  <div v-if="popoverOpen" class="ai-pop" @click.stop>
-                    <div class="ai-pop-h"><span class="ai-pop-spark"><Icon name="sparkles" :size="14" /></span> AI insights</div>
-                    <p class="ai-pop-sum">{{ dashSummary }}</p>
-                    <div class="ai-pop-acts">
-                      <button v-for="c in CTAS" :key="c.label" class="ai-pop-cta" :class="{ primary: c.primary }" @click="openAi(c.intent, c.label)">
-                        <Icon :name="c.icon" :size="14" /> <span>{{ c.label }}</span>
-                      </button>
-                    </div>
-                  </div>
-                </transition>
-              </div>
+              <AiInsightChip v-if="variant === 'A'" :board="board" @ask="openAi" />
               <button class="fh-ic" title="More"><Icon name="dots-v" :size="17" /></button>
             </div>
           </header>
@@ -219,41 +183,6 @@ watch([variant, panelOpen], () => nextTick(measure))
 .fh-ic:hover { background: var(--surface-2); color: var(--ink); }
 
 /* ── Variant A: header chip + popover ─────────────────────────────── */
-.chip-wrap { position: relative; }
-/* AI-accented pill: gradient-border over white, gradient glyph, count badge */
-.ai-chip {
-  display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px;
-  border: 1.5px solid transparent; border-radius: 999px;
-  background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--ai-grad-line) border-box;
-}
-.ai-chip :deep(.ico) { stroke: url(#ai-grad); color: var(--ai); }
-.ai-chip-n { font-size: 13px; font-weight: 700; color: var(--ai-ink); font-variant-numeric: tabular-nums; }
-.ai-chip:hover, .ai-chip.on { background: linear-gradient(var(--ai-soft), var(--ai-soft)) padding-box, var(--ai-grad-line) border-box; }
-.pop-backdrop { position: fixed; inset: 0; z-index: 40; }
-.ai-pop {
-  position: absolute; top: 38px; right: 0; z-index: 50; width: 340px;
-  background: var(--surface); border: 1px solid var(--ai-border); border-radius: 4px;
-  box-shadow: var(--sh-pop); padding: 14px;
-}
-.ai-pop-h { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
-.ai-pop-spark { width: 26px; height: 26px; border-radius: 4px; flex: none; display: grid; place-items: center; background: var(--ai-softer); }
-.ai-pop-spark :deep(.ico) { stroke: url(#ai-grad); color: var(--ai); }
-.ai-pop-sum { margin: 0; font-size: 13px; line-height: 1.55; color: var(--ink-2); }
-.ai-pop-acts { display: flex; flex-direction: column; gap: 8px; margin-top: 13px; }
-.ai-pop-cta {
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 36px; padding: 0 14px;
-  border: 1px solid var(--ai-border); border-radius: var(--r-pill);
-  background: var(--ai-grad-soft); color: var(--ai-ink); font-weight: 600; font-size: 13px;
-}
-.ai-pop-cta :deep(.ico) { color: var(--ai); }
-.ai-pop-cta:hover { border-color: var(--ai); background: var(--ai-soft); }
-/* primary: gradient border over white + gradient label (label lives in its own span) */
-.ai-pop-cta.primary { border: 1.5px solid transparent; background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--ai-grad-line) border-box; }
-.ai-pop-cta.primary span { background: var(--ai-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
-.ai-pop-cta.primary :deep(.ico) { stroke: url(#ai-grad); color: var(--ai); }
-.ai-pop-cta.primary:hover { background: linear-gradient(var(--ai-soft), var(--ai-soft)) padding-box, var(--ai-grad-line) border-box; }
-.pop-enter-active, .pop-leave-active { transition: opacity .14s ease, transform .14s ease; transform-origin: top right; }
-.pop-enter-from, .pop-leave-to { opacity: 0; transform: scale(.96); }
 
 /* ── Variant B: KPIs narrow to 4-per-row; a wide summary card takes slot 1 ── */
 .grid.vb :deep(.span-2) { grid-column: span 3; }   /* KPI tiles → 4 per row */

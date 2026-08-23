@@ -213,3 +213,60 @@ label.field { display:block; font-size:13px; font-weight: 500; color: var(--ink)
 @keyframes shimmer { 100% { transform: translateX(100%); } }
 .skeleton { position: relative; overflow: hidden; background: #eef0f6; border-radius: 4px; }
 .skeleton::after { content:""; position:absolute; inset:0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.7), transparent); animation: shimmer 1.3s infinite; }
+
+/* ── The AI insights card, ONE definition ────────────────────────────────────
+   Measured off the real ServiceOps ticket detail page's "AI Summary" card
+   (serviceops-ticket-detail/#/request), not approximated:
+
+     shell      1px #DFE5ED (= --border-control) · --r-lg · a 3% gradient WASH
+                laid OVER the surface, so the card still reads as card stock
+                with a tint on it rather than as a coloured panel
+     CTA        32px · 0/12 · --r · 12px/500 · ink label · 13px icon
+       secondary  a 12% gradient tint over the surface, NO visible border
+       primary    white/surface fill with the 80% gradient ramp AS the border
+                  (padding-box + border-box, the two-layer trick)
+     hover      label → --primary, plus --sh-sm. NOT a background change: the
+                tint IS the resting state, so re-tinting on hover reads as
+                "selected" rather than "hovered".
+
+   These live here, unscoped, because the same card is rendered by FOUR
+   components (the board card, the KPI-row card, the board header popover and
+   the widget hover card) and every previous attempt to keep them in step by
+   copying the rules into each scoped block drifted within a session — five
+   spellings of the same button, three of them a different radius.
+
+   Order matters: the two CTA types are the reference's whole hierarchy. The
+   FIRST action is primary and every other is secondary; giving them all the
+   same weight loses which one the card is actually recommending. */
+.aic {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border-control);
+  border-radius: var(--r-lg);
+}
+.aic::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: var(--ai-wash); pointer-events: none;
+}
+/* the wash is painted by ::before, so everything real has to sit above it */
+.aic > * { position: relative; }
+
+.ai-cta {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 32px; padding: 0 12px; box-sizing: border-box; white-space: nowrap;
+  border: 1px solid transparent; border-radius: var(--r);
+  background: var(--ai-cta), var(--surface);
+  color: var(--ink); font-weight: 500; font-size: 12px;
+  transition: color .2s, box-shadow .2s;
+}
+.ai-cta .ico { flex: none; }
+.ai-cta:hover { color: var(--primary); box-shadow: var(--sh-sm); }
+/* The reference draws the primary at 1px, same as the secondary's transparent
+   border — so the two sit at an identical 32px and their labels line up. A
+   1.5px border (what we used to use) makes the primary a pixel taller on each
+   side and the row stops sharing a baseline. */
+.ai-cta.primary {
+  background: linear-gradient(var(--surface), var(--surface)) padding-box,
+              var(--ai-grad-line) border-box;
+}
+.ai-cta.primary:hover { color: var(--primary); box-shadow: var(--sh-sm); }

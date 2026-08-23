@@ -18,11 +18,12 @@ const emit = defineEmits(['ask'])
 
 const { count, summary } = useAiTeaser(() => props.board)
 const open = ref(false)
-/* This entry point offers ONE action, not the pair. Deep dive is a long, structured
- * read — it belongs where there is room to land it (the widget's own card and the AI
- * panel, which both still offer both). From a topbar icon the useful question is the
- * short one: what needs attention. */
-const CTAS = AI_TEASER_CTAS.filter((c) => c.intent === 'focus')
+/* Both actions, in the order the reference card uses them: the first is the primary
+ * (gradient border), the rest are secondary (tint). This popover used to offer only
+ * "what needs attention" on the argument that a topbar icon has no room to land a deep
+ * dive — but the deep dive lands in the side panel either way, and being the one AI
+ * surface in the product with a different action set cost more than the row saved. */
+const CTAS = AI_TEASER_CTAS.filter((c) => c.intent === 'focus' || c.intent === 'deepdive')
 
 function pick(c) { open.value = false; emit('ask', c.intent, c.label) }
 function onKey(e) { if (e.key === 'Escape' && open.value) open.value = false }
@@ -40,12 +41,15 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
     </button>
     <div v-if="open" class="pop-backdrop" @click="open = false" />
     <transition name="pop">
-      <div v-if="open" class="ai-pop" @click.stop>
-        <div class="ai-pop-h"><span class="ai-pop-spark"><Icon name="sparkles" :size="14" /></span> AI insights</div>
+      <div v-if="open" class="ai-pop aic" @click.stop>
+        <div class="ai-pop-h"><span class="ai-pop-spark"><Icon name="sparkles" :size="16" /></span> AI insights</div>
         <p class="ai-pop-sum">{{ summary }}</p>
         <div class="ai-pop-acts">
-          <button v-for="c in CTAS" :key="c.intent" class="ai-pop-cta" :class="{ primary: c.primary }" @click="pick(c)">
-            <Icon :name="c.icon" :size="14" /> <span>{{ c.label }}</span>
+          <button
+            v-for="(c, i) in CTAS" :key="c.intent"
+            class="ai-cta" :class="{ primary: i === 0 }" @click="pick(c)"
+          >
+            <Icon :name="c.icon" :size="13" /><span>{{ c.label }}</span>
           </button>
         </div>
       </div>
@@ -74,29 +78,15 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
 .ai-chip-n { min-width: 17px; height: 17px; padding: 0 5px; display: grid; place-items: center; border-radius: 999px; background: var(--ai-soft); font-size: 11px; font-weight: 700; color: var(--ai-ink); font-variant-numeric: tabular-nums; }
 .ai-chip:hover, .ai-chip.on { background: linear-gradient(var(--ai-soft), var(--ai-soft)) padding-box, var(--ai-grad-line) border-box; }
 .pop-backdrop { position: fixed; inset: 0; z-index: 40; }
-.ai-pop {
-  position: absolute; top: 38px; right: 0; z-index: 50; width: 340px;
-  background: var(--surface); border: 1px solid var(--ai-border); border-radius: 4px;
-  box-shadow: var(--sh-pop); padding: 14px;
-}
-.ai-pop-h { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
-.ai-pop-spark { width: 26px; height: 26px; border-radius: 4px; flex: none; display: grid; place-items: center; background: var(--ai-softer); }
+/* Shell, wash and both CTA types come from `.aic` / `.ai-cta` in global.css —
+   the same card the ticket detail page shows. Only placement is local. */
+.ai-pop { position: absolute; top: 38px; right: 0; z-index: 50; width: 340px; box-shadow: var(--sh-pop); padding: 12px 16px 16px; }
+.ai-pop-h { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 10px; }
+/* a bare gradient glyph, no tinted container — the reference gives it none */
+.ai-pop-spark { flex: none; display: grid; place-items: center; }
 .ai-pop-spark :deep(.ico) { stroke: url(#ai-grad); color: var(--ai); }
-.ai-pop-sum { margin: 0; font-size: 13px; line-height: 1.55; color: var(--ink-2); }
-.ai-pop-acts { display: flex; flex-direction: column; gap: 8px; margin-top: 13px; }
-.ai-pop-cta {
-  /* 32/12/4px/500 — the product button (see .ac-cta) */
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px; padding: 0 12px;
-  border: 1px solid var(--ai-border); border-radius: var(--r);
-  background: var(--ai-grad-soft); color: var(--ai-ink); font-weight: 500; font-size: 13px;
-}
-.ai-pop-cta :deep(.ico) { color: var(--ai); }
-.ai-pop-cta:hover { border-color: var(--ai); background: var(--ai-soft); }
-/* primary: gradient border over white + gradient label (label lives in its own span) */
-.ai-pop-cta.primary { border: 1.5px solid transparent; background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--ai-grad-line) border-box; }
-.ai-pop-cta.primary span { background: var(--ai-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
-.ai-pop-cta.primary :deep(.ico) { stroke: url(#ai-grad); color: var(--ai); }
-.ai-pop-cta.primary:hover { background: linear-gradient(var(--ai-soft), var(--ai-soft)) padding-box, var(--ai-grad-line) border-box; }
+.ai-pop-sum { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ink); }
+.ai-pop-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 .pop-enter-active, .pop-leave-active { transition: opacity .14s ease, transform .14s ease; transform-origin: top right; }
 .pop-enter-from, .pop-leave-to { opacity: 0; transform: scale(.96); }
 </style>

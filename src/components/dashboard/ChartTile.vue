@@ -476,13 +476,41 @@ const legendCol = ref(null)
 const colH = ref(0)
 const page = ref(0)
 
+/* ── The donut's square, measured rather than declared ──────────────────────
+ * A part-of-whole chart is drawn as a circle whose diameter is 78% of the SHORTER
+ * side of its canvas — so on a wide, short tile the drawing is only as big as the
+ * row's height, and every extra pixel of canvas width is dead space. That dead space
+ * is what pushed the donut left of centre and opened a visible gulf before the legend.
+ *
+ * The CSS aspect-ratio that was supposed to collapse it never could: ECharts writes an
+ * inline width on its own container, and a flex item with flex-basis:auto takes that
+ * inline width as its max-content contribution — so the box stayed as wide as whatever
+ * ECharts last measured, which was itself derived from the box. A feedback loop.
+ * Measuring the row and setting the side explicitly is what breaks it.
+ *
+ * The square is capped so the legend always keeps LEGEND_MIN for its names. Truncating
+ * every label to "In P…" to buy a bigger circle trades the half of the chart that says
+ * WHAT each slice is for the half that says how big it is. */
+const LEGEND_MIN = 132    // a name plus its percentage, before ellipsis bites
+const chartRow = ref(null)
+const rowBox = ref({ w: 0, h: 0 })
+const ecSide = computed(() => {
+  if (!sideLegend.value) return null
+  const { w, h } = rowBox.value
+  if (!w || !h) return null
+  return Math.max(104, Math.min(h, w - LEGEND_MIN - 10))   // 10 = the row gap
+})
+
 let ro = null
+let roRow = null
 onMounted(() => {
   if (typeof ResizeObserver === 'undefined') return
   ro = new ResizeObserver(([e]) => { colH.value = e.contentRect.height })
   watch(legendCol, (el) => { ro.disconnect(); if (el) ro.observe(el) }, { immediate: true, flush: 'post' })
+  roRow = new ResizeObserver(([e]) => { rowBox.value = { w: e.contentRect.width, h: e.contentRect.height } })
+  watch(chartRow, (el) => { roRow.disconnect(); if (el) roRow.observe(el) }, { immediate: true, flush: 'post' })
 })
-onBeforeUnmount(() => ro?.disconnect())
+onBeforeUnmount(() => { ro?.disconnect(); roRow?.disconnect() })
 
 const sideEntries = computed(() => manageable.value)
 /* How many rows fit. The rank pill and pager both live in the footer, which is a
@@ -583,9 +611,10 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="chart" :style="{ height: height + 'px' }">
-      <div class="chart-row" :class="{ 'has-side': sideLegend }">
+      <div ref="chartRow" class="chart-row" :class="{ 'has-side': sideLegend }">
         <VChart
           ref="chartRef" class="ec" :option="option"
+          :style="ecSide ? { width: ecSide + 'px' } : null"
           :init-options="{ renderer: 'canvas' }" :update-options="{ replaceMerge: ['series'] }" autoresize
         />
 
@@ -744,13 +773,20 @@ onBeforeUnmount(() => {
    drawing and nothing else, so donut + legend is a real group with no invisible padding
    on either side for justify-content to centre around. Sizing it any other way just moves
    the empty space from one side to the other. */
-.chart-row.has-side .ec { flex: 0 1 auto; height: 100%; aspect-ratio: 1 / 1; min-width: 0; }
-.chart-row.has-side .legend-side { width: auto; min-width: 118px; max-width: 190px; }
+/* flex:none plus an inline width from ecSide — see the comment on ecSide for why the
+   pure-CSS square never held. With the canvas no longer far wider than the drawing,
+   the donut and the legend are a real pair and justify-content can centre them. */
+.chart-row.has-side .ec { flex: none; height: 100%; min-width: 0; }
+.chart-row.has-side .legend-side { flex: 0 1 auto; width: auto; min-width: 0; max-width: 190px; }
 
 /* Side legend — part-of-whole charts. The list is the only part that flexes, so
    the pager stays pinned at the bottom and the rank pill at the top. */
 .legend-side { flex: none; width: 168px; display: flex; flex-direction: column; gap: 6px; min-height: 0; padding: 2px 0; }
-.ls-list { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
+/* Centred, so a short legend sits opposite the middle of the donut instead of piling
+   against the top of a full-height column and reading as a separate top-aligned block.
+   Safe with a long one too: the list is PAGED to what the column can hold, so it never
+   overflows and centring a full page is a no-op — few entries centre, many fill. */
+.ls-list { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 4px; overflow: hidden; }
 .lg-side { width: 100%; height: 18px; justify-content: flex-start; }   /* 18 + 4 gap = ROW_H */
 /* The name takes only the width it needs (flex: 0 1 auto), so the value sits right
    beside it. It used to be flex: 1, which ate every spare pixel and shoved the value

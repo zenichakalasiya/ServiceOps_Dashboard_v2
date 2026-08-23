@@ -955,7 +955,10 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 
 <style scoped>
 .board { display: flex; flex-direction: column; min-height: 100%; }
-.bhead { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 16px 24px; background: var(--surface); border-bottom: 1px solid var(--border); flex-wrap: nowrap; }
+/* 16px sides, not 24. The BODY below takes its side padding inline from the board-margin
+   setting (16px by default), so a 24px header put the board title 8px left of the widgets
+   it belongs to — the one edge in the view where two stacked regions did not line up. */
+.bhead { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 16px; background: var(--surface); border-bottom: 1px solid var(--border); flex-wrap: nowrap; }
 .bh-left { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
 .listing-toggle { width: 34px; height: 32px; border: 1px solid var(--border); background: var(--surface); color: var(--ink-2); border-radius: 4px; display: grid; place-items: center; flex: none; }
 .listing-toggle:hover { background: var(--surface-2); color: var(--ink); border-color: var(--border-strong); }
