@@ -178,7 +178,10 @@ function run() {
 
 .tgl-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 14px; cursor: pointer; }
 .tgl-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.tgl-txt b { font-size: 13px; font-weight: 600; color: var(--ink-2); }
+/* same row, same reason — see WidgetBuilderModal. The two copies of this pattern have
+   already drifted apart on weight (600 here, 500 there); they are at least not going to
+   disagree about whether the label looks switched off. */
+.tgl-txt b { font-size: 13px; font-weight: 600; color: var(--ink); }
 .tgl-txt em { font-style: normal; font-size: 12px; color: var(--muted); line-height: 1.45; }
 .tgl { flex: none; width: 38px; height: 22px; padding: 0; border: none; border-radius: 999px; background: var(--border-strong); position: relative; transition: background .15s; }
 .tgl i { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: var(--sh-sm); transition: transform .15s; }

@@ -981,7 +981,12 @@ function save(place) {
 .tgl-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; cursor: pointer; margin-bottom: 12px; }
 .tgl-row:last-child { margin-bottom: 0; }
 .tgl-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.tgl-txt b { font-size: 13px; font-weight: 500; color: var(--ink-2); }
+/* --ink, not --ink-2. This <b> is the control's NAME and the only full-strength thing in
+   the row — the <em> under it is already muted and the switch beside it carries no text.
+   Secondary grey over muted grey gave the whole row nothing at primary strength, so it
+   read as disabled. (A .fld label stays grey precisely because it is not alone: the input
+   beneath it holds its value at full ink, so the label can afford to recede.) */
+.tgl-txt b { font-size: 13px; font-weight: 500; color: var(--ink); }
 .tgl-txt em { font-style: normal; font-size: 12px; color: var(--muted); line-height: 1.4; }
 /* the ON/OFF pill, same as the dashboard panel's � a bare track says there are two states
    but not which one you are looking at */
