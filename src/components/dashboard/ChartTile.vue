@@ -501,6 +501,17 @@ const ecSide = computed(() => {
   return Math.max(104, Math.min(h, w - LEGEND_MIN - 10))   // 10 = the row gap
 })
 
+/* Below this the legend cannot hold a name AND a percentage, and rendering both anyway
+ * produced a column of stubs — "In P…" over a percentage clipped to "38.71⁹". Two
+ * half-truncated facts are worth less than one whole one, so the compact form drops the
+ * NAME and keeps swatch + percentage: the swatch still maps the row to its slice, the
+ * number is still exact, and the name is one hover away in the row's own title. */
+const legendCompact = computed(() => {
+  const { w } = rowBox.value
+  if (!w || !ecSide.value) return false
+  return w - ecSide.value - 10 < 110
+})
+
 let ro = null
 let roRow = null
 onMounted(() => {
@@ -620,7 +631,7 @@ onBeforeUnmount(() => {
 
         <!-- Part-of-whole charts: legend to the RIGHT, one slice per line, paged to
              whatever the widget's height can hold. Taller widget → more per page. -->
-        <aside v-if="sideLegend" class="legend-side">
+        <aside v-if="sideLegend" class="legend-side" :class="{ compact: legendCompact }">
           <div ref="legendCol" class="ls-list">
             <span
               v-for="e in paged" :key="e.key" class="lg lg-side"
@@ -793,6 +804,9 @@ onBeforeUnmount(() => {
    to the far edge — a chasm of dead space next to a label as short as "P1". A long
    name still shrinks and ellipses, which is what the min-width: 0 is for. */
 .ls-nm { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* see legendCompact: too narrow for both, so keep the exact number and let the swatch
+   carry the identity rather than showing two truncated things */
+.legend-side.compact .ls-nm { display: none; }
 .lg-side b { flex: none; margin-left: 2px; font-variant-numeric: tabular-nums; }
 /* Footer: pill on the left, pager on the right, on one line. It wraps only if the
    two genuinely can't share the width — then it degrades to the old stacked look. */
