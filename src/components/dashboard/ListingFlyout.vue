@@ -64,6 +64,9 @@ function dashKind(d) {
 }
 // pre = monitor (predefined) · shared = share icon · mine = person
 function dashIcon(d) { return ({ pre: 'predefined-monitor', shared: 'share', mine: 'user' })[dashKind(d)] }
+/* The words the product uses. The tooltip used to print the internal key — a row whose
+   glyph you did not recognise answered "pre" when you hovered it. */
+const KIND_LABEL = { pre: 'Predefined', mine: 'Created by me', shared: 'Shared with me' }
 function openBoard(d) { recordView(d); router.push(`/dashboard/${d.id}`) }
 function del(d) { archiveDashboard(d) }
 
@@ -132,7 +135,7 @@ function doClone(d) { store.ui.editTarget = null; store.ui.cloneTarget = d; stor
     <div class="glist">
       <section v-for="grp in groups" :key="grp.name" class="grp">
           <button class="grp-head" @click="toggleGroup(grp.name)">
-            <Icon :name="open.has(grp.name) ? 'chevron-down' : 'chevron-right'" :size="14" />
+            <Icon :name="open.has(grp.name) ? 'chevron-down' : 'chevron-right'" :size="16" />
             <span class="gname">{{ grp.name }}</span>
             <span class="gcount">{{ grp.items.length }}</span>
           </button>
@@ -142,7 +145,7 @@ function doClone(d) { store.ui.editTarget = null; store.ui.cloneTarget = d; stor
                    else — one colour down the whole list, or a quiet sidebar becomes a
                    legend nobody asked for. 16px because a bare glyph has to hold the
                    column on its own now that the box behind it is gone. -->
-              <span class="ibox" :title="dashKind(d)"><Icon :name="dashIcon(d)" :size="16" /></span>
+              <span class="ibox" :title="KIND_LABEL[dashKind(d)]"><Icon :name="dashIcon(d)" :size="16" /></span>
               <span class="iname ellip">{{ d.name }}</span>
               <!-- the default landing board carries a static home icon beside its name here too -->
               <Icon v-if="d.default" name="default-home" :size="13" class="def-mark" title="Default dashboard — the one you land on" />
@@ -234,12 +237,23 @@ function doClone(d) { store.ui.editTarget = null; store.ui.cloneTarget = d; stor
 .grp { margin-bottom: 2px; }
 /* the chevron sits hard against the panel's left edge — it was indented 6px, which put
    every group heading out of line with the "Dashboards" title and the search box above */
-.grp-head { display: flex; align-items: center; gap: 7px; width: 100%; border: none; background: transparent; padding: 7px 6px 7px 0; border-radius: 4px; color: var(--ink-2); font-weight: 600; font-size: 13px; text-align: left; }
+/* A CATEGORY row, built to the admin sidebar's parent-module row: 34px tall, 0/10
+   padding, 12px label, and a 16px muted glyph hard left. The chevron IS that left glyph
+   here — admin puts a module icon left and a chevron right, but a category has no icon
+   of its own to show, so the one position carries the one job. Nothing on the right.
+   The label keeps 600 where admin's parent is 400: admin separates its modules with
+   section headers ("Intelligent Automation") and we have none, so weight is what tells
+   a category from the boards inside it. */
+.grp-head { display: flex; align-items: center; gap: 8px; width: 100%; height: 34px; border: none; background: transparent; padding: 0 10px; border-radius: 4px; color: var(--ink); font-weight: 600; font-size: 12px; text-align: left; }
 .grp-head:hover { background: var(--surface-2); }
+.grp-head > :deep(.ico) { flex: none; color: var(--muted); }
 .gname { flex: 1; }
-.gcount { font-size: 11px; color: var(--muted); background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px; padding: 0 7px; font-weight: 600; }
+/* §7.4 count badge — rounded-sm, not a pill; a pill reads as something you can press */
+.gcount { font-size: 11px; color: var(--muted); background: var(--surface-2); border-radius: var(--r-sm); padding: 1px 6px; font-weight: 600; }
 .items { display: flex; flex-direction: column; gap: 1px; padding: 1px 0 4px; }
-.item { display: flex; align-items: center; gap: 8px; padding: 4px 8px 4px 20px; border-radius: 4px; cursor: pointer; }
+/* A DASHBOARD row = admin's sub-module row: same 34px height and 12px label as its
+   parent, indented, with a 16px muted glyph left saying WHICH KIND of board it is. */
+.item { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 8px 0 24px; border-radius: 4px; cursor: pointer; font-size: 12px; }
 .item:hover { background: var(--surface-2); }
 /* No filled "selected" row inside the groups. The default board is already marked by the
    home icon beside its name AND pinned on its own row above, so a third signal on the
@@ -254,11 +268,12 @@ function doClone(d) { store.ui.editTarget = null; store.ui.cloneTarget = d; stor
    line up) rather than from a drawn box, and the glyph is quiet enough that the name
    stays the thing you read first. Colour still carries state: muted at rest, ink on
    hover, primary on the current board — matching the name beside it. */
-.ibox { flex: none; width: 20px; height: 20px; display: grid; place-items: center; color: var(--muted); }
-.item:hover .ibox { color: var(--ink-2); }
-.item.active .ibox { color: var(--primary-700); }
+/* the kind glyph. 16px and --muted, exactly as the admin sidebar paints its sub-module
+   icons — one grey down the whole list, so the column reads as structure, not status. */
+.ibox { flex: none; width: 16px; height: 16px; display: grid; place-items: center; color: var(--muted); }
+/* deliberately NOT recoloured when active — see .ibox */
 .lk { color: var(--muted-2); flex: none; }
-.iname { flex: 0 1 auto; min-width: 0; font-size: 13px; }
+.iname { flex: 0 1 auto; min-width: 0; font-size: 12px; }
 .tag-pre { font-size: 10px; font-weight: 500; color: var(--primary-700); background: var(--primary-soft); padding: 2px 6px; border-radius: 4px; flex: none; }
 /* pinned default row — sits above the groups, so no chevron indent; home icon + ⋯ only */
 .def-row { margin: 0 8px 6px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }

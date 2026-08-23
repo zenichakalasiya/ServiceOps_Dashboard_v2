@@ -29,8 +29,8 @@ import {
   Sparkles, User, Users, Lock, Globe, Calendar, Download, Image, FileText, ExternalLink,
   Bell, Settings, ArrowLeft, Pin, Wand2, Maximize2, GripVertical, Inbox, TrendingUp, FileOutput,
   Moon, Sun, CalendarDays, Rows3, LayoutTemplate, TriangleAlert, Package, Network,
-  Lightbulb, UserCheck, ClipboardCheck, UsersRound, Menu, Keyboard, History, Monitor,
-  FolderMinus, FolderPlus, BadgeCheck, Undo2, Redo2, RotateCcw, ThumbsUp, ThumbsDown, ArrowUp, ArrowDown,
+  Lightbulb, UserCheck, ClipboardCheck, UsersRound, Menu, Keyboard, History,
+  MonitorCog, FolderMinus, FolderPlus, BadgeCheck, Undo2, Redo2, RotateCcw, ThumbsUp, ThumbsDown, ArrowUp, ArrowDown,
   PenLine, Palette, Square, Circle, MoveUpRight, Eraser, Mail, MousePointer2, ChartArea,
   Donut, Filter, Triangle, ChartBarBig, ChartBarStacked, ChartNoAxesColumn, ChartSpline, ChartNoAxesCombined,
   ChartColumnBig, Grid3x3, Gauge, AlignLeft, Map, ArrowRight, MessageSquare,
@@ -67,7 +67,11 @@ const MAP = {
   moon: Moon, sun: Sun, calendar2: CalendarDays, rows: Rows3,
   template: LayoutTemplate, alert: TriangleAlert, package: Package, sitemap: Network,
   bulb: Lightbulb, 'user-check': UserCheck, clipboard: ClipboardCheck, team: UsersRound,
-  menu: Menu, keyboard: Keyboard, history: History, 'predefined-monitor': Monitor,
+  menu: Menu, keyboard: Keyboard, history: History,
+  /* The admin sidebar's "System Defaults" glyph — a monitor with a GEAR. Our word for that
+     state is "predefined", so the name stays ours and only the glyph is borrowed. A bare
+     Monitor said "a screen"; the gear says "shipped and configured by the system". */
+  'predefined-monitor': MonitorCog,
   // Ungroup pairs with New group: FolderPlus creates one, FolderMinus dissolves it.
   // lucide's own 'Ungroup' glyph is two dashed squares, which at 15px reads as a
   // smudge and shares no vocabulary with the icon that made the group.
