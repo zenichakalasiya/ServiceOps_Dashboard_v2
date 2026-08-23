@@ -452,11 +452,11 @@ function save(place) {
         <div class="bbody">
           <!-- LEFT: live preview (ServiceOps) -->
           <section class="preview">
-            <!-- The row above the preview. Refresh sits at its right end, on the same
-                 line as the tabs, because it acts on the thing directly below it —
-                 from the modal's top bar it was three regions away from what it
-                 refreshed. It renders even when there are no tabs to show. -->
-            <div class="pv-top">
+            <!-- Tabs only. Refresh used to share this row, which meant that whenever there
+                 were no families to offer (editing a predefined widget) a full-width band
+                 existed to hold one 32px button. It now sits in the preview card, where a
+                 placed widget keeps its own — same corner, same size, same gesture. -->
+            <div v-if="showFamilies" class="pv-top">
               <!-- creating: pick a family. editing: only the swaps that are actually
                    possible. Neither renders a disabled tab. -->
               <div v-if="showFamilies" class="pv-tabs">
@@ -467,11 +467,11 @@ function save(place) {
                   <Icon :name="f.icon" :size="16" /> {{ f.label }}
                 </button>
               </div>
+            </div>
+            <div class="pv-card">
               <button class="pv-refresh" title="Refresh preview" @click="refreshPreview">
                 <Icon name="refresh" :size="16" :class="{ spin: spinning }" />
               </button>
-            </div>
-            <div class="pv-card">
               <div class="pv-canvas">
                 <!-- the number only — the placed tile no longer shows a ▲/▼ %, and a
                      preview that shows one would be previewing something else -->
@@ -902,7 +902,7 @@ function save(place) {
    There was never a border here, but the preview sat on --bg while the panel sits on
    --surface, and that edge read as a 1px divider running the full height. The preview
    card keeps its own border and shadow, so it still reads as a card on white. */
-.preview { flex: 1.5; display: flex; flex-direction: column; min-width: 0; padding: 18px 22px 22px; background: var(--surface); }
+.preview { flex: 1.5; display: flex; flex-direction: column; min-width: 0; padding: 18px 22px 22px 22px; background: var(--surface); }
 /* One segmented control on a soft track with the active family filled near-black � the
    same control the reference uses for every either/or in this panel (family, access,
    Manual/Query, Top/Bottom/All). Four loose outlined buttons with a blue fill read as
@@ -910,7 +910,9 @@ function save(place) {
 /* the tab track and Refresh share one line; `margin-left:auto` (not space-between)
    keeps Refresh hard right even when there are no tabs to push it there */
 .pv-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-.pv-refresh { flex: none; margin-left: auto; width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid var(--border-control); background: var(--surface); color: var(--muted); border-radius: var(--r); }
+/* in the card's top-right corner, over the canvas — the same place and size the action
+   occupies on a placed widget, so the preview behaves like the thing it previews */
+.pv-refresh { position: absolute; top: 10px; right: 10px; z-index: 2; width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid var(--border-control); background: var(--surface); color: var(--muted); border-radius: var(--r); }
 .pv-refresh:hover { background: var(--surface-2); color: var(--ink); }
 .pv-tabs { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 4px; background: var(--surface-2); border-radius: 4px; }
 .pv-tab { display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 13px; border: none; background: transparent; color: var(--ink-2); border-radius: 4px; font-weight: 500; font-size: 13px; }
@@ -937,7 +939,7 @@ function save(place) {
 /* selected: a light primary wash, not a solid fill */
 .kind.on { background: var(--primary-soft); border-color: var(--primary); color: var(--primary-700); box-shadow: var(--sh-sm); }
 .kind .rot90 { transform: rotate(90deg); }
-.pv-card { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-sm); display: flex; flex-direction: column; overflow: hidden; }
+.pv-card { position: relative; flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-sm); display: flex; flex-direction: column; overflow: hidden; }
 .pv-canvas { flex: 1; display: grid; place-items: center; padding: 22px; min-height: 0; }
 .pv-canvas > * { width: 100%; }
 .pv-text { align-self: stretch; max-height: 100%; overflow: auto; align-self: start; }
@@ -949,7 +951,10 @@ function save(place) {
 .pv-tbl th { text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .4px; padding: 7px 10px; border-bottom: 1px solid var(--border); }
 .pv-tbl td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
 .pv-foot { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); margin-top: 12px; }
-.config { width: 480px; flex: none; display: flex; flex-direction: column; min-height: 0; }
+/* The line does the separating, so the panel no longer pays for a second gutter on top
+   of the preview's own right padding — the two together read as an undivided drift
+   rather than as two regions. Fields keep 20px off the rule so they do not touch it. */
+.config { width: 480px; flex: none; display: flex; flex-direction: column; min-height: 0; border-left: 1px solid var(--border); }
 .cfg-scroll { flex: 1; overflow: auto; padding: 18px 20px; }
 /* No rules between sections — the config sidebar had one under every section, so a Gauge
    scrolled past six or seven of them. Each heading is already a bold line with space above
@@ -1000,7 +1005,11 @@ function save(place) {
 .dup-warn .ico { flex: none; margin-top: 1px; }   /* optical-align with the first text line */
 .dup-warn b { font-weight: 600; color: var(--amber); }
 .input.bad { border-color: var(--amber); }
-.sec:last-child { padding-bottom: 0; }
+/* NO :last-child exception. The Display section is the last child of its <fieldset> while
+   Highlights sits outside it, so ":last-child" zeroed the gap on a section that was not
+   last on screen — the heading landed straight under the previous field's helper text.
+   A section is separated from whatever follows it regardless of how the markup nests, and
+   the trailing 22px at the very bottom keeps the last control off the footer. */
 /* 14px matches Create/Edit Dashboard — the two panels sit one click apart and were
    using different heading sizes for the same level of heading. */
 .sec-h { font-weight: 600; font-size: 14px; color: var(--ink); margin-bottom: 12px; }

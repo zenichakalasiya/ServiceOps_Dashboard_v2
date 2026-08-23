@@ -270,3 +270,10 @@ label.field { display:block; font-size:13px; font-weight: 500; color: var(--ink)
               var(--ai-grad-line) border-box;
 }
 .ai-cta.primary:hover { color: var(--primary); box-shadow: var(--sh-sm); }
+
+/* On a card narrow enough that the actions ARE the row, the buttons share it and the row
+   ends on the card's padding edge — like the summary paragraph above them. Left to size
+   themselves they stop short, and the leftover reads as a wider right padding than the
+   card actually has. Not applied to the full-width board card, where stretching two
+   buttons across the whole board would make them look like a form submit row. */
+.ai-ctas-fill .ai-cta { flex: 1; }

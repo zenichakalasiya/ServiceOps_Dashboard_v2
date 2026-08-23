@@ -27,7 +27,7 @@ const CTAS = AI_TEASER_CTAS
       <span class="acb-meta">{{ count ? count + ' need' + (count === 1 ? 's' : '') + ' attention' : 'Within range' }}</span>
     </div>
     <p class="acb-sum">{{ summary }}</p>
-    <div class="acb-acts">
+    <div class="acb-acts ai-ctas-fill">
       <button
         v-for="(c, i) in CTAS" :key="c.intent"
         class="ai-cta" :class="{ primary: i === 0 }" @click="emit('ask', c.intent, c.label)"

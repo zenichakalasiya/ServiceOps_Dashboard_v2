@@ -457,7 +457,7 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
           <!-- no widget name here: you're hovering that widget, so repeating it is noise -->
           <div class="wai-h"><span class="wai-spark"><Icon name="sparkles" :size="16" /></span> AI insights</div>
           <p class="wai-sum">{{ brief.summary }}</p>
-          <div v-if="WIDGET_CTAS.length" class="wai-acts">
+          <div v-if="WIDGET_CTAS.length" class="wai-acts ai-ctas-fill">
             <button
               v-for="a in WIDGET_CTAS" :key="a.label" class="ai-cta"
               :class="{ primary: a.intent === 'deepdive' }" @click="runWidgetAction(a)"
@@ -510,7 +510,7 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
               <!-- no widget name: you opened this from that widget's own menu -->
               <div class="wai-h"><span class="wai-spark"><Icon name="sparkles" :size="16" /></span> AI insights</div>
               <p class="wai-sum">{{ brief.summary }}</p>
-              <div class="wai-acts">
+              <div class="wai-acts ai-ctas-fill">
                 <button
                   v-for="a in WIDGET_CTAS" :key="a.label" class="ai-cta"
                   :class="{ primary: a.intent === 'deepdive' }" @click="askWidgetAi(a)"
@@ -817,7 +817,7 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 /* per-widget hover mini-summary card */
 /* Shell, wash and both CTA types come from `.aic` / `.ai-cta` in global.css —
    the same card the ticket detail page shows. Only geometry stays here. */
-.wai-card { position: fixed; z-index: 260; width: 384px; max-width: 92vw; padding: 12px 16px 16px; box-shadow: var(--sh-lg); }
+.wai-card { position: fixed; z-index: 260; width: 384px; max-width: 92vw; padding: 16px; box-shadow: var(--sh-lg); }
 .wai-card.up { transform: translateY(-100%); }
 .wai-h { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--ink); }
 .wai-h .ellip { color: var(--ai-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

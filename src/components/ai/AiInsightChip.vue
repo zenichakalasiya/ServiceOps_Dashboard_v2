@@ -44,7 +44,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
       <div v-if="open" class="ai-pop aic" @click.stop>
         <div class="ai-pop-h"><span class="ai-pop-spark"><Icon name="sparkles" :size="16" /></span> AI insights</div>
         <p class="ai-pop-sum">{{ summary }}</p>
-        <div class="ai-pop-acts">
+        <div class="ai-pop-acts ai-ctas-fill">
           <button
             v-for="(c, i) in CTAS" :key="c.intent"
             class="ai-cta" :class="{ primary: i === 0 }" @click="pick(c)"
@@ -80,7 +80,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
 .pop-backdrop { position: fixed; inset: 0; z-index: 40; }
 /* Shell, wash and both CTA types come from `.aic` / `.ai-cta` in global.css —
    the same card the ticket detail page shows. Only placement is local. */
-.ai-pop { position: absolute; top: 38px; right: 0; z-index: 50; width: 340px; box-shadow: var(--sh-pop); padding: 12px 16px 16px; }
+.ai-pop { position: absolute; top: 38px; right: 0; z-index: 50; width: 340px; box-shadow: var(--sh-pop); padding: 16px; }
 .ai-pop-h { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 10px; }
 /* a bare gradient glyph, no tinted container — the reference gives it none */
 .ai-pop-spark { flex: none; display: grid; place-items: center; }
