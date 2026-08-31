@@ -1078,11 +1078,17 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .group { border: 1px solid transparent; border-radius: 4px; background: var(--group-bg); padding: 6px 12px 14px; transition: box-shadow .15s, border-color .15s; }
 /* A tile inside a group sits on --group-bg (#FAFBFD), which is within four units of the
    tile header's own --bg (#F6F9FC) — close enough that the header strip merges into the
-   ground and the tile appears to begin at its white body. The tile's EDGE has to do the
-   separating: a stronger border and a deeper shadow lift the whole card off the group.
-   The alternative — recolouring the header inside a group — would give one widget two
+   ground and the tile appears to begin at its white body. The tile's EDGE does the
+   separating, and a STRONGER BORDER is all it takes.
+
+   There was a shadow here too. It lifted the card off the group, which is the problem:
+   a widget reads as focused — picked out, acted on — when it sits above its ground, and
+   these are just the widgets that happen to live in this group. The border draws the
+   edge without claiming any attention for it.
+
+   Not solved by recolouring the header inside a group: that would give one widget two
    different looks depending on where it was dropped, which is worse than the problem. */
-.group .cell > .tile { border-color: var(--border-strong); box-shadow: 0 1px 4px rgba(27,28,46,.10), 0 1px 2px rgba(27,28,46,.05); }
+.group .cell > .tile { border-color: var(--border-strong); }
 .group.drop-into, .grid.drop-into { border: 1px solid var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); border-radius: var(--r-lg); }
 .grid.drop-into { padding: 4px; }
 .grp-head { display: flex; align-items: center; gap: 8px; padding: 6px 0 12px; }
