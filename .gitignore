@@ -17,6 +17,22 @@ credentials*.txt
 *.p12
 *.pfx
 
+# Internal analysis — this repo is PUBLIC and none of this is ours to publish. It all
+# lives in the workspace root OUTSIDE this repo and has never been tracked here; these
+# patterns exist so a copy dropped in by accident cannot be committed. The secrets list
+# above already covered logins, but not the limitations register or the review docs,
+# which are just as internal and are the easier of the two to copy in without thinking.
+docs/
+register.txt
+limitations*.txt
+*.pdf
+*.xlsx
+
+# Playwright MCP leaves these in the working directory on every run — snapshots, console
+# logs and any named screenshot. They are debris from driving the browser, not project
+# files, and they were being deleted by hand after every session.
+.playwright-mcp/
+
 # Playwright
 /test-results/
 /playwright-report/
