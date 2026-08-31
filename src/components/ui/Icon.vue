@@ -27,7 +27,7 @@ import {
   ChevronDown, ChevronRight, ChevronLeft, ChevronUp, LayoutGrid, List, Check, X, Eye,
   ListFilter, Hash, ChartColumn, ChartLine, ChartPie, Table2, House, LayoutDashboard,
   Sparkles, User, Users, Lock, Globe, Calendar, Download, Image, FileText, ExternalLink,
-  Bell, Settings, ArrowLeft, Pin, Wand2, Maximize2, GripVertical, Inbox, TrendingUp, FileOutput,
+  Bell, Settings, ArrowLeft, Pin, Wand2, Maximize2, Minimize2, GripVertical, Inbox, TrendingUp, FileOutput,
   Moon, Sun, CalendarDays, Rows3, LayoutTemplate, TriangleAlert, Package, Network,
   Lightbulb, UserCheck, ClipboardCheck, UsersRound, Menu, Keyboard, History,
   MonitorCog, FolderMinus, FolderPlus, BadgeCheck, Undo2, Redo2, RotateCcw, ThumbsUp, ThumbsDown, ArrowUp, ArrowDown,
@@ -63,7 +63,11 @@ const MAP = {
   // ExternalLink arrow said "this opens another page", which is a different promise.
   export: FileOutput,
   bell: Bell, settings: Settings, 'arrow-left': ArrowLeft, pin: Pin, wand: Wand2,
-  'maximize-tile': Maximize2, drag: GripVertical, inbox: Inbox, trend: TrendingUp,
+  'maximize-tile': Maximize2,
+  /* its own glyph, not an X: leaving full screen RESTORES the tile to the board, which
+     is not the same promise as closing something. The pair reads as one toggle. */
+  'minimize-tile': Minimize2,
+  drag: GripVertical, inbox: Inbox, trend: TrendingUp,
   moon: Moon, sun: Sun, calendar2: CalendarDays, rows: Rows3,
   template: LayoutTemplate, alert: TriangleAlert, package: Package, sitemap: Network,
   bulb: Lightbulb, 'user-check': UserCheck, clipboard: ClipboardCheck, team: UsersRound,

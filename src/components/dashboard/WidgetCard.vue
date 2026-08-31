@@ -304,6 +304,9 @@ onBeforeUnmount(() => ro?.disconnect())
 // Below this width the two upfront controls (AI + Refresh) also fold into ⋯.
 const tiny = computed(() => cardW.value < 258)
 function refresh() { loading.value = true; setTimeout(() => { loading.value = false }, 750) }
+/* Full screen opens WITH the filter bar shown, because that is where a long record list
+   is actually read; the header toggle is there to reclaim the row, not to reveal it. */
+const presentFilter = ref(true)
 
 // provenance: predefined tiles can't be edited or deleted (only "other" actions)
 const prov = computed(() => props.tile.prov || 'user')
@@ -652,7 +655,17 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
     <teleport to="body">
       <div v-if="present" class="overlay" @click.self="present = false">
         <div class="present">
-          <div class="phead"><b>{{ tile.title }}</b><button class="btn btn-icon" @click="present = false"><Icon name="x" :size="18" /></button></div>
+          <!-- Full screen carries the actions that still MEAN something at this size:
+               refresh, the table's filter toggle, and collapse. Edit, duplicate and the
+               rest belong to the tile on the board, not to a reading view of it. -->
+          <div class="phead">
+            <b>{{ tile.title }}</b>
+            <div class="phead-a">
+              <button v-if="tile.type === 'shortcut'" class="btn btn-icon" :class="{ on: presentFilter }" title="Filter" @click="presentFilter = !presentFilter"><Icon name="filter" :size="17" /></button>
+              <button class="btn btn-icon" title="Refresh" @click="refresh"><Icon name="refresh" :size="17" :class="{ spin: loading }" /></button>
+              <button class="btn btn-icon" title="Exit full screen" @click="present = false"><Icon name="minimize-tile" :size="17" /></button>
+            </div>
+          </div>
           <div class="pbody">
             <ChartTile v-if="tile.type === 'chart'" :chart="tile.chart" :legend="showLegend" :data-labels="tile.dataLabels === true" :height="620" />
             <div v-else-if="tile.type === 'kpi'" class="kpi big"><div class="kpinum">{{ tile.value }}<span class="unit">{{ tile.unit }}</span></div></div>
@@ -661,6 +674,7 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
               <!-- full screen: the same bar, always available (there is no header icon to
                    toggle it from here), and the whole record set scrolls in the dialog -->
               <TableFilterBar
+                v-if="presentFilter"
                 :columns="tile.columns || []" :rows="tile.rows || []"
                 v-model="tableConds" v-model:search="tableSearch"
                 @close="tableConds = []; tableSearch = ''"

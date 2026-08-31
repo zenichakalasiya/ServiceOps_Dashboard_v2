@@ -144,6 +144,18 @@ function switchType(t) {
 
 // Manual vs Query-Based: the SQL Query field (with Tap Preview) shows for Shortcuts
 // and for any Widget/KPI once the user switches to the Query Based tab.
+/* The line under Manual / Query. The reference prints "A KPI counts the records that
+   match your conditions." on a screen whose Widget tab is active and whose preview is a
+   bar chart — so it names the wrong family and describes the wrong mode at once. This
+   follows both: which family is being built, and which of the two modes is in force,
+   because under Query the conditions are not what fills the tile. */
+const modeHint = computed(() => {
+  if (queryMode.value) return 'Write the query that returns this widget’s data.'
+  if (isKpi.value) return 'A KPI counts the records that match your conditions.'
+  if (isShortcut.value) return 'A Shortcut lists the records that match your conditions.'
+  return 'The chart plots the records that match your conditions.'
+})
+
 const queryMode = computed(() => isShortcut.value || (!isShortcut.value && cfg.mode === 'query'))
 const manualMode = computed(() => !isShortcut.value && cfg.mode === 'manual')
 
@@ -503,6 +515,7 @@ function save(place) {
                    mid-edit. Shown for both predefined and custom edits. -->
               <div v-if="editTabs.length" class="sec">
                 <div class="sec-h">Chart Type</div>
+                <p class="hint">Pick how the data should be visualized.</p>
                 <div class="kinds">
                   <button
                     v-for="t in editTabs" :key="t.id" class="kind"
@@ -568,6 +581,7 @@ function save(place) {
                    there has to be somewhere the name still lives. -->
               <div v-if="showFamilies && isChart" class="sec">
                 <div class="sec-h">Chart Type</div>
+                <p class="hint">Pick how the data should be visualized.</p>
                 <!-- Grouped, in the same buckets and the same order as the Create Widget
                      card grid, off one shared list (PICKER_GROUPS). Thirteen icon-only
                      squares in one wrapping row asked you to recognise every glyph before
@@ -593,6 +607,7 @@ function save(place) {
                     <button class="seg-b" :class="{ on: cfg.mode==='manual' }" @click="cfg.mode='manual'">Manual</button>
                     <button class="seg-b" :class="{ on: cfg.mode==='query' }" @click="cfg.mode='query'">Query</button>
                   </div>
+                  <p class="hint" style="margin-top:8px">{{ modeHint }}</p>
                 </template>
               </div>
               <!-- families without a chart type still need the Manual / Query switch -->
@@ -934,10 +949,10 @@ function save(place) {
 .kind-grp + .kind-grp { margin-top: 14px; }
 .kind-grp-h { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
 .kinds { display: flex; flex-wrap: wrap; gap: 10px; }
-.kind { flex: none; display: grid; place-items: center; width: 48px; height: 48px; padding: 0; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink-2); border-radius: 4px; }
-.kind:hover { background: var(--surface-2); border-color: var(--muted-2); }
+.kind { flex: none; display: grid; place-items: center; width: 56px; height: 52px; padding: 0; border: 1px solid var(--border-control); background: var(--surface); color: var(--ink-2); border-radius: var(--r-lg); transition: border-color .15s, color .15s; }
+.kind:hover { border-color: var(--muted-2); color: var(--ink); }
 /* selected: a light primary wash, not a solid fill */
-.kind.on { background: var(--primary-soft); border-color: var(--primary); color: var(--primary-700); box-shadow: var(--sh-sm); }
+.kind.on { border: 1.5px solid var(--ink); color: var(--ink); }
 .kind .rot90 { transform: rotate(90deg); }
 .pv-card { position: relative; flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-sm); display: flex; flex-direction: column; overflow: hidden; }
 .pv-canvas { flex: 1; display: grid; place-items: center; padding: 22px; min-height: 0; }
@@ -1017,7 +1032,7 @@ function save(place) {
    the trailing 22px at the very bottom keeps the last control off the footer. */
 /* 14px matches Create/Edit Dashboard — the two panels sit one click apart and were
    using different heading sizes for the same level of heading. */
-.sec-h { font-weight: 600; font-size: 14px; color: var(--ink); margin-bottom: 12px; }
+.sec-h { font-weight: 600; font-size: 15px; color: var(--ink); margin-bottom: 12px; }
 /* a heading that OWNS the line under it sits tight to it — 12px of air between a title
    and its own description reads as two separate things */
 .sec-h:has(+ .hint) { margin-bottom: 5px; }

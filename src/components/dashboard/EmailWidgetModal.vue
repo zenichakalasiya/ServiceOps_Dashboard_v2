@@ -201,8 +201,10 @@ function send() {
           <span v-if="drawing" class="hint">{{ tool === 'pen' ? 'Draw to highlight' : `Drag to place a ${shapeKind}` }} · Esc to stop</span>
         </div>
 
-        <!-- recipients -->
-        <label class="fl">Email</label>
+        <!-- Recipients. NOT "Share with", and no permission selector beside it: the
+             thing being sent is a rendered PDF, so there is no access to grant and
+             a "can view" would be a control with nothing behind it. -->
+        <label class="fl">Send to</label>
         <div class="rcpt" :class="{ focus: focused }">
           <span v-for="(p, i) in picked" :key="p.name" class="rchip">
             <Icon name="mail" :size="12" />{{ p.name }}
@@ -217,8 +219,8 @@ function send() {
         </div>
 
         <!-- the note IS the email body, which is what earns it a place here -->
-        <label class="fl">Note</label>
-        <textarea v-model="note" rows="2" placeholder="Add a note for the recipients…" />
+        <label class="fl">Add note</label>
+        <textarea v-model="note" rows="2" placeholder="Write a note…" />
       </div>
 
       <footer class="sw-f">
