@@ -206,8 +206,8 @@ function cancel() {
          ending the session, and it stays part of the draft, so Cancel undoes a Reset
          too. The gap between them is what says so. Outside the scroll area, so the
          commit is reachable without scrolling past the fields and the preview. -->
-    <footer class="la-foot">
-      <button class="la-ghost" :disabled="atDefaults" title="Put every value back to its default" @click="resetLayoutValues(dash)">
+    <footer class="la-foot dlg-foot">
+      <button class="la-ghost spread" :disabled="atDefaults" title="Put every value back to its default" @click="resetLayoutValues(dash)">
         <Icon name="reset" :size="14" /> Reset
       </button>
       <button class="btn" @click="cancel">Cancel</button>
@@ -285,7 +285,6 @@ function cancel() {
 .la-scale { display: flex; justify-content: space-between; margin: 2px 56px 0 0; font-size: 11px; color: var(--muted); }
 
 /* ── the footer ───────────────────────────────────────────────────────────────── */
-.la-foot { display: flex; align-items: center; gap: 8px; }
 /* Reset holds the left edge; `margin-right: auto` on it is what pushes the commit
    pair right, so the gap between them carries the "different kind of action" */
 .la-ghost {
@@ -296,7 +295,7 @@ function cancel() {
 .la-ghost:hover:not(:disabled) { background: var(--surface-2); color: var(--ink); }
 .la-ghost:disabled { opacity: .4; cursor: not-allowed; }
 .la.drawer .la-foot {
-  flex: none; padding: 12px 22px;
+  flex: none;
   background: var(--surface); border-top: 1px solid var(--border);
 }
 .la.panel .la-foot { margin-top: 18px; }

@@ -237,9 +237,9 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 <template>
   <div class="drawer-overlay" @click.self="emit('close')">
     <div class="aw">
-      <header class="aw-head">
+      <header class="dlg-head">
         <h3>Add new widget</h3>
-        <button class="ic" @click="emit('close')"><Icon name="x" :size="18" /></button>
+        <button class="dlg-x" @click="emit('close')"><Icon name="x" :size="18" /></button>
       </header>
 
       <!-- top tabs -->
@@ -340,12 +340,12 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 
       <!-- multi-select footer: Add (n) / Cancel -->
       <transition name="slideup">
-        <footer v-if="tab === 'chart'" class="aw-foot">
+        <footer v-if="tab === 'chart'" class="dlg-foot">
           <span />
           <div class="fbtns"><button class="btn" @click="emit('close')">Cancel</button></div>
         </footer>
-        <footer v-else-if="selected.size" class="aw-foot">
-          <span class="selinfo">{{ selected.size }} selected<span v-if="selected.size >= MAX_SEL"> · max {{ MAX_SEL }}</span></span>
+        <footer v-else-if="selected.size" class="dlg-foot">
+          <span class="selinfo spread">{{ selected.size }} selected<span v-if="selected.size >= MAX_SEL"> · max {{ MAX_SEL }}</span></span>
           <div class="fbtns">
             <button class="btn" @click="clearSel">Cancel</button>
             <button class="btn btn-primary" @click="addSelected"><Icon name="plus" :size="15" /> Add</button>
@@ -402,12 +402,6 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
    Below that the strip scrolls horizontally, which costs more than the cards gain. */
 .aw { width: 640px; max-width: 96vw; height: 100%; background: var(--picker-bg); box-shadow: var(--sh-lg); display: flex; flex-direction: column; overflow: hidden; animation: slideIn .22s cubic-bezier(.2,.8,.2,1); }
 @keyframes slideIn { from { transform: translateX(30px); opacity: .4; } to { transform: translateX(0); opacity: 1; } }
-.aw-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px 12px; }
-.aw-head h3 { margin: 0; font-size: 17px; font-weight: 700; color: var(--ink); }
-/* the close sits in its own tinted square, as the reference draws it — on a sunken
-   panel a bare glyph has no edge of its own and reads as floating text */
-.aw-head .ic { width: 30px; height: 30px; border-radius: var(--r); background: var(--picker-card); color: var(--muted); }
-.aw-head .ic:hover { background: var(--picker-card-hover); color: var(--ink); }
 .ic { width: 34px; height: 32px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .ic:hover { background: var(--surface-2); color: var(--ink); }
 /* five labels are wider than the drawer, so the strip scrolls sideways rather than
@@ -496,7 +490,6 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .cf-del { background: var(--red); border-color: var(--red); color: #fff; }
 .cf-del:hover { background: #c73f34; border-color: #c73f34; }
 /* multi-select footer */
-.aw-foot { display: flex; align-items: center; justify-content: space-between; padding: 12px 22px; border-top: 1px solid var(--border); background: var(--surface); flex: none; }
 .selinfo { font-size: 13px; font-weight: 500; color: var(--muted); }
 .fbtns { display: flex; gap: 10px; }
 .slideup-enter-active, .slideup-leave-active { transition: transform .2s ease, opacity .2s ease; }

@@ -60,7 +60,7 @@ function delSchedule(s) { props.d.schedules = props.d.schedules.filter((x) => x.
     <div class="sc-panel">
     <!-- ===== LIST ===== -->
     <template v-if="view === 'list'">
-      <div class="head"><h3>Schedule: {{ subject }}</h3><button class="ic" @click="emit('close')"><Icon name="x" :size="18" /></button></div>
+      <div class="dlg-head"><h3>Schedule: {{ subject }}</h3><button class="dlg-x" @click="emit('close')"><Icon name="x" :size="18" /></button></div>
       <div class="lst-top">
         <div class="qbox"><Icon name="search" :size="15" class="muted" /><input v-model="search" placeholder="Search…" /></div>
         <button class="btn btn-primary" @click="openCreate"><Icon name="plus" :size="15" /> Create Schedule</button>
@@ -78,12 +78,12 @@ function delSchedule(s) { props.d.schedules = props.d.schedules.filter((x) => x.
           </tbody>
         </table>
       </div>
-      <div class="foot"><span class="muted grow">Showing {{ list.length }} of {{ d.schedules.length }} items</span><button class="btn" @click="emit('close')">Close</button></div>
+      <div class="dlg-foot"><span class="muted spread">Showing {{ list.length }} of {{ d.schedules.length }} items</span><button class="btn" @click="emit('close')">Close</button></div>
     </template>
 
     <!-- ===== CREATE / EDIT FORM ===== -->
     <template v-else>
-      <div class="head"><div class="row gap-10"><button class="ic" title="Back to schedules" @click="view = 'list'"><Icon name="arrow-left" :size="18" /></button><h3>{{ editId ? 'Edit Schedule' : 'Create Schedule' }}</h3></div><button class="ic" @click="emit('close')"><Icon name="x" :size="18" /></button></div>
+      <div class="dlg-head"><div class="row gap-10"><button class="ic" title="Back to schedules" @click="view = 'list'"><Icon name="arrow-left" :size="18" /></button><h3>{{ editId ? 'Edit Schedule' : 'Create Schedule' }}</h3></div><button class="dlg-x" @click="emit('close')"><Icon name="x" :size="18" /></button></div>
       <div class="body">
         <div class="grid2">
           <div class="fld"><label>Name <i>*</i></label><input class="input" v-model="f.name" placeholder="Name" /></div>
@@ -156,7 +156,7 @@ function delSchedule(s) { props.d.schedules = props.d.schedules.filter((x) => x.
           </template>
         </div>
       </div>
-      <div class="foot"><button class="btn btn-primary" @click="createSchedule"><Icon name="check" :size="16" /> {{ editId ? 'Save' : 'Create' }}</button><button class="btn" @click="view = 'list'">Cancel</button></div>
+      <div class="dlg-foot"><button class="btn btn-primary" @click="createSchedule"><Icon name="check" :size="16" /> {{ editId ? 'Save' : 'Create' }}</button><button class="btn" @click="view = 'list'">Cancel</button></div>
     </template>
     </div>
   </div>
@@ -166,7 +166,6 @@ function delSchedule(s) { props.d.schedules = props.d.schedules.filter((x) => x.
 .sc-overlay { position: fixed; inset: 0; background: rgba(20,21,38,.42); backdrop-filter: blur(2px); z-index: 100; display: flex; justify-content: flex-end; }
 .sc-panel { width: 720px; max-width: 96vw; height: 100%; background: var(--surface); box-shadow: var(--sh-lg); display: flex; flex-direction: column; overflow: hidden; animation: slideIn .22s cubic-bezier(.2,.8,.2,1); }
 @keyframes slideIn { from { transform: translateX(30px); opacity: .4; } to { transform: translateX(0); opacity: 1; } }
-.head { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px 14px; border-bottom: 1px solid var(--border); } .head h3 { margin: 0; font-size: 17px; }
 .ic { width: 34px; height: 32px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; } .ic:hover { background: var(--surface-2); color: var(--ink); }
 /* list */
 .lst-top { display: flex; align-items: center; gap: 12px; padding: 16px 22px 8px; }
@@ -198,7 +197,6 @@ function delSchedule(s) { props.d.schedules = props.d.schedules.filter((x) => x.
 .sw i { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: var(--sh-sm); }
 .sw.on { background: var(--primary); } .sw.on i { left: 20px; }
 .time-row { display: flex; align-items: center; gap: 8px; } .time-row .colon { color: var(--muted); font-weight: 600; }
-.foot { display: flex; align-items: center; gap: 10px; padding: 14px 22px; border-top: 1px solid var(--border); background: var(--surface-2); }
 .foot .grow { flex: 1; font-size: 13px; }
 .foot:not(:has(.grow)) { justify-content: flex-start; }
 </style>

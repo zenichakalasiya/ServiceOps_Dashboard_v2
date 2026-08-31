@@ -323,3 +323,42 @@ label.field { display:block; font-size:13px; font-weight: 500; color: var(--ink)
 .seg.ro .seg-b:hover { color: var(--muted); }
 .seg.ro .seg-b.on { background: var(--border-strong); color: var(--ink); box-shadow: none; }
 .seg.ro .seg-b.on .ico { color: var(--ink); }
+
+/* ── Dialog chrome, ONE definition ───────────────────────────────────────────
+   Every sidebar, popup and dialog in the module wears the same head and foot.
+
+   An audit on 2026-08-31 found FIVE spellings of the header (titles at 17px and
+   18px, four different paddings, some with a bottom rule and some without), FIVE
+   of the close button (30x30 tinted, 34x32 bare, 30x30 bordered…) and SIX of the
+   footer (four paddings, two gaps, one on a different background). Nothing chose
+   those differences; they accumulated one panel at a time. A panel whose chrome
+   tells you which panel it is, is a panel you have to re-learn.
+
+   As with .seg and .aic: a scoped `.head` out-specifies these, so a local copy
+   does not merely duplicate the rule, it silently wins. Delete the local one. */
+.dlg-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 18px 22px 12px; flex: none;
+}
+.dlg-head h3 { margin: 0; font-size: 17px; font-weight: 700; color: var(--ink); }
+/* The close sits in its own tinted square, as the reference draws it. On a panel
+   that has no border under its title, a bare glyph has no edge of its own and
+   reads as floating text rather than as the control that dismisses the panel. */
+.dlg-x {
+  width: 30px; height: 30px; flex: none; padding: 0; border: none;
+  background: var(--surface-2); color: var(--muted);
+  border-radius: var(--r); display: grid; place-items: center;
+  transition: background .15s, color .15s;
+}
+.dlg-x:hover { background: var(--border); color: var(--ink); }
+
+/* Actions right-aligned, commit first — matching every footer in the reference.
+   Anything that belongs on the LEFT (a selection count, a Reset) takes
+   `margin-right: auto` rather than switching the whole row to space-between,
+   so a footer with nothing on the left still ends up right-aligned. */
+.dlg-foot {
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  padding: 14px 22px; border-top: 1px solid var(--border);
+  background: var(--surface); flex: none;
+}
+.dlg-foot .spread { margin-right: auto; }

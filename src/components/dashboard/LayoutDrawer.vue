@@ -43,11 +43,11 @@ onBeforeUnmount(() => { cancelLayoutEdit(); window.removeEventListener('keydown'
         <!-- Title only. The subtitle used to restate the scope, but the two scope cards
              are the first thing in the panel and say it in full — the header was
              answering a question the body answers three lines later. -->
-        <header class="ld-h">
+        <header class="ld-h dlg-head">
           <h3>Dashboard layout</h3>
           <!-- Close only. Reset lives at the footer's left edge, beside the other two
                things you can do to this draft. -->
-          <button class="ld-x" title="Close" @click="close"><Icon name="x" :size="18" /></button>
+          <button class="dlg-x" title="Close" @click="close"><Icon name="x" :size="18" /></button>
         </header>
         <div class="ld-b"><LayoutAppearance variant="drawer" /></div>
       </div>
@@ -66,10 +66,6 @@ onBeforeUnmount(() => { cancelLayoutEdit(); window.removeEventListener('keydown'
   background: var(--surface); border-left: 1px solid var(--border);
   box-shadow: var(--sh-lg);
 }
-.ld-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 22px; border-bottom: 1px solid var(--border); flex: none; }
-.ld-h h3 { margin: 0; font-size: 18px; font-weight: 600; color: var(--ink); }
-.ld-x { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border: none; background: transparent; color: var(--muted); border-radius: var(--r); }
-.ld-x:hover { background: var(--icon-hover); color: var(--ink); }
 /* No padding and no scrolling here: LayoutAppearance splits itself into a scrolling
    body and a pinned footer, and it can only do that if it owns the full height. A
    padded, scrolling wrapper would put the footer inside the scroll again. */

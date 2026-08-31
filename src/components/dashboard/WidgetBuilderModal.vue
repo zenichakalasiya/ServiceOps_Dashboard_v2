@@ -879,7 +879,7 @@ function save(place) {
               </div>
             </div>
 
-            <footer class="cfg-foot">
+            <footer class="cfg-foot dlg-foot">
 <!-- Reset removed: Cancel already discards everything, so the two sat side by
                    side offering the same outcome by different names. -->
               <!-- Canvas duplicate → single Duplicate · Canvas edit → single Update ·
@@ -1101,7 +1101,6 @@ function save(place) {
 .pv-kpi .u { font-size: 28px; font-weight: 600; color: var(--muted); margin-left: 4px; }
 .spin { animation: bsp .7s linear infinite; } @keyframes bsp { to { transform: rotate(360deg); } }
 .qrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 9px; }
-.cfg-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 18px; border-top: 1px solid var(--border); background: var(--surface); flex: none; }
 /* near-black primaries, matching the reference and the Create Dashboard panel */
 .cfg-foot .btn-primary { background: var(--ink); border-color: var(--ink); }
 .cfg-foot .btn-primary:hover:not(:disabled) { background: #26313f; border-color: #26313f; }

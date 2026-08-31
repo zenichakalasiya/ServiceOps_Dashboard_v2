@@ -115,12 +115,12 @@ function submit(openAdd = false) {
 <template>
   <div class="drawer-overlay" @click.self="close">
     <div class="drawer">
-      <div class="head">
+      <div class="dlg-head">
         <div>
           <h3>{{ isEdit ? 'Edit Dashboard' : isClone ? 'Clone Dashboard' : 'Create Dashboard' }}</h3>
           <p v-if="isEdit || isClone" class="muted">{{ isEdit ? 'Update this dashboard’s details.' : 'Duplicate this board with its widgets, then tweak it.' }}</p>
         </div>
-        <button class="x-btn" @click="close"><Icon name="x" :size="16" /></button>
+        <button class="dlg-x" @click="close"><Icon name="x" :size="16" /></button>
       </div>
 
       <div class="body">
@@ -212,7 +212,7 @@ function submit(openAdd = false) {
 
       </div>
 
-      <div class="foot">
+      <div class="dlg-foot">
         <button class="btn btn-primary" :disabled="!canSave" :title="nameTaken ? 'That name is already taken — dashboard names must be unique' : ''" @click="submit(false)">
           <Icon :name="isEdit ? 'check' : isClone ? 'copy' : 'plus'" :size="16" /> {{ isEdit ? 'Save changes' : isClone ? 'Clone Dashboard' : 'Create' }}
         </button>
@@ -231,12 +231,8 @@ function submit(openAdd = false) {
 .drawer-overlay { position: fixed; inset: 0; background: rgba(20,21,38,.42); backdrop-filter: blur(2px); z-index: 100; display: flex; justify-content: flex-end; }
 .drawer { width: 620px; max-width: 96vw; height: 100%; background: var(--surface); box-shadow: var(--sh-lg); display: flex; flex-direction: column; overflow: hidden; animation: slideIn .22s cubic-bezier(.2,.8,.2,1); }
 @keyframes slideIn { from { transform: translateX(30px); opacity: .4; } to { transform: none; opacity: 1; } }
-.head { display: flex; align-items: flex-start; justify-content: space-between; padding: 20px 22px 12px; }
-.head h3 { margin: 0; font-size: 18px; }
 .head p { margin: 3px 0 0; font-size: 13px; }
 /* close sits in its own soft square, as the design has it */
-.x-btn { width: 30px; height: 30px; flex: none; border: 1px solid var(--border); background: var(--surface-2); color: var(--ink-2); border-radius: 4px; display: grid; place-items: center; }
-.x-btn:hover { background: var(--border); color: var(--ink); }
 .body { flex: 1; padding: 6px 22px 20px; display: flex; flex-direction: column; gap: 16px; overflow: auto; }
 /* section headings — Basics / Visibility & sharing / Layout, as the design groups them.
    The first one loses its top margin so it doesn't push away from the drawer header. */
@@ -305,7 +301,6 @@ function submit(openAdd = false) {
 /* live preview */
 /* ---- Default landing scope: who does this become the home screen for? ---- */
 
-.foot { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 22px; border-top: 1px solid var(--border); background: var(--surface); }
 /* the primary is the design's near-black, not the product blue — inside a modal whose
    only other blue is the access segment, a blue CTA competed with it */
 .foot .btn-primary { background: var(--ink); border-color: var(--ink); }
