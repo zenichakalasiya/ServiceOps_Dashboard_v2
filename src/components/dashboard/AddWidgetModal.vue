@@ -238,7 +238,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
   <div class="drawer-overlay" @click.self="emit('close')">
     <div class="aw">
       <header class="aw-head">
-        <h3>Add New Widget</h3>
+        <h3>Add new widget</h3>
         <button class="ic" @click="emit('close')"><Icon name="x" :size="18" /></button>
       </header>
 
@@ -253,10 +253,16 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
         <button class="awt" :class="{ on: tab === 'trash' }" @click="tab = 'trash'">Archive <span v-if="trashCount" class="awt-count">{{ trashCount }}</span></button>
       </div>
 
-      <!-- module filter + search (reuse tabs only — the Create Widget tab has no search) -->
-      <div v-if="tab !== 'chart'" class="aw-filters">
-        <div class="srch"><Icon name="search" :size="15" class="muted" /><input v-model="search" placeholder="Search…" /></div>
-        <div v-if="fType !== 'shortcut'" class="modsel"><Dropdown v-model="fModule" :options="moduleOptions" placeholder="All modules" /></div>
+      <!-- Search on every tab, including Create Widget, where it already filters the type
+           cards. The MODULE dropdown does not follow it there: a module filter picks saved
+           tiles by the module they report on, and a chart TYPE has no module — on that tab
+           it would render enabled and change nothing, so the search takes the full row. -->
+      <div class="aw-filters">
+        <div class="srch">
+          <Icon name="search" :size="15" class="muted" />
+          <input v-model="search" :placeholder="tab === 'chart' ? 'Search widget types…' : 'Search…'" />
+        </div>
+        <div v-if="tab !== 'chart' && fType !== 'shortcut'" class="modsel"><Dropdown v-model="fModule" :options="moduleOptions" placeholder="All modules" /></div>
       </div>
 
       <!-- type filter inside a reuse tab. Section 10.1 content tabs, the same switcher the
@@ -334,7 +340,11 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 
       <!-- multi-select footer: Add (n) / Cancel -->
       <transition name="slideup">
-        <footer v-if="tab !== 'chart' && selected.size" class="aw-foot">
+        <footer v-if="tab === 'chart'" class="aw-foot">
+          <span />
+          <div class="fbtns"><button class="btn" @click="emit('close')">Cancel</button></div>
+        </footer>
+        <footer v-else-if="selected.size" class="aw-foot">
           <span class="selinfo">{{ selected.size }} selected<span v-if="selected.size >= MAX_SEL"> · max {{ MAX_SEL }}</span></span>
           <div class="fbtns">
             <button class="btn" @click="clearSel">Cancel</button>
@@ -390,10 +400,14 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
    It cannot go much lower: the tab strip (Create Widget → Archive) measures 622px, and
    the active tab is bold, so its width shifts as you switch tabs — hence the headroom.
    Below that the strip scrolls horizontally, which costs more than the cards gain. */
-.aw { width: 640px; max-width: 96vw; height: 100%; background: var(--surface); box-shadow: var(--sh-lg); display: flex; flex-direction: column; overflow: hidden; animation: slideIn .22s cubic-bezier(.2,.8,.2,1); }
+.aw { width: 640px; max-width: 96vw; height: 100%; background: var(--picker-bg); box-shadow: var(--sh-lg); display: flex; flex-direction: column; overflow: hidden; animation: slideIn .22s cubic-bezier(.2,.8,.2,1); }
 @keyframes slideIn { from { transform: translateX(30px); opacity: .4; } to { transform: translateX(0); opacity: 1; } }
 .aw-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px 12px; }
-.aw-head h3 { margin: 0; font-size: 17px; }
+.aw-head h3 { margin: 0; font-size: 17px; font-weight: 700; color: var(--ink); }
+/* the close sits in its own tinted square, as the reference draws it — on a sunken
+   panel a bare glyph has no edge of its own and reads as floating text */
+.aw-head .ic { width: 30px; height: 30px; border-radius: var(--r); background: var(--picker-card); color: var(--muted); }
+.aw-head .ic:hover { background: var(--picker-card-hover); color: var(--ink); }
 .ic { width: 34px; height: 32px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .ic:hover { background: var(--surface-2); color: var(--ink); }
 /* five labels are wider than the drawer, so the strip scrolls sideways rather than
@@ -406,7 +420,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .awt.on { color: var(--primary-700); border-bottom-color: var(--primary); }
 .awt-count { font-size: 11px; font-weight: 700; background: var(--red-soft); color: var(--red); border-radius: 999px; padding: 0 6px; }
 .aw-filters { display: flex; gap: 9px; padding: 14px 22px 6px; }
-.srch { display: flex; align-items: center; gap: 8px; background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 4px; padding: 0 11px; height: 36px; flex: 1; }
+.srch { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border-control); border-radius: var(--r); padding: 0 11px; height: 36px; flex: 1; }
 .srch input { border: none; outline: none; background: transparent; width: 100%; font-size: 13px; }
 .modsel { width: 172px; flex: none; }
 /* section 10.1 content tabs — underline, no fill. Every tab carries a transparent 2px
@@ -420,7 +434,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .ttab.on .ttab-c { background: var(--primary-soft); color: var(--primary-700); }
 .aw-body { flex: 1; overflow: auto; padding: 14px 22px 22px; }
 .cat { margin-bottom: 18px; }
-.cat-h { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted-2); font-weight: 600; margin: 6px 0 10px; }
+.cat-h { font-size: 13px; color: var(--muted); font-weight: 500; margin: 6px 0 10px; }
 .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 /* §9.2 clickable / module card. Three things follow from that section:
    · it sits on --surface, not the grey --surface-2 — a card IS the surface, and a grey
@@ -430,9 +444,9 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
    · hover is a primary border plus the guide's lift shadow, not a colour wash. The
      wash tinted the whole card blue and the icon lost its own contrast against it.
    The icon keeps --muted at rest and takes the primary on hover, per §5. */
-.tc { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 20px 12px; border: 1px solid var(--border); background: var(--surface); border-radius: var(--r-lg); color: var(--muted); transition: border-color .15s, box-shadow .15s, transform .1s, color .15s; }
-.tc:hover { border-color: var(--primary); color: var(--primary); box-shadow: var(--sh); transform: translateY(-2px); }
-.tc-group { border-style: dashed; border-color: var(--border-strong); }
+.tc { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 20px 12px; border: 1px solid transparent; background: var(--picker-card); border-radius: var(--r-lg); color: var(--muted); transition: background .15s, border-color .15s, color .15s; }
+.tc:hover { background: var(--picker-card-hover); border-color: var(--primary); color: var(--primary); }
+.tc-group { border-style: dashed; border-color: var(--border-strong); background: transparent; }
 .tc-ico { width: 64px; height: 64px; display: grid; place-items: center; }
 /* the label is READ, so it holds the primary ink while the icon stays quiet beside it */
 .tc-label { font-size: 13px; font-weight: 500; color: var(--ink); }
@@ -474,7 +488,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .cf-del { background: var(--red); border-color: var(--red); color: #fff; }
 .cf-del:hover { background: #c73f34; border-color: #c73f34; }
 /* multi-select footer */
-.aw-foot { display: flex; align-items: center; justify-content: space-between; padding: 12px 22px; border-top: 1px solid var(--border); background: var(--surface-2); flex: none; }
+.aw-foot { display: flex; align-items: center; justify-content: space-between; padding: 12px 22px; border-top: 1px solid var(--border); background: var(--surface); flex: none; }
 .selinfo { font-size: 13px; font-weight: 500; color: var(--muted); }
 .fbtns { display: flex; gap: 10px; }
 .slideup-enter-active, .slideup-leave-active { transition: transform .2s ease, opacity .2s ease; }

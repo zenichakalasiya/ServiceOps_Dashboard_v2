@@ -83,6 +83,15 @@
   --bg: #f7f9fc;               /* Page background (app shell) */
   --surface: #ffffff;          /* Surface / card / table */
   --surface-2: #f5f7fa;        /* Subtle fill / hover */
+  /* The widget picker inverts the usual relationship: its panel is a SUNKEN ground and
+     the type cards sit raised on it, rather than white cards on white. Light does that by
+     making the ground faintly blue and the cards a step darker; dark cannot copy that,
+     because on a dark theme lightness IS elevation — a card darker than its ground reads
+     as a hole. So dark drops the ground below --surface and lifts the cards above it, and
+     the same "card stands off the panel" relationship survives the theme swap. */
+  --picker-bg: #f6f9fc;
+  --picker-card: #edf2f8;
+  --picker-card-hover: #e4ebf4;
   --row-hover: #f9fafb;        /* Table row hover */
   --icon-hover: #f3f4f6;       /* Icon-button hover */
   --inset: #f1f5f9;            /* Inset panel fill */
@@ -197,6 +206,9 @@
   --surface: #1d1d27;
   --sidebar: #0f111a; --sidebar-hover: #1b1f2b; --sidebar-border: #282c3a;
   --surface-2: #25252f;
+  --picker-bg: #17171f;        /* below --surface: the ground */
+  --picker-card: #25252f;      /* above it: the cards */
+  --picker-card-hover: #2e2e3a;
   --row-hover: #22222d;
   --icon-hover: #2a2a35;
   --inset: #212129;
