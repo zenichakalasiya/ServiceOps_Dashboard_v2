@@ -158,7 +158,6 @@ function cancel() {
               class="la-rng" type="range" min="0" max="2" step="1"
               :value="sizeIdx" @input="setVal('titleSize', SIZES[+$event.target.value].id)"
             />
-            <span class="la-val">{{ val('titleSize') }}</span>
           </div>
           <div class="la-scale"><span v-for="s in SIZES" :key="s.id">{{ s.id }}</span></div>
         </div>
@@ -173,7 +172,7 @@ function cancel() {
               class="la-rng" type="range" :min="s.min" :max="s.max" :step="s.step"
               :value="val(s.key)" @input="setVal(s.key, +$event.target.value)"
             />
-            <span class="la-val">{{ val(s.key) }}</span>
+            <span class="la-val box">{{ val(s.key) }}</span>
           </div>
         </div>
       </div>
@@ -182,7 +181,7 @@ function cancel() {
            screenshot: four tiles is enough to show a gap, a padding and a title size
            changing together, and it stays legible at drawer width. -->
       <div class="la-preview">
-        <span class="la-pv-cap">Live Preview</span>
+        <span class="la-pv-cap">Live preview</span>
         <!-- margin and padding come straight from store.layout: they are no longer
              scoped settings, so routing them through val() would imply a board could
              override them -->
@@ -270,11 +269,14 @@ function cancel() {
 /* a FIXED width, not min-width: "14" and "140" in different chips gave their sliders
    different lengths, and two tracks in the same column stopping at different points
    reads as a mistake. 46px holds three digits. */
+/* A bordered box, as the reference draws it, not a filled chip — beside a track this
+   value is the track's CURRENT reading and the outline says it is a field you could
+   type into next, which is where this is heading. A grey fill made it look disabled. */
 .la-val {
-  flex: none; width: 46px; height: 26px;
+  flex: none; width: 46px; height: 30px;
   display: inline-grid; place-items: center;
-  background: var(--surface-2); border-radius: var(--r);
-  font-size: 12px; font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums;
+  background: var(--surface); border: 1px solid var(--border-control); border-radius: var(--r);
+  font-size: 12px; font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums;
 }
 
 /* `margin: 0` overrides Chrome's UA 2px on range inputs — it made every track start

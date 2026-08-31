@@ -624,9 +624,12 @@ function save(place) {
 
               <!-- Query — Shortcuts always; Widget/KPI when "Query Based" tab is active -->
               <div v-if="queryMode" class="sec">
-                <div class="sec-h">Query <i class="req">*</i></div>
+                <div class="q-head">
+                  <div class="sec-h" style="margin:0">Query <i class="req">*</i></div>
+                  <button class="btn btn-sm btn-primary" @click="refreshPreview">Run Preview</button>
+                </div>
+                <p class="hint">{{ isShortcut ? 'Write a query to return the records this Shortcut lists.' : 'Write a query to return the data this widget plots.' }}</p>
                 <textarea class="input sql" rows="6" v-model="cfg.sqlQuery" :placeholder="SQL_PLACEHOLDER" spellcheck="false" />
-                <div class="qrow"><span class="hint" style="margin:0">{{ isShortcut ? 'Write a query to return the records this Shortcut lists.' : 'Write a query to return the data this widget plots.' }}</span><button class="btn btn-sm btn-primary" @click="refreshPreview"><Icon name="eye" :size="13" /> Tap Preview</button></div>
               </div>
 
               <!-- Axes (classic charts, Manual mode only) -->
@@ -1033,6 +1036,8 @@ function save(place) {
 /* 14px matches Create/Edit Dashboard — the two panels sit one click apart and were
    using different heading sizes for the same level of heading. */
 .sec-h { font-weight: 600; font-size: 15px; color: var(--ink); margin-bottom: 12px; }
+/* heading and its action on one line, the action right-aligned */
+.q-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 5px; }
 /* a heading that OWNS the line under it sits tight to it — 12px of air between a title
    and its own description reads as two separate things */
 .sec-h:has(+ .hint) { margin-bottom: 5px; }

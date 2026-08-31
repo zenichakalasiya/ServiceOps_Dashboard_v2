@@ -822,7 +822,7 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
               <Icon name="calendar" :size="14" />
               <span>{{ g.dateFilter ? relativeFor(g.dateFilter) : 'Date filter' }}</span>
             </button>
-            <button v-if="tilesIn(g.id).length" class="grp-add" title="Add widget to this group" @click="addWidgetToGroup(g.id)"><Icon name="plus" :size="14" /> Add widget</button>
+            <button v-if="tilesIn(g.id).length" class="grp-add" title="Add widget to this group" @click="addWidgetToGroup(g.id)"><Icon name="plus" :size="14" /> Add Widget</button>
             <button class="grp-act" title="Ungroup" @click="ungroup(g)"><Icon name="ungroup" :size="15" /></button>
           </header>
           <!-- the one-liner: what the range above actually does to the widgets below it -->
@@ -888,9 +888,9 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
     <teleport to="body">
       <transition name="fabpop">
         <div v-if="showGroupCta && groupPicks.size" class="group-cta">
-          <span class="gc-count"><Icon name="new-group" :size="16" /> {{ groupPicks.size }} widget{{ groupPicks.size > 1 ? 's' : '' }} selected</span>
+          <span class="gc-count">{{ groupPicks.size }} widget{{ groupPicks.size > 1 ? 's' : '' }} selected</span>
+          <button class="btn btn-sm btn-primary" @click="createGroupFromPicks">Create Group</button>
           <button class="btn btn-sm" @click="clearPicks">Cancel</button>
-          <button class="btn btn-sm btn-primary" @click="createGroupFromPicks"><Icon name="check" :size="14" /> Create group</button>
         </div>
       </transition>
     </teleport>
@@ -1215,8 +1215,12 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .cell.pick-on { outline: 2px dashed var(--primary); outline-offset: 2px; box-shadow: 0 0 0 4px var(--primary-soft); border-radius: var(--r-lg); }
 .marquee { position: fixed; z-index: 300; border: 1.5px dashed var(--primary); background: rgba(61,139,208,.12); border-radius: 4px; pointer-events: none; }
 /* bottom-right confirm CTA */
-.group-cta { position: fixed; right: 26px; bottom: 96px; z-index: 60; display: flex; align-items: center; gap: 10px; padding: 9px 12px 9px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; box-shadow: var(--sh-lg); }
-.gc-count { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; font-size: 13px; color: var(--primary-700); }
+/* Centred at the foot of the board, not tucked bottom-right. What it reports is about
+   the SELECTION, which is spread across the canvas — a bar pinned to one corner reads as
+   belonging to the thing in that corner (the FAB sits there) rather than to the widgets
+   the user just marqueed. */
+.group-cta { position: fixed; left: 50%; transform: translateX(-50%); bottom: 26px; z-index: 60; display: flex; align-items: center; gap: 10px; padding: 10px 12px 10px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-lg); }
+.gc-count { display: inline-flex; align-items: center; font-weight: 500; font-size: 13px; color: var(--ink); margin-right: 4px; }
 .add-group { display: inline-flex; align-items: center; gap: 7px; border: none; background: transparent; border-radius: 4px; padding: 8px 12px; font-weight: 600; font-size: 13px; color: var(--primary-700); }
 .add-group:hover { background: var(--primary-softer); }
 .empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; padding: 64px 20px; text-align: center; }
