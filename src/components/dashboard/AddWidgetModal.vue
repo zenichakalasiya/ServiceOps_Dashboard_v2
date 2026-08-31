@@ -60,9 +60,11 @@ const CHART_CARDS = [
    uses (the builder's family switch, the library's type pills). */
 const GROUPS = [
   ...groupPickerTypes(CHART_CARDS),
-  { cat: 'KPI', types: [{ id: 'kpi', label: 'KPI', icon: 'kpi', type: 'kpi', kind: null }] },
-  { cat: 'Shortcut', types: [{ id: 'shortcut', label: 'Shortcut', icon: 'table', type: 'shortcut', kind: null }] },
-  { cat: 'Free Text', types: [{ id: 'text', label: 'Free Text', icon: 'chart-text', type: 'text', kind: null }] },
+  { cat: 'Non-chart', types: [
+    { id: 'kpi', label: 'KPI', icon: 'kpi', type: 'kpi', kind: null },
+    { id: 'shortcut', label: 'Shortcut', icon: 'table', type: 'shortcut', kind: null },
+    { id: 'text', label: 'Free Text', icon: 'chart-text', type: 'text', kind: null },
+  ] },
 ]
 const filteredGroups = computed(() => GROUPS.map((g) => ({
   cat: g.cat, types: g.types.filter((t) => t.label.toLowerCase().includes(search.value.toLowerCase())),

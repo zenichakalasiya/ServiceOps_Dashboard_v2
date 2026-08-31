@@ -149,8 +149,6 @@ function switchType(t) {
    bar chart — so it names the wrong family and describes the wrong mode at once. This
    follows both: which family is being built, and which of the two modes is in force,
    because under Query the conditions are not what fills the tile. */
-// the Chart Type row, flattened out of kindGroups — the frame has no group headings
-const flatKinds = computed(() => kindGroups.value.flatMap((g) => g.types))
 
 const modeHint = computed(() => {
   if (queryMode.value) return 'Write the query that returns this widget’s data.'
@@ -591,17 +589,22 @@ function save(place) {
                      you could choose; under a heading you find "the stacked one" by
                      reading four words instead of scanning all thirteen. It also puts the
                      two convertible groups first, so the reversible choices come first. -->
-                <!-- One flat row, as the frame draws it. It was grouped under Statistics /
-                     Coverage / Multi-Series / Advanced headings; the file does not carry
-                     those, so the row is the row. The kinds keep their order, so the two
-                     convertible families still lead. -->
-                <div class="kinds">
-                  <button
-                    v-for="k in flatKinds" :key="k.id" class="kind"
-                    :class="{ on: curType.id === k.id }" :title="k.label" :aria-label="k.label" @click="pickKind(k)"
-                  >
-                    <Icon :name="k.icon" :size="22" :class="{ rot90: k.id === 'bar' }" />
-                  </button>
+                <!-- Grouped, in the same buckets and order as the Create Widget gallery, off
+                     one shared list (PICKER_GROUPS). Thirteen icon-only squares in a single
+                     wrapping row asked you to recognise every glyph before you could choose;
+                     under a heading you find "the stacked one" by reading four words instead
+                     of scanning all thirteen. The two convertible groups lead, so the
+                     reversible choices come first. -->
+                <div v-for="g in kindGroups" :key="g.cat" class="kind-grp">
+                  <div class="kind-grp-h">{{ g.cat }}</div>
+                  <div class="kinds">
+                    <button
+                      v-for="k in g.types" :key="k.id" class="kind"
+                      :class="{ on: curType.id === k.id }" :title="k.label" :aria-label="k.label" @click="pickKind(k)"
+                    >
+                      <Icon :name="k.icon" :size="22" :class="{ rot90: k.id === 'bar' }" />
+                    </button>
+                  </div>
                 </div>
                 <template v-if="!isShortcut && !isText">
                   <!-- 26px, not 14: Manual / Query Based is a different question from the
