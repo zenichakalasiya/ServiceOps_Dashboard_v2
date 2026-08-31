@@ -920,14 +920,18 @@ function save(place) {
    There was never a border here, but the preview sat on --bg while the panel sits on
    --surface, and that edge read as a 1px divider running the full height. The preview
    card keeps its own border and shadow, so it still reads as a card on white. */
-.preview { flex: 1.5; display: flex; flex-direction: column; min-width: 0; padding: 18px 22px 22px 22px; background: var(--surface); }
+/* The left pane is a WORKSPACE: a tinted band at the top carrying the family switch,
+   then the preview card inset within it. It used to be a white pane with the tabs
+   floating on the same ground as the chart, which made the switch look like part of the
+   preview rather than the control that changes what is being previewed. */
+.preview { flex: 1.5; display: flex; flex-direction: column; min-width: 0; padding: 0 0 12px; background: var(--surface-2); }
 /* One segmented control on a soft track with the active family filled near-black � the
    same control the reference uses for every either/or in this panel (family, access,
    Manual/Query, Top/Bottom/All). Four loose outlined buttons with a blue fill read as
    four separate things you could each turn on. */
 /* the tab track and Refresh share one line; `margin-left:auto` (not space-between)
    keeps Refresh hard right even when there are no tabs to push it there */
-.pv-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.pv-top { display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 12px; flex: none; }
 /* in the card's top-right corner, over the canvas — the same place and size the action
    occupies on a placed widget, so the preview behaves like the thing it previews */
 .pv-refresh { position: absolute; top: 10px; right: 10px; z-index: 2; width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid var(--border-control); background: var(--surface); color: var(--muted); border-radius: var(--r); }
@@ -952,12 +956,12 @@ function save(place) {
 .kind-grp + .kind-grp { margin-top: 14px; }
 .kind-grp-h { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
 .kinds { display: flex; flex-wrap: wrap; gap: 10px; }
-.kind { flex: none; display: grid; place-items: center; width: 56px; height: 52px; padding: 0; border: 1px solid var(--border-control); background: var(--surface); color: var(--ink-2); border-radius: var(--r-lg); transition: border-color .15s, color .15s; }
+.kind { flex: none; display: grid; place-items: center; width: 56px; height: 50px; padding: 0; border: 1px solid var(--border-control); background: var(--surface); color: var(--ink-2); border-radius: var(--r-lg); transition: border-color .15s, color .15s; }
 .kind:hover { border-color: var(--muted-2); color: var(--ink); }
 /* selected: a light primary wash, not a solid fill */
 .kind.on { border: 1.5px solid var(--ink); color: var(--ink); }
 .kind .rot90 { transform: rotate(90deg); }
-.pv-card { position: relative; flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-sm); display: flex; flex-direction: column; overflow: hidden; }
+.pv-card { position: relative; flex: 1; margin: 0 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-sm); display: flex; flex-direction: column; overflow: hidden; }
 .pv-canvas { flex: 1; display: grid; place-items: center; padding: 22px; min-height: 0; }
 .pv-canvas > * { width: 100%; }
 .pv-text { align-self: stretch; max-height: 100%; overflow: auto; align-self: start; }
@@ -968,7 +972,7 @@ function save(place) {
 .pv-tbl { width: 100%; border-collapse: collapse; font-size: 13px; align-self: start; }
 .pv-tbl th { text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .4px; padding: 7px 10px; border-bottom: 1px solid var(--border); }
 .pv-tbl td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
-.pv-foot { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); margin-top: 12px; }
+.pv-foot { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); margin: 10px 12px 0; }
 /* The line does the separating, so the panel no longer pays for a second gutter on top
    of the preview's own right padding — the two together read as an undivided drift
    rather than as two regions. Fields keep 20px off the rule so they do not touch it. */

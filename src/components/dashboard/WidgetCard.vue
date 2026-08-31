@@ -949,7 +949,11 @@ table { font-size: 13px; }
    the shared .overlay uses 24px and the two would otherwise land a few px apart. */
 .overlay { padding: 16px; }
 .present { background: var(--surface); border-radius: var(--r-xl); width: 100%; height: 100%; display: flex; flex-direction: column; box-shadow: var(--sh-lg); overflow: hidden; }
-.phead { display: flex; align-items: center; justify-content: space-between; padding: 16px 22px; border-bottom: 1px solid var(--border); font-size: 16px; flex: none; }
+/* A tinted band, 46px tall — the same band a placed widget wears, so full screen reads
+   as the SAME widget enlarged rather than as a different kind of window. Measured off
+   the frame: container 46px, title inset 12px with 11px above it. */
+.phead { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 46px; padding: 0 12px; background: var(--surface-2); border-bottom: 1px solid var(--border); font-size: 15px; flex: none; }
+.phead-a { display: flex; align-items: center; gap: 2px; }
 .pbody { padding: 32px 40px; flex: 1; min-height: 62vh; display: grid; place-items: center; overflow: auto; }
 .pbody > * { width: 100%; }
 .kpi.big { padding: 0; } .kpi.big .kpinum { font-size: 150px; } .kpi.big .kpinum .unit { font-size: 48px; }
