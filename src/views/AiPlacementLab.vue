@@ -157,12 +157,8 @@ watch([variant, panelOpen], () => nextTick(measure))
 .lab { display: flex; flex-direction: column; height: 100%; min-height: 0; background: var(--bg); }
 /* switcher bar */
 .lab-bar { display: flex; align-items: center; gap: 16px 24px; flex-wrap: wrap; padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--surface); }
-.seg { display: inline-flex; gap: 3px; background: var(--surface-2); padding: 3px; border-radius: 4px; border: 1px solid var(--border); }
-.seg-b { border: none; background: transparent; padding: 6px 13px; border-radius: 4px; font-size: 13px; font-weight: 500; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
 .seg-b b { color: var(--ink-2); }
 .seg-b:hover { color: var(--ink); }
-.seg-b.on { background: var(--surface); color: var(--primary-700); box-shadow: var(--sh-sm); font-weight: 600; }
-.seg-b.on b { color: var(--primary-700); }
 /* readout */
 .readout { display: flex; align-items: center; gap: 16px; margin-left: auto; font-family: var(--mono, ui-monospace, monospace); }
 .ro { display: flex; align-items: baseline; gap: 6px; }

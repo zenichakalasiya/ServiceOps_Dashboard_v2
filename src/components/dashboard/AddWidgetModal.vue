@@ -15,7 +15,7 @@ const tab = ref('chart')              // chart | predefined | user | shared | tr
 const fModule = ref('')
 const fType = ref('')                 // '' | kpi | chart | shortcut
 const search = ref('')
-const TYPE_FILTERS = [{ v: '', label: 'All' }, { v: 'kpi', label: 'KPI' }, { v: 'chart', label: 'Widget' }, { v: 'shortcut', label: 'Shortcut' }]
+const TYPE_FILTERS = [{ v: '', label: 'All' }, { v: 'chart', label: 'Widget' }, { v: 'kpi', label: 'KPI' }, { v: 'shortcut', label: 'Shortcut' }]
 const builder = ref(null)             // selected chart type → opens centered builder
 
 /* ---- Chart type tab -------------------------------------------------------------
@@ -425,13 +425,21 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .modsel { width: 172px; flex: none; }
 /* section 10.1 content tabs — underline, no fill. Every tab carries a transparent 2px
    bottom border so selection does not shift the row. */
-.type-tabs { display: flex; align-items: center; gap: 10px; padding: 10px 22px 0; border-bottom: 1px solid var(--border); }
-.ttab { display: inline-flex; align-items: center; gap: 7px; border: none; border-bottom: 2px solid transparent; background: transparent; padding: 0 6px 9px; color: var(--muted); font-size: 14px; font-weight: 500; white-space: nowrap; }
-.ttab:hover { color: var(--ink); border-bottom-color: var(--border-strong); }
-.ttab.on { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+/* PILLS, as the reference draws them — not the underline row this was.
+
+   These are a FILTER over one list, not a second level of navigation. The tab strip
+   above already switches what you are looking at; a second underline row directly
+   under it read as two navigations of equal weight stacked on each other, and you
+   had to work out which one owned the content. A pill sits ON the list it filters. */
+.type-tabs { display: flex; align-items: center; gap: 8px; padding: 12px 22px 2px; }
+.ttab { display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 12px; border: 1px solid var(--border-control); background: var(--surface); color: var(--muted); border-radius: var(--r); font-size: 13px; font-weight: 500; white-space: nowrap; transition: color .15s, border-color .15s; }
+.ttab:hover { color: var(--ink); border-color: var(--muted-2); }
+.ttab.on { border-color: var(--ink); color: var(--ink); font-weight: 600; }
 /* section 7.4 count badge: rounded-sm, never a pill — and no white-on-ink to invert in dark */
-.ttab-c { font-size: 11px; font-weight: 600; background: var(--surface-2); color: var(--muted); border-radius: var(--r-sm); padding: 1px 6px; }
-.ttab.on .ttab-c { background: var(--primary-soft); color: var(--primary-700); }
+/* the count rides inside the pill; on the active one it inverts, which is what makes
+   the chosen filter readable at a glance without colouring the whole pill */
+.ttab-c { min-width: 18px; text-align: center; font-size: 11px; font-weight: 600; background: var(--surface-2); color: var(--muted); border-radius: var(--r-pill); padding: 1px 6px; }
+.ttab.on .ttab-c { background: var(--ink); color: var(--surface); }
 .aw-body { flex: 1; overflow: auto; padding: 14px 22px 22px; }
 .cat { margin-bottom: 18px; }
 .cat-h { font-size: 13px; color: var(--muted); font-weight: 500; margin: 6px 0 10px; }

@@ -1051,10 +1051,6 @@ function save(place) {
 .chev { position: absolute; right: 11px; top: 12px; color: var(--muted); pointer-events: none; }
 /* Manual / Query, and Manage Legend's All / Highest / Lowest. No bottom margin — what
    follows a segmented control is the configuration it governs, so it belongs against it. */
-.seg { display: inline-flex; gap: 2px; background: var(--surface-2); padding: 4px; border-radius: 4px; border: none; margin-bottom: 0; }
-.seg-b { border: none; background: transparent; padding: 0 14px; height: 30px; border-radius: 4px; font-weight: 500; font-size: 13px; color: var(--ink-2); }
-.seg-b:hover { color: var(--ink); }
-.seg-b.on { background: var(--ink); color: var(--surface); font-weight: 600; box-shadow: var(--sh-sm); }
 /* No top margin. A hint is the DESCRIPTION of the heading above it, not a paragraph in
    its own right — it belongs against that heading, with the air below the pair. */
 .hint { font-size: 12px; color: var(--muted); margin: 0 0 10px; }

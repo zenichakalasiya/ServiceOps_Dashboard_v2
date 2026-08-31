@@ -175,7 +175,7 @@ function submit(openAdd = false) {
         <div class="grp">
           <label class="field">Dashboard Access Level <span v-if="!lockedDash" class="req">*</span></label>
           <div class="seg" :class="{ ro: lockedDash }">
-            <button v-for="(a, k) in ACCESS" :key="k" class="seg-btn" :class="{ on: access === k }" :disabled="lockedDash" @click="access = k">{{ a.label }}</button>
+            <button v-for="(a, k) in ACCESS" :key="k" class="seg-b" :class="{ on: access === k }" :disabled="lockedDash" @click="access = k">{{ a.label }}</button>
           </div>
           <p class="oneliner"><Icon name="info" :size="14" /> {{ ACC_DESC[access] }}</p>
         </div>
@@ -262,19 +262,11 @@ function submit(openAdd = false) {
 .pd-note + .sec-h { margin-top: 0; }
 /* one segmented control on a soft track, active segment filled solid — the same control
    the Manage tabs use, so "which of these three is in force" reads identically everywhere */
-.seg { display: inline-flex; gap: 2px; padding: 4px; background: var(--surface-2); border-radius: 4px; align-self: flex-start; }
-.seg-btn { display: flex; align-items: center; justify-content: center; height: 32px; padding: 0 22px; border-radius: 4px; border: none; background: transparent; color: var(--ink-2); font-weight: 500; font-size: 13px; }
-.seg-btn:hover { color: var(--ink); }
 /* `--surface`, not #fff — `--ink` is near-white in dark, so a hardcoded white label
    was invisible on its own fill. In light `--surface` is #ffffff, unchanged. */
-.seg-btn.on { background: var(--ink); color: var(--surface); font-weight: 600; box-shadow: var(--sh-sm); }
 /* Read-only (a predefined board's identity). The value STAYS legible — the point is to
    show what the board is, not to grey it into unreadability — so only the affordance is
    removed: no hover, no pointer, and a quieter fill on the selected segment. */
-.seg.ro { opacity: 1; }
-.seg.ro .seg-btn { cursor: default; color: var(--muted); }
-.seg.ro .seg-btn:hover { color: var(--muted); }
-.seg.ro .seg-btn.on { background: var(--border-strong); color: var(--ink); box-shadow: none; }
 .input:disabled, textarea.input:disabled {
   background: var(--surface-2); color: var(--ink-2); cursor: default;
   border-color: var(--border); -webkit-text-fill-color: var(--ink-2); opacity: 1;

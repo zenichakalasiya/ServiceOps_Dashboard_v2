@@ -155,10 +155,7 @@ function run() {
 .ctab.on { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
 
 /* the format switcher inside Download — §10.2 segmented toggle */
-.seg { display: inline-flex; align-items: center; gap: 2px; padding: 3px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 4px; }
-.seg-b { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 30px; padding: 0 16px; border: none; background: transparent; color: var(--ink-2); border-radius: 4px; font-size: 13px; font-weight: 500; }
 .seg-b:not(.on):hover { color: var(--ink); }
-.seg-b.on { background: var(--primary-soft); color: var(--primary-700); font-weight: 600; }
 
 /* the destination, spelled out where the short tab label could not */
 .sec-h { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 12px; }

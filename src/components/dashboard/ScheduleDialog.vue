@@ -189,9 +189,6 @@ function delSchedule(s) { props.d.schedules = props.d.schedules.filter((x) => x.
 .pwd-input { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border-strong); border-radius: var(--r); padding: 0 10px; height: 36px; }
 .pwd-input input { border: none; outline: none; background: transparent; flex: 1; font-size: 13px; }
 .eye { border: none; background: transparent; color: var(--muted); display: grid; place-items: center; }
-.seg { display: inline-flex; gap: 4px; background: var(--surface-2); padding: 3px; border-radius: 4px; border: 1px solid var(--border); align-self: flex-start; }
-.seg-b { border: none; background: transparent; padding: 6px 14px; border-radius: 4px; font-weight: 500; font-size: 13px; color: var(--muted); }
-.seg-b.on { background: var(--primary); color: #fff; box-shadow: var(--sh-sm); }
 .emails { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; border: 1px solid var(--border-strong); border-radius: var(--r); padding: 6px 8px; min-height: 38px; }
 .echip { display: inline-flex; align-items: center; gap: 5px; background: var(--primary-soft); color: var(--primary-700); border-radius: 4px; padding: 2px 8px; font-size: 12px; } .echip button { border: none; background: transparent; color: var(--primary-700); display: grid; place-items: center; }
 .einput { border: none; outline: none; background: transparent; flex: 1; min-width: 90px; font-size: 13px; }

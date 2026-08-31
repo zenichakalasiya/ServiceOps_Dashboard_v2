@@ -733,8 +733,8 @@ onBeforeUnmount(() => {
             <div class="rp-row">
               <div class="rp-col">
                 <span class="rp-l">Sort Order</span>
-                <div class="rp-tabs">
-                  <button v-for="r in RANKS" :key="r.id" class="rp-t" :class="{ on: rankMode === r.id }" @click="rankMode = r.id">{{ r.label }}</button>
+                <div class="seg sm fill">
+                  <button v-for="r in RANKS" :key="r.id" class="seg-b" :class="{ on: rankMode === r.id }" @click="rankMode = r.id">{{ r.label }}</button>
                 </div>
               </div>
               <div class="rp-col n">
@@ -871,10 +871,6 @@ onBeforeUnmount(() => {
 .cs-chip:hover, .cs-chip.on { border-color: var(--primary); color: var(--primary-700); background: var(--primary-soft); }
 
 /* rank window — tabs, then the one field that tab needs */
-.rp-tabs { display: flex; gap: 2px; padding: 2px; background: var(--surface-2); border-radius: 4px; }
-.rp-t { flex: 1; height: 26px; border: none; background: transparent; color: var(--muted); border-radius: 4px; font-size: 11px; font-weight: 600; white-space: nowrap; padding: 0 4px; }
-.rp-t:hover { color: var(--ink); }
-.rp-t.on { background: var(--surface); color: var(--primary-700); box-shadow: var(--sh-sm); }
 /* Sort Order (tabs) and Value (select) share one row, each under its own label */
 .rp-row { display: flex; align-items: flex-end; gap: 10px; padding-bottom: 9px; border-bottom: 1px solid var(--border); }
 .rp-col { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 0; }
