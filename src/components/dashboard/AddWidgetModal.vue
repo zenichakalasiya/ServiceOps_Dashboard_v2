@@ -425,15 +425,22 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
    above already switches what you are looking at; a second underline row directly
    under it read as two navigations of equal weight stacked on each other, and you
    had to work out which one owned the content. A pill sits ON the list it filters. */
-.type-tabs { display: flex; align-items: center; gap: 8px; padding: 12px 22px 2px; }
-.ttab { display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 12px; border: 1px solid var(--border-control); background: var(--surface); color: var(--muted); border-radius: var(--r); font-size: 13px; font-weight: 500; white-space: nowrap; transition: color .15s, border-color .15s; }
+.type-tabs { display: flex; align-items: center; gap: 7px; padding: 12px 22px 2px; }
+/* Measured off the frame: 30px tall, 6px/8px padding, 4px gap, 12px/500 label, and a
+   6px radius. 6 is off our 2/4/8/12 radius scale — the design file asks for it here and
+   the ask was fidelity to the file, so it is stated as a literal rather than dressed up
+   as a token it is not. */
+.ttab { display: inline-flex; align-items: center; gap: 4px; height: 30px; padding: 6px 8px; border: 1px solid var(--border-control); background: var(--surface); color: var(--muted); border-radius: 6px; font-size: 12px; font-weight: 500; white-space: nowrap; transition: color .15s, border-color .15s; }
 .ttab:hover { color: var(--ink); border-color: var(--muted-2); }
 .ttab.on { border-color: var(--ink); color: var(--ink); font-weight: 600; }
 /* section 7.4 count badge: rounded-sm, never a pill — and no white-on-ink to invert in dark */
-/* the count rides inside the pill; on the active one it inverts, which is what makes
-   the chosen filter readable at a glance without colouring the whole pill */
-.ttab-c { min-width: 18px; text-align: center; font-size: 11px; font-weight: 600; background: var(--surface-2); color: var(--muted); border-radius: var(--r-pill); padding: 1px 6px; }
-.ttab.on .ttab-c { background: var(--ink); color: var(--surface); }
+/* The count rides inside the pill and INVERTS on the active one — that inversion is
+   what makes the chosen filter readable without colouring the whole pill.
+   On an inactive pill the number stays --ink even though its label is muted: the label
+   says which filter, the number is data, and greying the data too made the row look
+   disabled in the frame comparison. */
+.ttab-c { display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 500; background: var(--surface-2); color: var(--ink); border-radius: var(--r-pill); padding: 1px 4px; }
+.ttab.on .ttab-c { background: var(--ink); color: var(--surface); padding: 2px 3px; }
 .aw-body { flex: 1; overflow: auto; padding: 14px 22px 22px; }
 .cat { margin-bottom: 18px; }
 .cat-h { font-size: 13px; color: var(--muted); font-weight: 500; margin: 6px 0 10px; }

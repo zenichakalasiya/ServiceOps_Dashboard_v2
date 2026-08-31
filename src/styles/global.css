@@ -316,8 +316,9 @@ label.field { display:block; font-size:13px; font-weight: 500; color: var(--ink)
 /* equal-width segments, for a track that should fill its column */
 .seg.fill { display: flex; }
 .seg.fill .seg-b { flex: 1; padding: 0 10px; }
-/* compact, for a popover */
-.seg.sm .seg-b { height: 26px; font-size: 11px; padding: 0 10px; }
+/* compact, for a popover — 24px segments in a 4px track, 12px insets, measured off
+   the Legend Filter frame */
+.seg.sm .seg-b { height: 24px; font-size: 11px; padding: 0 12px; }
 /* read-only: still says which one is in force, without looking pressable */
 .seg.ro .seg-b { cursor: default; color: var(--muted); }
 .seg.ro .seg-b:hover { color: var(--muted); }
