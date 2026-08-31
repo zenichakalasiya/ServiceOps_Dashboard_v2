@@ -53,14 +53,16 @@ const CHART_CARDS = [
   // so any tile already built on it keeps drawing; it is simply no longer offered.
 ]
 
-// KPI and Shortcut join Free Text here: they are the tiles that are not charts.
+/* One section per tile FAMILY, as the design file lays the gallery out: every chart kind
+   under Widget, then the families that are not charts, each on its own. The previous
+   Statistics / Coverage / Multi-Series / Advanced split grouped by what a chart DOES;
+   this groups by what the tile IS, which is the axis the rest of the product already
+   uses (the builder's family switch, the library's type pills). */
 const GROUPS = [
   ...groupPickerTypes(CHART_CARDS),
-  { cat: 'Non-chart', types: [
-    { id: 'kpi', label: 'KPI', icon: 'kpi', type: 'kpi', kind: null },
-    { id: 'shortcut', label: 'Shortcut', icon: 'table', type: 'shortcut', kind: null },
-    { id: 'text', label: 'Free Text', icon: 'chart-text', type: 'text', kind: null },
-  ] },
+  { cat: 'KPI', types: [{ id: 'kpi', label: 'KPI', icon: 'kpi', type: 'kpi', kind: null }] },
+  { cat: 'Shortcut', types: [{ id: 'shortcut', label: 'Shortcut', icon: 'table', type: 'shortcut', kind: null }] },
+  { cat: 'Free Text', types: [{ id: 'text', label: 'Free Text', icon: 'chart-text', type: 'text', kind: null }] },
 ]
 const filteredGroups = computed(() => GROUPS.map((g) => ({
   cat: g.cat, types: g.types.filter((t) => t.label.toLowerCase().includes(search.value.toLowerCase())),
@@ -239,7 +241,17 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
     <div class="aw">
       <header class="dlg-head">
         <h3>Add new widget</h3>
-        <button class="dlg-x" @click="emit('close')"><Icon name="x" :size="18" /></button>
+        <div class="hd-a">
+          <!-- Archive is a MODE, not a peer of the tabs beside it: the others slice the
+               live library, this one leaves it. As a tab it sat in that row claiming to
+               be another slice; as a toggle here it reads as the switch it is. -->
+          <button
+            class="dlg-x" :class="{ on: tab === 'trash' }"
+            :title="tab === 'trash' ? 'Back to the library' : `Archive${trashCount ? ' (' + trashCount + ')' : ''}`"
+            @click="tab = tab === 'trash' ? 'all' : 'trash'"
+          ><Icon name="archive" :size="17" /></button>
+          <button class="dlg-x" @click="emit('close')"><Icon name="x" :size="18" /></button>
+        </div>
       </header>
 
       <!-- top tabs -->
@@ -249,8 +261,6 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
         <button class="awt" :class="{ on: tab === 'predefined' }" @click="tab = 'predefined'">Predefined</button>
         <button class="awt" :class="{ on: tab === 'user' }" @click="tab = 'user'">Created by me</button>
         <button class="awt" :class="{ on: tab === 'shared' }" @click="tab = 'shared'">Shared with me</button>
-        <!-- "Archive" in the UI; the state key stays `trash` so nothing downstream moves -->
-        <button class="awt" :class="{ on: tab === 'trash' }" @click="tab = 'trash'">Archive <span v-if="trashCount" class="awt-count">{{ trashCount }}</span></button>
       </div>
 
       <!-- Search on every tab, including Create Widget, where it already filters the type
@@ -294,7 +304,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
           </section>
           <!-- Empty Group is the last option (charts come first) -->
           <section class="cat">
-            <div class="cat-h">Layout</div>
+            <div class="cat-h">Empty group</div>
             <div class="cards">
               <button class="tc tc-group" @click="emit('newgroup')">
                 <div class="tc-ico"><ChartIcon name="group" :size="64" /></div>
@@ -393,6 +403,9 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 </template>
 
 <style scoped>
+.hd-a { display: flex; align-items: center; gap: 8px; }
+/* the archive toggle reads as ON the way every chosen thing in this module does */
+.dlg-x.on { background: var(--ink); color: var(--surface); }
 .drawer-overlay { position: fixed; inset: 0; background: rgba(20,21,38,.42); backdrop-filter: blur(2px); z-index: 100; display: flex; justify-content: flex-end; }
 /* 640px, not 720. The Create Widget cards are a fixed 4 per row, so the panel's width
    IS the card's width — at 720 each card was 160px around a 64px icon and the artwork

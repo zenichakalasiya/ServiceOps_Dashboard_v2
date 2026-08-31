@@ -149,6 +149,9 @@ function switchType(t) {
    bar chart — so it names the wrong family and describes the wrong mode at once. This
    follows both: which family is being built, and which of the two modes is in force,
    because under Query the conditions are not what fills the tile. */
+// the Chart Type row, flattened out of kindGroups — the frame has no group headings
+const flatKinds = computed(() => kindGroups.value.flatMap((g) => g.types))
+
 const modeHint = computed(() => {
   if (queryMode.value) return 'Write the query that returns this widget’s data.'
   if (isKpi.value) return 'A KPI counts the records that match your conditions.'
@@ -588,16 +591,17 @@ function save(place) {
                      you could choose; under a heading you find "the stacked one" by
                      reading four words instead of scanning all thirteen. It also puts the
                      two convertible groups first, so the reversible choices come first. -->
-                <div v-for="g in kindGroups" :key="g.cat" class="kind-grp">
-                  <div class="kind-grp-h">{{ g.cat }}</div>
-                  <div class="kinds">
-                    <button
-                      v-for="k in g.types" :key="k.id" class="kind"
-                      :class="{ on: curType.id === k.id }" :title="k.label" :aria-label="k.label" @click="pickKind(k)"
-                    >
-                      <Icon :name="k.icon" :size="22" :class="{ rot90: k.id === 'bar' }" />
-                    </button>
-                  </div>
+                <!-- One flat row, as the frame draws it. It was grouped under Statistics /
+                     Coverage / Multi-Series / Advanced headings; the file does not carry
+                     those, so the row is the row. The kinds keep their order, so the two
+                     convertible families still lead. -->
+                <div class="kinds">
+                  <button
+                    v-for="k in flatKinds" :key="k.id" class="kind"
+                    :class="{ on: curType.id === k.id }" :title="k.label" :aria-label="k.label" @click="pickKind(k)"
+                  >
+                    <Icon :name="k.icon" :size="22" :class="{ rot90: k.id === 'bar' }" />
+                  </button>
                 </div>
                 <template v-if="!isShortcut && !isText">
                   <!-- 26px, not 14: Manual / Query Based is a different question from the
@@ -889,13 +893,13 @@ function save(place) {
                 <button class="btn btn-primary" :disabled="!canSave" :title="ctaHint" @click="save(true)"><Icon name="copy" :size="16" /> Duplicate {{ ctaLabel }}</button>
               </template>
               <template v-else-if="editing">
-                <button class="btn btn-primary" :disabled="!canSave" :title="ctaHint" @click="save(false)"><Icon name="check" :size="16" /> Update {{ ctaLabel }}</button>
+                <button class="btn btn-primary" :disabled="!canSave" :title="ctaHint" @click="save(false)">Update</button>
               </template>
               <template v-else>
                 <!-- the prototype leads with the place-it action, then the plain create,
                      then Cancel — placing is the common case, so it takes the emphasis -->
                 <button class="btn btn-primary" :disabled="!canSave" :title="ctaHint" @click="save(true)">{{ prefix }} &amp; Add to Dashboard</button>
-                <button class="btn" :disabled="!canSave" :title="ctaHint" @click="save(false)">{{ prefix }}</button>
+                <button class="btn commit" :disabled="!canSave" :title="ctaHint" @click="save(false)">{{ prefix }}</button>
               </template>
               <button class="btn" @click="emit('close')">Cancel</button>
             </footer>
@@ -1106,7 +1110,12 @@ function save(place) {
 .spin { animation: bsp .7s linear infinite; } @keyframes bsp { to { transform: rotate(360deg); } }
 .qrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 9px; }
 /* near-black primaries, matching the reference and the Create Dashboard panel */
-.cfg-foot .btn-primary { background: var(--ink); border-color: var(--ink); }
+/* The frame fills BOTH "Create & Add to Dashboard" and "Create". That is two primaries in
+   one row, which normally loses the hierarchy — here it reads because they are the same
+   verb with different destinations, and Cancel is the only thing that must stay quiet. */
+.cfg-foot .btn-primary { background: var(--ink); border-color: var(--ink); color: var(--surface); }
+.cfg-foot .btn.commit { background: var(--ink); border-color: var(--ink); color: var(--surface); font-weight: 600; }
+.cfg-foot .btn.commit:hover:not(:disabled) { background: #26313f; border-color: #26313f; }
 .cfg-foot .btn-primary:hover:not(:disabled) { background: #26313f; border-color: #26313f; }
 @media (max-width: 900px) {
   .bbody { flex-direction: column; }

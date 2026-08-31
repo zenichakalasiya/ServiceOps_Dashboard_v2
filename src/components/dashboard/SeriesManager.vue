@@ -110,12 +110,6 @@ watch(rows, () => { pickFor.value = null })
       </template>
       <template v-else>
         <button v-if="searchable" class="si" title="Search series" @click="openSearch"><Icon name="search" :size="14" /></button>
-        <button class="sh" :class="{ on: sortKey === 'name' }" @click="sortBy('name')">
-          Series <Icon v-if="sortKey === 'name'" :name="sortDir === 'asc' ? 'sort-asc' : 'sort-desc'" :size="11" />
-        </button>
-        <button class="sh num" :class="{ on: sortKey === 'value' }" @click="sortBy('value')">
-          Value <Icon v-if="sortKey === 'value'" :name="sortDir === 'asc' ? 'sort-asc' : 'sort-desc'" :size="11" />
-        </button>
       </template>
     </div>
 
@@ -123,7 +117,7 @@ watch(rows, () => { pickFor.value = null })
       <div
         v-for="e in rows" :key="e.key" class="sm-row"
         :class="{ off: hidden.has(e.key) }"
-        :title="hidden.has(e.key) ? `Show ${e.name} on the chart` : `Hide ${e.name} from the chart`"
+        :title="`${e.name} — ${e.value} (${pct(e.value)}%) · ${hidden.has(e.key) ? 'show' : 'hide'}`"
         @click="emit('toggle', e.key)"
       >
         <!-- the swatch recolours, the row toggles — hence @click.stop -->
@@ -131,9 +125,7 @@ watch(rows, () => { pickFor.value = null })
           class="sw" :class="{ open: pickFor === e.key }" :style="{ background: e.color }"
           :title="`Change ${e.name}’s colour`" @click.stop="openPick(e.key, $event)"
         />
-        <span class="nm">{{ e.name }}</span>
-        <span class="vl">{{ e.value }}</span>
-        <span class="pc">{{ pct(e.value) }}%</span>
+        <span class="nm">{{ e.name }}: {{ pct(e.value) }}%</span>
       </div>
       <div v-if="!rows.length" class="sm-empty">No series match “{{ q }}”</div>
     </div>

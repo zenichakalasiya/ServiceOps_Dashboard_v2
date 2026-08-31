@@ -7,9 +7,9 @@
  * gives each glyph its depth.
  *
  * The one change is the colour. The sheet hard-codes #516381 for every shape; the glyphs
- * now paint from --ci-1/2/3, which each TONE (below) points at real --chart-* stops — so
- * a chart icon previews the chart it builds, and both themes resolve from one set of
- * tokens. Non-chart glyphs keep the original inked ramp.
+ * paint from --ci-1/2/3 instead, which resolve to `currentColor` at the sheet's own
+ * 0.6 / 0.4 / 0.2 — so the call site sets the colour and both themes work from one set
+ * of values.
  *
  * `multiline` and `text` were not in the sheet — they are drawn here in the same idiom
  * (same frame, same ramp, same stroke weights) rather than borrowing another icon's
@@ -19,28 +19,6 @@ defineProps({
   name: { type: String, required: true },
   size: { type: [Number, String], default: 40 },
 })
-
-/* WHICH colours a glyph paints with. Not one answer for all of them — the depth ramp
- * was doing two different jobs in the sheet, and colour has to keep them apart:
- *
- *   series  the three steps are three SERIES, so they take the three real chart stops.
- *           A pie icon then previews the pie it builds.
- *   mono    one series drawn with depth (a bar chart is not three colours). One hue at
- *           three strengths, mixed toward the surface so it works on either theme.
- *   bands   a gauge reads good → warn → bad; those are the meanings its arcs already
- *           carry, so the stops follow the meaning rather than the series order.
- *   neutral not a chart. Colouring a Free Text or a Shortcut glyph would assert a data
- *           meaning it does not have, so these keep the original inked ramp.
- *
- * Heatmap is deliberately mono: three hues would destroy the one thing a heatmap says,
- * which is that the same measure is more intense in some cells than in others. */
-const TONE = {
-  pie: 'series', donut: 'series', funnel: 'series', stack: 'series', grouped: 'series',
-  combo: 'series', multiline: 'series', mapbubble: 'series',
-  bar: 'mono', column: 'mono', line: 'mono', hist: 'mono', heatmap: 'mono',
-  gauge: 'bands',
-  kpi: 'neutral', shortcut: 'neutral', text: 'neutral', group: 'neutral',
-}
 
 // per-icon group transform, straight from the sheet
 const T = {
@@ -66,7 +44,7 @@ const T = {
 </script>
 
 <template>
-  <svg class="cico" :class="TONE[name] || 'series'" :width="size" :height="size" viewBox="0 0 64 64" fill="none" aria-hidden="true" focusable="false">
+  <svg class="cico" :width="size" :height="size" viewBox="0 0 64 64" fill="none" aria-hidden="true" focusable="false">
     <g :transform="T[name] || T.pie">
       <!-- Pie -->
       <template v-if="name === 'pie'">
@@ -244,20 +222,18 @@ const T = {
 </template>
 
 <style scoped>
-/* --ci-1..3 are the three depth steps, strongest first. Every stop is a --chart-* token,
-   so the icons inherit the lifted dark palette for free instead of needing a second
-   hard-coded set. color-mix toward --surface (not toward transparent) keeps the tints
-   opaque, which matters on the picker card where a translucent glyph would pick up the
-   hover fill behind it. */
-.cico.series { --ci-1: var(--chart-1); --ci-2: var(--chart-2); --ci-3: var(--chart-3); }
-.cico.mono {
-  --ci-1: var(--chart-1);
-  --ci-2: color-mix(in srgb, var(--chart-1) 58%, var(--surface));
-  --ci-3: color-mix(in srgb, var(--chart-1) 30%, var(--surface));
-}
-.cico.bands { --ci-1: var(--chart-2); --ci-2: var(--chart-3); --ci-3: var(--chart-4); }
-/* unchanged from the sheet: the inked ramp at the original 0.6 / 0.4 / 0.2 */
-.cico.neutral {
+/* --ci-1..3 are the sheet's three depth steps, strongest first, and they are MONOCHROME:
+   currentColor at the original 0.6 / 0.4 / 0.2, so the caller's colour drives all three.
+
+   These were briefly painted from the --chart-* stops, per-kind. The design file draws
+   every glyph in one inked ramp, so that is what they are again. It reads better in the
+   gallery too: seventeen tiles each carrying three hues turned a grid you scan by SHAPE
+   into one you have to scan past colour to read, and the colour was not carrying any
+   meaning — a pie icon is a pie whatever it is tinted.
+
+   color-mix toward transparent rather than opacity on each path, so the ramp is one
+   declaration per step instead of an attribute on all 97 shapes. */
+.cico {
   --ci-1: color-mix(in srgb, currentColor 60%, transparent);
   --ci-2: color-mix(in srgb, currentColor 40%, transparent);
   --ci-3: color-mix(in srgb, currentColor 20%, transparent);

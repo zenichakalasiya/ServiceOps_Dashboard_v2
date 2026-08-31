@@ -155,11 +155,20 @@ export { NEW_KINDS }
  * are deliberately separate — Multi-Series reads as one group but each of its members
  * is frozen alone.
  */
+/* The design file groups the gallery by what a tile IS, not by what its chart does:
+   one Widget bucket holding every chart kind, then KPI, Shortcut and Empty group.
+
+   This replaced a Statistics / Coverage / Multi-Series / Advanced split. That split
+   ordered the kinds by commitment — the two convertible groups first, the frozen ones
+   after — which the flat list no longer says. The freeze rules still hold; they are just
+   not signposted in the picker any more, so isFrozen() has to carry that on its own.
+
+   Order within Widget follows the frame: Pie, Bar, Line, Column, Gauge, Histogram,
+   Heatmap, Stack, Combo, Funnel, Donut, Map Bubble — four to a row. */
 export const PICKER_GROUPS = [
-  { cat: 'Statistics', ids: ['line', 'bar', 'column'] },
-  { cat: 'Coverage', ids: ['pie', 'donut'] },
-  { cat: 'Multi-Series', ids: ['stack', 'grouped', 'multiline', 'combo'] },
-  { cat: 'Advanced', ids: ['gauge', 'hist', 'heatmap', 'funnel'] },
+  { cat: 'Widget', ids: ['pie', 'bar', 'line', 'column', 'gauge', 'hist', 'heatmap', 'stack', 'combo', 'funnel', 'donut', 'grouped', 'multiline'] },
+  { cat: 'KPI', ids: ['kpi'] },
+  { cat: 'Shortcut', ids: ['shortcut'] },
 ]
 
 /** Slot a flat list of picker types into PICKER_GROUPS, dropping empty groups. */
