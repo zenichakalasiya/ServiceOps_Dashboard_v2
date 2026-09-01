@@ -8,7 +8,7 @@
  *
  * The one change is the colour. The sheet hard-codes #516381 for every shape; the glyphs
  * paint from --ci-1/2/3 instead, which resolve to `currentColor` at the sheet's own
- * 0.6 / 0.4 / 0.2 — so the call site sets the colour and both themes work from one set
+ * 1 / 0.55 / 0.3 — so the call site sets the colour and both themes work from one set
  * of values.
  *
  * `multiline` and `text` were not in the sheet — they are drawn here in the same idiom
@@ -223,7 +223,13 @@ const T = {
 
 <style scoped>
 /* --ci-1..3 are the sheet's three depth steps, strongest first, and they are MONOCHROME:
-   currentColor at the original 0.6 / 0.4 / 0.2, so the caller's colour drives all three.
+   currentColor at 1 / 0.55 / 0.3, so the caller's colour drives all three.
+
+   The sheet's own ramp was 0.6 / 0.4 / 0.2, which was tuned for a TINTED card. Against a
+   white one the whole glyph washed out — the strongest step never got past a mid grey, so
+   a Column and a Histogram were hard to tell apart at a glance. Taking the top step to
+   full currentColor puts the contrast back into the shape, and the two lower steps still
+   carry the depth the sheet drew.
 
    These were briefly painted from the --chart-* stops, per-kind. The design file draws
    every glyph in one inked ramp, so that is what they are again. It reads better in the
@@ -234,9 +240,9 @@ const T = {
    color-mix toward transparent rather than opacity on each path, so the ramp is one
    declaration per step instead of an attribute on all 97 shapes. */
 .cico {
-  --ci-1: color-mix(in srgb, currentColor 60%, transparent);
-  --ci-2: color-mix(in srgb, currentColor 40%, transparent);
-  --ci-3: color-mix(in srgb, currentColor 20%, transparent);
+  --ci-1: currentColor;
+  --ci-2: color-mix(in srgb, currentColor 55%, transparent);
+  --ci-3: color-mix(in srgb, currentColor 30%, transparent);
 }
 .cico { display: block; flex: none; }
 </style>

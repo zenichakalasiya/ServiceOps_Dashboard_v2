@@ -468,13 +468,20 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
    · hover is a primary border plus the guide's lift shadow, not a colour wash. The
      wash tinted the whole card blue and the icon lost its own contrast against it.
    The icon keeps --muted at rest and takes the primary on hover, per §5. */
-.tc { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 20px 12px; border: 1px solid transparent; background: var(--picker-card); border-radius: var(--r-lg); color: var(--muted); transition: background .15s, border-color .15s, color .15s; }
-.tc:hover { background: var(--picker-card-hover); border-color: var(--primary); color: var(--primary); }
-.tc-group { border-style: dashed; border-color: var(--border-strong); background: transparent; }
+/* White card, hairline border, on the sunken ground. The fill and the ground were the
+   other way round — a tinted card on a near-white panel — which gave the grid very little
+   separation, since the two surfaces were four steps apart. A white card against
+   #f6f9fc is the ordinary card-on-ground relationship and the tiles read as objects.
+
+   --ink drives the artwork: the icon ramp resolves from currentColor, so the glyph gets
+   its weight from the card rather than from a colour of its own. */
+.tc { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 20px 12px; border: 1px solid var(--border-control); background: var(--surface); border-radius: var(--r-lg); color: var(--ink); transition: border-color .15s, box-shadow .15s; }
+.tc:hover { border-color: var(--muted-2); box-shadow: var(--sh-sm); }
+.tc-group { border-style: dashed; border-color: var(--border-strong); }
 .tc-ico { width: 64px; height: 64px; display: grid; place-items: center; }
 /* the label is READ, so it holds the primary ink while the icon stays quiet beside it */
 .tc-label { font-size: 13px; font-weight: 500; color: var(--ink); }
-.tc:hover .tc-label { color: var(--primary); }
+
 .lst { display: flex; flex-direction: column; gap: 2px; }
 .lrow { display: flex; align-items: center; gap: 12px; padding: 10px 10px; border-radius: 4px; }
 .lrow:hover { background: var(--surface-2); }
