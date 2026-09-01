@@ -90,8 +90,10 @@
      as a hole. So dark drops the ground below --surface and lifts the cards above it, and
      the same "card stands off the panel" relationship survives the theme swap. */
   --picker-bg: #f6f9fc;
-  --picker-card: #edf2f8;
-  --picker-card-hover: #e4ebf4;
+  /* The chart-type tile: its artwork colour and its edge. --picker-ico drives all three
+     depth steps of the glyph (1 / 0.55 / 0.3 of it), so one value sets the whole icon. */
+  --picker-ico: #7186a8;
+  --picker-tile-border: #e3e8f2;
   --row-hover: #f9fafb;        /* Table row hover */
   --icon-hover: #f3f4f6;       /* Icon-button hover */
   --inset: #f1f5f9;            /* Inset panel fill */
@@ -207,8 +209,13 @@
   --sidebar: #0f111a; --sidebar-hover: #1b1f2b; --sidebar-border: #282c3a;
   --surface-2: #25252f;
   --picker-bg: #17171f;        /* below --surface: the ground */
-  --picker-card: #25252f;      /* above it: the cards */
-  --picker-card-hover: #2e2e3a;
+  /* Lifted for dark, not reused. #7186a8 clears the dark card at 4.5:1 on its own, but
+     the ramp does not: the 0.3 step would composite to within a hair of #1d1d27 and the
+     lightest third of every glyph would vanish. Lifting the base carries all three steps.
+     The border follows --border-control rather than staying #e3e8f2, which would be a
+     near-white hairline around a near-black card. */
+  --picker-ico: #8fa4c6;
+  --picker-tile-border: #343441;
   --row-hover: #22222d;
   --icon-hover: #2a2a35;
   --inset: #212129;
