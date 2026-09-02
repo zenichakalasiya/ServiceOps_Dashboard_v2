@@ -117,13 +117,17 @@ const T = {
       <!-- Five columns that TOUCH, in one colour. Both matter: a histogram is one series
            over continuous bins, so gaps would make it a Column chart and a colour ramp
            would make it look like several series. -->
+      <!-- Five TOUCHING columns over continuous bins. Only the modal bin is inked; the other
+           four drop to the ground step, so the shape of the distribution is what you read
+           rather than five equal blocks. Still one colour family — a histogram is one
+           series, and a ramp across the bins would imply several. -->
       <template v-else-if="name === 'hist'">
         <path d="M5 33H43" fill="none" stroke="var(--ci-axis)" stroke-width="1.6" stroke-linecap="round" />
-        <rect x="7" y="23" width="7" height="8" fill="var(--ci-1)" />
-        <rect x="14.5" y="15" width="7" height="16" fill="var(--ci-1)" />
-        <rect x="22" y="19" width="7" height="12" fill="var(--ci-1)" />
+        <rect x="7" y="23" width="7" height="8" fill="var(--ci-4)" />
+        <rect x="14.5" y="15" width="7" height="16" fill="var(--ci-4)" />
+        <rect x="22" y="19" width="7" height="12" fill="var(--ci-4)" />
         <rect x="29.5" y="8" width="7" height="23" fill="var(--ci-1)" />
-        <rect x="37" y="13" width="7" height="18" fill="var(--ci-1)" />
+        <rect x="37" y="13" width="7" height="18" fill="var(--ci-4)" />
       </template>
 
       <!-- Heatmap -->
@@ -137,8 +141,10 @@ const T = {
       <!-- A single hexagon holding its readings. The eight-hex honeycomb that was here
            briefly came from a Highcharts TILEMAP, which is a different chart from the one
            we draw; one hexagon reads as "a measured cell" without claiming a layout. -->
+      <!-- A single hexagon holding its readings. The body is the GROUND step: it is the cell,
+           not a measurement, and at 0.4 it competed with the two bars it is meant to hold. -->
       <template v-else-if="name === 'heatmap'">
-        <path d="M24 11 35 17.5 35 30.5 24 37 13 30.5 13 17.5Z" fill="var(--ci-3)" stroke="var(--ci-1)" stroke-width="2" stroke-linejoin="round" />
+        <path d="M24 11 35 17.5 35 30.5 24 37 13 30.5 13 17.5Z" fill="var(--ci-4)" stroke="var(--ci-1)" stroke-width="2" stroke-linejoin="round" />
         <rect x="18.5" y="20.5" width="11" height="2.6" rx="1.3" fill="var(--ci-1)" />
         <rect x="18.5" y="25.5" width="11" height="2.6" rx="1.3" fill="var(--ci-1)" />
       </template>
@@ -166,12 +172,19 @@ const T = {
       <!-- Combo -->
       <!-- Bars AND a line, which is the whole definition of a combo. The bars drop to
            --ci-3 so the line reads on top of them instead of fighting for the same weight. -->
+      <!-- Bars AND a line, which is the whole definition of a combo — so the line has to
+           CROSS them. It used to arc above the bars entirely, which read as two charts that
+           happened to share a frame. Points sit where the line meets each bar, and the bars
+           take the ground step so the line stays legible over them. -->
       <template v-else-if="name === 'combo'">
         <path d="M5 33H43" fill="none" stroke="var(--ci-axis)" stroke-width="1.6" stroke-linecap="round" />
-        <rect x="8" y="21" width="8" height="10" rx="1.2" fill="var(--ci-3)" />
-        <rect x="20" y="16" width="8" height="15" rx="1.2" fill="var(--ci-3)" />
-        <rect x="32" y="11" width="8" height="20" rx="1.2" fill="var(--ci-3)" />
-        <path d="M8 25L18 19L28 12L42 6" fill="none" stroke="var(--ci-1)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+        <rect x="8" y="21" width="8" height="10" rx="1.2" fill="var(--ci-4)" />
+        <rect x="20" y="14" width="8" height="17" rx="1.2" fill="var(--ci-4)" />
+        <rect x="32" y="18" width="8" height="13" rx="1.2" fill="var(--ci-4)" />
+        <path d="M12 24L24 12L36 20" fill="none" stroke="var(--ci-1)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+        <circle cx="12" cy="24" r="2.2" fill="var(--ci-1)" />
+        <circle cx="24" cy="12" r="2.2" fill="var(--ci-1)" />
+        <circle cx="36" cy="20" r="2.2" fill="var(--ci-1)" />
       </template>
 
       <!-- Funnel -->
@@ -200,8 +213,10 @@ const T = {
            abstract block that stood here said "a wide thing on a card", which is also what
            a title bar looks like. Digits cannot be read as anything else. Monospace so the
            three glyphs sit on an even rhythm at any size. -->
+      <!-- A NUMBER, because that is the whole tile: a KPI is a count of something. The card
+           behind it takes the ground step so the digits are the only thing with weight. -->
       <template v-else-if="name === 'kpi'">
-        <rect x="7" y="12" width="34" height="24" rx="3" fill="var(--ci-3)" />
+        <rect x="7" y="12" width="34" height="24" rx="3" fill="var(--ci-4)" />
         <text
           x="24" y="29.5" text-anchor="middle" fill="var(--ci-1)"
           font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
@@ -215,18 +230,21 @@ const T = {
            table. Ruling the cells is what makes it a table; the heads say which edge is
            the top. The rules are --surface, not #fff, so they stay the card colour when
            the card is dark. -->
+      <!-- A ruled grid of CELLS, per the supplied SVG: an outlined table, its header row
+           lighter than its body, and a content bar in each row. The previous glyph drew
+           header bars floating over loose blocks, which reads as a toolbar above tiles; what
+           makes a table a table is that every cell shares its edges with its neighbours. -->
       <template v-else-if="name === 'shortcut'">
-        <rect x="7.5" y="12.5" width="33" height="23" rx="2.5" fill="var(--ci-3)" />
-        <rect x="10" y="15" width="8" height="3" rx="1" fill="var(--ci-1)" />
-        <rect x="20" y="15" width="8" height="3" rx="1" fill="var(--ci-1)" />
-        <rect x="30" y="15" width="8" height="3" rx="1" fill="var(--ci-1)" />
-        <path d="M7.5 20.5H40.5M7.5 28H40.5M18.7 20.5V35.5M29.3 20.5V35.5" stroke="var(--surface)" stroke-width="1.6" />
-        <rect x="10" y="23" width="6" height="2.4" rx="1.2" fill="var(--ci-2)" />
-        <rect x="21.2" y="23" width="6" height="2.4" rx="1.2" fill="var(--ci-2)" />
-        <rect x="31.8" y="23" width="6" height="2.4" rx="1.2" fill="var(--ci-2)" />
-        <rect x="10" y="30.5" width="6" height="2.4" rx="1.2" fill="var(--ci-2)" />
-        <rect x="21.2" y="30.5" width="6" height="2.4" rx="1.2" fill="var(--ci-2)" />
-        <rect x="31.8" y="30.5" width="6" height="2.4" rx="1.2" fill="var(--ci-2)" />
+        <rect x="8" y="11" width="32" height="26" rx="2.5" fill="var(--ci-3)" />
+        <path d="M8 13.5A2.5 2.5 0 0 1 10.5 11H37.5A2.5 2.5 0 0 1 40 13.5V17.5H8Z" fill="var(--ci-4)" />
+        <path
+          d="M8 17.5H40M8 24H40M8 30.5H40M18.67 11V37M29.33 11V37"
+          fill="none" stroke="var(--ci-1)" stroke-width="1.1"
+        />
+        <rect x="8" y="11" width="32" height="26" rx="2.5" fill="none" stroke="var(--ci-1)" stroke-width="1.6" />
+        <rect x="10.6" y="19.6" width="5.5" height="2.2" rx="1.1" fill="var(--ci-1)" />
+        <rect x="10.6" y="26.1" width="5.5" height="2.2" rx="1.1" fill="var(--ci-1)" />
+        <rect x="10.6" y="32.6" width="5.5" height="2.2" rx="1.1" fill="var(--ci-1)" />
       </template>
 
       <!-- Free Text — the sheet had no text glyph; same card frame as KPI/Shortcut -->
@@ -234,9 +252,12 @@ const T = {
            indistinguishable from Shortcut at 24px — both were a card with horizontal bars.
            A letterform cannot be confused with a table. The note stays under it because
            every other tile icon in this set sits on a ground, and the tile IS a note. -->
+      <!-- A serif T on the note it writes. The letterform is set smaller than the note it
+           sits on — at full height it filled the card edge to edge and stopped reading as
+           "a letter ON a page", which is the whole idea. -->
       <template v-else-if="name === 'text'">
-        <rect x="8" y="11" width="32" height="26" rx="3" fill="var(--ci-3)" />
-        <path d="M14 16H34V21.5H31.6V18.4H25.4V31.6H28.2V34H19.8V31.6H22.6V18.4H16.4V21.5H14Z" fill="var(--ci-1)" />
+        <rect x="8" y="11" width="32" height="26" rx="3" fill="var(--ci-4)" />
+        <path d="M17 18H31V22.6H29.1V20.2H25.1V29.4H27.2V31.6H20.8V29.4H22.9V20.2H18.9V22.6H17Z" fill="var(--ci-1)" />
       </template>
 
       <!-- Empty group -->
@@ -293,6 +314,11 @@ const T = {
   --ci-1: color-mix(in srgb, currentColor 80%, transparent);
   --ci-2: color-mix(in srgb, currentColor 60%, transparent);
   --ci-3: color-mix(in srgb, currentColor 40%, transparent);
+  /* --ci-4 is not a fourth data step, it is the GROUND: the card behind a KPI, the body of
+     a hexagon, the bars a histogram is not drawing attention to. 0.4 was the lightest the
+     reference ramp went, but 0.4 is still a mid tone when it fills a large area rather than
+     a thin bar — a whole card at 0.4 reads as a filled block, not as backing. */
+  --ci-4: color-mix(in srgb, currentColor 22%, transparent);
 }
 .cico { display: block; flex: none; }
 </style>
