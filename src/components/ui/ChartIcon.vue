@@ -211,7 +211,7 @@ const T = {
            icon the developers receive verbatim.
 
            Bar heights are lifted from Grouped so the two read as the same family. Each line
-           point sits above its own bar's top, never inside it — a line that crosses the bars
+           point clears its own bar EVERYWHERE, not just at the bar's centre — a line that crosses the bars
            has to be read apart from them before it can be read at all, and at 40px there is
            no room for that.
 
@@ -226,7 +226,7 @@ const T = {
            bisector and the reach that keeps the width constant through the corner. -->
       <template v-else-if="name === 'combo'">
         <path
-          d="M5 4H7.1V34H43V36.1H5ZM9 11H16V30H9ZM18 18H25V30H18ZM27 7H34V30H27ZM36 15H43V30H36ZM12.05 9.01L21.7 13.29L30.65 5.34L38.97 9.96L40.03 8.04L30.35 2.66L21.3 10.71L12.95 6.99Z"
+          d="M5 4H7.1V34H43V36.1H5ZM9 17H16V30H9ZM18 22H25V30H18ZM27 14H34V30H27ZM36 20H43V30H36ZM12.05 9.01L21.7 13.29L30.65 5.34L38.97 9.96L40.03 8.04L30.35 2.66L21.3 10.71L12.95 6.99Z"
           fill="var(--ci-1)" fill-rule="evenodd"
         />
       </template>
@@ -328,12 +328,15 @@ const T = {
       <!-- An empty folder with a plus. The plus takes the ground step: it marks the folder
            as one you add to, but the FOLDER is the thing being named, and at full ink the
            plus was the first thing read. -->
-      <!-- An empty folder with a plus. The folder is the lightest thing here and the plus is
-           the darkest: the plus is the ACTION, and a mark has to be darker than the surface
-           it sits on. Lightening the plus instead put it below its own background, where it
-           vanished entirely. -->
+      <!-- An empty folder with a plus. The WHOLE folder is the lightest step now, tab
+           included, so the plus has nothing but the ground behind it — the tab at 0.4 was
+           the darkest thing in a tile whose subject is the plus.
+
+           The plus stays the darkest mark: it is the ACTION, and a mark has to be darker
+           than the surface it sits on. Lightening the plus itself, as an earlier pass did,
+           put it below its own background and it vanished. -->
       <template v-else-if="name === 'group'">
-        <path d="M10 13H20.5L24 17H38A2 2 0 0 1 40 19V34A2 2 0 0 1 38 36H10A2 2 0 0 1 8 34V15A2 2 0 0 1 10 13Z" fill="var(--ci-3)" />
+        <path d="M10 13H20.5L24 17H38A2 2 0 0 1 40 19V34A2 2 0 0 1 38 36H10A2 2 0 0 1 8 34V15A2 2 0 0 1 10 13Z" fill="var(--ci-4)" />
         <path d="M8 21H40V34A2 2 0 0 1 38 36H10A2 2 0 0 1 8 34Z" fill="var(--ci-4)" />
         <rect x="22.75" y="23.5" width="2.5" height="10" rx="1.25" fill="var(--ci-1)" />
         <rect x="19" y="27.25" width="10" height="2.5" rx="1.25" fill="var(--ci-1)" />
