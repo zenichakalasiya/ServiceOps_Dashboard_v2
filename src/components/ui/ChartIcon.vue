@@ -41,7 +41,7 @@ const T = {
   funnel: 'translate(-4 -4.0) scale(1.5)',
   mapbubble: 'translate(-4 -4.0) scale(1.5)',
   kpi: 'translate(-4 -4.0) scale(1.5)',
-  shortcut: 'translate(-4 -4.0) scale(1.5)',
+  shortcut: 'translate(8 13)',
   text: 'translate(-4 -4.0) scale(1.5)',
   group: 'translate(-4 -4.0) scale(1.5)',
 }
@@ -255,16 +255,17 @@ const T = {
            in each body row. What makes a table a table is that every cell shares its edges
            with its neighbours — the header reads as the header because it is the one row
            with nothing in it, so it needs no tint of its own. -->
+      <!-- A ruled grid of CELLS on the lightest ground, its outer edge at the same 2.1 the
+           cartesian icons use for an axis, and the internal rules lighter so the table has
+           an outside and an inside. Drawn on the unscaled artboard so those widths mean the
+           same thing here as they do in Bar or Column. -->
       <template v-else-if="name === 'shortcut'">
-        <rect x="8" y="11" width="32" height="26" rx="2.5" fill="var(--ci-4)" />
-        <path
-          d="M8 17.5H40M8 24H40M8 30.5H40M18.67 11V37M29.33 11V37"
-          fill="none" stroke="var(--ci-1)" stroke-width="1.1"
-        />
-        <rect x="8" y="11" width="32" height="26" rx="2.5" fill="none" stroke="var(--ci-1)" stroke-width="1.6" />
-        <rect x="10.6" y="19.6" width="5.5" height="2.2" rx="1.1" fill="var(--ci-1)" />
-        <rect x="10.6" y="26.1" width="5.5" height="2.2" rx="1.1" fill="var(--ci-1)" />
-        <rect x="10.6" y="32.6" width="5.5" height="2.2" rx="1.1" fill="var(--ci-1)" />
+        <rect x="5" y="5" width="38" height="28" rx="2.5" fill="var(--ci-4)" />
+        <path d="M5 12H43M5 19.33H43M5 26.67H43M17.67 5V33M30.33 5V33" fill="none" stroke="var(--ci-1)" stroke-width="1.3" />
+        <rect x="5" y="5" width="38" height="28" rx="2.5" fill="none" stroke="var(--ci-1)" stroke-width="2.1" />
+        <rect x="8" y="14.6" width="6.6" height="2.4" rx="1.2" fill="var(--ci-1)" />
+        <rect x="8" y="21.9" width="6.6" height="2.4" rx="1.2" fill="var(--ci-1)" />
+        <rect x="8" y="29.2" width="6.6" height="2.4" rx="1.2" fill="var(--ci-1)" />
       </template>
 
       <!-- Free Text — the sheet had no text glyph; same card frame as KPI/Shortcut -->
@@ -300,11 +301,15 @@ const T = {
       <!-- An empty folder with a plus. The plus takes the ground step: it marks the folder
            as one you add to, but the FOLDER is the thing being named, and at full ink the
            plus was the first thing read. -->
+      <!-- An empty folder with a plus. The folder is the lightest thing here and the plus is
+           the darkest: the plus is the ACTION, and a mark has to be darker than the surface
+           it sits on. Lightening the plus instead put it below its own background, where it
+           vanished entirely. -->
       <template v-else-if="name === 'group'">
         <path d="M10 13H20.5L24 17H38A2 2 0 0 1 40 19V34A2 2 0 0 1 38 36H10A2 2 0 0 1 8 34V15A2 2 0 0 1 10 13Z" fill="var(--ci-3)" />
-        <path d="M8 21H40V34A2 2 0 0 1 38 36H10A2 2 0 0 1 8 34Z" fill="var(--ci-2)" />
-        <rect x="22.75" y="24" width="2.5" height="9" rx="1.25" fill="var(--ci-4)" />
-        <rect x="19.5" y="27.25" width="9" height="2.5" rx="1.25" fill="var(--ci-4)" />
+        <path d="M8 21H40V34A2 2 0 0 1 38 36H10A2 2 0 0 1 8 34Z" fill="var(--ci-4)" />
+        <rect x="22.75" y="23.5" width="2.5" height="10" rx="1.25" fill="var(--ci-1)" />
+        <rect x="19" y="27.25" width="10" height="2.5" rx="1.25" fill="var(--ci-1)" />
       </template>
     </g>
   </svg>
