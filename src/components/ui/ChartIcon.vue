@@ -30,7 +30,9 @@ const T = {
   column: 'translate(-4 -7.0) scale(1.5)',
   gauge: 'translate(-4 -4.0) scale(1.5)',
   hist: 'translate(-4 -7.0) scale(1.5)',
-  heatmap: 'translate(-4 -5.5) scale(1.5)',
+  /* the honeycomb is laid out directly in the 64 artboard rather than in the sheet's
+     scaled coordinate space, so it takes a plain offset instead of the 1.5 group scale */
+  heatmap: 'translate(6 8)',
   stack: 'translate(-4 -5.5) scale(1.5)',
   grouped: 'translate(-4 -5.5) scale(1.5)',
   combo: 'translate(-4 -7.0) scale(1.5)',
@@ -111,23 +113,22 @@ const T = {
       </template>
 
       <!-- Heatmap -->
+      <!-- A honeycomb, per the supplied reference.
+
+           NOTE, deliberately: our Heat Map renders a rectangular MATRIX (Team x Priority,
+           colour-scaled per cell), not a tilemap of hexes. This icon and that chart
+           therefore disagree. It was chosen with that known and accepted; if a real tilemap
+           kind ever ships, this artwork belongs to it and Heat Map should take its grid
+           back. The old grid glyph is in git if it is wanted. -->
       <template v-else-if="name === 'heatmap'">
-        <rect x="8.75" y="9.75" width="6.5" height="6.5" rx="1" fill="var(--ci-3)" />
-        <rect x="16.75" y="9.75" width="6.5" height="6.5" rx="1" fill="var(--ci-2)" />
-        <rect x="24.75" y="9.75" width="6.5" height="6.5" rx="1" fill="var(--ci-1)" />
-        <rect x="32.75" y="9.75" width="6.5" height="6.5" rx="1" fill="var(--ci-2)" />
-        <rect x="8.75" y="17.75" width="6.5" height="6.5" rx="1" fill="var(--ci-2)" />
-        <rect x="16.75" y="17.75" width="6.5" height="6.5" rx="1" fill="var(--ci-1)" />
-        <rect x="24.75" y="17.75" width="6.5" height="6.5" rx="1" fill="var(--ci-1)" />
-        <rect x="32.75" y="17.75" width="6.5" height="6.5" rx="1" fill="var(--ci-3)" />
-        <rect x="8.75" y="25.75" width="6.5" height="6.5" rx="1" fill="var(--ci-1)" />
-        <rect x="16.75" y="25.75" width="6.5" height="6.5" rx="1" fill="var(--ci-2)" />
-        <rect x="24.75" y="25.75" width="6.5" height="6.5" rx="1" fill="var(--ci-3)" />
-        <rect x="32.75" y="25.75" width="6.5" height="6.5" rx="1" fill="var(--ci-2)" />
-        <rect x="8.75" y="33.75" width="6.5" height="6.5" rx="1" fill="var(--ci-3)" />
-        <rect x="16.75" y="33.75" width="6.5" height="6.5" rx="1" fill="var(--ci-3)" />
-        <rect x="24.75" y="33.75" width="6.5" height="6.5" rx="1" fill="var(--ci-2)" />
-        <rect x="32.75" y="33.75" width="6.5" height="6.5" rx="1" fill="var(--ci-1)" />
+        <path d="M9 0 17 4.6 17 13.8 9 18.4 1 13.8 1 4.6Z" fill="var(--ci-1)" />
+        <path d="M25 0 33 4.6 33 13.8 25 18.4 17 13.8 17 4.6Z" fill="var(--ci-2)" />
+        <path d="M41 0 49 4.6 49 13.8 41 18.4 33 13.8 33 4.6Z" fill="var(--ci-3)" />
+        <path d="M17 13.8 25 18.4 25 27.6 17 32.2 9 27.6 9 18.4Z" fill="var(--ci-2)" />
+        <path d="M33 13.8 41 18.4 41 27.6 33 32.2 25 27.6 25 18.4Z" fill="var(--ci-1)" />
+        <path d="M9 27.6 17 32.2 17 41.4 9 46 1 41.4 1 32.2Z" fill="var(--ci-3)" />
+        <path d="M25 27.6 33 32.2 33 41.4 25 46 17 41.4 17 32.2Z" fill="var(--ci-2)" />
+        <path d="M41 27.6 49 32.2 49 41.4 41 46 33 41.4 33 32.2Z" fill="var(--ci-1)" />
       </template>
 
       <!-- Stacked -->
@@ -170,31 +171,44 @@ const T = {
       </template>
 
       <!-- KPI -->
+      <!-- The headline number and its label. The trend arrow that used to sit beside it is
+           gone: a KPI tile renders the number ONLY — no delta, no percentage — so the arrow
+           advertised a reading the tile never shows. The number also grows to fill the width
+           the arrow was taking, which is what a KPI actually looks like. -->
       <template v-else-if="name === 'kpi'">
         <rect x="7" y="12" width="34" height="24" rx="3" fill="var(--ci-3)" />
-        <rect x="12" y="18" width="15" height="8" rx="1.5" fill="var(--ci-1)" />
-        <rect x="12" y="29" width="10" height="2.5" rx="1.25" fill="var(--ci-2)" />
-        <path d="M30 26L34 20.5L38 26" fill="none" stroke="var(--ci-1)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+        <rect x="12.5" y="17.5" width="23" height="9.5" rx="1.5" fill="var(--ci-1)" />
+        <rect x="12.5" y="30" width="13" height="2.6" rx="1.3" fill="var(--ci-2)" />
       </template>
 
       <!-- Shortcut -->
+      <!-- Column heads over a RULED 3x2 grid. The old glyph was a solid header band with
+           six loose blocks under it, which read as a toolbar over tiles rather than as a
+           table. Ruling the cells is what makes it a table; the heads say which edge is
+           the top. The rules are --surface, not #fff, so they stay the card colour when
+           the card is dark. -->
       <template v-else-if="name === 'shortcut'">
-        <rect x="7" y="12" width="34" height="24" rx="3" fill="var(--ci-3)" />
-        <path d="M7 15A3 3 0 0 1 10 12H38A3 3 0 0 1 41 15V19H7Z" fill="var(--ci-1)" />
-        <rect x="10" y="22" width="8" height="5" rx="1" fill="var(--ci-1)" />
-        <rect x="20" y="22" width="8" height="5" rx="1" fill="var(--ci-2)" />
-        <rect x="30" y="22" width="8" height="5" rx="1" fill="var(--ci-2)" />
-        <rect x="10" y="29.5" width="8" height="5" rx="1" fill="var(--ci-2)" />
-        <rect x="20" y="29.5" width="8" height="5" rx="1" fill="var(--ci-2)" />
-        <rect x="30" y="29.5" width="8" height="5" rx="1" fill="var(--ci-2)" />
+        <rect x="7.5" y="12.5" width="33" height="23" rx="2.5" fill="var(--ci-3)" />
+        <rect x="10" y="15" width="8" height="3" rx="1" fill="var(--ci-1)" />
+        <rect x="20" y="15" width="8" height="3" rx="1" fill="var(--ci-1)" />
+        <rect x="30" y="15" width="8" height="3" rx="1" fill="var(--ci-1)" />
+        <path d="M7.5 20.5H40.5M7.5 28H40.5M18.7 20.5V35.5M29.3 20.5V35.5" stroke="var(--surface)" stroke-width="1.6" />
+        <rect x="10" y="23" width="6" height="2.4" rx="1.2" fill="var(--ci-2)" />
+        <rect x="21.2" y="23" width="6" height="2.4" rx="1.2" fill="var(--ci-2)" />
+        <rect x="31.8" y="23" width="6" height="2.4" rx="1.2" fill="var(--ci-2)" />
+        <rect x="10" y="30.5" width="6" height="2.4" rx="1.2" fill="var(--ci-2)" />
+        <rect x="21.2" y="30.5" width="6" height="2.4" rx="1.2" fill="var(--ci-2)" />
+        <rect x="31.8" y="30.5" width="6" height="2.4" rx="1.2" fill="var(--ci-2)" />
       </template>
 
       <!-- Free Text — the sheet had no text glyph; same card frame as KPI/Shortcut -->
+      <!-- A serif T on the note it writes. Lines-on-a-card was the old glyph and it was
+           indistinguishable from Shortcut at 24px — both were a card with horizontal bars.
+           A letterform cannot be confused with a table. The note stays under it because
+           every other tile icon in this set sits on a ground, and the tile IS a note. -->
       <template v-else-if="name === 'text'">
-        <rect x="7" y="12" width="34" height="24" rx="3" fill="var(--ci-3)" />
-        <rect x="12" y="18" width="24" height="3" rx="1.5" fill="var(--ci-1)" />
-        <rect x="12" y="24" width="20" height="2.5" rx="1.25" fill="var(--ci-2)" />
-        <rect x="12" y="29" width="14" height="2.5" rx="1.25" fill="var(--ci-2)" />
+        <rect x="8" y="11" width="32" height="26" rx="3" fill="var(--ci-3)" />
+        <path d="M14 16H34V21.5H31.6V18.4H25.4V31.6H28.2V34H19.8V31.6H22.6V18.4H16.4V21.5H14Z" fill="var(--ci-1)" />
       </template>
 
       <!-- Empty group -->
