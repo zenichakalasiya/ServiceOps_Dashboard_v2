@@ -37,7 +37,7 @@ const T = {
   heatmap: 'translate(-4 -4.0) scale(1.5)',
   stack: 'translate(8 13)',
   grouped: 'translate(8 13)',
-  combo: 'translate(0 0)',
+  combo: 'translate(8 13)',
   funnel: 'translate(-4 -4.0) scale(1.5)',
   mapbubble: 'translate(-4 -4.0) scale(1.5)',
   kpi: 'translate(-4 -4.0) scale(1.5)',
@@ -207,9 +207,26 @@ const T = {
 
            Generated, not hand-written — the connector quads need each segment's
            perpendicular, and eyeballing those gives a line whose thickness wobbles. -->
+      <!-- Bars with a series line riding clear ABOVE them, and ONE path, because this is the
+           icon the developers receive verbatim.
+
+           Bar heights are lifted from Grouped so the two read as the same family. Each line
+           point sits above its own bar's top, never inside it — a line that crosses the bars
+           has to be read apart from them before it can be read at all, and at 40px there is
+           no room for that.
+
+           The line is offset ONCE into a single outline with mitred corners, at the same 2.2
+           the Line and Multi-line data strokes use. It was previously three separate
+           quadrilaterals, one per segment: overlapping quads leave a notch on the outside of
+           every bend and a doubled edge on the inside, which is what made it look messy. The
+           four dots went with them — at this size they were four blobs on the bar tops.
+
+           A single <path> carries a single fill, so the axis and the line are filled outlines
+           rather than strokes. Generated, not hand-written: mitre joins need each vertex's
+           bisector and the reach that keeps the width constant through the corner. -->
       <template v-else-if="name === 'combo'">
         <path
-          d="M13 12H15.2V48.8H52V51H13ZM18 28.8H25V45.8H18ZM26.5 18.8H33.5V45.8H26.5ZM35 24.8H42V45.8H35ZM43.5 14.8H50.5V45.8H43.5ZM22.28 25.7L30.78 16.2L29.22 14.8L20.72 24.3ZM29.39 16.36L37.89 22.36L39.11 20.64L30.61 14.64ZM39.3 22.18L47.8 12.18L46.2 10.82L37.7 20.82ZM19 25a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0ZM27.5 15.5a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0ZM36 21.5a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0ZM44.5 11.5a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0Z"
+          d="M5 4H7.1V34H43V36.1H5ZM9 11H16V30H9ZM18 18H25V30H18ZM27 7H34V30H27ZM36 15H43V30H36ZM12.05 9.01L21.7 13.29L30.65 5.34L38.97 9.96L40.03 8.04L30.35 2.66L21.3 10.71L12.95 6.99Z"
           fill="var(--ci-1)" fill-rule="evenodd"
         />
       </template>
