@@ -52,15 +52,38 @@ const total = Object.keys(ICON_MAP).length + CHART_ICONS.length
 /* Copy the rendered SVG, not a component name: what a developer wants from a page like
    this is either the markup to paste or the name to type, and the markup is the one they
    cannot get by reading the source. Shift-click gives the name instead. */
+/* THE COPY IS PADDED, and the page is not.
+ *
+ * Measured at 48px, a lucide glyph puts 36 units of ink in its 24-unit viewBox — 75% of
+ * the box. The FontAwesome set ServiceOps ships today fills 67% (fa-file-export: an
+ * 11.67 path in a 17.5 box). Dropped into a slot sized for FA, a lucide icon therefore
+ * reads about 12% larger, which is the "uploaded at 48 and it looks too big" report this
+ * exists to answer. It is NOT missing padding — our icons carry exactly the padding
+ * lucide ships, byte for byte the same as the reference library. The two families are
+ * just drawn to different optical sizes.
+ *
+ * Widening the viewBox 24 -> 27 and re-centring it (-1.5) puts the same 18 units of ink
+ * in a 27-unit box = 67%, matching FA exactly. No path data is touched, so lucide's
+ * deliberate per-glyph variation survives: Plus stays smaller than Star because its
+ * designers made it so, and normalising every glyph to one fill would make a Plus read
+ * heavier than a Star.
+ *
+ * Only the COPY is padded — the prototype renders unchanged, so no screen shifts. That
+ * does mean the page shows 75% and hands you 67%, which the How-to-use panel states,
+ * because a silent gap between what you see and what you get is worse than the 12%. */
+const PAD_VIEWBOX = '-1.5 -1.5 27 27'
+
 async function copyIcon(name, el, isChart) {
   const svg = el.querySelector('svg')
   if (!svg) return
-  const out = svg.outerHTML
+  let out = svg.outerHTML
     .replace(/\s(data-v-[a-z0-9]+)=""/g, '')
     .replace(/\sclass="[^"]*"/, '')
+  // the illustrated set is our own 64×64 artwork and already carries its spacing
+  if (!isChart) out = out.replace(/viewBox="0 0 24 24"/, `viewBox="${PAD_VIEWBOX}"`)
   try {
     await navigator.clipboard.writeText(out)
-    toast(`${name} — SVG copied at ${size.value}px`, 'success')
+    toast(`${name} — SVG copied at ${size.value}px${isChart ? '' : ', padded to 67%'}`, 'success')
   } catch {
     toast('Clipboard blocked by the browser', 'error')
   }
@@ -115,6 +138,15 @@ async function copyName(name, isChart) {
         Product sizes: <b>13–14px</b> inline with text, <b>15px</b> inside 32px controls,
         <b>16px</b> nav and section headers, <b>18px</b> panel headers and close buttons.
       </p>
+      <p class="il-note">
+        <b>The copied SVG is padded; the tiles above are not.</b> A lucide glyph fills
+        <b>75%</b> of its box, while the FontAwesome set ServiceOps ships today fills
+        <b>67%</b> — so at the same size a lucide icon reads about 12% larger. The copy widens
+        the viewBox to <code>-1.5 -1.5 27 27</code>, putting the same ink in a 67% box so it
+        drops straight into an existing icon slot at the right optical size. Paths are
+        untouched, so each glyph keeps its own weight. <b>Widget artwork</b> copies unpadded —
+        it is our own 64×64 artwork and already carries its spacing.
+      </p>
     </section>
 
     <section v-if="chartGroup.length" class="il-sec">
@@ -165,6 +197,8 @@ async function copyName(name, isChart) {
 .il-how-h { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
 .il-how p { margin: 0 0 6px; font-size: 12.5px; line-height: 1.6; color: var(--ink-2); max-width: 110ch; }
 .il-how p:last-child { margin-bottom: 0; }
+/* the one thing on this page a developer can get wrong by not reading it */
+.il-note { border-left: 2px solid var(--picker-ico); padding-left: 10px; margin-top: 10px !important; }
 .il-how code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 1px 5px; }
 
 .il-sec { margin-bottom: 30px; }
