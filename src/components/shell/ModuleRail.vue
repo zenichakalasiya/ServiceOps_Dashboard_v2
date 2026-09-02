@@ -81,6 +81,16 @@ function pickSub(m, sub) {
       <transition name="fade"><span v-if="!store.ui.railExpanded && hoverKey === 'ai'" class="tt tip">AI Capabilities</span></transition>
     </button>
 
+    <!-- Icon Library — the last thing in the rail. It documents the product rather than
+         being part of it, so it sits below every module and takes no accent: a developer
+         reference should be findable without competing with the things people came for. -->
+    <button class="mod lib" :class="{ active: route.path === '/icons' }"
+      @click="router.push('/icons')" @mouseenter="hoverKey = 'icons'" @mouseleave="hoverKey = ''">
+      <span class="mod-ic"><Icon name="grid" :size="19" /></span>
+      <span v-if="store.ui.railExpanded" class="mod-nm">Icon Library</span>
+      <transition name="fade"><span v-if="!store.ui.railExpanded && hoverKey === 'icons'" class="tt tip">Icon Library</span></transition>
+    </button>
+
     <!-- submodule flyout (Assets / CMDB / Patches / Packages) -->
     <teleport to="body">
       <div v-if="flyout" class="fly" :style="{ top: flyout.top + 'px', left: flyout.left + 'px' }"
@@ -118,6 +128,10 @@ function pickSub(m, sub) {
 .mod.active .mod-nm { font-weight: 600; }
 .mod-caret { color: var(--muted-2); flex: none; }
 .mod.ai { margin-top: 4px; color: var(--primary); }
+/* neutral, unlike .mod.ai above it — the accent is spent on AI, and a second coloured
+   entry at the foot would make the two compete for the same glance */
+.mod.lib { color: var(--muted); }
+.mod.lib:hover { color: var(--ink); }
 .mod.ai:hover { background: var(--primary-soft); color: var(--primary-700); }
 .mod.ai.active { background: var(--primary); color: #fff; }
 /* placement only — surface, padding and weight come from .tt */
