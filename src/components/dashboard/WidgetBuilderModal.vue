@@ -150,6 +150,20 @@ function switchType(t) {
    follows both: which family is being built, and which of the two modes is in force,
    because under Query the conditions are not what fills the tile. */
 
+/* What the rank window actually does to the chart, stated for the setting currently in
+   force. It used to sit under the field as a permanent two-line paragraph; on the info
+   icon it is there for whoever wants it and invisible to everyone else, which is the same
+   trade every other field in this panel already makes.
+
+   Hint renders plain text, so the bold around the number is gone. No loss: the number is
+   also in the input two inches away, and the sentence exists to explain the RULE. */
+const legendHint = computed(() => {
+  if (cfg.rank === 'all') return 'Every entry in the legend is drawn on the chart.'
+  const n = Number(cfg.rankN) || '\u2014'
+  const which = cfg.rank === 'bottom' ? 'lowest' : 'highest'
+  return `Out of every entry in the legend, only the ${n} with the ${which} values are drawn. The rest are left off the chart.`
+})
+
 const modeHint = computed(() => {
   if (queryMode.value) return 'Write the query that returns this widget’s data.'
   if (isKpi.value) return 'A KPI counts the records that match your conditions.'
@@ -819,11 +833,11 @@ function save(place) {
 
                      "Top N" / "Bottom N" is chart jargon: N is a variable nobody outside
                      analytics reads as one. Highest / Lowest says the same thing in words,
-                     and the sentence underneath states the actual outcome rather than
-                     naming the rule. Shown only for kinds that HAVE a legend — a histogram
-                     has one bar per bucket and nothing to rank. -->
+                     and the info icon states the actual outcome rather than naming the
+                     rule. Shown only for kinds that HAVE a legend — a histogram has one bar
+                     per bucket and nothing to rank. -->
                 <div v-if="manualMode && hasLegend" class="fld">
-                  <label>Manage Legend</label>
+                  <label>Manage Legend <Hint :text="legendHint" /></label>
                   <div class="rank-row">
                     <div class="seg rank-seg">
                       <button class="seg-b" :class="{ on: cfg.rank === 'all' }" @click="cfg.rank = 'all'">All</button>
@@ -832,10 +846,6 @@ function save(place) {
                     </div>
                     <input class="input rank-n" type="text" inputmode="numeric" v-model="rankN" :disabled="cfg.rank === 'all'" :placeholder="cfg.rank === 'all' ? 'All shown' : 'Select value'" />
                   </div>
-                  <p class="hint">
-                    <template v-if="cfg.rank === 'all'">Every entry in the legend is drawn on the chart.</template>
-                    <template v-else>Out of every entry in the legend, only the <b>{{ Number(cfg.rankN) || '—' }}</b> with the {{ cfg.rank === 'bottom' ? 'lowest' : 'highest' }} values are drawn. The rest are left off the chart.</template>
-                  </p>
                 </div>
 
                 <!-- Legend on/off. Manage Legend above bounds WHICH entries are drawn;
