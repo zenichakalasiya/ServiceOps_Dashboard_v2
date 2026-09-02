@@ -12,6 +12,9 @@ const routes = [
   { path: '/dashboard/:id', name: 'dashboard', component: () => import('../views/DashboardView.vue'), props: true },
   // AI Capabilities showcase — selector of the four AI features over a live demo board
   { path: '/ai', name: 'ai', component: () => import('../views/AiShowcase.vue') },
+  /* The icon catalogue. A developer reference rather than a product screen, which is why
+     it is reachable from the topbar and not from the dashboard listing. */
+  { path: '/icons', name: 'icons', component: () => import('../views/IconLibrary.vue') },
   // AI-insights placement lab — compare three entry-point placements over the real board
   { path: '/ai-placement', name: 'ai-placement', component: () => import('../views/AiPlacementLab.vue') },
   // non-dashboard module (stub content) — the two-sidebar shell around a real listing

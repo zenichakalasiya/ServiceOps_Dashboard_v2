@@ -28,6 +28,10 @@ function openAi() { store.ui.aiPanelOpen = true }
       <button class="ic" title="History" @click="nyi('History')"><Icon name="history" :size="18" /></button>
       <button class="ic" title="Settings" @click="nyi('Settings')"><Icon name="settings" :size="18" /></button>
       <button class="ic" title="Keyboard shortcuts" @click="nyi('Keyboard shortcuts')"><Icon name="keyboard" :size="18" /></button>
+      <!-- The icon catalogue. It sits beside the other developer-facing controls rather
+           than in the dashboard listing, because it documents the product instead of
+           being part of it. -->
+      <button class="ic" title="Icon Library" @click="$router.push('/icons')"><Icon name="grid" :size="18" /></button>
       <button class="ic" :title="store.ui.theme === 'dark' ? 'Light mode' : 'Dark mode'" @click="store.ui.theme = store.ui.theme === 'dark' ? 'light' : 'dark'">
         <Icon :name="store.ui.theme === 'dark' ? 'sun' : 'moon'" :size="18" />
       </button>
