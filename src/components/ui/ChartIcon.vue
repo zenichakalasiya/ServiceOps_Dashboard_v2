@@ -30,9 +30,7 @@ const T = {
   column: 'translate(-4 -7.0) scale(1.5)',
   gauge: 'translate(-4 -4.0) scale(1.5)',
   hist: 'translate(-4 -7.0) scale(1.5)',
-  /* the honeycomb is laid out directly in the 64 artboard rather than in the sheet's
-     scaled coordinate space, so it takes a plain offset instead of the 1.5 group scale */
-  heatmap: 'translate(6 8)',
+  heatmap: 'translate(-4 -4.0) scale(1.5)',
   stack: 'translate(-4 -5.5) scale(1.5)',
   grouped: 'translate(-4 -5.5) scale(1.5)',
   combo: 'translate(-4 -7.0) scale(1.5)',
@@ -63,17 +61,22 @@ const T = {
       </template>
 
       <!-- Bar -->
+      <!-- Horizontal bars off a value axis. Bars alone floated; the axis is what says which
+           edge they are measured from, and it is the line the reference set draws too. -->
       <template v-else-if="name === 'bar'">
-        <rect x="8" y="12" width="30" height="6" rx="1.5" fill="var(--ci-1)" />
-        <rect x="8" y="22" width="21" height="6" rx="1.5" fill="var(--ci-2)" />
-        <rect x="8" y="32" width="13" height="6" rx="1.5" fill="var(--ci-3)" />
+        <path d="M9 12V36" stroke="var(--ci-1)" stroke-width="2" stroke-linecap="round" />
+        <rect x="11.5" y="14" width="27" height="5.5" rx="1.5" fill="var(--ci-1)" />
+        <rect x="11.5" y="22" width="19" height="5.5" rx="1.5" fill="var(--ci-2)" />
+        <rect x="11.5" y="30" width="12" height="5.5" rx="1.5" fill="var(--ci-3)" />
       </template>
 
       <!-- Line -->
+      <!-- A line ON ITS AXIS. The reference set draws the baseline for every cartesian kind,
+           which is what stops Line, Area and Multi-line reading as loose squiggles. -->
       <template v-else-if="name === 'line'">
-        <path d="M8 33L15 26L22 29L29 18L36 22L40 14V40H8Z" fill="var(--ci-3)" />
-        <path d="M8 37L15 34L22 35.5L29 31L36 32L40 28" fill="none" stroke="var(--ci-2)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
-        <path d="M8 33L15 26L22 29L29 18L36 22L40 14" fill="none" stroke="var(--ci-1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M9 30L16 22L23 26L30 15L37 19L41 13V34H9Z" fill="var(--ci-3)" />
+        <path d="M9 30L16 22L23 26L30 15L37 19L41 13" fill="none" stroke="var(--ci-1)" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M9 34H41" stroke="var(--ci-1)" stroke-width="2" stroke-linecap="round" />
       </template>
 
       <!-- Multi-line — three series, no area fill, so it never reads as Line -->
@@ -120,28 +123,30 @@ const T = {
            therefore disagree. It was chosen with that known and accepted; if a real tilemap
            kind ever ships, this artwork belongs to it and Heat Map should take its grid
            back. The old grid glyph is in git if it is wanted. -->
+      <!-- A single hexagon holding its readings. The eight-hex honeycomb that was here
+           briefly came from a Highcharts TILEMAP, which is a different chart from the one
+           we draw; one hexagon reads as "a measured cell" without claiming a layout. -->
       <template v-else-if="name === 'heatmap'">
-        <path d="M9 0 17 4.6 17 13.8 9 18.4 1 13.8 1 4.6Z" fill="var(--ci-1)" />
-        <path d="M25 0 33 4.6 33 13.8 25 18.4 17 13.8 17 4.6Z" fill="var(--ci-2)" />
-        <path d="M41 0 49 4.6 49 13.8 41 18.4 33 13.8 33 4.6Z" fill="var(--ci-3)" />
-        <path d="M17 13.8 25 18.4 25 27.6 17 32.2 9 27.6 9 18.4Z" fill="var(--ci-2)" />
-        <path d="M33 13.8 41 18.4 41 27.6 33 32.2 25 27.6 25 18.4Z" fill="var(--ci-1)" />
-        <path d="M9 27.6 17 32.2 17 41.4 9 46 1 41.4 1 32.2Z" fill="var(--ci-3)" />
-        <path d="M25 27.6 33 32.2 33 41.4 25 46 17 41.4 17 32.2Z" fill="var(--ci-2)" />
-        <path d="M41 27.6 49 32.2 49 41.4 41 46 33 41.4 33 32.2Z" fill="var(--ci-1)" />
+        <path d="M24 11 35 17.5 35 30.5 24 37 13 30.5 13 17.5Z" fill="var(--ci-3)" stroke="var(--ci-1)" stroke-width="2" stroke-linejoin="round" />
+        <rect x="18.5" y="20.5" width="11" height="2.6" rx="1.3" fill="var(--ci-1)" />
+        <rect x="18.5" y="25.5" width="11" height="2.6" rx="1.3" fill="var(--ci-1)" />
       </template>
 
       <!-- Stacked -->
+      <!-- Vertical bars, each SEGMENTED, standing on a baseline. The segments are the whole
+           point of a stack, so they keep the three-step ramp; the baseline is what separates
+           it from Grouped, whose bars stand side by side rather than piled. -->
       <template v-else-if="name === 'stack'">
-        <rect x="8" y="30" width="8" height="10" fill="var(--ci-1)" />
-        <rect x="8" y="22" width="8" height="8" fill="var(--ci-2)" />
-        <path d="M8 17.5A1.5 1.5 0 0 1 9.5 16H14.5A1.5 1.5 0 0 1 16 17.5V22H8Z" fill="var(--ci-3)" />
-        <rect x="20" y="27" width="8" height="13" fill="var(--ci-1)" />
-        <rect x="20" y="17" width="8" height="10" fill="var(--ci-2)" />
-        <path d="M20 11.5A1.5 1.5 0 0 1 21.5 10H26.5A1.5 1.5 0 0 1 28 11.5V17H20Z" fill="var(--ci-3)" />
-        <rect x="32" y="32" width="8" height="8" fill="var(--ci-1)" />
-        <rect x="32" y="25" width="8" height="7" fill="var(--ci-2)" />
-        <path d="M32 21.5A1.5 1.5 0 0 1 33.5 20H38.5A1.5 1.5 0 0 1 40 21.5V25H32Z" fill="var(--ci-3)" />
+        <rect x="10" y="28" width="8" height="8" rx="1" fill="var(--ci-1)" />
+        <rect x="10" y="21" width="8" height="6.4" rx="1" fill="var(--ci-2)" />
+        <rect x="10" y="16" width="8" height="4.4" rx="1" fill="var(--ci-3)" />
+        <rect x="20" y="26" width="8" height="10" rx="1" fill="var(--ci-1)" />
+        <rect x="20" y="18" width="8" height="7.4" rx="1" fill="var(--ci-2)" />
+        <rect x="20" y="12.5" width="8" height="4.9" rx="1" fill="var(--ci-3)" />
+        <rect x="30" y="30" width="8" height="6" rx="1" fill="var(--ci-1)" />
+        <rect x="30" y="23.5" width="8" height="5.9" rx="1" fill="var(--ci-2)" />
+        <rect x="30" y="19" width="8" height="3.9" rx="1" fill="var(--ci-3)" />
+        <path d="M8 38H40" stroke="var(--ci-1)" stroke-width="2" stroke-linecap="round" />
       </template>
 
       <!-- Combo -->
@@ -175,10 +180,17 @@ const T = {
            gone: a KPI tile renders the number ONLY — no delta, no percentage — so the arrow
            advertised a reading the tile never shows. The number also grows to fill the width
            the arrow was taking, which is what a KPI actually looks like. -->
+      <!-- A NUMBER, because that is the whole tile: a KPI is a count of something. The
+           abstract block that stood here said "a wide thing on a card", which is also what
+           a title bar looks like. Digits cannot be read as anything else. Monospace so the
+           three glyphs sit on an even rhythm at any size. -->
       <template v-else-if="name === 'kpi'">
         <rect x="7" y="12" width="34" height="24" rx="3" fill="var(--ci-3)" />
-        <rect x="12.5" y="17.5" width="23" height="9.5" rx="1.5" fill="var(--ci-1)" />
-        <rect x="12.5" y="30" width="13" height="2.6" rx="1.3" fill="var(--ci-2)" />
+        <text
+          x="24" y="29.5" text-anchor="middle" fill="var(--ci-1)"
+          font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+          font-size="15" font-weight="700" letter-spacing="-0.5"
+        >123</text>
       </template>
 
       <!-- Shortcut -->
