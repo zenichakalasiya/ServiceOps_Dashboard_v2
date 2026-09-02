@@ -299,7 +299,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
                    Bar / Column / Stacked / Histogram tell themselves apart. No rot90 —
                    Bar has its own horizontal artwork now. -->
               <button v-for="t in g.types" :key="t.id" class="tc" @click="builder = t">
-                <div class="tc-ico"><ChartIcon :name="t.id" :size="64" /></div>
+                <div class="tc-ico"><ChartIcon :name="t.id" :size="88" /></div>
                 <span class="tc-label">{{ t.label }}</span>
               </button>
             </div>
@@ -309,7 +309,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
             <div class="cat-h">Empty group</div>
             <div class="cards">
               <button class="tc tc-group" @click="emit('newgroup')">
-                <div class="tc-ico"><ChartIcon name="group" :size="64" /></div>
+                <div class="tc-ico"><ChartIcon name="group" :size="88" /></div>
                 <span class="tc-label">Empty Group</span>
               </button>
             </div>
@@ -475,10 +475,14 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 
    --picker-ico drives the artwork: the icon ramp resolves from currentColor, so one
    token sets all three depth steps of every glyph. */
-.tc { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 20px 12px; border: 1px solid var(--picker-tile-border); background: var(--surface); border-radius: var(--r-lg); color: var(--picker-ico); transition: border-color .15s, box-shadow .15s; }
+/* The CARD keeps its size and the artwork grows inside it: 64 -> 88px in a block that was
+   and stays 138x133. The room comes from the vertical padding, 20 -> 10 — an icon this size
+   needs less framing, not more, and the card was mostly padding before. min-height pins the
+   height so a one-line and a two-line label still produce identical tiles. */
+.tc { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 10px 12px; min-height: 133px; border: 1px solid var(--picker-tile-border); background: var(--surface); border-radius: var(--r-lg); color: var(--picker-ico); transition: border-color .15s, box-shadow .15s; }
 .tc:hover { border-color: var(--muted-2); box-shadow: var(--sh-sm); }
 .tc-group { border-style: dashed; border-color: var(--border-strong); }
-.tc-ico { width: 64px; height: 64px; display: grid; place-items: center; }
+.tc-ico { width: 88px; height: 88px; display: grid; place-items: center; }
 /* the label is READ, so it holds the primary ink while the icon stays quiet beside it */
 /* the LABEL stays --ink: it is text and has to stay readable, while the artwork beside
    it is decoration and can sit back at --picker-ico */
