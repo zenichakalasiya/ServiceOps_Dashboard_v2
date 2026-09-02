@@ -37,7 +37,7 @@ const T = {
   heatmap: 'translate(-4 -4.0) scale(1.5)',
   stack: 'translate(8 13)',
   grouped: 'translate(8 13)',
-  combo: 'translate(8 13)',
+  combo: 'translate(0 0)',
   funnel: 'translate(-4 -4.0) scale(1.5)',
   mapbubble: 'translate(-4 -4.0) scale(1.5)',
   kpi: 'translate(-4 -4.0) scale(1.5)',
@@ -193,15 +193,25 @@ const T = {
       <!-- Bars AND a line, which is the whole definition of a combo — so the line CROSSES
            them, with a point where it meets each. Bars take the ground step so the line
            stays legible over them. -->
+      <!-- ONE path, on purpose — this is the icon the developers receive verbatim, so what
+           ships here is what they get rather than a richer version they cannot use.
+
+           A single <path> carries a single fill, which is why everything that would
+           normally be a stroke is emitted as a filled outline instead: the axis is a filled
+           L, and each segment of the series line is a quadrilateral computed from the
+           perpendicular of that segment. The supplied reference is built exactly this way,
+           and being single-tone is what makes it possible at all.
+
+           Consequence worth knowing: Combo is the one FLAT icon in this set. Every other
+           kind uses the 0.8 / 0.6 / 0.4 ramp, which no single path can express.
+
+           Generated, not hand-written — the connector quads need each segment's
+           perpendicular, and eyeballing those gives a line whose thickness wobbles. -->
       <template v-else-if="name === 'combo'">
-        <path d="M5 34H43" fill="none" stroke="var(--ci-axis)" stroke-width="2.1" stroke-linecap="round" />
-        <rect x="8" y="21" width="8" height="9" rx="1.2" fill="var(--ci-4)" />
-        <rect x="20" y="14" width="8" height="16" rx="1.2" fill="var(--ci-4)" />
-        <rect x="32" y="18" width="8" height="12" rx="1.2" fill="var(--ci-4)" />
-        <path d="M12 24L24 12L36 20" fill="none" stroke="var(--ci-1)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
-        <circle cx="12" cy="24" r="2.2" fill="var(--ci-1)" />
-        <circle cx="24" cy="12" r="2.2" fill="var(--ci-1)" />
-        <circle cx="36" cy="20" r="2.2" fill="var(--ci-1)" />
+        <path
+          d="M13 12H15.2V48.8H52V51H13ZM18 28.8H25V45.8H18ZM26.5 18.8H33.5V45.8H26.5ZM35 24.8H42V45.8H35ZM43.5 14.8H50.5V45.8H43.5ZM22.28 25.7L30.78 16.2L29.22 14.8L20.72 24.3ZM29.39 16.36L37.89 22.36L39.11 20.64L30.61 14.64ZM39.3 22.18L47.8 12.18L46.2 10.82L37.7 20.82ZM19 25a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0ZM27.5 15.5a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0ZM36 21.5a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0ZM44.5 11.5a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0Z"
+          fill="var(--ci-1)" fill-rule="evenodd"
+        />
       </template>
 
       <!-- Funnel -->
