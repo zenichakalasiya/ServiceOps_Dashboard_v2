@@ -24,16 +24,20 @@ defineProps({
 const T = {
   pie: 'translate(-4 -4.0) scale(1.5)',
   donut: 'translate(-4 -4.0) scale(1.5)',
-  bar: 'translate(-4 -5.5) scale(1.5)',
-  line: 'translate(-4 -8.5) scale(1.5)',
-  multiline: 'translate(-4 -8.5) scale(1.5)',
-  column: 'translate(-4 -7.0) scale(1.5)',
+  bar: 'translate(8 13)',
+  /* The cartesian kinds are drawn on the reference SVGs' own 48x38 artboard and simply
+     centred in the 64 box — no 1.5 scale. Redrawing them at the sheet's scale would mean
+     re-deriving every coordinate, and the axis weights would stop matching the files they
+     came from. */
+  line: 'translate(8 13)',
+  multiline: 'translate(8 13)',
+  column: 'translate(8 13)',
   gauge: 'translate(-4 -4.0) scale(1.5)',
-  hist: 'translate(-4 -7.0) scale(1.5)',
+  hist: 'translate(8 13)',
   heatmap: 'translate(-4 -4.0) scale(1.5)',
-  stack: 'translate(-4 -5.5) scale(1.5)',
-  grouped: 'translate(-4 -5.5) scale(1.5)',
-  combo: 'translate(-4 -7.0) scale(1.5)',
+  stack: 'translate(8 13)',
+  grouped: 'translate(8 13)',
+  combo: 'translate(8 13)',
   funnel: 'translate(-4 -4.0) scale(1.5)',
   mapbubble: 'translate(-4 -4.0) scale(1.5)',
   kpi: 'translate(-4 -4.0) scale(1.5)',
@@ -63,35 +67,41 @@ const T = {
       <!-- Bar -->
       <!-- Horizontal bars off a value axis. Bars alone floated; the axis is what says which
            edge they are measured from, and it is the line the reference set draws too. -->
+      <!-- Horizontal bars off a value axis. NOT segmented: the reference for this slot is a
+           STACKED horizontal bar, but our Bar chart plots one series, and drawing segments
+           would promise a stack it never renders. Stacked below keeps the segments. -->
       <template v-else-if="name === 'bar'">
-        <path d="M9 12V36" stroke="var(--ci-1)" stroke-width="2" stroke-linecap="round" />
-        <rect x="11.5" y="14" width="27" height="5.5" rx="1.5" fill="var(--ci-1)" />
-        <rect x="11.5" y="22" width="19" height="5.5" rx="1.5" fill="var(--ci-2)" />
-        <rect x="11.5" y="30" width="12" height="5.5" rx="1.5" fill="var(--ci-3)" />
+        <path d="M5 4V34" fill="none" stroke="var(--ci-axis)" stroke-width="1.6" stroke-linecap="round" />
+        <rect x="7" y="7" width="32" height="7" rx="1.2" fill="var(--ci-1)" />
+        <rect x="7" y="17" width="22" height="7" rx="1.2" fill="var(--ci-2)" />
+        <rect x="7" y="27" width="14" height="7" rx="1.2" fill="var(--ci-3)" />
       </template>
 
       <!-- Line -->
       <!-- A line ON ITS AXIS. The reference set draws the baseline for every cartesian kind,
            which is what stops Line, Area and Multi-line reading as loose squiggles. -->
+      <!-- One series on its axis. -->
       <template v-else-if="name === 'line'">
-        <path d="M9 30L16 22L23 26L30 15L37 19L41 13V34H9Z" fill="var(--ci-3)" />
-        <path d="M9 30L16 22L23 26L30 15L37 19L41 13" fill="none" stroke="var(--ci-1)" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" />
-        <path d="M9 34H41" stroke="var(--ci-1)" stroke-width="2" stroke-linecap="round" />
+        <path d="M5 4V33H43" fill="none" stroke="var(--ci-axis)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M9 27L18 18L26 22L34 11L41 16" fill="none" stroke="var(--ci-1)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
       </template>
 
       <!-- Multi-line — three series, no area fill, so it never reads as Line -->
+      <!-- Two series, the second dropped to --ci-3 so the pair reads as two lines rather
+           than as one line crossing itself. -->
       <template v-else-if="name === 'multiline'">
-        <path d="M8 38L15 35L22 37L29 32L36 34L40 30" fill="none" stroke="var(--ci-3)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
-        <path d="M8 32L15 27L22 30L29 23L36 26L40 21" fill="none" stroke="var(--ci-2)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
-        <path d="M8 26L15 19L22 23L29 14L36 18L40 12" fill="none" stroke="var(--ci-1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M5 4V33H43" fill="none" stroke="var(--ci-axis)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M9 24L17 14L25 18L33 8L41 13" fill="none" stroke="var(--ci-1)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M9 30L17 25L25 28L33 21L41 25" fill="none" stroke="var(--ci-3)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
       </template>
 
       <!-- Column -->
+      <!-- Vertical bars on a baseline — Bar turned ninety degrees, same three steps. -->
       <template v-else-if="name === 'column'">
-        <rect x="9" y="28" width="6" height="12" rx="1" fill="var(--ci-3)" />
-        <rect x="17" y="18" width="6" height="22" rx="1" fill="var(--ci-2)" />
-        <rect x="25" y="24" width="6" height="16" rx="1" fill="var(--ci-2)" />
-        <rect x="33" y="12" width="6" height="28" rx="1" fill="var(--ci-1)" />
+        <path d="M5 33H43" fill="none" stroke="var(--ci-axis)" stroke-width="1.6" stroke-linecap="round" />
+        <rect x="9" y="12" width="8" height="19" rx="1.2" fill="var(--ci-1)" />
+        <rect x="20" y="19" width="8" height="12" rx="1.2" fill="var(--ci-2)" />
+        <rect x="31" y="8" width="8" height="23" rx="1.2" fill="var(--ci-3)" />
       </template>
 
       <!-- Gauge -->
@@ -104,15 +114,16 @@ const T = {
       </template>
 
       <!-- Histogram -->
+      <!-- Five columns that TOUCH, in one colour. Both matter: a histogram is one series
+           over continuous bins, so gaps would make it a Column chart and a colour ramp
+           would make it look like several series. -->
       <template v-else-if="name === 'hist'">
-        <rect x="8" y="35" width="3.4" height="5" rx="0.75" fill="var(--ci-3)" />
-        <rect x="12" y="30" width="3.4" height="10" rx="0.75" fill="var(--ci-3)" />
-        <rect x="16" y="23" width="3.4" height="17" rx="0.75" fill="var(--ci-2)" />
-        <rect x="20" y="15" width="3.4" height="25" rx="0.75" fill="var(--ci-1)" />
-        <rect x="24" y="12" width="3.4" height="28" rx="0.75" fill="var(--ci-1)" />
-        <rect x="28" y="19" width="3.4" height="21" rx="0.75" fill="var(--ci-2)" />
-        <rect x="32" y="27" width="3.4" height="13" rx="0.75" fill="var(--ci-2)" />
-        <rect x="36" y="33" width="3.4" height="7" rx="0.75" fill="var(--ci-3)" />
+        <path d="M5 33H43" fill="none" stroke="var(--ci-axis)" stroke-width="1.6" stroke-linecap="round" />
+        <rect x="7" y="23" width="7" height="8" fill="var(--ci-1)" />
+        <rect x="14.5" y="15" width="7" height="16" fill="var(--ci-1)" />
+        <rect x="22" y="19" width="7" height="12" fill="var(--ci-1)" />
+        <rect x="29.5" y="8" width="7" height="23" fill="var(--ci-1)" />
+        <rect x="37" y="13" width="7" height="18" fill="var(--ci-1)" />
       </template>
 
       <!-- Heatmap -->
@@ -136,26 +147,31 @@ const T = {
       <!-- Vertical bars, each SEGMENTED, standing on a baseline. The segments are the whole
            point of a stack, so they keep the three-step ramp; the baseline is what separates
            it from Grouped, whose bars stand side by side rather than piled. -->
+      <!-- Three columns, each SEGMENTED bottom-to-top 0.8 / 0.6 / 0.4, as the reference
+           stacks them. Only the TOP segment is rounded — the joins inside a stack are
+           butted, which is what makes it read as one column rather than three tiles. -->
       <template v-else-if="name === 'stack'">
-        <rect x="10" y="28" width="8" height="8" rx="1" fill="var(--ci-1)" />
-        <rect x="10" y="21" width="8" height="6.4" rx="1" fill="var(--ci-2)" />
-        <rect x="10" y="16" width="8" height="4.4" rx="1" fill="var(--ci-3)" />
-        <rect x="20" y="26" width="8" height="10" rx="1" fill="var(--ci-1)" />
-        <rect x="20" y="18" width="8" height="7.4" rx="1" fill="var(--ci-2)" />
-        <rect x="20" y="12.5" width="8" height="4.9" rx="1" fill="var(--ci-3)" />
-        <rect x="30" y="30" width="8" height="6" rx="1" fill="var(--ci-1)" />
-        <rect x="30" y="23.5" width="8" height="5.9" rx="1" fill="var(--ci-2)" />
-        <rect x="30" y="19" width="8" height="3.9" rx="1" fill="var(--ci-3)" />
-        <path d="M8 38H40" stroke="var(--ci-1)" stroke-width="2" stroke-linecap="round" />
+        <path d="M5 33H43" fill="none" stroke="var(--ci-axis)" stroke-width="1.6" stroke-linecap="round" />
+        <rect x="9" y="25" width="8" height="7" fill="var(--ci-1)" />
+        <rect x="9" y="18" width="8" height="7" fill="var(--ci-2)" />
+        <path d="M9 13.2A1.2 1.2 0 0 1 10.2 12H15.8A1.2 1.2 0 0 1 17 13.2V18H9Z" fill="var(--ci-3)" />
+        <rect x="20" y="27" width="8" height="5" fill="var(--ci-1)" />
+        <rect x="20" y="20" width="8" height="7" fill="var(--ci-2)" />
+        <path d="M20 16.2A1.2 1.2 0 0 1 21.2 15H26.8A1.2 1.2 0 0 1 28 16.2V20H20Z" fill="var(--ci-3)" />
+        <rect x="31" y="24" width="8" height="8" fill="var(--ci-1)" />
+        <rect x="31" y="16" width="8" height="8" fill="var(--ci-2)" />
+        <path d="M31 11.2A1.2 1.2 0 0 1 32.2 10H37.8A1.2 1.2 0 0 1 39 11.2V16H31Z" fill="var(--ci-3)" />
       </template>
 
       <!-- Combo -->
+      <!-- Bars AND a line, which is the whole definition of a combo. The bars drop to
+           --ci-3 so the line reads on top of them instead of fighting for the same weight. -->
       <template v-else-if="name === 'combo'">
-        <rect x="9" y="26" width="6" height="14" rx="1" fill="var(--ci-3)" />
-        <rect x="17" y="20" width="6" height="20" rx="1" fill="var(--ci-2)" />
-        <rect x="25" y="25" width="6" height="15" rx="1" fill="var(--ci-3)" />
-        <rect x="33" y="17" width="6" height="23" rx="1" fill="var(--ci-2)" />
-        <path d="M12 23L20 16L28 20L36 12" fill="none" stroke="var(--ci-1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M5 33H43" fill="none" stroke="var(--ci-axis)" stroke-width="1.6" stroke-linecap="round" />
+        <rect x="8" y="21" width="8" height="10" rx="1.2" fill="var(--ci-3)" />
+        <rect x="20" y="16" width="8" height="15" rx="1.2" fill="var(--ci-3)" />
+        <rect x="32" y="11" width="8" height="20" rx="1.2" fill="var(--ci-3)" />
+        <path d="M8 25L18 19L28 12L42 6" fill="none" stroke="var(--ci-1)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
       </template>
 
       <!-- Funnel -->
@@ -228,13 +244,14 @@ const T = {
            to its rules: same 8→40 span and baseline as Stacked, same 0.4/0.6 ramp, but
            the pairs stand SIDE BY SIDE instead of piling up. That contrast is the whole
            job of the icon — next to Stacked it has to be the difference you notice. -->
+      <!-- TWO PAIRS, not four evenly spaced bars. The gap between the pairs is the entire
+           difference from Column, and the reference spaces them the same way. -->
       <template v-else-if="name === 'grouped'">
-        <rect x="8" y="22" width="4.5" height="18" fill="var(--ci-2)" />
-        <rect x="13.5" y="16" width="4.5" height="24" fill="var(--ci-1)" />
-        <rect x="19" y="14" width="4.5" height="26" fill="var(--ci-2)" />
-        <rect x="24.5" y="20" width="4.5" height="20" fill="var(--ci-1)" />
-        <rect x="30" y="26" width="4.5" height="14" fill="var(--ci-2)" />
-        <rect x="35.5" y="29" width="4.5" height="11" fill="var(--ci-1)" />
+        <path d="M5 33H43" fill="none" stroke="var(--ci-axis)" stroke-width="1.6" stroke-linecap="round" />
+        <rect x="8" y="11" width="7" height="20" rx="1.2" fill="var(--ci-1)" />
+        <rect x="16" y="18" width="7" height="13" rx="1.2" fill="var(--ci-3)" />
+        <rect x="27" y="7" width="7" height="24" rx="1.2" fill="var(--ci-1)" />
+        <rect x="35" y="15" width="7" height="16" rx="1.2" fill="var(--ci-3)" />
       </template>
 
       <template v-else-if="name === 'group'">
@@ -265,10 +282,17 @@ const T = {
 
    color-mix toward transparent rather than opacity on each path, so the ramp is one
    declaration per step instead of an attribute on all 97 shapes. */
+/* The RAMP, taken from the ServiceOps chart-type icons themselves. Those SVGs carry TWO
+   variables, not one: --chart-line-type-icon paints the axis at full strength, and
+   --chart-type-icon paints the data at 0.8 / 0.6 / 0.4. That split is the whole reason the
+   real icons read as charts — the axis is the frame and the data sits inside it — and it is
+   exactly what our single 1 / 0.55 / 0.3 ramp was missing. Same four values here, all
+   driven off currentColor so one token still sets the whole icon. */
 .cico {
-  --ci-1: currentColor;
-  --ci-2: color-mix(in srgb, currentColor 55%, transparent);
-  --ci-3: color-mix(in srgb, currentColor 30%, transparent);
+  --ci-axis: currentColor;
+  --ci-1: color-mix(in srgb, currentColor 80%, transparent);
+  --ci-2: color-mix(in srgb, currentColor 60%, transparent);
+  --ci-3: color-mix(in srgb, currentColor 40%, transparent);
 }
 .cico { display: block; flex: none; }
 </style>
