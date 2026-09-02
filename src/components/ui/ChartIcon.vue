@@ -251,9 +251,12 @@ const T = {
            lighter than its body, and a content bar in each row. The previous glyph drew
            header bars floating over loose blocks, which reads as a toolbar above tiles; what
            makes a table a table is that every cell shares its edges with its neighbours. -->
+      <!-- A ruled grid of CELLS: an outlined table on the ground step, with a content bar
+           in each body row. What makes a table a table is that every cell shares its edges
+           with its neighbours — the header reads as the header because it is the one row
+           with nothing in it, so it needs no tint of its own. -->
       <template v-else-if="name === 'shortcut'">
-        <rect x="8" y="11" width="32" height="26" rx="2.5" fill="var(--ci-3)" />
-        <path d="M8 13.5A2.5 2.5 0 0 1 10.5 11H37.5A2.5 2.5 0 0 1 40 13.5V17.5H8Z" fill="var(--ci-4)" />
+        <rect x="8" y="11" width="32" height="26" rx="2.5" fill="var(--ci-4)" />
         <path
           d="M8 17.5H40M8 24H40M8 30.5H40M18.67 11V37M29.33 11V37"
           fill="none" stroke="var(--ci-1)" stroke-width="1.1"
@@ -294,11 +297,14 @@ const T = {
         <rect x="35" y="15" width="7" height="15" rx="1.2" fill="var(--ci-3)" />
       </template>
 
+      <!-- An empty folder with a plus. The plus takes the ground step: it marks the folder
+           as one you add to, but the FOLDER is the thing being named, and at full ink the
+           plus was the first thing read. -->
       <template v-else-if="name === 'group'">
         <path d="M10 13H20.5L24 17H38A2 2 0 0 1 40 19V34A2 2 0 0 1 38 36H10A2 2 0 0 1 8 34V15A2 2 0 0 1 10 13Z" fill="var(--ci-3)" />
         <path d="M8 21H40V34A2 2 0 0 1 38 36H10A2 2 0 0 1 8 34Z" fill="var(--ci-2)" />
-        <rect x="22.75" y="24" width="2.5" height="9" rx="1.25" fill="var(--ci-1)" />
-        <rect x="19.5" y="27.25" width="9" height="2.5" rx="1.25" fill="var(--ci-1)" />
+        <rect x="22.75" y="24" width="2.5" height="9" rx="1.25" fill="var(--ci-4)" />
+        <rect x="19.5" y="27.25" width="9" height="2.5" rx="1.25" fill="var(--ci-4)" />
       </template>
     </g>
   </svg>
