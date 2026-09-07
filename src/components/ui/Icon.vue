@@ -32,6 +32,17 @@ const props = defineProps({
   name: String,
   size: { type: [Number, String], default: 18 },
   strokeWidth: { type: [Number, String], default: 2 },
+  /* Solid rather than outlined, decided at the CALL SITE.
+
+     `FILLED` in data/icons.js is the other half of this and does a different job: it
+     names icons that are ALWAYS solid, because solid is what they mean — a filled star
+     is "favourited", an outlined one is "not". This prop is for icons whose meaning is
+     unchanged either way and where the choice belongs to the surface: a boxed icon
+     button in a dense list wants weight; the same glyph in a dropdown does not.
+
+     Putting these names in FILLED instead would have filled every copy/edit/trash in the
+     app — the tile menus, the builder, the manage grid — to restyle one row. */
+  filled: { type: Boolean, default: false },
 })
 
 
@@ -46,7 +57,7 @@ const stroke = computed(() => (px.value <= 14 ? 1.75 : 2))
   <component
     :is="cmp" v-if="cmp" class="ico"
     :size="px" :stroke-width="stroke"
-    :fill="FILLED.has(name) ? 'currentColor' : 'none'"
+    :fill="filled || FILLED.has(name) ? 'currentColor' : 'none'"
     aria-hidden="true"
   />
 </template>

@@ -268,31 +268,43 @@ const T = {
         >123</text>
       </template>
 
-      <!-- Shortcut -->
-      <!-- Column heads over a RULED 3x2 grid. The old glyph was a solid header band with
-           six loose blocks under it, which read as a toolbar over tiles rather than as a
-           table. Ruling the cells is what makes it a table; the heads say which edge is
-           the top. The rules are --surface, not #fff, so they stay the card colour when
-           the card is dark. -->
-      <!-- A ruled grid of CELLS, per the supplied SVG: an outlined table, its header row
-           lighter than its body, and a content bar in each row. The previous glyph drew
-           header bars floating over loose blocks, which reads as a toolbar above tiles; what
-           makes a table a table is that every cell shares its edges with its neighbours. -->
-      <!-- A ruled grid of CELLS: an outlined table on the ground step, with a content bar
-           in each body row. What makes a table a table is that every cell shares its edges
-           with its neighbours — the header reads as the header because it is the one row
-           with nothing in it, so it needs no tint of its own. -->
-      <!-- A ruled grid of CELLS on the lightest ground, its outer edge at the same 2.1 the
-           cartesian icons use for an axis, and the internal rules lighter so the table has
-           an outside and an inside. Drawn on the unscaled artboard so those widths mean the
-           same thing here as they do in Bar or Column. -->
+      <!-- Shortcut — a HEADED table, per the supplied reference.
+
+           The previous glyph left the header row empty and let the body carry everything.
+           That is a grid, not a table: what says "table" is a row of column heads that are
+           visibly not data, so the reference puts a bar in every header cell and only in
+           the first column below it. Reading order comes out right — the heads are the
+           darkest thing and the eye starts at the top-left, which is where a table starts.
+
+           Five rows rather than four. A Shortcut tile is a RECORD LIST, and a table with
+           three body rows reads as a summary; the density is part of what the icon says.
+
+           Tones invert the old glyph: the frame steps back to --ci-2 and the rules to a
+           1px --ci-3, so the marks INSIDE the table are the darkest thing in it. Before, the
+           2.1 outer edge was at full ink and the icon read as a box with some contents.
+
+           Only the HEADER band is tinted; the body cells take the card colour. Tinting the
+           whole table, which is what every other icon in this set does with its ground, put
+           a 22% wash under 1px rules and the two collapsed into one grey mesh — the grid
+           stopped reading as a grid. Confining the tint to the header buys the rules their
+           contrast back AND is the second thing marking the header as the header.
+
+           Drawn on the unscaled artboard, so those widths mean here what they mean in Bar
+           or Column. -->
       <template v-else-if="name === 'shortcut'">
-        <rect x="5" y="5" width="38" height="28" rx="2.5" fill="var(--ci-4)" />
-        <path d="M5 12H43M5 19.33H43M5 26.67H43M17.67 5V33M30.33 5V33" fill="none" stroke="var(--ci-1)" stroke-width="1.3" />
-        <rect x="5" y="5" width="38" height="28" rx="2.5" fill="none" stroke="var(--ci-1)" stroke-width="2.1" />
-        <rect x="8" y="14.6" width="6.6" height="2.4" rx="1.2" fill="var(--ci-1)" />
-        <rect x="8" y="21.9" width="6.6" height="2.4" rx="1.2" fill="var(--ci-1)" />
-        <rect x="8" y="29.2" width="6.6" height="2.4" rx="1.2" fill="var(--ci-1)" />
+        <path d="M7.5 5H40.5A2.5 2.5 0 0143 7.5V11.4H5V7.5A2.5 2.5 0 017.5 5Z" fill="var(--ci-4)" />
+        <path
+          d="M5 11.4H43M5 16.8H43M5 22.2H43M5 27.6H43M17.67 5V33M30.33 5V33"
+          fill="none" stroke="var(--ci-3)" stroke-width="1"
+        />
+        <rect x="5" y="5" width="38" height="28" rx="2.5" fill="none" stroke="var(--ci-2)" stroke-width="2.1" />
+        <rect x="7.34" y="7" width="8" height="2.4" rx="1.2" fill="var(--ci-1)" />
+        <rect x="20" y="7" width="8" height="2.4" rx="1.2" fill="var(--ci-1)" />
+        <rect x="32.67" y="7" width="8" height="2.4" rx="1.2" fill="var(--ci-1)" />
+        <rect x="8" y="12.9" width="6.6" height="2.4" rx="1.2" fill="var(--ci-2)" />
+        <rect x="8" y="18.3" width="6.6" height="2.4" rx="1.2" fill="var(--ci-2)" />
+        <rect x="8" y="23.7" width="6.6" height="2.4" rx="1.2" fill="var(--ci-2)" />
+        <rect x="8" y="29.1" width="6.6" height="2.4" rx="1.2" fill="var(--ci-2)" />
       </template>
 
       <!-- Free Text — the sheet had no text glyph; same card frame as KPI/Shortcut -->

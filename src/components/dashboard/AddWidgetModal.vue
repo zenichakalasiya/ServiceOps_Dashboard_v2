@@ -435,14 +435,19 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
                   <div class="lt-desc ellip">{{ l.desc || (TYPE_LABEL[l.type] + ' · ' + l.module) }}</div>
                 </div>
                 <!-- Archive: Restore + Delete forever · otherwise Duplicate / Edit / Delete -->
+                <!-- SOLID glyphs, not outlined. These are 15px icons inside 28px boxes on a
+                     row that is now white-on-white-ish; an outline at that size is mostly the
+                     hole in the middle, and the three of them read as three empty boxes until
+                     you look straight at them. Filled, the silhouette carries at a glance,
+                     which is all a row action ever gets. -->
                 <div v-if="isTrash" class="lt-acts always">
-                  <button class="la" title="Restore" @click="restore(l)"><Icon name="restore" :size="15" /></button>
-                  <button class="la del" title="Delete forever" @click="delForever(l)"><Icon name="trash" :size="15" /></button>
+                  <button class="la" title="Restore" @click="restore(l)"><Icon name="restore" :size="15" filled /></button>
+                  <button class="la del" title="Delete forever" @click="delForever(l)"><Icon name="trash" :size="15" filled /></button>
                 </div>
                 <div v-else-if="hasActions(l) && !isPlaced(l)" class="lt-acts">
-                  <button v-if="canDuplicate(l)" class="la" title="Duplicate" @click="openLibBuilder(l)"><Icon name="copy" :size="15" /></button>
-                  <button v-if="canEdit(l)" class="la" title="Edit" @click="openLibBuilder(l)"><Icon name="edit" :size="15" /></button>
-                  <button v-if="canDelete(l)" class="la del" title="Delete" @click="delLib(l)"><Icon name="trash" :size="15" /></button>
+                  <button v-if="canDuplicate(l)" class="la" title="Duplicate" @click="openLibBuilder(l)"><Icon name="copy" :size="15" filled /></button>
+                  <button v-if="canEdit(l)" class="la" title="Edit" @click="openLibBuilder(l)"><Icon name="edit" :size="15" filled /></button>
+                  <button v-if="canDelete(l)" class="la del" title="Delete" @click="delLib(l)"><Icon name="trash" :size="15" filled /></button>
                 </div>
               </div>
             </div>
@@ -626,7 +631,11 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .lrow.placed { opacity: .72; }
 .lrow.placed .lcb { cursor: not-allowed; }
 .placed-tag { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; color: var(--green); background: var(--green-soft); padding: 1px 7px 1px 5px; border-radius: 999px; flex: none; }
-.lcb { width: 16px; height: 16px; accent-color: var(--primary); flex: none; cursor: pointer; margin: 0; }
+/* 14px, not 16. The row grew a second line and a 40px artwork well; at 16 the checkbox
+   was competing with the icon beside it for the same job of opening the row, and it is
+   the smaller of the two duties. Still a comfortable target — the whole row is not
+   clickable, so this stays above the 14px floor rather than going lower. */
+.lcb { width: 14px; height: 14px; accent-color: var(--primary); flex: none; cursor: pointer; margin: 0; }
 .lt-main { flex: 1; min-width: 0; }
 .lt-name-row { display: flex; align-items: center; gap: 7px; } .lt-name { font-weight: 600; font-size: 13px; }
 /* the description, one line and clipped. It is context, not content — a wrapping
