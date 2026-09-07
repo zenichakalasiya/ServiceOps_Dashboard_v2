@@ -964,7 +964,20 @@ function save(place) {
    four separate things you could each turn on. */
 /* the tab track and Refresh share one line; `margin-left:auto` (not space-between)
    keeps Refresh hard right even when there are no tabs to push it there */
-.pv-top { display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 12px; flex: none; }
+/* 62 = the 30px pill plus 16 above and 16 below. The row already asks for centring; what it
+   was not getting is explained by the rule below, and until that was fixed the pill sat hard
+   against the header and all 16px of the old 46px row piled up underneath it.
+
+   16 rather than the 8 that centring alone would have given: the space UNDER the switcher was
+   never the problem, so the fix adds a matching gap above instead of splitting the existing
+   one in half. */
+.pv-top { display: flex; align-items: center; gap: 12px; height: 62px; padding: 0 12px; flex: none; }
+/* .seg carries `align-self: flex-start` globally, which is what stops it stretching to full
+   width inside the COLUMN form layouts it usually lives in. This row is a flex ROW, so the
+   cross axis is vertical and that same declaration pins it to the top. It arrived when the
+   family switcher stopped being `.pv-tab` and became `.seg` — the shared control brought a
+   rule the private copy never had. */
+.pv-top .seg { align-self: center; }
 /* in the card's top-right corner, over the canvas — the same place and size the action
    occupies on a placed widget, so the preview behaves like the thing it previews */
 .pv-refresh { position: absolute; top: 10px; right: 10px; z-index: 2; width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid var(--border-control); background: var(--surface); color: var(--muted); border-radius: var(--r); }
