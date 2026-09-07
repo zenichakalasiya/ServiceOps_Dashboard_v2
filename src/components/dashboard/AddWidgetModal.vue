@@ -266,29 +266,17 @@ function canEdit(l) {
 function canDelete(l) { return l.prov === 'user' }
 function hasActions(l) { return canDuplicate(l) || canEdit(l) || canDelete(l) }
 
-// in a mixed list the row must say where each item came from
-const PROV_LABEL = { predefined: 'Predefined', user: 'Created by me', shared: 'Shared' }
-
 const TYPE_LABEL = { kpi: 'KPI', chart: 'Widget', shortcut: 'Shortcut' }
 
 /* The placement count and its "Placed on" popover were removed from this listing.
  * `libUsage` still exists in the store for anywhere that wants the impact view. */
-/* The tooltip carries only what the ROW cannot: the type in words, and where the item came
-   from. It used to open with a description as well — a generated one, back when the row had
-   none to show — and that sentence went when the row grew a real description under the
-   title. Repeating on hover what is already on screen is not redundancy that costs nothing:
-   it trains people to hover rows that have nothing more to give.
+/* There is NO hover tooltip on a row. It carried the type and the provenance, and neither
+   turned out to need it: the type is drawn as the row's artwork, and the provenance is the
+   tab you are standing in — or, in a search result, the tag on the row itself. A tooltip
+   whose content is already on the page costs a hover to learn nothing.
 
-   The type is here because the icon carries it on the row, and an icon is a fast answer
-   rather than a certain one — "is this a KPI or a Widget" has to be answerable in words
-   somewhere. Provenance is here because nothing on the row says it while you are browsing a
-   single tab, and it decides which actions the row offers. */
-const tip = ref({ show: false, type: '', prov: '', top: 0, right: 0 })
-function showTip(l, e) {
-  const r = e.currentTarget.getBoundingClientRect()
-  tip.value = { show: true, type: l.type, prov: l.prov, top: r.top + r.height / 2, right: window.innerWidth - r.left + 12 }
-}
-function hideTip() { tip.value.show = false }
+   `PROV_LABEL` went with it. TAB_OF_PROV is the surviving spelling of the same idea and is
+   the one that reaches the screen, on a search result's tag. */
 const TAB_LABEL = { predefined: 'Predefined', user: 'Created by me', shared: 'Shared with me' }
 const emptyMsg = computed(() => {
   const plural = fType.value ? (fType.value === 'kpi' ? 'KPIs' : TYPE_LABEL[fType.value] + 's') : 'items'
@@ -410,8 +398,24 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
             </div>
 
             <div v-else class="lst">
-              <div v-for="l in g.items" :key="l.id" class="lrow" :class="{ sel: isSel(l), placed: isPlaced(l) }" @mouseenter="showTip(l, $event)" @mouseleave="hideTip">
-                <input v-if="!isTrash" type="checkbox" class="lcb" :checked="isSel(l) || isPlaced(l)" :disabled="isPlaced(l)" @change="toggleSel(l)" />
+              <!-- The WHOLE card selects. The checkbox is a 14px target in a 62px card, so
+                   asking for it specifically was a Fitts's Law tax on the one thing this list
+                   exists to do; the card is the object, so the card is the target. Archive rows
+                   are not selectable at all, so they get no handler rather than a dead one. -->
+              <div
+                v-for="l in g.items" :key="l.id" class="lrow"
+                :class="{ sel: isSel(l), placed: isPlaced(l), pick: !isTrash && !isPlaced(l) }"
+                @click="!isTrash && toggleSel(l)"
+              >
+                <!-- click.prevent, not @change: the browser is not allowed to toggle this box
+                     itself, so what it shows is only ever `isSel`. On @change it could disagree
+                     — refuse the 11th selection and the state says no while the box you just
+                     clicked sits there ticked. .stop keeps the card handler from undoing it. -->
+                <input
+                  v-if="!isTrash" type="checkbox" class="lcb"
+                  :checked="isSel(l) || isPlaced(l)" :disabled="isPlaced(l)"
+                  @click.prevent.stop="toggleSel(l)"
+                />
                 <span v-else class="trash-ic"><Icon name="trash" :size="15" /></span>
                 <!-- the artwork of the chart this row actually draws. It replaces the words
                      "Widget" / "KPI" / "Shortcut", which used to open the meta line and now
@@ -421,33 +425,41 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
                 <div class="lt-main">
                   <div class="lt-name-row">
                     <span class="lt-name ellip">{{ l.title }}</span>
-                    <!-- Searching, the tag is the TAB the result came from — the thing you
-                         can no longer read off the page, since the results span all of them.
-                         Not searching, the tab is on screen and the module is not, so it is
-                         the module. Never both: in a module-grouped result list the module is
-                         already the heading three lines up. -->
-                    <span class="row-tag" :class="searching ? 'src' : 'mod'">{{ searching ? TAB_OF_PROV[l.prov] : l.module }}</span>
+                    <!-- "On dashboard" comes FIRST so the tag after it stays flush right on every
+                         row. The other way round, the two rows already on the board had their tag
+                         pushed 108px left by the badge, and the column stopped being a column on
+                         exactly the rows that carry the most on that line. -->
                     <span v-if="isPlaced(l)" class="placed-tag"><Icon name="check" :size="11" /> On dashboard</span>
+                    <!-- Searching, the tag is the TAB the result came from — the thing you can no
+                         longer read off the page, since the results span all of them. Not searching,
+                         the tab is on screen and the module is not, so it is the module. Never both:
+                         in a module-grouped result list the module is already the heading above. -->
+                    <span class="row-tag" :class="searching ? 'src' : 'mod'">{{ searching ? TAB_OF_PROV[l.prov] : l.module }}</span>
                   </div>
                   <!-- Falls back to the type and module for an item saved without a
                        description — an empty second line would collapse the row to a
                        different height than its neighbours, for no gain. -->
                   <div class="lt-desc ellip">{{ l.desc || (TYPE_LABEL[l.type] + ' · ' + l.module) }}</div>
                 </div>
-                <!-- Archive: Restore + Delete forever · otherwise Duplicate / Edit / Delete -->
-                <!-- SOLID glyphs, not outlined. These are 15px icons inside 28px boxes on a
-                     row that is now white-on-white-ish; an outline at that size is mostly the
-                     hole in the middle, and the three of them read as three empty boxes until
-                     you look straight at them. Filled, the silhouette carries at a glance,
-                     which is all a row action ever gets. -->
-                <div v-if="isTrash" class="lt-acts always">
+                <!-- Archive: Restore + Delete forever · otherwise Duplicate / Edit / Delete.
+
+                     SOLID glyphs, not outlined. At 15px an outline is mostly the hole in the
+                     middle, and three of them read as three empty boxes until you look straight
+                     at one. Filled, the silhouette carries at a glance, which is all a row
+                     action ever gets — and it is what lets the buttons drop their own boxes.
+
+                     @click.stop on the group: these open a builder or delete a tile, and none
+                     of them is also a request to select the card underneath. -->
+                <div v-if="isTrash" class="lt-acts always" @click.stop>
                   <button class="la" title="Restore" @click="restore(l)"><Icon name="restore" :size="15" filled /></button>
                   <button class="la del" title="Delete forever" @click="delForever(l)"><Icon name="trash" :size="15" filled /></button>
                 </div>
-                <div v-else-if="hasActions(l) && !isPlaced(l)" class="lt-acts">
-                  <button v-if="canDuplicate(l)" class="la" title="Duplicate" @click="openLibBuilder(l)"><Icon name="copy" :size="15" filled /></button>
-                  <button v-if="canEdit(l)" class="la" title="Edit" @click="openLibBuilder(l)"><Icon name="edit" :size="15" filled /></button>
-                  <button v-if="canDelete(l)" class="la del" title="Delete" @click="delLib(l)"><Icon name="trash" :size="15" filled /></button>
+                <div v-else class="lt-acts" @click.stop>
+                  <template v-if="!isPlaced(l)">
+                    <button v-if="canDuplicate(l)" class="la" title="Duplicate" @click="openLibBuilder(l)"><Icon name="copy" :size="15" filled /></button>
+                    <button v-if="canEdit(l)" class="la" title="Edit" @click="openLibBuilder(l)"><Icon name="edit" :size="15" filled /></button>
+                    <button v-if="canDelete(l)" class="la del" title="Delete" @click="delLib(l)"><Icon name="trash" :size="15" filled /></button>
+                  </template>
                 </div>
               </div>
             </div>
@@ -480,19 +492,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 
     <!-- The "Placed on" popover lived here. It hung off the usage badge, which was its
          only trigger, so it went when the count did rather than staying as unreachable
-         code. If the impact view is wanted back it needs a trigger of its own — the row
-         already uses hover for its description tooltip, so the two would collide. -->
-
-    <!-- Row tooltip — the type and the provenance, opening to the left of the hovered row -->
-    <teleport to="body">
-      <transition name="fade">
-        <div v-if="tip.show" class="tt lib-tip" :style="{ top: tip.top + 'px', right: tip.right + 'px' }">
-          <span v-if="tip.type" class="tt-tag">{{ TYPE_LABEL[tip.type] }}</span>
-          <span v-if="tip.prov" class="tt-tag" :class="tip.prov">{{ PROV_LABEL[tip.prov] || tip.prov }}</span>
-          <span class="lib-tip-arrow" />
-        </div>
-      </transition>
-    </teleport>
+         code. If the impact view is wanted back it needs a trigger of its own. -->
 
     <!-- Delete confirmation -->
     <teleport to="body">
@@ -620,15 +620,23 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
    a line of text — hence the white surface and the hairline, matching the type cards on
    the Create Widget tab. gap drops 12 -> 10 because the icon between the checkbox and the
    title adds a third column to the row. */
-.lrow { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: var(--r); background: var(--surface); border: 1px solid var(--picker-tile-border); }
+.lrow { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--picker-tile-border); transition: border-color .15s, box-shadow .15s, background .15s; }
+/* 8px, not 4. A card is a SURFACE and takes the surface tier; the 4px control corner is
+   what made a stack of these read as a list of buttons. */
+.lrow.pick { cursor: pointer; }
 .lst { gap: 6px; }
 /* the artwork block. 34px inside a 40px well: the icons are drawn on a 64 artboard with
    their own margins, so a tight well would crop the visual weight rather than the box. */
 .lt-ico { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: var(--r); background: var(--picker-bg); color: var(--picker-ico); }
-.lrow:hover { border-color: var(--muted-2); box-shadow: var(--sh-sm); }
+.lrow.pick:hover { border-color: var(--primary); box-shadow: var(--sh-sm); }
 .lrow.sel { background: var(--primary-softer); border-color: var(--primary); }
 .lrow.sel .lt-ico { background: var(--surface); }
-.lrow.placed { opacity: .72; }
+/* Placed rows step back with a grey ground rather than a blanket opacity. At .72 the
+   TITLE faded too, and the row you most need to recognise — the one already on the board
+   — was the hardest to read. The ground says "spent", the text stays legible. */
+.lrow.placed { background: var(--surface-2); border-color: transparent; }
+.lrow.placed .lt-name { color: var(--muted); }
+.lrow.placed .lt-ico { background: var(--surface); opacity: .6; }
 .lrow.placed .lcb { cursor: not-allowed; }
 .placed-tag { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; color: var(--green); background: var(--green-soft); padding: 1px 7px 1px 5px; border-radius: 999px; flex: none; }
 /* 14px, not 16. The row grew a second line and a 40px artwork well; at 16 the checkbox
@@ -638,35 +646,65 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .lcb { width: 14px; height: 14px; accent-color: var(--primary); flex: none; cursor: pointer; margin: 0; }
 .lt-main { flex: 1; min-width: 0; }
 .lt-name-row { display: flex; align-items: center; gap: 7px; } .lt-name { font-weight: 600; font-size: 13px; }
+/* The tags sit at the RIGHT edge of the text column, not tight against the title. Titles
+   are every length, so a tag that follows one lands in a different place on every row and
+   the eye has to hunt for it. Pushed right they form a column you can read straight down,
+   and the title gets an unambiguous right edge to truncate against. */
+/* The TITLE holds the auto margin, so everything after it is pushed right whatever that
+   "everything" turns out to be — one tag, or a badge and a tag. Selecting the tags instead
+   needed a rule per combination, and the one for a lone tag was `.row-tag:first-of-type`,
+   which matches by ELEMENT type: .lt-name is a <span> too, so it was always the first of
+   type and the margin landed on nothing.
+
+   min-width: 0 is what lets a long title shrink and ellipsis instead of shoving the tags
+   off the right — a nowrap span's min-content width is its whole text. */
+.lt-name { flex: 0 1 auto; min-width: 0; margin-right: auto; }
 /* the description, one line and clipped. It is context, not content — a wrapping
    description would make rows of different heights out of a list you scan by rhythm. */
 .lt-desc { font-size: 12px; color: var(--muted); margin-top: 1px; line-height: 1.45; }
 /* One tag class, two meanings (module while browsing, source tab while searching), because
    they never appear together — a row shows whichever fact the page is not already showing. */
 .row-tag { flex: none; font-size: 11px; font-weight: 500; border-radius: var(--r); padding: 1px 6px; white-space: nowrap; }
-.row-tag.mod { background: var(--surface-2); color: var(--muted); }
+/* The module is plain text, not a chip. As a --surface-2 pill it disappeared on exactly the
+   two rows that are not white — a selected card (--primary-softer) and a placed one
+   (--surface-2, the same colour) — so the chip was there for the rows that needed it least.
+   It is metadata sitting in its own right-hand column, which is all the grouping it needs;
+   a box around it was a container doing no work. */
+.row-tag.mod { background: none; padding: 0; color: var(--muted); }
+/* The source tag stays a chip: in a search result it is a CLASSIFICATION and has to be read
+   as one, not as more metadata. It takes the card colour on a tinted row for the same reason
+   the module tag stopped being a chip — its own tint is one step from the selected ground. */
 .row-tag.src { background: var(--primary-softer); color: var(--primary-700); }
+.lrow.sel .row-tag.src, .lrow.placed .row-tag.src { background: var(--surface); }
 /* on a type card the source tag is a caption under the label, not a chip beside it */
 .tc .row-tag { margin-top: -2px; }
-/* left-pointing tooltip (teleported, fixed to viewport) */
+/* the row tooltip and its arrow were deleted here — see the note by TYPE_LABEL */
 /* surface, padding and colour come from .tt now — only the placement is local */
-/* No fixed width any more. 232px was sized for a sentence; holding two short tags it left
-   most of the box empty, which reads as a tooltip that failed to load rather than one that
-   is simply short. It shrinks to its contents now, so the two tags sit on one line. */
-.lib-tip { position: fixed; z-index: 200; transform: translateY(-50%); display: flex; align-items: center; gap: 5px; pointer-events: none; white-space: nowrap; }
-/* provenance as a tag under the description — mirrors WidgetCard's .tt-tag */
-.lib-tip-arrow { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); border: 6px solid transparent; border-left-color: #030213; }
+
 /* Hover actions (Duplicate / Edit / Delete) — each in its own outlined box rather than a
    bare glyph, so on a tinted hovered row they still read as three separate buttons. Delete
    is red at rest, not only on its own hover: it is the one action here you cannot undo. */
-.lt-acts { display: flex; align-items: center; gap: 6px; opacity: 0; transition: opacity .12s; }
-.lrow:hover .lt-acts { opacity: 1; }
+/* focus-within as well as hover: these are the only actions on the row, and reaching them
+   by keyboard should not require a mouse to be somewhere. */
+/* A FIXED gutter, three buttons wide, whether or not this row has three. The action count
+   is per-provenance — Predefined offers Duplicate only, your own offers three — so a gutter
+   that sized itself to its contents put the tag column in a different place on every row of
+   a search result, which mixes all three. The column only reads as a column if it is one.
+   Rows with fewer actions right-align into it. */
+.lt-acts { display: flex; align-items: center; justify-content: flex-end; gap: 2px; width: 88px; flex: none; opacity: 0; transition: opacity .12s; }
+.lrow:hover .lt-acts, .lrow:focus-within .lt-acts { opacity: 1; }
 .lt-acts.always { opacity: 1; }
 .trash-ic { width: 16px; display: inline-grid; place-items: center; color: var(--muted-2); flex: none; }
-.la { width: 28px; height: 28px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink-2); border-radius: 4px; display: grid; place-items: center; }
-.la:hover { border-color: var(--primary); color: var(--primary-700); background: var(--primary-softer); }
-.la.del { color: var(--red); }
-.la.del:hover { color: var(--red); border-color: var(--red); background: var(--red-soft); }
+/* Ghost buttons now — no resting box. Three outlined boxes inside an outlined card is four
+   containers deep for one row, and the boxes were carrying an affordance the glyphs could
+   not: they were outlined too, and an outlined glyph in an outlined box reads as neither.
+   The glyphs are solid, so the shape alone says "button" and the box is free to go. Each
+   still takes a 28px hit area and lights its own ground on hover, so they stay three
+   separate targets rather than a strip. */
+.la { width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: var(--r); display: grid; place-items: center; transition: background .12s, color .12s; }
+.la:hover { color: var(--primary-700); background: var(--primary-softer); }
+.la.del { color: var(--muted); }
+.la.del:hover { color: var(--red); background: var(--red-soft); }
 /* delete confirmation modal */
 .cf-overlay { position: fixed; inset: 0; background: rgba(20,21,38,.5); backdrop-filter: blur(2px); z-index: 130; display: grid; place-items: center; padding: 24px; }
 .cf { width: min(400px, 92vw); background: var(--surface); border-radius: var(--r-xl); box-shadow: var(--sh-lg); padding: 24px; text-align: center; }

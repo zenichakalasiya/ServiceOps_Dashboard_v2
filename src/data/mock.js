@@ -262,11 +262,11 @@ export function seed() {
     ...(o.desc ? { desc: o.desc } : {}), ...(o.kind ? { kind: o.kind } : {}),
   })
   // predefined
-  push('kpi', 'Open Requests', 'predefined', 'Request', { fav: true, desc: 'Every request not yet resolved or closed, across all technician groups.' })
+  push('kpi', 'Open Requests', 'predefined', 'Request', { fav: true, desc: 'Every request not yet resolved or closed, across all groups.' })
   push('kpi', 'SLA Compliance %', 'predefined', 'Request', { fav: true, desc: 'Share of requests resolved inside their SLA target this period.' })
   push('kpi', 'MTTR', 'predefined', 'Request', { desc: 'Mean time to resolve, measured from first assignment to resolution.' })
   push('kpi', 'Out-of-Warranty Assets', 'predefined', 'Asset', { desc: 'Assets whose warranty has lapsed but which are still in service.' })
-  push('chart', 'Created vs Resolved', 'predefined', 'Request', { fav: true, kind: 'multiline', desc: 'Daily created against resolved volume — the backlog gap at a glance.' })
+  push('chart', 'Created vs Resolved', 'predefined', 'Request', { fav: true, kind: 'multiline', desc: 'Daily created against resolved volume — the backlog gap.' })
   push('chart', 'Tickets by Priority', 'predefined', 'Request', { kind: 'donut', desc: 'Open requests split by priority, P1 through P4.' })
   push('chart', 'Assets by Type', 'predefined', 'Asset', { kind: 'column', desc: 'Hardware, software and virtual assets by category.' })
   push('chart', 'Backlog Trend', 'predefined', 'Request', { kind: 'line', desc: 'Unresolved request count over the last 30 days.' })
