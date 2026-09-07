@@ -420,7 +420,7 @@ function save(place) {
   }
   // --- library duplicate/edit: hand the config back to the listing ---
   if (props.libItem) {
-    emit('librarySaved', { title: effectiveName.value, module: cfg.module, type: curType.value.type, access: cfg.access, place })
+    emit('librarySaved', { title: effectiveName.value, module: cfg.module, type: curType.value.type, access: cfg.access, desc: cfg.description, kind: curType.value.id, place })
     return
   }
   // --- edit an existing board tile in place (type may change for a predefined edit) ---
@@ -455,7 +455,7 @@ function save(place) {
     props.d.updated = new Date().toISOString()
     emit('created', pv.id)
   } else {
-    emit('savedToLibrary', { title: effectiveName.value, module: cfg.module, type: curType.value.type, access: cfg.access })
+    emit('savedToLibrary', { title: effectiveName.value, module: cfg.module, type: curType.value.type, access: cfg.access, desc: cfg.description, kind: curType.value.id })
   }
 }
 </script>

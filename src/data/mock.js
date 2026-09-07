@@ -242,30 +242,48 @@ export function seed() {
   // Library of reusable tiles for the Add-Widget flow
   const modules = ['Request', 'Asset', 'Problem', 'Change', 'Contract', 'Service Catalog']
   const lib = []
-  const push = (type, title, prov, module, fav = false, sharedAccess = 'view') => lib.push({ id: uid('lt'), type, title, prov, module, favorite: fav, sharedAccess })
+  /* Every library item now carries a `desc`, and every chart the `kind` it draws.
+
+     Both exist because the Add-Widget listing shows them: the description sits under the
+     title, where the "Widget · Request" line used to be, and the kind decides which chart
+     artwork the row wears. A chart with no kind falls back to Column, so an item saved
+     from the builder before this field existed still draws something sensible.
+
+     Two items are deliberately left WITHOUT a description — `tete` and `ssss`, the
+     junk-named pair. They are what proves the row survives a missing description, which is
+     the ordinary case for anything a user saved in a hurry.
+
+     The trailing positional args (fav, sharedAccess) became an options object on the way
+     past four: `push(t, title, prov, mod, false, 'view', desc, kind)` is a line nobody can
+     read, and half these calls only wanted the last argument. */
+  const push = (type, title, prov, module, o = {}) => lib.push({
+    id: uid('lt'), type, title, prov, module,
+    favorite: !!o.fav, sharedAccess: o.sharedAccess || 'view',
+    ...(o.desc ? { desc: o.desc } : {}), ...(o.kind ? { kind: o.kind } : {}),
+  })
   // predefined
-  push('kpi', 'Open Requests', 'predefined', 'Request', true)
-  push('kpi', 'SLA Compliance %', 'predefined', 'Request', true)
-  push('kpi', 'MTTR', 'predefined', 'Request')
-  push('kpi', 'Out-of-Warranty Assets', 'predefined', 'Asset')
-  push('chart', 'Created vs Resolved', 'predefined', 'Request', true)
-  push('chart', 'Tickets by Priority', 'predefined', 'Request')
-  push('chart', 'Assets by Type', 'predefined', 'Asset')
-  push('chart', 'Backlog Trend', 'predefined', 'Request')
-  push('shortcut', 'My Open P1 Requests', 'predefined', 'Request', true)
-  push('shortcut', 'Expiring Contracts', 'predefined', 'Contract')
+  push('kpi', 'Open Requests', 'predefined', 'Request', { fav: true, desc: 'Every request not yet resolved or closed, across all technician groups.' })
+  push('kpi', 'SLA Compliance %', 'predefined', 'Request', { fav: true, desc: 'Share of requests resolved inside their SLA target this period.' })
+  push('kpi', 'MTTR', 'predefined', 'Request', { desc: 'Mean time to resolve, measured from first assignment to resolution.' })
+  push('kpi', 'Out-of-Warranty Assets', 'predefined', 'Asset', { desc: 'Assets whose warranty has lapsed but which are still in service.' })
+  push('chart', 'Created vs Resolved', 'predefined', 'Request', { fav: true, kind: 'multiline', desc: 'Daily created against resolved volume — the backlog gap at a glance.' })
+  push('chart', 'Tickets by Priority', 'predefined', 'Request', { kind: 'donut', desc: 'Open requests split by priority, P1 through P4.' })
+  push('chart', 'Assets by Type', 'predefined', 'Asset', { kind: 'column', desc: 'Hardware, software and virtual assets by category.' })
+  push('chart', 'Backlog Trend', 'predefined', 'Request', { kind: 'line', desc: 'Unresolved request count over the last 30 days.' })
+  push('shortcut', 'My Open P1 Requests', 'predefined', 'Request', { fav: true, desc: 'P1 requests assigned to you, newest first.' })
+  push('shortcut', 'Expiring Contracts', 'predefined', 'Contract', { desc: 'Contracts reaching end of term within the next 90 days.' })
   // user-defined (incl. some junk-named to show the predefined badge value)
-  push('kpi', 'Network P1s', 'user', 'Request')
-  push('kpi', 'sla violetd', 'user', 'Request')
-  push('chart', 'Changes by Risk', 'user', 'Change')
-  push('chart', 'tete', 'user', 'Problem')
+  push('kpi', 'Network P1s', 'user', 'Request', { desc: 'P1 requests raised against the Network team.' })
+  push('kpi', 'sla violetd', 'user', 'Request', { desc: 'Requests that breached their SLA target.' })
+  push('chart', 'Changes by Risk', 'user', 'Change', { kind: 'column', desc: 'Change requests grouped by assessed risk level.' })
+  push('chart', 'tete', 'user', 'Problem', { kind: 'bar' })
   push('kpi', 'ssss', 'user', 'Request')
-  push('shortcut', 'Failing CIs', 'user', 'Asset')
+  push('shortcut', 'Failing CIs', 'user', 'Asset', { desc: 'Configuration items reporting errors in the last 24 hours.' })
   // shared with me — 3 widgets + 1 KPI (owner grants View or Edit access)
-  push('chart', 'Vendor Spend', 'shared', 'Contract', false, 'view')
-  push('chart', 'Change Success Rate', 'shared', 'Change', false, 'edit')
-  push('chart', 'Asset Aging', 'shared', 'Asset', false, 'view')
-  push('kpi', 'Patch Compliance %', 'shared', 'Asset', false, 'both')
+  push('chart', 'Vendor Spend', 'shared', 'Contract', { kind: 'column', desc: 'Contract spend by vendor for the current financial year.' })
+  push('chart', 'Change Success Rate', 'shared', 'Change', { sharedAccess: 'edit', kind: 'line', desc: 'Percentage of changes closed successfully, by month.' })
+  push('chart', 'Asset Aging', 'shared', 'Asset', { kind: 'hist', desc: 'Assets bucketed by age since purchase date.' })
+  push('kpi', 'Patch Compliance %', 'shared', 'Asset', { sharedAccess: 'both', desc: 'Endpoints running the latest approved patch level.' })
 
   return { folders, dashboards, library: lib, modules, owners }
 }
