@@ -273,23 +273,20 @@ const TYPE_LABEL = { kpi: 'KPI', chart: 'Widget', shortcut: 'Shortcut' }
 
 /* The placement count and its "Placed on" popover were removed from this listing.
  * `libUsage` still exists in the store for anywhere that wants the impact view. */
-/* The tooltip used to carry a GENERATED sentence ("A chart widget from the Request
-   module") because the row had no description to show. The row has one now, so the
-   tooltip shows the real thing in full — the row truncates it to one line — and falls
-   back to the generated line only for an item that has none.
+/* The tooltip carries only what the ROW cannot: the type in words, and where the item came
+   from. It used to open with a description as well — a generated one, back when the row had
+   none to show — and that sentence went when the row grew a real description under the
+   title. Repeating on hover what is already on screen is not redundancy that costs nothing:
+   it trains people to hover rows that have nothing more to give.
 
-   The type moved into it as a tag. The icon says the type at a glance and that is enough
-   for scanning, but "is this a KPI or a Widget" has to be answerable in words somewhere,
-   and the tooltip is where the other named facts about a row already live. */
-function libDesc(l) {
-  if (l.desc) return l.desc
-  const kind = l.type === 'kpi' ? 'A headline KPI number' : l.type === 'shortcut' ? 'A record list / table' : 'A chart widget'
-  return `${kind} from the ${l.module} module.`
-}
-const tip = ref({ show: false, text: '', type: '', prov: '', top: 0, right: 0 })
+   The type is here because the icon carries it on the row, and an icon is a fast answer
+   rather than a certain one — "is this a KPI or a Widget" has to be answerable in words
+   somewhere. Provenance is here because nothing on the row says it while you are browsing a
+   single tab, and it decides which actions the row offers. */
+const tip = ref({ show: false, type: '', prov: '', top: 0, right: 0 })
 function showTip(l, e) {
   const r = e.currentTarget.getBoundingClientRect()
-  tip.value = { show: true, text: libDesc(l), type: l.type, prov: l.prov, top: r.top + r.height / 2, right: window.innerWidth - r.left + 12 }
+  tip.value = { show: true, type: l.type, prov: l.prov, top: r.top + r.height / 2, right: window.innerWidth - r.left + 12 }
 }
 function hideTip() { tip.value.show = false }
 const TAB_LABEL = { predefined: 'Predefined', user: 'Created by me', shared: 'Shared with me' }
@@ -419,7 +416,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
                 <!-- the artwork of the chart this row actually draws. It replaces the words
                      "Widget" / "KPI" / "Shortcut", which used to open the meta line and now
                      have nowhere to sit — a picture of the thing reads faster than its name
-                     anyway, and the name is still in the hover tooltip for when it doesn't. -->
+                     anyway, and the name is still on hover for when it doesn't. -->
                 <span class="lt-ico"><ChartIcon :name="libIcon(l)" :size="34" /></span>
                 <div class="lt-main">
                   <div class="lt-name-row">
@@ -481,15 +478,12 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
          code. If the impact view is wanted back it needs a trigger of its own — the row
          already uses hover for its description tooltip, so the two would collide. -->
 
-    <!-- Row description tooltip — opens to the left of the hovered row, arrow points right -->
+    <!-- Row tooltip — the type and the provenance, opening to the left of the hovered row -->
     <teleport to="body">
       <transition name="fade">
-        <div v-if="tip.show" class="tt lib-tip tt-stack" :style="{ top: tip.top + 'px', right: tip.right + 'px' }">
-          <span class="tt-desc">{{ tip.text }}</span>
-          <span class="tt-tags">
-            <span v-if="tip.type" class="tt-tag">{{ TYPE_LABEL[tip.type] }}</span>
-            <span v-if="tip.prov" class="tt-tag" :class="tip.prov">{{ PROV_LABEL[tip.prov] || tip.prov }}</span>
-          </span>
+        <div v-if="tip.show" class="tt lib-tip" :style="{ top: tip.top + 'px', right: tip.right + 'px' }">
+          <span v-if="tip.type" class="tt-tag">{{ TYPE_LABEL[tip.type] }}</span>
+          <span v-if="tip.prov" class="tt-tag" :class="tip.prov">{{ PROV_LABEL[tip.prov] || tip.prov }}</span>
           <span class="lib-tip-arrow" />
         </div>
       </transition>
@@ -645,10 +639,12 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .row-tag.src { background: var(--primary-softer); color: var(--primary-700); }
 /* on a type card the source tag is a caption under the label, not a chip beside it */
 .tc .row-tag { margin-top: -2px; }
-/* left-pointing description tooltip (teleported, fixed to viewport) */
+/* left-pointing tooltip (teleported, fixed to viewport) */
 /* surface, padding and colour come from .tt now — only the placement is local */
-.lib-tip { position: fixed; z-index: 200; transform: translateY(-50%); width: 232px; pointer-events: none; text-align: left; }
-.tt-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+/* No fixed width any more. 232px was sized for a sentence; holding two short tags it left
+   most of the box empty, which reads as a tooltip that failed to load rather than one that
+   is simply short. It shrinks to its contents now, so the two tags sit on one line. */
+.lib-tip { position: fixed; z-index: 200; transform: translateY(-50%); display: flex; align-items: center; gap: 5px; pointer-events: none; white-space: nowrap; }
 /* provenance as a tag under the description — mirrors WidgetCard's .tt-tag */
 .lib-tip-arrow { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); border: 6px solid transparent; border-left-color: #030213; }
 /* Hover actions (Duplicate / Edit / Delete) — each in its own outlined box rather than a
