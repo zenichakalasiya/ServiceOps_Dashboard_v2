@@ -301,8 +301,9 @@ function submit(openAdd = false) {
 /* live preview */
 /* ---- Default landing scope: who does this become the home screen for? ---- */
 
-/* the primary is the design's near-black, not the product blue — inside a modal whose
-   only other blue is the access segment, a blue CTA competed with it */
-.foot .btn-primary { background: var(--ink); border-color: var(--ink); }
-.foot .btn-primary:hover:not(:disabled) { background: #26313f; border-color: #26313f; }
+/* The near-black override is gone. Its reasoning was that a blue CTA competed with the
+   access segment — but the segment was near-black too, so what actually happened is that
+   the panel had two competing near-blacks and no primary at all. The segment is blue now
+   and the button is the global .btn-primary, which is the same blue: one accent, used for
+   the choice you made and the action that commits it. */
 </style>

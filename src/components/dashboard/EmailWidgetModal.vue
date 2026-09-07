@@ -257,7 +257,7 @@ function send() {
 .pop-i.on { color: var(--primary-700); background: var(--primary-soft); }
 .pop.swatches { display: flex; gap: 5px; min-width: 0; padding: 7px; }
 .sw-dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid transparent; padding: 0; }
-.sw-dot.on { border-color: var(--ink); }
+.sw-dot.on { border-color: var(--primary); }
 .sw-dot.custom { position: relative; overflow: hidden; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); }
 .sw-dot.custom input { position: absolute; inset: -8px; opacity: 0; cursor: pointer; }
 

@@ -308,15 +308,17 @@ function onDrop(target) {
 .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
 /* one segmented control, not four loose buttons: a soft track with the active segment
    filled solid, exactly as the reference has it */
-.tabs { display: inline-flex; gap: 2px; padding: 4px; background: var(--surface-2); border-radius: 4px; }
-.t { border: none; background: transparent; padding: 7px 14px; border-radius: 4px; font-weight: 500; font-size: 13px; color: var(--ink-2); }
-.t:hover { background: color-mix(in srgb, var(--surface) 70%, transparent); color: var(--ink); }
-/* `--surface`, not #fff — `--ink` is near-white in dark and swallowed a white label */
-.t.on { background: var(--ink); color: var(--surface); font-weight: 600; box-shadow: var(--sh-sm); }
-.t .c { font-size: 11px; background: var(--surface); border-radius: 999px; padding: 0 6px; margin-left: 5px; color: var(--ink-2); }
-/* --ink inverts to near-white in dark, so #fff here measured 1.13:1 — invisible. The
-   fill and the label both have to follow the theme, not just the parent. */
-.t.on .c { background: color-mix(in srgb, var(--surface) 22%, transparent); color: var(--surface); }
+/* The same pill the whole module now uses, with the count it has always carried — this is
+   the shape the reference draws for a filter tab, and a listing tab is one. It was a track
+   with a near-black filled segment, which is the sixth copy of that control this file has
+   had to unlearn. */
+.tabs { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.t { display: inline-flex; align-items: center; gap: 6px; height: 30px; border: 1px solid var(--border-control); background: var(--surface); padding: 0 12px; border-radius: 6px; font-weight: 500; font-size: 13px; color: var(--ink-2); transition: color .15s, border-color .15s, background .15s; }
+.t:not(.on):hover { color: var(--ink); border-color: var(--muted-2); }
+.t.on { background: var(--primary-soft); border-color: var(--primary); color: var(--primary-700); font-weight: 600; }
+.t .c { font-size: 10px; font-weight: 600; background: var(--surface-2); border-radius: var(--r-pill); padding: 1px 6px; color: var(--ink); }
+/* the count inverts on the active pill, the way it does on the Add-Widget filters */
+.t.on .c { background: var(--primary); color: #fff; }
 .tr { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .srch { display: flex; align-items: center; gap: 7px; background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 4px; padding: 0 10px; height: 36px; width: 200px; }
 .srch input { border: none; outline: none; background: transparent; width: 100%; font-size: 13px; }

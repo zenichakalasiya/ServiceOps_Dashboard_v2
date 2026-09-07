@@ -486,9 +486,9 @@ function save(place) {
             <div v-if="showFamilies" class="pv-top">
               <!-- creating: pick a family. editing: only the swaps that are actually
                    possible. Neither renders a disabled tab. -->
-              <div v-if="showFamilies" class="pv-tabs">
+              <div v-if="showFamilies" class="seg">
                 <button
-                  v-for="f in FAMILIES" :key="f.id" class="pv-tab"
+                  v-for="f in FAMILIES" :key="f.id" class="seg-b"
                   :class="{ on: familyOn(f) }" :title="`Build a ${f.label}`" @click="pickFamily(f)"
                 >
                   <Icon :name="f.icon" :size="16" /> {{ f.label }}
@@ -571,9 +571,9 @@ function save(place) {
               <div class="sec">
                 <div class="sec-h">Visibility &amp; sharing</div>
                 <label class="acc-lbl">Widget Access Level <i v-if="!predefinedEdit">*</i></label>
-                <div class="acc-seg" :class="{ ro: predefinedEdit }">
+                <div class="seg fill" :class="{ ro: predefinedEdit }">
                   <button
-                    v-for="(a, k) in ACCESS" :key="k" class="acc-btn" :class="{ on: cfg.access === k }"
+                    v-for="(a, k) in ACCESS" :key="k" class="seg-b" :class="{ on: cfg.access === k }"
                     :disabled="predefinedEdit" @click="cfg.access = k"
                   >
                     <Icon :name="a.icon" :size="15" /> {{ a.label }}
@@ -953,15 +953,10 @@ function save(place) {
    occupies on a placed widget, so the preview behaves like the thing it previews */
 .pv-refresh { position: absolute; top: 10px; right: 10px; z-index: 2; width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid var(--border-control); background: var(--surface); color: var(--muted); border-radius: var(--r); }
 .pv-refresh:hover { background: var(--surface-2); color: var(--ink); }
-.pv-tabs { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 4px; background: var(--surface-2); border-radius: 4px; }
-.pv-tab { display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 13px; border: none; background: transparent; color: var(--ink-2); border-radius: 4px; font-weight: 500; font-size: 13px; }
-.pv-tab:hover { color: var(--ink); }
-/* `--surface`, not #fff — `--ink` is near-white in dark and swallowed a white label */
-.pv-tab.on { background: var(--ink); color: var(--surface); font-weight: 600; box-shadow: var(--sh-sm); }
-.pv-tab.on :deep(.ico) { color: var(--surface); }
-.pv-tab:disabled { opacity: .45; cursor: not-allowed; }
-.pv-tab.on:disabled { opacity: 1; }
-.pv-tab .rot90 { transform: rotate(90deg); }
+/* The family switcher was `.pv-tab`, a fifth private copy of the segmented control — its
+   own track, its own 30px button, its own near-black active state. It is `.seg` now, and
+   the only thing left here is the one rule that is genuinely local to this panel. */
+.seg-b .rot90 { transform: rotate(90deg); }
 /* chart-kind picker in the config panel — the family row's little sibling, sized for
    a 2-up grid so all four fit the narrow column without wrapping oddly */
 /* Icon-only squares that WRAP, so all twelve kinds show at the reference's size instead
@@ -975,8 +970,8 @@ function save(place) {
 .kinds { display: flex; flex-wrap: wrap; gap: 10px; }
 .kind { flex: none; display: grid; place-items: center; width: 56px; height: 50px; padding: 0; border: 1px solid var(--border-control); background: var(--surface); color: var(--ink-2); border-radius: var(--r-lg); transition: border-color .15s, color .15s; }
 .kind:hover { border-color: var(--muted-2); color: var(--ink); }
-/* selected: a light primary wash, not a solid fill */
-.kind.on { border: 1.5px solid var(--ink); color: var(--ink); }
+/* selected: the primary, as an edge and a wash — the same statement the pills make */
+.kind.on { border: 1.5px solid var(--primary); background: var(--primary-softer); color: var(--primary-700); }
 .kind .rot90 { transform: rotate(90deg); }
 .pv-card { position: relative; flex: 1; margin: 0 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-sm); display: flex; flex-direction: column; overflow: hidden; }
 .pv-canvas { flex: 1; display: grid; place-items: center; padding: 22px; min-height: 0; }
@@ -1079,11 +1074,7 @@ function save(place) {
    the narrower config column (the board's 38px pills would crowd it). */
 .acc-lbl { display: block; font-size: 12px; font-weight: 500; color: var(--ink-2); margin-bottom: 6px; }
 .acc-lbl i { color: var(--red); font-style: normal; }
-.acc-seg { display: flex; gap: 2px; padding: 4px; background: var(--surface-2); border-radius: 4px; }
-.acc-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; height: 30px; padding: 0 10px; border: none; background: transparent; color: var(--ink-2); border-radius: 4px; font-weight: 500; font-size: 13px; }
-.acc-btn:hover { color: var(--ink); }
-.acc-btn.on { background: var(--ink); color: var(--surface); font-weight: 600; box-shadow: var(--sh-sm); }
-.acc-btn.on :deep(.ico) { color: var(--surface); }
+
 /* Read-only, on a predefined widget. The value stays legible — showing WHAT it is set
    to is the entire reason these fields are rendered instead of hidden — so only the
    affordance is removed: no hover, no pointer, a quieter fill on the active segment. */
@@ -1094,10 +1085,6 @@ function save(place) {
    state to descendants when a fieldset is taken out of the box tree, so half the
    controls stayed live. `block` keeps the propagation and the reset does the rest. */
 .ro-fs { border: none; margin: 0; padding: 0; min-width: 0; display: block; }
-.acc-seg.ro .acc-btn { cursor: default; color: var(--muted); }
-.acc-seg.ro .acc-btn:hover { color: var(--muted); }
-.acc-seg.ro .acc-btn.on { background: var(--border-strong); color: var(--ink); box-shadow: none; }
-.acc-seg.ro .acc-btn.on :deep(.ico) { color: var(--ink); }
 .input:disabled, textarea.input:disabled {
   background: var(--surface-2); color: var(--ink-2); cursor: default;
   border-color: var(--border); -webkit-text-fill-color: var(--ink-2); opacity: 1;
@@ -1122,14 +1109,15 @@ function save(place) {
 .pv-kpi .u { font-size: 28px; font-weight: 600; color: var(--muted); margin-left: 4px; }
 .spin { animation: bsp .7s linear infinite; } @keyframes bsp { to { transform: rotate(360deg); } }
 .qrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 9px; }
-/* near-black primaries, matching the reference and the Create Dashboard panel */
-/* The frame fills BOTH "Create & Add to Dashboard" and "Create". That is two primaries in
-   one row, which normally loses the hierarchy — here it reads because they are the same
-   verb with different destinations, and Cancel is the only thing that must stay quiet. */
-.cfg-foot .btn-primary { background: var(--ink); border-color: var(--ink); color: var(--surface); }
-.cfg-foot .btn.commit { background: var(--ink); border-color: var(--ink); color: var(--surface); font-weight: 600; }
-.cfg-foot .btn.commit:hover:not(:disabled) { background: #26313f; border-color: #26313f; }
-.cfg-foot .btn-primary:hover:not(:disabled) { background: #26313f; border-color: #26313f; }
+/* .btn-primary is NOT overridden here any more. It was repainted near-black on the grounds
+   that the design reference drew it that way; the effect was a scoped rule quietly beating
+   the global one, so this footer was the only place in the app where the primary button was
+   not the primary colour.
+
+   `.commit` is the second of two primaries in this row — same verb, different destination —
+   so it takes the primary look by class rather than by a local repaint. */
+.cfg-foot .btn.commit { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 600; }
+.cfg-foot .btn.commit:hover:not(:disabled) { background: var(--primary-600); border-color: var(--primary-600); }
 @media (max-width: 900px) {
   .bbody { flex-direction: column; }
   .preview { flex: none; height: 240px; border-right: none; }

@@ -541,7 +541,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
    as a token it is not. */
 .ttab { display: inline-flex; align-items: center; gap: 4px; height: 30px; padding: 6px 8px; border: 1px solid var(--border-control); background: var(--surface); color: var(--muted); border-radius: 6px; font-size: 12px; font-weight: 500; white-space: nowrap; transition: color .15s, border-color .15s; }
 .ttab:hover { color: var(--ink); border-color: var(--muted-2); }
-.ttab.on { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+.ttab.on { background: var(--primary-soft); border-color: var(--primary); color: var(--primary-700); font-weight: 600; }
 /* section 7.4 count badge: rounded-sm, never a pill — and no white-on-ink to invert in dark */
 /* The count rides inside the pill and INVERTS on the active one — that inversion is
    what makes the chosen filter readable without colouring the whole pill.
@@ -549,7 +549,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
    says which filter, the number is data, and greying the data too made the row look
    disabled in the frame comparison. */
 .ttab-c { display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 500; background: var(--surface-2); color: var(--ink); border-radius: var(--r-pill); padding: 1px 4px; }
-.ttab.on .ttab-c { background: var(--ink); color: var(--surface); padding: 2px 3px; }
+.ttab.on .ttab-c { background: var(--primary); color: #fff; padding: 2px 3px; }
 .aw-body { flex: 1; overflow: auto; padding: 16px; }
 .cat { margin-bottom: 18px; }
 .cat-h { font-size: 13px; color: var(--muted); font-weight: 500; margin: 6px 0 10px; }
