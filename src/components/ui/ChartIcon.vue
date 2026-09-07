@@ -38,7 +38,7 @@ const T = {
   stack: 'translate(8 13)',
   grouped: 'translate(8 13)',
   combo: 'translate(8 13)',
-  funnel: 'translate(-4 -4.0) scale(1.5)',
+  funnel: 'translate(0 0)',
   mapbubble: 'translate(-4 -4.0) scale(1.5)',
   kpi: 'translate(-4 -4.0) scale(1.5)',
   shortcut: 'translate(8 13)',
@@ -232,10 +232,38 @@ const T = {
       </template>
 
       <!-- Funnel -->
+      <!-- A FUNNEL, per the supplied reference — not three stacked trapezoids.
+
+           The old glyph was flat: three chevrons of decreasing width, which is a diagram of a
+           funnel chart rather than a picture of a funnel, and at 34px it read as a stack of
+           bars. The reference draws the object — a mouth you can see into, a cone in two
+           tiers, and a spout — so every edge here is an ELLIPSE arc, which is what puts the
+           thing in perspective and is the entire difference between the two.
+
+           Each tier below the mouth takes its top edge from a LOWER-half arc, not the upper
+           half its own rim would really show. Geometrically the upper half is correct; drawn
+           that way the arcs cross, because a tier's top arc peaks above the previous tier's
+           bottom arc dips, and the tones bleed into each other. It is also not what you would
+           actually see: the tier above blocks the view into the ones below.
+
+           And each of those top edges is the tier ABOVE's bottom edge, same rx and ry, moved
+           down 1.6. That is what makes the gap constant. Insetting the endpoints instead —
+           the obvious way to draw a narrowing cone — gives two arcs of different radii, so the
+           gap is widest at the centre and closes to nothing at the sides; the first pass did
+           that and the seams read as white crescents rather than as seams. A tier starting
+           exactly as wide as the one above it is also just what a funnel does.
+
+           The ramp runs light-to-dark downward: the mouth is the lightest step and the spout
+           the darkest. That matches the reference (its bottom band is the solid black one)
+           AND the chart the icon stands for, where the narrow end holds the fewest records.
+
+           Drawn on the unscaled artboard. The 1.5 scale the slice icons carry would have made
+           these arc radii mean something different from the numbers written here. -->
       <template v-else-if="name === 'funnel'">
-        <path d="M8 10H40L36.143 19H11.857Z" fill="var(--ci-3)" />
-        <path d="M12.5 20.5H35.5L32.286 28H15.714Z" fill="var(--ci-2)" />
-        <path d="M16.357 29.5H31.643L28 38H20Z" fill="var(--ci-1)" />
+        <path d="M8 14A24 5.5 0 0 1 56 14L45 30.5A13 3 0 0 1 19 30.5Z" fill="var(--ci-3)" />
+        <path d="M14.5 14A17.5 3.2 0 1 0 49.5 14A17.5 3.2 0 1 0 14.5 14Z" fill="var(--ci-4)" />
+        <path d="M19 32.1A13 3 0 0 0 45 32.1L38 42A6 1.4 0 0 1 26 42Z" fill="var(--ci-2)" />
+        <path d="M26 43.6A6 1.4 0 0 0 38 43.6L38 53.5A6 1.4 0 0 1 26 53.5Z" fill="var(--ci-1)" />
       </template>
 
       <!-- Map Bubble -->
