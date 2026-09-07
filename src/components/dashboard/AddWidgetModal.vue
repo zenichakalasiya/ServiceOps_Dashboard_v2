@@ -442,23 +442,20 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
                   <div class="lt-desc ellip">{{ l.desc || (TYPE_LABEL[l.type] + ' · ' + l.module) }}</div>
                 </div>
                 <!-- Archive: Restore + Delete forever · otherwise Duplicate / Edit / Delete.
-
-                     SOLID glyphs, not outlined. At 15px an outline is mostly the hole in the
-                     middle, and three of them read as three empty boxes until you look straight
-                     at one. Filled, the silhouette carries at a glance, which is all a row
-                     action ever gets — and it is what lets the buttons drop their own boxes.
+                     Outlined glyphs, as everywhere else in the app — what carries the weight is
+                     the button's FILL, not the glyph. See .la.
 
                      @click.stop on the group: these open a builder or delete a tile, and none
                      of them is also a request to select the card underneath. -->
                 <div v-if="isTrash" class="lt-acts always" @click.stop>
-                  <button class="la" title="Restore" @click="restore(l)"><Icon name="restore" :size="15" filled /></button>
-                  <button class="la del" title="Delete forever" @click="delForever(l)"><Icon name="trash" :size="15" filled /></button>
+                  <button class="la" title="Restore" @click="restore(l)"><Icon name="restore" :size="15" /></button>
+                  <button class="la del" title="Delete forever" @click="delForever(l)"><Icon name="trash" :size="15" /></button>
                 </div>
                 <div v-else class="lt-acts" @click.stop>
                   <template v-if="!isPlaced(l)">
-                    <button v-if="canDuplicate(l)" class="la" title="Duplicate" @click="openLibBuilder(l)"><Icon name="copy" :size="15" filled /></button>
-                    <button v-if="canEdit(l)" class="la" title="Edit" @click="openLibBuilder(l)"><Icon name="edit" :size="15" filled /></button>
-                    <button v-if="canDelete(l)" class="la del" title="Delete" @click="delLib(l)"><Icon name="trash" :size="15" filled /></button>
+                    <button v-if="canDuplicate(l)" class="la" title="Duplicate" @click="openLibBuilder(l)"><Icon name="copy" :size="15" /></button>
+                    <button v-if="canEdit(l)" class="la" title="Edit" @click="openLibBuilder(l)"><Icon name="edit" :size="15" /></button>
+                    <button v-if="canDelete(l)" class="la del" title="Delete" @click="delLib(l)"><Icon name="trash" :size="15" /></button>
                   </template>
                 </div>
               </div>
@@ -522,13 +519,22 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
    It cannot go much lower: the tab strip (Create Widget → Archive) measures 622px, and
    the active tab is bold, so its width shifts as you switch tabs — hence the headroom.
    Below that the strip scrolls horizontally, which costs more than the cards gain. */
-.aw { width: 640px; max-width: 96vw; height: 100%; background: var(--picker-bg); box-shadow: var(--sh-lg); display: flex; flex-direction: column; overflow: hidden; animation: slideIn .22s cubic-bezier(.2,.8,.2,1); }
+/* WHITE, with the boxes tinted — the reverse of how this started. A tinted panel carrying
+   white cards makes the panel the figure and the cards the holes in it; on white, each box
+   is an object sitting on a page. The drawer is also the biggest surface on screen when it
+   is open, so it is the one that should be the quietest. */
+.aw { width: 640px; max-width: 96vw; height: 100%; background: var(--surface); box-shadow: var(--sh-lg); display: flex; flex-direction: column; overflow: hidden; animation: slideIn .22s cubic-bezier(.2,.8,.2,1); }
 @keyframes slideIn { from { transform: translateX(30px); opacity: .4; } to { transform: translateX(0); opacity: 1; } }
 .ic { width: 34px; height: 32px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .ic:hover { background: var(--surface-2); color: var(--ink); }
 /* five labels are wider than the drawer, so the strip scrolls sideways rather than
    clipping the last tab — same treatment as the dashboard listing's tabs */
-.aw-tabs { display: flex; gap: 4px; padding: 0 22px; border-bottom: 1px solid var(--border); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -ms-overflow-style: none; }
+/* 12px, on every side of the drawer. .dlg-head and .dlg-foot are the shared dialog chrome
+   and carry 22px of their own, so they are overridden here rather than in global.css —
+   every other dialog in the app still wants the wider inset. */
+.aw .dlg-head { padding: 12px 12px 8px; }
+.aw .dlg-foot { padding: 12px; }
+.aw-tabs { display: flex; gap: 4px; padding: 0 12px; border-bottom: 1px solid var(--border); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -ms-overflow-style: none; }
 .aw-tabs::-webkit-scrollbar { display: none; }
 .awt { flex: none; }
 .awt { display: inline-flex; align-items: center; gap: 5px; border: none; background: transparent; padding: 10px 4px; margin-right: 14px; font-weight: 500; font-size: 13px; color: var(--muted); border-bottom: 2px solid transparent; }
@@ -537,7 +543,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .awt-count { font-size: 11px; font-weight: 700; background: var(--red-soft); color: var(--red); border-radius: 999px; padding: 0 6px; }
 /* the search sits ABOVE the tab strip and spans the drawer — a control that governs the
    tabs cannot be narrower than they are, or it reads as one more filter beside them */
-.aw-search { padding: 12px 22px 14px; }
+.aw-search { padding: 8px 12px 12px; }
 .srch-x { width: 20px; height: 20px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; flex: none; }
 .srch-x:hover { background: var(--surface-2); color: var(--ink); }
 .srch { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border-control); border-radius: var(--r); padding: 0 11px; height: 36px; flex: 1; }
@@ -551,7 +557,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
    above already switches what you are looking at; a second underline row directly
    under it read as two navigations of equal weight stacked on each other, and you
    had to work out which one owned the content. A pill sits ON the list it filters. */
-.type-tabs { display: flex; align-items: center; gap: 7px; padding: 12px 22px 2px; }
+.type-tabs { display: flex; align-items: center; gap: 7px; padding: 12px 12px 0; }
 .tt-sp { flex: 1; }
 /* Measured off the frame: 30px tall, 6px/8px padding, 4px gap, 12px/500 label, and a
    6px radius. 6 is off our 2/4/8/12 radius scale — the design file asks for it here and
@@ -578,7 +584,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
    disabled in the frame comparison. */
 .ttab-c { display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 500; background: var(--surface-2); color: var(--ink); border-radius: var(--r-pill); padding: 1px 4px; }
 .ttab.on .ttab-c { background: var(--ink); color: var(--surface); padding: 2px 3px; }
-.aw-body { flex: 1; overflow: auto; padding: 14px 22px 22px; }
+.aw-body { flex: 1; overflow: auto; padding: 12px; }
 .cat { margin-bottom: 18px; }
 .cat-h { font-size: 13px; color: var(--muted); font-weight: 500; margin: 6px 0 10px; }
 .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
@@ -601,7 +607,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
    and stays 138x133. The room comes from the vertical padding, 20 -> 10 — an icon this size
    needs less framing, not more, and the card was mostly padding before. min-height pins the
    height so a one-line and a two-line label still produce identical tiles. */
-.tc { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 10px 12px; min-height: 133px; border: 1px solid var(--picker-tile-border); background: var(--surface); border-radius: var(--r-lg); color: var(--picker-ico); transition: border-color .15s, box-shadow .15s; }
+.tc { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 10px 12px; min-height: 133px; border: 1px solid var(--picker-tile-border); background: var(--picker-tile-fill); border-radius: var(--r-lg); color: var(--picker-ico); transition: border-color .15s, box-shadow .15s; }
 .tc:hover { border-color: var(--muted-2); box-shadow: var(--sh-sm); }
 .tc-group { border-style: dashed; border-color: var(--border-strong); }
 .tc-ico { width: 88px; height: 88px; display: grid; place-items: center; }
@@ -620,23 +626,26 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
    a line of text — hence the white surface and the hairline, matching the type cards on
    the Create Widget tab. gap drops 12 -> 10 because the icon between the checkbox and the
    title adds a third column to the row. */
-.lrow { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--picker-tile-border); transition: border-color .15s, box-shadow .15s, background .15s; }
+.lrow { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: var(--r-lg); background: var(--picker-tile-fill); border: 1px solid var(--picker-tile-border); transition: border-color .15s, box-shadow .15s, background .15s; }
 /* 8px, not 4. A card is a SURFACE and takes the surface tier; the 4px control corner is
    what made a stack of these read as a list of buttons. */
 .lrow.pick { cursor: pointer; }
 .lst { gap: 6px; }
 /* the artwork block. 34px inside a 40px well: the icons are drawn on a 64 artboard with
    their own margins, so a tight well would crop the visual weight rather than the box. */
-.lt-ico { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: var(--r); background: var(--picker-bg); color: var(--picker-ico); }
+/* The well steps BACK to the panel colour, so the nesting reads panel > box > well rather
+   than three tints of the same blue. */
+.lt-ico { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: var(--r); background: var(--surface); color: var(--picker-ico); }
 .lrow.pick:hover { border-color: var(--primary); box-shadow: var(--sh-sm); }
 .lrow.sel { background: var(--primary-softer); border-color: var(--primary); }
 .lrow.sel .lt-ico { background: var(--surface); }
-/* Placed rows step back with a grey ground rather than a blanket opacity. At .72 the
-   TITLE faded too, and the row you most need to recognise — the one already on the board
-   — was the hardest to read. The ground says "spent", the text stays legible. */
-.lrow.placed { background: var(--surface-2); border-color: transparent; }
+/* A placed row DISSOLVES into the panel — no fill, no edge. Every other row is a box you
+   can pick up; this one is not, and taking its box away says that before any of the text
+   does. It replaced a blanket opacity: .72, which faded the TITLE too, so the row you most
+   need to recognise — the one already on your board — was the hardest to read. */
+.lrow.placed { background: transparent; border-color: transparent; }
 .lrow.placed .lt-name { color: var(--muted); }
-.lrow.placed .lt-ico { background: var(--surface); opacity: .6; }
+.lrow.placed .lt-ico { background: var(--picker-tile-fill); opacity: .7; }
 .lrow.placed .lcb { cursor: not-allowed; }
 .placed-tag { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; color: var(--green); background: var(--green-soft); padding: 1px 7px 1px 5px; border-radius: 999px; flex: none; }
 /* 14px, not 16. The row grew a second line and a 40px artwork well; at 16 the checkbox
@@ -691,19 +700,22 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
    that sized itself to its contents put the tag column in a different place on every row of
    a search result, which mixes all three. The column only reads as a column if it is one.
    Rows with fewer actions right-align into it. */
-.lt-acts { display: flex; align-items: center; justify-content: flex-end; gap: 2px; width: 88px; flex: none; opacity: 0; transition: opacity .12s; }
+.lt-acts { display: flex; align-items: center; justify-content: flex-end; gap: 6px; width: 96px; flex: none; opacity: 0; transition: opacity .12s; }
 .lrow:hover .lt-acts, .lrow:focus-within .lt-acts { opacity: 1; }
 .lt-acts.always { opacity: 1; }
 .trash-ic { width: 16px; display: inline-grid; place-items: center; color: var(--muted-2); flex: none; }
-/* Ghost buttons now — no resting box. Three outlined boxes inside an outlined card is four
-   containers deep for one row, and the boxes were carrying an affordance the glyphs could
-   not: they were outlined too, and an outlined glyph in an outlined box reads as neither.
-   The glyphs are solid, so the shape alone says "button" and the box is free to go. Each
-   still takes a 28px hit area and lights its own ground on hover, so they stay three
-   separate targets rather than a strip. */
-.la { width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: var(--r); display: grid; place-items: center; transition: background .12s, color .12s; }
+/* FILLED, not outlined — the box is solid and the glyph inside it stays a stroke. An
+   outlined box around an outlined glyph is two outlines competing to be the button, which
+   is what these were; filling the box settles it, and the glyph goes back to matching every
+   other icon in the app. The fill is --surface: the row it sits on is tinted now, so white
+   is the step that reads as a raised control on it.
+
+   Delete is red at REST, not only on its own hover. It is the one action here you cannot
+   undo, and a colour that appears only once you are already pointing at it is a warning
+   that arrives after the decision. */
+.la { width: 28px; height: 28px; border: none; background: var(--surface); color: var(--ink-2); border-radius: var(--r); display: grid; place-items: center; transition: background .12s, color .12s; }
 .la:hover { color: var(--primary-700); background: var(--primary-softer); }
-.la.del { color: var(--muted); }
+.la.del { color: var(--red); }
 .la.del:hover { color: var(--red); background: var(--red-soft); }
 /* delete confirmation modal */
 .cf-overlay { position: fixed; inset: 0; background: rgba(20,21,38,.5); backdrop-filter: blur(2px); z-index: 130; display: grid; place-items: center; padding: 24px; }

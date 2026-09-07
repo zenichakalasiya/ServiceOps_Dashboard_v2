@@ -90,6 +90,13 @@
      as a hole. So dark drops the ground below --surface and lifts the cards above it, and
      the same "card stands off the panel" relationship survives the theme swap. */
   --picker-bg: #f6f9fc;
+  /* The fill of a BOX standing on the drawer — a chart-type tile, a listing row. It cannot
+     just be --picker-bg in both themes, because the drawer and the box swapped roles: the
+     drawer is --surface now and the box is the tinted one. In light that means one step
+     DOWN from white; in dark a box below the panel would read as a hole punched in it, so
+     dark steps UP instead (elevation on dark is surface lightness, not shadow). Same
+     relationship — "softly distinct from the panel" — opposite direction. */
+  --picker-tile-fill: #f6f9fc;
   /* The chart-type tile: its artwork colour and its edge. --picker-ico drives all three
      depth steps of the glyph (1 / 0.55 / 0.3 of it), so one value sets the whole icon. */
   --picker-ico: #7186a8;
@@ -209,6 +216,7 @@
   --sidebar: #0f111a; --sidebar-hover: #1b1f2b; --sidebar-border: #282c3a;
   --surface-2: #25252f;
   --picker-bg: #17171f;        /* below --surface: the ground */
+  --picker-tile-fill: #25252f; /* ABOVE --surface — see the light-theme note */
   /* Lifted for dark, not reused. #7186a8 clears the dark card at 4.5:1 on its own, but
      the ramp does not: the 0.3 step would composite to within a hair of #1d1d27 and the
      lightest third of every glyph would vanish. Lifting the base carries all three steps.

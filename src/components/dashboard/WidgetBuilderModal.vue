@@ -207,7 +207,7 @@ function initCfg() {
     assetType: '', dateFilter: 'Created date', description: ex?.info || '',
     // an existing tile already carrying its own `dateFilter` range IS a sticky widget —
     // read the switch back off the tile so editing one doesn't silently un-stick it
-    // empty by default so the field shows its prompt � the range is required (*) and
+    // empty by default so the field shows its prompt — the range is required (*) and
     // there is no sensible range to guess on the user's behalf
     stickyDate: !!ex?.dateFilter, dateRange: ex?.dateFilter || '',
     // Output shaping is a rank WINDOW, not a sort direction: "Top 10" / "Bottom 10".
@@ -942,7 +942,7 @@ function save(place) {
    floating on the same ground as the chart, which made the switch look like part of the
    preview rather than the control that changes what is being previewed. */
 .preview { flex: 1.5; display: flex; flex-direction: column; min-width: 0; padding: 0 0 12px; background: var(--surface-2); }
-/* One segmented control on a soft track with the active family filled near-black � the
+/* One segmented control on a soft track with the active family filled near-black — the
    same control the reference uses for every either/or in this panel (family, access,
    Manual/Query, Top/Bottom/All). Four loose outlined buttons with a blue fill read as
    four separate things you could each turn on. */
@@ -1027,7 +1027,7 @@ function save(place) {
    beneath it holds its value at full ink, so the label can afford to recede.) */
 .tgl-txt b { font-size: 13px; font-weight: 500; color: var(--ink); }
 .tgl-txt em { font-style: normal; font-size: 12px; color: var(--muted); line-height: 1.4; }
-/* the ON/OFF pill, same as the dashboard panel's � a bare track says there are two states
+/* the ON/OFF pill, same as the dashboard panel's — a bare track says there are two states
    but not which one you are looking at */
 .tgl { flex: none; width: 58px; height: 24px; padding: 0; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface-2); position: relative; transition: background .15s, border-color .15s; }
 .tgl i { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--muted-2); box-shadow: var(--sh-sm); transition: left .15s, background .15s; }
