@@ -529,12 +529,16 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .ic:hover { background: var(--surface-2); color: var(--ink); }
 /* five labels are wider than the drawer, so the strip scrolls sideways rather than
    clipping the last tab — same treatment as the dashboard listing's tabs */
-/* 12px, on every side of the drawer. .dlg-head and .dlg-foot are the shared dialog chrome
+/* 16px, on every side of the drawer. .dlg-head and .dlg-foot are the shared dialog chrome
    and carry 22px of their own, so they are overridden here rather than in global.css —
-   every other dialog in the app still wants the wider inset. */
-.aw .dlg-head { padding: 12px 12px 8px; }
-.aw .dlg-foot { padding: 12px; }
-.aw-tabs { display: flex; gap: 4px; padding: 0 12px; border-bottom: 1px solid var(--border); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -ms-overflow-style: none; }
+   every other dialog in the app still wants the wider inset.
+
+   Only the values that ARE an edge take 16. The 8px under the header and the 12px under the
+   search are gaps BETWEEN bands, not insets; moving them with the edge would have closed the
+   bands up instead of widening the margin. */
+.aw .dlg-head { padding: 16px 16px 8px; }
+.aw .dlg-foot { padding: 16px; }
+.aw-tabs { display: flex; gap: 4px; padding: 0 16px; border-bottom: 1px solid var(--border); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -ms-overflow-style: none; }
 .aw-tabs::-webkit-scrollbar { display: none; }
 .awt { flex: none; }
 .awt { display: inline-flex; align-items: center; gap: 5px; border: none; background: transparent; padding: 10px 4px; margin-right: 14px; font-weight: 500; font-size: 13px; color: var(--muted); border-bottom: 2px solid transparent; }
@@ -543,7 +547,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .awt-count { font-size: 11px; font-weight: 700; background: var(--red-soft); color: var(--red); border-radius: 999px; padding: 0 6px; }
 /* the search sits ABOVE the tab strip and spans the drawer — a control that governs the
    tabs cannot be narrower than they are, or it reads as one more filter beside them */
-.aw-search { padding: 8px 12px 12px; }
+.aw-search { padding: 8px 16px 12px; }
 .srch-x { width: 20px; height: 20px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; flex: none; }
 .srch-x:hover { background: var(--surface-2); color: var(--ink); }
 .srch { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border-control); border-radius: var(--r); padding: 0 11px; height: 36px; flex: 1; }
@@ -557,7 +561,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
    above already switches what you are looking at; a second underline row directly
    under it read as two navigations of equal weight stacked on each other, and you
    had to work out which one owned the content. A pill sits ON the list it filters. */
-.type-tabs { display: flex; align-items: center; gap: 7px; padding: 12px 12px 0; }
+.type-tabs { display: flex; align-items: center; gap: 7px; padding: 12px 16px 0; }
 .tt-sp { flex: 1; }
 /* Measured off the frame: 30px tall, 6px/8px padding, 4px gap, 12px/500 label, and a
    6px radius. 6 is off our 2/4/8/12 radius scale — the design file asks for it here and
@@ -584,7 +588,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
    disabled in the frame comparison. */
 .ttab-c { display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 500; background: var(--surface-2); color: var(--ink); border-radius: var(--r-pill); padding: 1px 4px; }
 .ttab.on .ttab-c { background: var(--ink); color: var(--surface); padding: 2px 3px; }
-.aw-body { flex: 1; overflow: auto; padding: 12px; }
+.aw-body { flex: 1; overflow: auto; padding: 16px; }
 .cat { margin-bottom: 18px; }
 .cat-h { font-size: 13px; color: var(--muted); font-weight: 500; margin: 6px 0 10px; }
 .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
