@@ -4,7 +4,7 @@ import Icon from '../ui/Icon.vue'
 import Dropdown from '../ui/Dropdown.vue'
 import ChartIcon from '../ui/ChartIcon.vue'
 import WidgetBuilderModal from './WidgetBuilderModal.vue'
-import { store, addTilesToDashboard, deleteLibTile, restoreLibTile, removeLibTileForever, toast } from '../../store/index.js'
+import { store, addTilesToDashboard, removeLibTileForever, toast } from '../../store/index.js'
 import { uid } from '../../data/mock.js'
 import { groupPickerTypes } from '../../data/chartTypes.js'
 const props = defineProps({ d: Object, group: { type: String, default: null } })
@@ -12,13 +12,13 @@ const emit = defineEmits(['close', 'created', 'newgroup'])
 function tagGroup(id) { if (props.group && id != null) { const t = props.d.tiles.find((x) => x.id === id); if (t) t.group = props.group } }
 
 const tab = ref('chart')              // chart | predefined | user | shared
-/* Archive is no longer a tab OR a header button — it is a mode of ONE tab.
-
-   Only an item you made can be archived (canDelete is `prov === user`), so the archive
-   can only ever hold Created-by-me items. Sitting in the header it was offered from
-   Predefined and Shared too, where nothing can ever arrive in it. It now appears beside
-   the filters on Created by me, which is the only tab whose contents can go there. */
-const archive = ref(false)
+/* There is no Archive. It was a header button, then a mode of the Created-by-me tab, and
+   now it is gone — which means Delete has to be a REAL delete, not a soft one. A
+   soft-delete with nowhere to see the result is worse than either: the item leaves the
+   list, the copy says "moved to Trash", and there is no Trash. So `deleteLibTile` /
+   `restoreLibTile` are no longer imported and Delete opens the confirm that was already
+   here for "delete forever". Destructive, named, and confirmed — the pattern the rest of
+   the app already uses (components/ui/ConfirmDialog.vue). */
 const fModule = ref('')
 const fType = ref('')                 // '' | kpi | chart | shortcut
 const search = ref('')
@@ -89,7 +89,6 @@ const GROUPS = [
 
 // ---- Reuse tabs: listing with actions ----
 const provMap = { predefined: 'predefined', user: 'user', shared: 'shared' }
-const isTrash = computed(() => archive.value)
 /* The All tab is gone: the search above the tabs already reaches every provenance, so a
  * tab that did the same thing was a second answer to a question already answered. Each
  * remaining tab is one provenance, and the per-item rules below still read `l.prov`
@@ -104,7 +103,7 @@ const inTab = (l) => l.prov === provMap[tab.value] && !l.trashed
  * a filter that can only ever return nothing isn't a filter.
  * "All modules" carries no count: it is the absence of a filter, not a bucket. */
 const moduleBase = computed(() => {
-  const arr = isTrash.value ? store.library.filter((l) => l.trashed) : store.library.filter(inTab)
+  const arr = store.library.filter(inTab)
   return fType.value ? arr.filter((l) => l.type === fType.value) : arr
 })
 const moduleCount = (m) => moduleBase.value.filter((l) => l.module === m).length
@@ -116,9 +115,8 @@ const moduleOptions = computed(() => [
 watch(moduleOptions, (opts) => {
   if (fModule.value && !opts.some((o) => o.value === fModule.value)) fModule.value = ''
 })
-const trashCount = computed(() => store.library.filter((l) => l.trashed).length)
 const list = computed(() => {
-  let arr = isTrash.value ? store.library.filter((l) => l.trashed) : store.library.filter(inTab)
+  let arr = store.library.filter(inTab)
   if (fType.value) arr = arr.filter((l) => l.type === fType.value)
   if (fModule.value) arr = arr.filter((l) => l.module === fModule.value)
   return arr
@@ -126,9 +124,7 @@ const list = computed(() => {
 // per-type counts for the current tab (before the type filter is applied)
 const typeCounts = computed(() => {
   const inMod = (l) => !fModule.value || l.module === fModule.value
-  const base = isTrash.value
-    ? store.library.filter((l) => l.trashed && inMod(l))
-    : store.library.filter((l) => inTab(l) && inMod(l))
+  const base = store.library.filter((l) => inTab(l) && inMod(l))
   return { '': base.length, kpi: base.filter((l) => l.type === 'kpi').length, chart: base.filter((l) => l.type === 'chart').length, shortcut: base.filter((l) => l.type === 'shortcut').length }
 })
 /* ---- GLOBAL SEARCH ---------------------------------------------------------------
@@ -245,11 +241,9 @@ function onSavedToLibrary({ title, module, type, sharedAccess, desc, kind }) {
   toast(`Saved “${item.title}” to User Defined`, 'success')
 }
 
-// ---- Delete = soft-delete to Trash · Trash tab: Restore + Delete forever (confirm) ----
+// ---- Delete removes the definition from the library, behind a confirm ----
 const delTarget = ref(null)
-function delLib(l) { deleteLibTile(l) }          // → Trash (reversible)
-function restore(l) { restoreLibTile(l) }
-function delForever(l) { delTarget.value = l }    // opens the confirm modal
+function delLib(l) { delTarget.value = l }
 function confirmDel() { removeLibTileForever(delTarget.value); delTarget.value = null }
 
 /* ---- per-ITEM action rules (same for Widget / KPI / Shortcut) ----
@@ -280,16 +274,14 @@ const TYPE_LABEL = { kpi: 'KPI', chart: 'Widget', shortcut: 'Shortcut' }
 const TAB_LABEL = { predefined: 'Predefined', user: 'Created by me', shared: 'Shared with me' }
 const emptyMsg = computed(() => {
   const plural = fType.value ? (fType.value === 'kpi' ? 'KPIs' : TYPE_LABEL[fType.value] + 's') : 'items'
-  if (isTrash.value) return `Archive is empty.`
   return `No ${plural} in ${TAB_LABEL[tab.value] || 'this tab'} yet.`
 })
 const emptyHelp = computed(() => {
-  if (isTrash.value) return 'Archived widgets, KPIs and Shortcuts land here — restore them, or delete forever.'
   if (tab.value === 'shared') return 'Widgets, KPIs and Shortcuts shared with you will appear here.'
   if (tab.value === 'user') return 'Create one from the Create Widget tab, then it appears here.'
   return 'Predefined tiles curated by your admin will appear here.'
 })
-watch([tab], () => { search.value = ''; fModule.value = ''; fType.value = ''; archive.value = false; selected.value = new Set() })
+watch([tab], () => { search.value = ''; fModule.value = ''; fType.value = ''; selected.value = new Set() })
 watch(fType, (v) => { if (v === 'shortcut') fModule.value = '' })   // Shortcut listing has no module filter
 
 function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
@@ -335,14 +327,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
           role="tab" :aria-selected="fType === t.v" @click="fType = t.v"
         >{{ t.label }} <span class="ttab-c">{{ typeCounts[t.v] }}</span></button>
         <span class="tt-sp" />
-        <!-- Archive lives HERE, on Created by me, because only an item you made can ever
-             reach it — canDelete is `prov === user`. In the header it was offered from
-             Predefined and Shared as well, where it can only ever open empty. -->
-        <button
-          v-if="tab === 'user'" class="ttab arc" :class="{ on: isTrash }"
-          @click="archive = !archive"
-        ><Icon name="archive" :size="14" /> Archive <span v-if="trashCount" class="ttab-c">{{ trashCount }}</span></button>
-        <div v-if="fType !== 'shortcut' && !isTrash" class="modsel"><Dropdown v-model="fModule" :options="moduleOptions" placeholder="All modules" /></div>
+        <div v-if="fType !== 'shortcut'" class="modsel"><Dropdown v-model="fModule" :options="moduleOptions" placeholder="All modules" /></div>
       </div>
 
       <div class="aw-body">
@@ -404,19 +389,18 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
                    are not selectable at all, so they get no handler rather than a dead one. -->
               <div
                 v-for="l in g.items" :key="l.id" class="lrow"
-                :class="{ sel: isSel(l), placed: isPlaced(l), pick: !isTrash && !isPlaced(l) }"
-                @click="!isTrash && toggleSel(l)"
+                :class="{ sel: isSel(l), placed: isPlaced(l), pick: !isPlaced(l) }"
+                @click="toggleSel(l)"
               >
                 <!-- click.prevent, not @change: the browser is not allowed to toggle this box
                      itself, so what it shows is only ever `isSel`. On @change it could disagree
                      — refuse the 11th selection and the state says no while the box you just
                      clicked sits there ticked. .stop keeps the card handler from undoing it. -->
                 <input
-                  v-if="!isTrash" type="checkbox" class="lcb"
+                  type="checkbox" class="lcb"
                   :checked="isSel(l) || isPlaced(l)" :disabled="isPlaced(l)"
                   @click.prevent.stop="toggleSel(l)"
                 />
-                <span v-else class="trash-ic"><Icon name="trash" :size="15" /></span>
                 <!-- the artwork of the chart this row actually draws. It replaces the words
                      "Widget" / "KPI" / "Shortcut", which used to open the meta line and now
                      have nowhere to sit — a picture of the thing reads faster than its name
@@ -425,11 +409,6 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
                 <div class="lt-main">
                   <div class="lt-name-row">
                     <span class="lt-name ellip">{{ l.title }}</span>
-                    <!-- "On dashboard" comes FIRST so the tag after it stays flush right on every
-                         row. The other way round, the two rows already on the board had their tag
-                         pushed 108px left by the badge, and the column stopped being a column on
-                         exactly the rows that carry the most on that line. -->
-                    <span v-if="isPlaced(l)" class="placed-tag"><Icon name="check" :size="11" /> On dashboard</span>
                     <!-- Searching, the tag is the TAB the result came from — the thing you can no
                          longer read off the page, since the results span all of them. Not searching,
                          the tab is on screen and the module is not, so it is the module. Never both:
@@ -441,17 +420,12 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
                        different height than its neighbours, for no gain. -->
                   <div class="lt-desc ellip">{{ l.desc || (TYPE_LABEL[l.type] + ' · ' + l.module) }}</div>
                 </div>
-                <!-- Archive: Restore + Delete forever · otherwise Duplicate / Edit / Delete.
-                     Outlined glyphs, as everywhere else in the app — what carries the weight is
-                     the button's FILL, not the glyph. See .la.
+                <!-- Duplicate / Edit / Delete. Outlined glyphs, as everywhere else in the app —
+                     what carries the weight is the button's FILL, not the glyph. See .la.
 
                      @click.stop on the group: these open a builder or delete a tile, and none
                      of them is also a request to select the card underneath. -->
-                <div v-if="isTrash" class="lt-acts always" @click.stop>
-                  <button class="la" title="Restore" @click="restore(l)"><Icon name="restore" :size="15" /></button>
-                  <button class="la del" title="Delete forever" @click="delForever(l)"><Icon name="trash" :size="15" /></button>
-                </div>
-                <div v-else class="lt-acts" @click.stop>
+                <div class="lt-acts" @click.stop>
                   <template v-if="!isPlaced(l)">
                     <button v-if="canDuplicate(l)" class="la" title="Duplicate" @click="openLibBuilder(l)"><Icon name="copy" :size="15" /></button>
                     <button v-if="canEdit(l)" class="la" title="Edit" @click="openLibBuilder(l)"><Icon name="edit" :size="15" /></button>
@@ -496,11 +470,11 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
       <div v-if="delTarget" class="cf-overlay" @click.self="delTarget = null">
         <div class="cf">
           <div class="cf-ico"><Icon name="trash" :size="22" /></div>
-          <h4>Delete “{{ delTarget.title }}” forever?</h4>
-          <p>This permanently removes it from the library. This action can’t be undone.</p>
+          <h4>Delete “{{ delTarget.title }}”?</h4>
+          <p>This removes the definition from the library for everyone. Copies already placed on a dashboard keep working. This can’t be undone.</p>
           <div class="cf-btns">
             <button class="btn" @click="delTarget = null">Cancel</button>
-            <button class="btn cf-del" @click="confirmDel"><Icon name="trash" :size="15" /> Delete forever</button>
+            <button class="btn cf-del" @click="confirmDel"><Icon name="trash" :size="15" /> Delete</button>
           </div>
         </div>
       </div>
@@ -510,8 +484,6 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 
 <style scoped>
 .hd-a { display: flex; align-items: center; gap: 8px; }
-/* the archive toggle reads as ON the way every chosen thing in this module does */
-.dlg-x.on { background: var(--ink); color: var(--surface); }
 .drawer-overlay { position: fixed; inset: 0; background: rgba(20,21,38,.42); backdrop-filter: blur(2px); z-index: 100; display: flex; justify-content: flex-end; }
 /* 640px, not 720. The Create Widget cards are a fixed 4 per row, so the panel's width
    IS the card's width — at 720 each card was 160px around a 64px icon and the artwork
@@ -570,16 +542,6 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .ttab { display: inline-flex; align-items: center; gap: 4px; height: 30px; padding: 6px 8px; border: 1px solid var(--border-control); background: var(--surface); color: var(--muted); border-radius: 6px; font-size: 12px; font-weight: 500; white-space: nowrap; transition: color .15s, border-color .15s; }
 .ttab:hover { color: var(--ink); border-color: var(--muted-2); }
 .ttab.on { border-color: var(--ink); color: var(--ink); font-weight: 600; }
-/* Archive shares the pill shape with the type filters but is not one of them — those
-   narrow the list, this leaves it for a different list entirely. The gap before it, the
-   icon, and the FILLED active state (the type filters only outline) are what say so.
-
-   Both selectors below carry three classes on purpose. `.arc.on` ties with `.ttab.on`
-   on specificity and loses on source order, which is how this first shipped: --ink text
-   on an --ink fill, a solid black pill with an invisible label inside it. */
-.ttab.arc { gap: 5px; }
-.ttab.arc.on { background: var(--ink); border-color: var(--ink); color: var(--surface); }
-.ttab.arc.on .ttab-c { background: var(--surface); color: var(--ink); }
 /* section 7.4 count badge: rounded-sm, never a pill — and no white-on-ink to invert in dark */
 /* The count rides inside the pill and INVERTS on the active one — that inversion is
    what makes the chosen filter readable without colouring the whole pill.
@@ -636,7 +598,10 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
    fill. The chart-type tiles keep their tint, and the difference is deliberate: a tile is
    133px of mostly-artwork and needs a ground to sit the drawing on, while a row is 62px of
    mostly-text, where a tint behind the text is just less contrast. */
-.lrow { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: var(--r); background: var(--surface); border: 1px solid var(--picker-tile-border); transition: border-color .15s, box-shadow .15s, background .15s; }
+/* 0.625rem = 10px, stated as the literal it is. Our radius scale is 2/4/8/12 and this is
+   none of them, so it gets no token — a var() named after a tier it does not belong to is
+   how an off-scale value quietly becomes the scale. Same treatment as the 6px on .ttab. */
+.lrow { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: 0.625rem; background: var(--surface); border: 1px solid var(--picker-tile-border); transition: border-color .15s, box-shadow .15s, background .15s; }
 .lrow.pick { cursor: pointer; }
 /* the artwork block. 34px inside a 40px well: the icons are drawn on a 64 artboard with
    their own margins, so a tight well would crop the visual weight rather than the box. */
@@ -646,15 +611,11 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .lrow.pick:hover { border-color: var(--primary); box-shadow: var(--sh-sm); }
 .lrow.sel { background: var(--primary-softer); border-color: var(--primary); }
 .lrow.sel .lt-ico { background: var(--surface); }
-/* A placed row DISSOLVES into the panel — no fill, no edge. Every other row is a box you
-   can pick up; this one is not, and taking its box away says that before any of the text
-   does. It replaced a blanket opacity: .72, which faded the TITLE too, so the row you most
-   need to recognise — the one already on your board — was the hardest to read. */
-.lrow.placed { background: transparent; border-color: transparent; }
-.lrow.placed .lt-name { color: var(--muted); }
-.lrow.placed .lt-ico { background: var(--picker-tile-fill); opacity: .7; }
+/* A row already on the board is an ORDINARY card now — same fill, same edge. Its only tell
+   is the ticked, disabled checkbox, which is the whole convention of an "already added"
+   picker. The cursor stays default so the card does not offer a click it will refuse. */
+.lrow.placed { cursor: default; }
 .lrow.placed .lcb { cursor: not-allowed; }
-.placed-tag { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; color: var(--green); background: var(--green-soft); padding: 1px 7px 1px 5px; border-radius: 999px; flex: none; }
 /* 14px, not 16. The row grew a second line and a 40px artwork well; at 16 the checkbox
    was competing with the icon beside it for the same job of opening the row, and it is
    the smaller of the two duties. Still a comfortable target — the whole row is not
@@ -662,36 +623,31 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .lcb { width: 14px; height: 14px; accent-color: var(--primary); flex: none; cursor: pointer; margin: 0; }
 .lt-main { flex: 1; min-width: 0; }
 .lt-name-row { display: flex; align-items: center; gap: 7px; } .lt-name { font-weight: 600; font-size: 13px; }
-/* The tags sit at the RIGHT edge of the text column, not tight against the title. Titles
-   are every length, so a tag that follows one lands in a different place on every row and
-   the eye has to hunt for it. Pushed right they form a column you can read straight down,
-   and the title gets an unambiguous right edge to truncate against. */
-/* The TITLE holds the auto margin, so everything after it is pushed right whatever that
-   "everything" turns out to be — one tag, or a badge and a tag. Selecting the tags instead
-   needed a rule per combination, and the one for a lone tag was `.row-tag:first-of-type`,
-   which matches by ELEMENT type: .lt-name is a <span> too, so it was always the first of
-   type and the margin landed on nothing.
+/* The tag sits BESIDE the title now, not at the right edge of the column. Beside it, it reads
+   as a property OF the title — proximity is what binds them; right-aligned it read as a
+   separate column the row happened to also have. The cost is the ragged right edge that the
+   alignment was buying, and that is the trade, made deliberately.
 
-   min-width: 0 is what lets a long title shrink and ellipsis instead of shoving the tags
-   off the right — a nowrap span's min-content width is its whole text. */
-.lt-name { flex: 0 1 auto; min-width: 0; margin-right: auto; }
+   min-width: 0 is what lets a long title shrink and ellipsis instead of shoving the tag off
+   the right — a nowrap span's min-content width is its whole text. */
+.lt-name { flex: 0 1 auto; min-width: 0; }
 /* the description, one line and clipped. It is context, not content — a wrapping
    description would make rows of different heights out of a list you scan by rhythm. */
 .lt-desc { font-size: 12px; color: var(--muted); margin-top: 1px; line-height: 1.45; }
 /* One tag class, two meanings (module while browsing, source tab while searching), because
    they never appear together — a row shows whichever fact the page is not already showing. */
-.row-tag { flex: none; font-size: 11px; font-weight: 500; border-radius: var(--r); padding: 1px 6px; white-space: nowrap; }
-/* The module is plain text, not a chip. As a --surface-2 pill it disappeared on exactly the
-   two rows that are not white — a selected card (--primary-softer) and a placed one
-   (--surface-2, the same colour) — so the chip was there for the rows that needed it least.
-   It is metadata sitting in its own right-hand column, which is all the grouping it needs;
-   a box around it was a container doing no work. */
-.row-tag.mod { background: none; padding: 0; color: var(--muted); }
+.row-tag { flex: none; font-size: 11px; font-weight: 500; border-radius: var(--r-sm); padding: 1px 6px; white-space: nowrap; }
+/* A minimal chip: the badge radius (--r-sm, 2px per the guide), the quiet fill, no border.
+   It went flat once because a --surface-2 pill vanished on a tinted row — the rows are white
+   again, and the one state that is still tinted (selected) gets the override below rather
+   than the whole thing being flattened for it. */
+.row-tag.mod { background: var(--surface-2); color: var(--muted); border-radius: var(--r-sm); }
+.lrow.sel .row-tag.mod { background: var(--surface); }
 /* The source tag stays a chip: in a search result it is a CLASSIFICATION and has to be read
    as one, not as more metadata. It takes the card colour on a tinted row for the same reason
    the module tag stopped being a chip — its own tint is one step from the selected ground. */
 .row-tag.src { background: var(--primary-softer); color: var(--primary-700); }
-.lrow.sel .row-tag.src, .lrow.placed .row-tag.src { background: var(--surface); }
+.lrow.sel .row-tag.src { background: var(--surface); }
 /* on a type card the source tag is a caption under the label, not a chip beside it */
 .tc .row-tag { margin-top: -2px; }
 /* the row tooltip and its arrow were deleted here — see the note by TYPE_LABEL */
@@ -710,7 +666,6 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .lt-acts { display: flex; align-items: center; justify-content: flex-end; gap: 6px; width: 96px; flex: none; opacity: 0; transition: opacity .12s; }
 .lrow:hover .lt-acts, .lrow:focus-within .lt-acts { opacity: 1; }
 .lt-acts.always { opacity: 1; }
-.trash-ic { width: 16px; display: inline-grid; place-items: center; color: var(--muted-2); flex: none; }
 /* FILLED, not outlined — the box is solid and the glyph inside it stays a stroke. An
    outlined box around an outlined glyph is two outlines competing to be the button, which
    is what these were; filling the box settles it, and the glyph goes back to matching every
