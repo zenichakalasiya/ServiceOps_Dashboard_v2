@@ -573,8 +573,20 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
    and stays 138x133. The room comes from the vertical padding, 20 -> 10 — an icon this size
    needs less framing, not more, and the card was mostly padding before. min-height pins the
    height so a one-line and a two-line label still produce identical tiles. */
-.tc { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 10px 12px; min-height: 133px; border: 1px solid var(--picker-tile-border); background: var(--picker-tile-fill); border-radius: var(--r); color: var(--picker-ico); transition: border-color .15s, box-shadow .15s; }
-.tc:hover { border-color: var(--muted-2); box-shadow: var(--sh-sm); }
+/* No resting outline — the fill alone makes the tile. It keeps a TRANSPARENT 1px border
+   rather than none, so the hover edge costs no reflow: dropping the border outright would
+   have every tile in the grid shift 1px as the cursor crossed it.
+
+   0.625rem, the same corner the listing cards take. Both are the picker's "a thing you can
+   choose", and they are the only two shapes in the module wearing it.
+
+   Hover is the primary edge now, not --muted-2 — the same edge the listing cards answer
+   with, since blue is the module's one accent. */
+.tc { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 10px 12px; min-height: 133px; border: 1px solid transparent; background: var(--picker-tile-fill); border-radius: 0.625rem; color: var(--picker-ico); transition: border-color .15s, box-shadow .15s; }
+.tc:hover { border-color: var(--primary); box-shadow: var(--sh-sm); }
+/* Empty Group KEEPS its edge. It is the one tile whose border is not decoration — a dashed
+   outline around nothing is what "empty" looks like, and it is the only tile here that adds
+   a container rather than a widget. */
 .tc-group { border-style: dashed; border-color: var(--border-strong); }
 .tc-ico { width: 88px; height: 88px; display: grid; place-items: center; }
 /* the label is READ, so it holds the primary ink while the icon stays quiet beside it */
