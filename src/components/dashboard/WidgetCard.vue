@@ -306,7 +306,6 @@ const tiny = computed(() => cardW.value < 258)
 function refresh() { loading.value = true; setTimeout(() => { loading.value = false }, 750) }
 /* Full screen opens WITH the filter bar shown, because that is where a long record list
    is actually read; the header toggle is there to reclaim the row, not to reveal it. */
-const presentFilter = ref(true)
 
 // provenance: predefined tiles can't be edited or deleted (only "other" actions)
 const prov = computed(() => props.tile.prov || 'user')
@@ -655,26 +654,28 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
     <teleport to="body">
       <div v-if="present" class="overlay" @click.self="present = false">
         <div class="present">
-          <!-- Full screen carries the actions that still MEAN something at this size:
-               refresh, the table's filter toggle, and collapse. Edit, duplicate and the
-               rest belong to the tile on the board, not to a reading view of it. -->
+          <!-- Full screen carries the actions that still MEAN something at this size: refresh
+               and collapse. Edit, duplicate and the rest belong to the tile on the board, not
+               to a reading view of it.
+
+               The Shortcut filter toggle used to sit here too. It hid a bar that is the only
+               way to search the record set once you are in this view, and hiding it saved one
+               row of a screen that is otherwise almost entirely empty space. -->
           <div class="phead">
             <b>{{ tile.title }}</b>
             <div class="phead-a">
-              <button v-if="tile.type === 'shortcut'" class="btn btn-icon" :class="{ on: presentFilter }" title="Filter" @click="presentFilter = !presentFilter"><Icon name="filter" :size="17" /></button>
               <button class="btn btn-icon" title="Refresh" @click="refresh"><Icon name="refresh" :size="17" :class="{ spin: loading }" /></button>
               <button class="btn btn-icon" title="Exit full screen" @click="present = false"><Icon name="minimize-tile" :size="17" /></button>
             </div>
           </div>
-          <div class="pbody">
+          <div class="pbody" :class="{ tbl: tile.type === 'shortcut' }">
             <ChartTile v-if="tile.type === 'chart'" :chart="tile.chart" :legend="showLegend" :data-labels="tile.dataLabels === true" :height="620" />
             <div v-else-if="tile.type === 'kpi'" class="kpi big"><div class="kpinum">{{ tile.value }}<span class="unit">{{ tile.unit }}</span></div></div>
             <FreeTextTile v-else-if="tile.type === 'text'" :content="tile.content" />
             <div v-else class="stbl big">
-              <!-- full screen: the same bar, always available (there is no header icon to
-                   toggle it from here), and the whole record set scrolls in the dialog -->
+              <!-- full screen: the same bar, always there, and the whole record set scrolls
+                   in the dialog -->
               <TableFilterBar
-                v-if="presentFilter"
                 :columns="tile.columns || []" :rows="tile.rows || []"
                 v-model="tableConds" v-model:search="tableSearch"
                 @close="tableConds = []; tableSearch = ''"
@@ -955,9 +956,20 @@ table { font-size: 13px; }
 .phead { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 46px; padding: 0 12px; background: var(--surface-2); border-bottom: 1px solid var(--border); font-size: 15px; flex: none; }
 .phead-a { display: flex; align-items: center; gap: 2px; }
 .pbody { padding: 32px 40px; flex: 1; min-height: 62vh; display: grid; place-items: center; overflow: auto; }
+/* A table gets 12 on every side instead of 32/40. The generous inset is there for a CHART,
+   which is a picture and wants air around it; a table is a grid that should use the width it
+   was given, and at 40px a full-screen record list was inset further than the same list is on
+   the board. Scoped by tile type rather than applied to .pbody, because the chart, KPI and
+   note views still want the frame. */
+.pbody.tbl { padding: 12px; }
 .pbody > * { width: 100%; }
 .kpi.big { padding: 0; } .kpi.big .kpinum { font-size: 150px; } .kpi.big .kpinum .unit { font-size: 48px; }
 .stbl.big { align-self: stretch; width: 100%; } .stbl.big table { font-size: 15px; }
+/* 12 between the search bar and the first row. The bar ships with margin-bottom: 6 for the
+   in-card table, where 6 is right because the whole tile is tight; at full screen the same 6
+   left the bar sitting on the header row. Overridden here rather than in TableFilterBar so
+   the on-board tables keep theirs. */
+.stbl.big :deep(.tfb) { margin-bottom: 12px; }
 /* full screen: the record list scrolls within the dialog (sticky header) instead of
    a "View all" jump; taller than the tile so more rows show at once. */
 .stbl.big .stbl-scroll { max-height: 72vh; }
