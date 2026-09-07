@@ -310,6 +310,21 @@ const derivedNoteTitle = computed(() => noteTitle(cfg.content))
  * directly — for a note `cfg.name` is empty and always will be. */
 const effectiveName = computed(() => (isText.value ? derivedNoteTitle.value : (cfg.name || '').trim()))
 
+/* The header names the ACTION and the THING it acts on — "Create Bar", "Edit Shortcut".
+
+   It was a breadcrumb: Dashboard › Edit › <the widget's name>. Two of those three parts were
+   not worth their room. "Dashboard" is not a place you can click back to from here, so it was
+   a step in a trail that does not exist, and the name is in the Name field a few inches below,
+   where you can also change it. What the header was NOT saying is the one thing you cannot
+   read anywhere else at a glance: which of the sixteen types this panel is currently building.
+
+   curType is reactive, so switching the family or the chart kind retitles the panel — the
+   title tracks the choice rather than describing how you arrived. */
+const headTitle = computed(() => {
+  const verb = props.duplicate ? 'Duplicate' : (editing.value || libMode.value) ? 'Edit' : 'Create'
+  return `${verb} ${curType.value.label}`
+})
+
 const dupBoards = computed(() => {
   const n = effectiveName.value.toLowerCase()
   if (!n) return []
@@ -466,7 +481,7 @@ function save(place) {
       <div class="builder">
         <!-- Header (ClickUp-style) -->
         <header class="bhead">
-          <div class="crumb"><span class="muted">Dashboard</span> <Icon name="chevron-right" :size="13" class="sep" /> <span v-if="duplicate" class="muted">Duplicate</span><span v-else-if="editing || libMode" class="muted">Edit</span> <b>{{ effectiveName || ('New ' + curType.label) }}</b></div>
+          <h3 class="btitle">{{ headTitle }}</h3>
           <!-- Reset, not Refresh. Refresh acts on the PREVIEW, so it now lives beside
                the preview (below); what belongs up here next to Close is the action
                that operates on the whole form. -->
@@ -927,8 +942,9 @@ function save(place) {
 .overlay { position: fixed; inset: 0; background: rgba(20,21,38,.5); backdrop-filter: blur(2px); z-index: 120; display: grid; place-items: center; padding: 16px; }
 .builder { width: 100%; height: 100%; background: var(--surface); border-radius: var(--r-xl); box-shadow: var(--sh-lg); display: flex; flex-direction: column; overflow: hidden; }
 .bhead { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); flex: none; }
-.crumb { display: flex; align-items: center; gap: 8px; font-size: 14px; }
-.crumb .sep { color: var(--muted-2); }
+/* the dialog title type from global.css — this header is a .bhead rather than a .dlg-head,
+   but it is the same kind of thing and should not read as a smaller one */
+.btitle { margin: 0; font-size: 17px; font-weight: 700; }
 .hacts { display: flex; gap: 2px; }
 .ic { width: 34px; height: 32px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .ic:hover { background: var(--surface-2); color: var(--ink); }
@@ -941,7 +957,7 @@ function save(place) {
    then the preview card inset within it. It used to be a white pane with the tabs
    floating on the same ground as the chart, which made the switch look like part of the
    preview rather than the control that changes what is being previewed. */
-.preview { flex: 1.5; display: flex; flex-direction: column; min-width: 0; padding: 0 0 12px; background: var(--surface-2); }
+.preview { flex: 1.5; display: flex; flex-direction: column; min-width: 0; padding: 12px 0; background: var(--surface-2); }
 /* One segmented control on a soft track with the active family filled near-black — the
    same control the reference uses for every either/or in this panel (family, access,
    Manual/Query, Top/Bottom/All). Four loose outlined buttons with a blue fill read as
