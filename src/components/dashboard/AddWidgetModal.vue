@@ -611,7 +611,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
    and stays 138x133. The room comes from the vertical padding, 20 -> 10 — an icon this size
    needs less framing, not more, and the card was mostly padding before. min-height pins the
    height so a one-line and a two-line label still produce identical tiles. */
-.tc { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 10px 12px; min-height: 133px; border: 1px solid var(--picker-tile-border); background: var(--picker-tile-fill); border-radius: var(--r-lg); color: var(--picker-ico); transition: border-color .15s, box-shadow .15s; }
+.tc { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 10px 12px; min-height: 133px; border: 1px solid var(--picker-tile-border); background: var(--picker-tile-fill); border-radius: var(--r); color: var(--picker-ico); transition: border-color .15s, box-shadow .15s; }
 .tc:hover { border-color: var(--muted-2); box-shadow: var(--sh-sm); }
 .tc-group { border-style: dashed; border-color: var(--border-strong); }
 .tc-ico { width: 88px; height: 88px; display: grid; place-items: center; }
@@ -621,25 +621,28 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .tc-label { font-size: 13px; font-weight: 500; color: var(--ink); }
 
 /* search-result section headings — the module, and how many it holds */
-.lsec + .lsec { margin-top: 16px; }
+/* 24, because the rows inside a group are 12 apart now. A between-group gap that does not
+   clearly beat the within-group gap stops grouping anything (Gestalt: proximity). */
+.lsec + .lsec { margin-top: 24px; }
 .lsec-h { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); margin: 2px 0 8px; }
 .lsec-n { font-size: 10px; font-weight: 600; background: var(--surface-2); color: var(--ink); border-radius: var(--r-pill); padding: 1px 6px; letter-spacing: 0; }
 .res-h { font-size: 13px; color: var(--muted); margin: 0 0 12px; }
-.lst { display: flex; flex-direction: column; gap: 2px; }
+.lst { display: flex; flex-direction: column; gap: 12px; }
 /* A row is two lines now (title + description), so it is a card-sized object rather than
    a line of text — hence the white surface and the hairline, matching the type cards on
    the Create Widget tab. gap drops 12 -> 10 because the icon between the checkbox and the
    title adds a third column to the row. */
-.lrow { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: var(--r-lg); background: var(--picker-tile-fill); border: 1px solid var(--picker-tile-border); transition: border-color .15s, box-shadow .15s, background .15s; }
-/* 8px, not 4. A card is a SURFACE and takes the surface tier; the 4px control corner is
-   what made a stack of these read as a list of buttons. */
+/* WHITE and outlined, on the white drawer — the edge is what makes it a card here, not a
+   fill. The chart-type tiles keep their tint, and the difference is deliberate: a tile is
+   133px of mostly-artwork and needs a ground to sit the drawing on, while a row is 62px of
+   mostly-text, where a tint behind the text is just less contrast. */
+.lrow { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: var(--r); background: var(--surface); border: 1px solid var(--picker-tile-border); transition: border-color .15s, box-shadow .15s, background .15s; }
 .lrow.pick { cursor: pointer; }
-.lst { gap: 6px; }
 /* the artwork block. 34px inside a 40px well: the icons are drawn on a 64 artboard with
    their own margins, so a tight well would crop the visual weight rather than the box. */
-/* The well steps BACK to the panel colour, so the nesting reads panel > box > well rather
-   than three tints of the same blue. */
-.lt-ico { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: var(--r); background: var(--surface); color: var(--picker-ico); }
+/* The well takes the tint back. It was --surface while the ROW was tinted; on a white card a
+   white well is nothing at all. */
+.lt-ico { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: var(--r); background: var(--picker-tile-fill); color: var(--picker-ico); }
 .lrow.pick:hover { border-color: var(--primary); box-shadow: var(--sh-sm); }
 .lrow.sel { background: var(--primary-softer); border-color: var(--primary); }
 .lrow.sel .lt-ico { background: var(--surface); }
@@ -716,8 +719,11 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 
    Delete is red at REST, not only on its own hover. It is the one action here you cannot
    undo, and a colour that appears only once you are already pointing at it is a warning
-   that arrives after the decision. */
-.la { width: 28px; height: 28px; border: none; background: var(--surface); color: var(--ink-2); border-radius: var(--r); display: grid; place-items: center; transition: background .12s, color .12s; }
+   that arrives after the decision.
+
+   --surface-2, not --surface: the row went back to white, so the button has to be the darker
+   step to read as a control on it. */
+.la { width: 28px; height: 28px; border: none; background: var(--surface-2); color: var(--ink-2); border-radius: var(--r); display: grid; place-items: center; transition: background .12s, color .12s; }
 .la:hover { color: var(--primary-700); background: var(--primary-softer); }
 .la.del { color: var(--red); }
 .la.del:hover { color: var(--red); background: var(--red-soft); }
