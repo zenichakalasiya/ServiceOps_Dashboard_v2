@@ -957,7 +957,14 @@ function save(place) {
    then the preview card inset within it. It used to be a white pane with the tabs
    floating on the same ground as the chart, which made the switch look like part of the
    preview rather than the control that changes what is being previewed. */
-.preview { flex: 1.5; display: flex; flex-direction: column; min-width: 0; padding: 12px 0; background: var(--surface-2); }
+/* No padding at the TOP. It was `12px 0`, and that 12 stacked on the 16 inside .pv-top, so
+   the band between the header rule and the family switcher measured 28 while the gap under
+   the switcher measured 16 — the switcher looked pushed down rather than centred in a band.
+
+   The bottom 12 stays. It is not the same spacing: with the left/right 12 on .pv-card it is
+   the frame the preview card sits in, and dropping it would put the card hard against the
+   foot of the pane. Only the top was doubling up. */
+.preview { flex: 1.5; display: flex; flex-direction: column; min-width: 0; padding: 0 0 12px; background: var(--surface-2); }
 /* One segmented control on a soft track with the active family filled near-black — the
    same control the reference uses for every either/or in this panel (family, access,
    Manual/Query, Top/Bottom/All). Four loose outlined buttons with a blue fill read as
