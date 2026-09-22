@@ -182,7 +182,7 @@ positioned in viewport coordinates — follow that pattern for any new floating 
 | `components/dashboard/DataTable.vue` | TanStack table for Shortcut tiles — sort, search, per-column filters. |
 | `components/dashboard/TableFilterBar.vue` | The Requests-style filter bar: pick a field in the search box → `Field Operator Value` chip → operator popover. Chips AND across fields. |
 | `components/dashboard/WidgetBuilderModal.vue` | Create/edit a tile. |
-| `components/dashboard/AddWidgetModal.vue` | The tile library — tabs, module/type filters, usage badge. |
+| `components/dashboard/AddWidgetModal.vue` | The widget picker drawer. A **global search above the tabs** (every provenance, every module, and the chart types) grouped by module with a source-tab tag; tabs Create Widget · Predefined · Created by me · Shared with me (no All, no Archive — Delete is a confirmed hard delete). Rows are two-line cards: artwork · title + module chip · description. Library items carry `desc` + `kind`. |
 | `components/ui/FilterMenu.vue` | Shared two-level filter: OR within a field, AND across fields. |
 | `components/ai/AiAssistant.vue` | The whole AI side panel — composer, thread, creation flows. |
 | `components/ai/AiSummaryCard.vue` | The upfront AI Summary banner + its 3 CTAs. |
