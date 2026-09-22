@@ -70,7 +70,9 @@ function helpdeskTiles() {
     { ...kpi('Urgent Open Requests', 6, '', { dir: 'up', pct: 20 }, 'bad', 'Open requests with priority Urgent.'), w: 2 },
     { ...chart('Open Requests By Status', { kind: 'donut', labels: ['Open', 'In Progress', 'Pending', 'Resolved', 'Closed'], series: [{ name: 'Requests', values: [96, 54, 30, 42, 26] }] }, 'Open requests grouped by status.'), w: 4 },
     { ...chart('Open Requests By Priority', { kind: 'donut', labels: ['Low', 'Medium', 'High', 'Urgent'], series: [{ name: 'Requests', values: [120, 78, 34, 16] }] }, 'Open requests grouped by priority.'), w: 4, dateFilter: 'Last 7 days' },
-    { ...chart('Open Requests By Technician', { kind: 'hbar', labels: TECHS, series: [{ name: 'Total', values: [34, 28, 22, 19, 17, 14, 12, 9, 7, 5, 12] }] }, 'Open requests grouped by assigned technician.'), w: 4 },
+    // Deliberately empty — this is the board's permanent demo of the empty-widget state
+    // (see WidgetCard.vue's `tileState`/`WS`). Do not "fix" it by putting values back.
+    { ...chart('Open Requests By Technician', { kind: 'hbar', labels: TECHS, series: [{ name: 'Total', values: [] }] }, 'Open requests grouped by assigned technician.'), w: 4 },
     /* The legend problem in the flesh: 63 technicians on a pie. Above HIGH_CARD the
      * tile switches to the rank pill (Top N · Bottom N · range · coverage · All) and
      * pages the side legend to whatever the widget's height can hold. See

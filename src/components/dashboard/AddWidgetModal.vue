@@ -416,9 +416,11 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .awt:hover { color: var(--ink); }
 .awt.on { color: var(--primary-700); border-bottom-color: var(--primary); }
 .awt-count { font-size: 11px; font-weight: 700; background: var(--red-soft); color: var(--red); border-radius: 999px; padding: 0 6px; }
-/* the search sits ABOVE the tab strip and spans the drawer — a control that governs the
-   tabs cannot be narrower than they are, or it reads as one more filter beside them */
-.aw-search { padding: 8px 16px 12px; }
+/* More air above the search box than below it: it needs to read as its own band under
+   the tab strip's border, while the type pills right below already carry their own
+   12px top padding — stacking two generous gaps there would double the space the two
+   controls need to read as adjacent, not separate. */
+.aw-search { padding: 18px 16px 4px; }
 .srch-x { width: 20px; height: 20px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; flex: none; }
 .srch-x:hover { background: var(--surface-2); color: var(--ink); }
 .srch { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border-control); border-radius: var(--r); padding: 0 11px; height: 36px; flex: 1; }
