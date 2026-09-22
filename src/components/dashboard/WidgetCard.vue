@@ -262,6 +262,27 @@ function matchedRows(rows) {
 }
 const hasTableFilters = computed(() => tableConds.value.length > 0)
 
+/* The Shortcut footer's line. It states what the table holds, and when the record set is
+   narrowed it says by how much — "3 of 12 records match" — so a filtered tile can never pass
+   for the whole list. The narrowing is shared with Full screen (one tableConds, one
+   tableSearch), so a filter set there and left on is exactly the case this has to catch.
+
+   The search half repeats what DataTable does with the same string (a case-insensitive
+   contains over every cell) rather than asking the table for its count, which would mean
+   reaching into TanStack from outside for one number. */
+const footTotal = computed(() => (props.tile.rows || []).length)
+const footShown = computed(() => {
+  const q = tableSearch.value.trim().toLowerCase()
+  if (!q) return filteredRows.value.length
+  return filteredRows.value.filter((r) => r.some((c) => String(c ?? '').toLowerCase().includes(q))).length
+})
+const footText = computed(() => {
+  const noun = footTotal.value === 1 ? 'record' : 'records'
+  return footShown.value === footTotal.value
+    ? `${footTotal.value} ${noun}`
+    : `${footShown.value} of ${footTotal.value} ${noun} match`
+})
+
 // row filtering + sorting now live in DataTable (TanStack); we only own the query
 const present = ref(false)
 /* Who a restricted widget reaches. Normalised to arrays because the two fields don't
@@ -619,8 +640,7 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
                the whole of, and the bar cost two rows of the tile's height to do it. Search
                and filter both live in Full screen, where the entire record set is present
                and narrowing it means something. -->
-          <!-- scrollable table container (sticky header); click a header to sort. No
-               "View all" — the list scrolls in place, and Full screen shows all of it. -->
+          <!-- scrollable table container (sticky header); click a header to sort. -->
           <div class="stbl-scroll">
             <DataTable :columns="tile.columns" :rows="filteredRows" :search="tableSearch" :filtered="hasTableFilters" @clear-filters="tableConds = []">
               <template #cell="{ value }">
@@ -629,6 +649,15 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
                 <template v-else>{{ value }}</template>
               </template>
             </DataTable>
+          </div>
+          <!-- Footer: what the table holds, and the way to all of it. "View all" opens Full
+               screen — the view that already carries every record plus search and filter —
+               rather than a new destination. It used to be argued away because the list
+               scrolls in place; a scroll is not discoverable on a tile showing four rows, and
+               a named exit is. -->
+          <div class="sfoot">
+            <span class="sfoot-t">{{ footText }}</span>
+            <button class="sfoot-a" @click="present = true">View all <Icon name="chevron-right" :size="14" /></button>
           </div>
         </div>
       </template>
@@ -924,6 +953,13 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 .sx { border: none; background: transparent; color: var(--muted); cursor: pointer; display: grid; place-items: center; padding: 0; }
 .sx:hover { color: var(--ink); }
 .stbl-scroll { flex: 1; overflow: auto; min-height: 0; max-height: 200px; }
+/* margin-top: auto pins it to the tile's bottom edge whatever the table's height — the
+   scroll area is capped at 200px, so on a tall tile the footer would otherwise float up
+   under the last row. flex: none so the table, not the footer, gives way on a short tile. */
+.sfoot { flex: none; margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
+.sfoot-t { font-size: 12px; color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sfoot-a { flex: none; display: inline-flex; align-items: center; gap: 2px; border: none; background: transparent; padding: 0; font-size: 13px; font-weight: 500; color: var(--primary-700); cursor: pointer; }
+.sfoot-a:hover { text-decoration: underline; }
 /* filter row eats a row's worth of height — give it back so rows stay visible */
 .stbl-scroll:has(.fltr) { max-height: 236px; }
 /* table/th/td/.nodata chrome lives in DataTable.vue — scoped CSS cannot reach
