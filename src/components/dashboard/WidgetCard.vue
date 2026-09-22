@@ -262,25 +262,29 @@ function matchedRows(rows) {
 }
 const hasTableFilters = computed(() => tableConds.value.length > 0)
 
-/* The Shortcut footer's line. It states what the table holds, and when the record set is
-   narrowed it says by how much — "3 of 12 records match" — so a filtered tile can never pass
-   for the whole list. The narrowing is shared with Full screen (one tableConds, one
-   tableSearch), so a filter set there and left on is exactly the case this has to catch.
+/* The Shortcut footer's line: "5 out of 100 records are shown". The two numbers are the
+   tile's point — a Shortcut previews a handful of records from a list that can be far
+   longer, and a bare "5 records" read as though the five were all there was.
+
+   The total is `tile.total`, the count the query matched, falling back to rows.length for a
+   tile that carries no separate total. The shown count follows any narrowing, which is
+   shared with Full screen (one tableConds, one tableSearch), so a filter set there and left
+   on lowers it here too.
 
    The search half repeats what DataTable does with the same string (a case-insensitive
    contains over every cell) rather than asking the table for its count, which would mean
    reaching into TanStack from outside for one number. */
-const footTotal = computed(() => (props.tile.rows || []).length)
+const footTotal = computed(() => props.tile.total ?? (props.tile.rows || []).length)
 const footShown = computed(() => {
   const q = tableSearch.value.trim().toLowerCase()
   if (!q) return filteredRows.value.length
   return filteredRows.value.filter((r) => r.some((c) => String(c ?? '').toLowerCase().includes(q))).length
 })
 const footText = computed(() => {
+  if (!footTotal.value) return 'No records to show'
   const noun = footTotal.value === 1 ? 'record' : 'records'
-  return footShown.value === footTotal.value
-    ? `${footTotal.value} ${noun}`
-    : `${footShown.value} of ${footTotal.value} ${noun} match`
+  const verb = footShown.value === 1 ? 'is' : 'are'
+  return `${footShown.value} out of ${footTotal.value} ${noun} ${verb} shown`
 })
 
 // row filtering + sorting now live in DataTable (TanStack); we only own the query

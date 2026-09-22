@@ -82,16 +82,21 @@ function helpdeskTiles() {
        ['Payroll app 500 error', 'Neha Gupta', 'In Progress', 'High'],
        ['SSO login failing for HR', 'Rahul Shukla', 'Open', 'Medium'],
        ['Wi-Fi outage – Pune office', 'Karan Mehta', 'Open', 'High']],
-      'Open requests assigned to me.'), w: 4 },
+      'Open requests assigned to me.'), w: 4,
+      /* `total` is how many records the Shortcut's query matched; `rows` is the slice the
+         tile carries. They differ in the real product — a Shortcut previews the first few
+         records of a list that can run to hundreds — and the tile's footer states both.
+         A tile without `total` falls back to rows.length. */
+      total: 100 },
     { ...shortcut('My Open Tasks', ['Subject', 'Reference', 'Status', 'Priority'],
       [['Provision laptop for new joiner', 'TASK-3021', 'Open', 'Medium'],
        ['Review firewall change', 'TASK-3018', 'In Progress', 'High'],
        ['Patch database servers', 'TASK-3009', 'Open', 'Urgent']],
-      'Tasks assigned to me that are open.'), w: 4 },
+      'Tasks assigned to me that are open.'), w: 4, total: 24 },
     { ...shortcut('My Pending Approvals', ['Requester Name', 'Created Date', 'Subject', 'Type'],
       [['Priya Nair', '18 Jul 2026', 'New software purchase — Figma', 'Service Request'],
        ['Vikram Deshpande', '17 Jul 2026', 'Access to production DB', 'Change']],
-      'Approval requests waiting on me.'), w: 4 },
+      'Approval requests waiting on me.'), w: 4, total: 7 },
   ]
 }
 function assetTiles() {
@@ -101,10 +106,10 @@ function assetTiles() {
     kpi('Unassigned', 47, '', { dir: 'down', pct: 9 }, 'good', 'Assets with no assigned user.'),
     chart('Assets by Type', bars(['Laptop', 'Desktop', 'Server', 'Mobile', 'Network'], [2100, 1200, 320, 900, 300]), 'Hardware asset count by type.'),
     chart('Patch Compliance', donut(['Compliant', 'Pending', 'Failed'], [3800, 700, 320]), 'Endpoint patch status.'),
-    shortcut('Expiring Contracts',
+    { ...shortcut('Expiring Contracts',
       ['Contract', 'Vendor', 'Value', 'Expires'],
       [['CNT-118', 'Dell', '₹ 12.4L', '14 days'], ['CNT-094', 'Microsoft', '₹ 38.0L', '22 days']],
-      'Contracts expiring within 30 days.'),
+      'Contracts expiring within 30 days.'), total: 11 },
   ]
 }
 function execTiles() {
