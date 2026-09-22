@@ -411,7 +411,10 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
   <!-- `acting` holds the cluster open while a popover this header owns is up: the menu
        and the date popover are teleported, so moving the pointer into them drops :hover
        and the icons would collapse out from under the thing the user just opened. -->
-  <div ref="cardEl" class="tile card" :class="{ ['span-' + (tile.w || 3)]: true, ['rows-' + (tile.h || 1)]: true, acting: menu || dfOpen || aiHover, note: isNote }">
+  <!-- `blank` tints the body for every state that has no content to draw (no-data,
+       error, unconfigured). A tile whose body is white looks identical to a loaded one
+       until you read the text — the tint is what says "nothing here" at a glance. -->
+  <div ref="cardEl" class="tile card" :class="{ ['span-' + (tile.w || 3)]: true, ['rows-' + (tile.h || 1)]: true, acting: menu || dfOpen || aiHover, note: isNote, blank: tileState !== 'ok' && !loading }">
     <!-- Standardized header: title + info (left) · refresh · fullscreen · edit · ⋯ (right).
          EVERY tile uses this. The click-to-select floating toolbar three tiles used to
          have is gone — one board should not have two different ways to reach the same
@@ -941,15 +944,26 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 .tbody { flex: 1; padding: var(--tile-pad, 12px); display: flex; flex-direction: column; min-height: 0; }
 .loading { flex: 1; display: flex; flex-direction: column; justify-content: center; }
 /* empty-widget states */
+/* The BODY carries the tint, not `.wstate` itself — `.tbody`'s own padding sits outside
+   `.wstate`, so tinting the inner block would leave a white gutter around it and read as
+   a panel inset in a card rather than as an empty card. `--surface-2` is one quiet step
+   off a normal card in BOTH themes (it is darker than --surface in light and lighter in
+   dark), so the "this tile is different" reading survives the theme switch without a
+   second colour being written here. */
+.tile.blank .tbody { background: var(--surface-2); }
 .wstate { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 6px; color: var(--muted); padding: 14px; }
 .wstate b { color: var(--ink-2); font-size: 13px; font-weight: 600; }
 .ws-sub { font-size: 12px; max-width: 230px; line-height: 1.45; }
-.ws-ico { width: 44px; height: 44px; border-radius: 4px; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); margin-bottom: 3px; }
+/* Both wells are CIRCLES and both are `--surface`, and the two facts are related: the
+   body is tinted now, so a `--surface-2` well would be the same colour as the ground it
+   sits on and disappear. The well has to step the OTHER way from the body — the same
+   inversion the Add-widget picker's rows make. */
+.ws-ico { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); color: var(--muted); margin-bottom: 3px; }
 .wstate.err .ws-ico { background: var(--red-soft); color: var(--red); }
-/* The no-data well: a bigger, softer rounded square — same tokens the Add-widget
-   picker's chart-type tiles use (--picker-tile-fill / --picker-ico) — so the tile's own
-   shape reads as an illustration sitting in a frame, not a warning glyph in a box. */
-.ws-ico-shape { width: 60px; height: 60px; border-radius: var(--r); background: var(--picker-tile-fill); color: var(--picker-ico); margin-bottom: 5px; }
+/* The no-data well: bigger, and round, holding the tile's own chart artwork
+   (--picker-ico is the ink the Add-widget picker's chart glyphs use) — so it reads as an
+   illustration of what would be here, not as a warning glyph in a box. */
+.ws-ico-shape { width: 60px; height: 60px; border-radius: 50%; background: var(--surface); color: var(--picker-ico); margin-bottom: 5px; }
 .wstate .btn { margin-top: 9px; }
 /* full-area hover: the whole numeric region (below the title) fills on hover,
    with generous padding so the highlight surrounds the number on every side */
