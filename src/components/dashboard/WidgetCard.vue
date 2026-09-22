@@ -411,10 +411,7 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
   <!-- `acting` holds the cluster open while a popover this header owns is up: the menu
        and the date popover are teleported, so moving the pointer into them drops :hover
        and the icons would collapse out from under the thing the user just opened. -->
-  <!-- `blank` tints the body for every state that has no content to draw (no-data,
-       error, unconfigured). A tile whose body is white looks identical to a loaded one
-       until you read the text — the tint is what says "nothing here" at a glance. -->
-  <div ref="cardEl" class="tile card" :class="{ ['span-' + (tile.w || 3)]: true, ['rows-' + (tile.h || 1)]: true, acting: menu || dfOpen || aiHover, note: isNote, blank: tileState !== 'ok' && !loading }">
+  <div ref="cardEl" class="tile card" :class="{ ['span-' + (tile.w || 3)]: true, ['rows-' + (tile.h || 1)]: true, acting: menu || dfOpen || aiHover, note: isNote }">
     <!-- Standardized header: title + info (left) · refresh · fullscreen · edit · ⋯ (right).
          EVERY tile uses this. The click-to-select floating toolbar three tiles used to
          have is gone — one board should not have two different ways to reach the same
@@ -943,27 +940,22 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
    is one preference rather than a number repeated in every tile. */
 .tbody { flex: 1; padding: var(--tile-pad, 12px); display: flex; flex-direction: column; min-height: 0; }
 .loading { flex: 1; display: flex; flex-direction: column; justify-content: center; }
-/* empty-widget states */
-/* The BODY carries the tint, not `.wstate` itself — `.tbody`'s own padding sits outside
-   `.wstate`, so tinting the inner block would leave a white gutter around it and read as
-   a panel inset in a card rather than as an empty card. `--surface-2` is one quiet step
-   off a normal card in BOTH themes (it is darker than --surface in light and lighter in
-   dark), so the "this tile is different" reading survives the theme switch without a
-   second colour being written here. */
-.tile.blank .tbody { background: var(--surface-2); }
+/* empty-widget states. The tile itself is an ORDINARY card — white body, grey header
+   band, exactly like a tile that has data. Only the well behind the icon is tinted;
+   tinting the body as well was tried and reverted, because at that point the whole
+   board's worth of empty tiles changes colour to say something the icon already says. */
 .wstate { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 6px; color: var(--muted); padding: 14px; }
 .wstate b { color: var(--ink-2); font-size: 13px; font-weight: 600; }
 .ws-sub { font-size: 12px; max-width: 230px; line-height: 1.45; }
-/* Both wells are CIRCLES and both are `--surface`, and the two facts are related: the
-   body is tinted now, so a `--surface-2` well would be the same colour as the ground it
-   sits on and disappear. The well has to step the OTHER way from the body — the same
-   inversion the Add-widget picker's rows make. */
-.ws-ico { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); color: var(--muted); margin-bottom: 3px; }
+/* Both wells are CIRCLES — a disc reads as a place the icon LIVES, where the old 4px
+   square read as a second, smaller card inside the card. */
+.ws-ico { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); margin-bottom: 3px; }
 .wstate.err .ws-ico { background: var(--red-soft); color: var(--red); }
-/* The no-data well: bigger, and round, holding the tile's own chart artwork
-   (--picker-ico is the ink the Add-widget picker's chart glyphs use) — so it reads as an
-   illustration of what would be here, not as a warning glyph in a box. */
-.ws-ico-shape { width: 60px; height: 60px; border-radius: 50%; background: var(--surface); color: var(--picker-ico); margin-bottom: 5px; }
+/* The no-data well: bigger, round, and on the PRIMARY tint rather than the near-white
+   --picker-tile-fill it started on — at #f6f9fc against a white card the disc was barely
+   a disc. Blue is the module's one accent, and the artwork's own ink (--picker-ico) is a
+   blue-grey, so the tint is the colour the glyph already belongs to. */
+.ws-ico-shape { width: 60px; height: 60px; border-radius: 50%; background: var(--primary-soft); color: var(--picker-ico); margin-bottom: 5px; }
 .wstate .btn { margin-top: 9px; }
 /* full-area hover: the whole numeric region (below the title) fills on hover,
    with generous padding so the highlight surrounds the number on every side */
