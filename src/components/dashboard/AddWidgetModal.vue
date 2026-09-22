@@ -19,6 +19,9 @@ const tab = ref('chart')              // chart | predefined | user | shared
    `restoreLibTile` are no longer imported and Delete opens the confirm that was already
    here for "delete forever". Destructive, named, and confirmed — the pattern the rest of
    the app already uses (components/ui/ConfirmDialog.vue). */
+// The search box sits under the tab strip and only on the three reuse tabs — Create Widget
+// has nothing to search (it's a fixed grid of chart types). It filters the ACTIVE tab only,
+// same as the type pills and module dropdown beside it, so all three read as one filter row.
 const fModule = ref('')
 const fType = ref('')                 // '' | kpi | chart | shortcut
 const search = ref('')
@@ -83,27 +86,32 @@ const GROUPS = [
     { id: 'text', label: 'Free Text', icon: 'chart-text', type: 'text', kind: null },
   ] },
 ]
-/* GROUPS is rendered straight. There used to be a `filteredGroups` that narrowed it by the
-   search box; the search is global now and surfaces matching types as a result group of
-   its own, so the computed could only ever have returned all of GROUPS. */
+/* GROUPS is rendered straight — Create Widget has no search box, so there is nothing to
+   narrow it by. */
 
 // ---- Reuse tabs: listing with actions ----
 const provMap = { predefined: 'predefined', user: 'user', shared: 'shared' }
-/* The All tab is gone: the search above the tabs already reaches every provenance, so a
- * tab that did the same thing was a second answer to a question already answered. Each
- * remaining tab is one provenance, and the per-item rules below still read `l.prov`
- * rather than the tab — search results mix all three, so a tab-keyed rule would have
- * offered Delete on a predefined tile. */
+/* The All tab is gone — each remaining tab is one provenance, and the per-item rules below
+ * still read `l.prov` rather than the tab, since a tab-keyed rule would offer Delete on a
+ * predefined tile the moment a predefined item ever showed up outside its own tab. */
 const inTab = (l) => l.prov === provMap[tab.value] && !l.trashed
 
-/* Module counts must describe WHAT YOU WILL GET, so they are scoped to the tab and
- * the type filter you already have on. They used to count the whole library, so
+/* Search is scoped to the active tab, same as the type pills and module dropdown —
+ * description and module match too, since you rarely remember what a saved widget was
+ * called. All three read as one filter row, so they all apply together. */
+const q = computed(() => search.value.trim().toLowerCase())
+const searching = computed(() => q.value.length > 0)
+function hitText(v) { return !!v && v.toLowerCase().includes(q.value) }
+function hitSearch(l) { return !searching.value || hitText(l.title) || hitText(l.desc) || hitText(l.module) }
+
+/* Module counts must describe WHAT YOU WILL GET, so they are scoped to the tab, the type
+ * filter and the search text you already have on. They used to count the whole library, so
  * "Request (20)" on the Created-by-me tab would open three rows — the badge and the
  * result disagreed. A module with nothing in the current tab isn't offered at all;
  * a filter that can only ever return nothing isn't a filter.
  * "All modules" carries no count: it is the absence of a filter, not a bucket. */
 const moduleBase = computed(() => {
-  const arr = store.library.filter(inTab)
+  let arr = store.library.filter(inTab).filter(hitSearch)
   return fType.value ? arr.filter((l) => l.type === fType.value) : arr
 })
 const moduleCount = (m) => moduleBase.value.filter((l) => l.module === m).length
@@ -116,7 +124,7 @@ watch(moduleOptions, (opts) => {
   if (fModule.value && !opts.some((o) => o.value === fModule.value)) fModule.value = ''
 })
 const list = computed(() => {
-  let arr = store.library.filter(inTab)
+  let arr = store.library.filter(inTab).filter(hitSearch)
   if (fType.value) arr = arr.filter((l) => l.type === fType.value)
   if (fModule.value) arr = arr.filter((l) => l.module === fModule.value)
   return arr
@@ -124,48 +132,8 @@ const list = computed(() => {
 // per-type counts for the current tab (before the type filter is applied)
 const typeCounts = computed(() => {
   const inMod = (l) => !fModule.value || l.module === fModule.value
-  const base = store.library.filter((l) => inTab(l) && inMod(l))
+  const base = store.library.filter((l) => inTab(l) && inMod(l)).filter(hitSearch)
   return { '': base.length, kpi: base.filter((l) => l.type === 'kpi').length, chart: base.filter((l) => l.type === 'chart').length, shortcut: base.filter((l) => l.type === 'shortcut').length }
-})
-/* ---- GLOBAL SEARCH ---------------------------------------------------------------
- * The box sits ABOVE the tab strip, and that position is the whole contract: it
- * out-scopes the tabs. Typing in it searches every provenance and every module at once
- * — including the Create Widget tab, whose chart TYPES are searchable too, so the tag
- * set on a result covers all four tabs rather than three of them.
- *
- * While it has text the per-tab filters (type pills, module) are hidden and no tab reads
- * as active. They are narrower than the search, so leaving them on screen would pose the
- * question of which one owns the result list — and the answer would have been neither.
- *
- * Results group by MODULE, because that is the axis a person searching already has in
- * mind ("something about assets"), and each row carries the tab it came from as a tag,
- * so picking a shared widget over your own stays a decision rather than an accident. */
-const q = computed(() => search.value.trim().toLowerCase())
-const searching = computed(() => q.value.length > 0)
-const TAB_OF_PROV = { predefined: 'Predefined', user: 'Created by me', shared: 'Shared with me' }
-
-const searchGroups = computed(() => {
-  if (!searching.value) return []
-  const hit = (v) => !!v && v.toLowerCase().includes(q.value)
-  // description and module match too — you rarely remember what a saved widget was called
-  const items = store.library.filter((l) => !l.trashed && (hit(l.title) || hit(l.desc) || hit(l.module)))
-  const byModule = new Map()
-  for (const l of items) { if (!byModule.has(l.module)) byModule.set(l.module, []); byModule.get(l.module).push(l) }
-  // store.modules order, not Map insertion order, so the groups sit in the same sequence
-  // as the module dropdown rather than in whatever order the library happens to be in
-  const groups = store.modules.filter((m) => byModule.has(m)).map((m) => ({ key: m, cat: m, items: byModule.get(m) }))
-  const types = GROUPS.flatMap((g) => g.types).filter((t) => hit(t.label))
-  if (types.length) groups.push({ key: '__types', cat: 'Widget types', types })
-  return groups
-})
-const searchCount = computed(() => searchGroups.value.reduce((n, g) => n + (g.items || g.types).length, 0))
-
-/* One list of sections drives the body in BOTH modes — searching or not — so the row
-   markup exists once. A second copy under a v-else is exactly how two listings start
-   agreeing today and disagreeing in three commits. */
-const sections = computed(() => {
-  if (searching.value) return searchGroups.value
-  return list.value.length ? [{ key: 'tab', cat: null, items: list.value }] : []
 })
 
 /* The row wears the artwork of the chart it actually draws, which is the point of putting
@@ -178,28 +146,16 @@ function libIcon(l) {
   return l.kind || 'column'
 }
 
-// ---- multi-select: add is ONLY via checkbox + footer (no per-row quick add) ----
-const MAX_SEL = 10
-const selected = ref(new Set())
-// a library item already on this dashboard can't be added again — it shows as checked+locked
+// ---- quick add: one click places the tile at the end of the board, drawer stays open ----
+// a library item already on this dashboard can't be added again — its add icon is
+// replaced by a static "already added" mark instead
 function isPlaced(l) { return props.d.tiles.some((t) => t.title === l.title && t.type === l.type) }
-function isSel(l) { return selected.value.has(l.id) }
-function toggleSel(l) {
-  if (isPlaced(l)) return   // already on the dashboard
-  const s = new Set(selected.value)
-  if (s.has(l.id)) s.delete(l.id)
-  else if (s.size >= MAX_SEL) { toast(`You can add up to ${MAX_SEL} at once`, 'warn'); return }
-  else s.add(l.id)
-  selected.value = s
-}
-function clearSel() { selected.value = new Set() }
-function addSelected() {
-  const items = store.library.filter((l) => selected.value.has(l.id))
-  if (!items.length) return
+function quickAdd(l) {
+  if (isPlaced(l)) return
   const before = props.d.tiles.length
-  addTilesToDashboard(props.d, items)
+  addTilesToDashboard(props.d, [l])
   if (props.group) for (let i = before; i < props.d.tiles.length; i++) props.d.tiles[i].group = props.group
-  emit('close')
+  toast(`Added “${l.title}” to the dashboard`, 'success')
 }
 
 // ---- Duplicate / Edit → open the builder (live preview); Update returns a copy to the listing ----
@@ -266,11 +222,8 @@ const TYPE_LABEL = { kpi: 'KPI', chart: 'Widget', shortcut: 'Shortcut' }
  * `libUsage` still exists in the store for anywhere that wants the impact view. */
 /* There is NO hover tooltip on a row. It carried the type and the provenance, and neither
    turned out to need it: the type is drawn as the row's artwork, and the provenance is the
-   tab you are standing in — or, in a search result, the tag on the row itself. A tooltip
-   whose content is already on the page costs a hover to learn nothing.
-
-   `PROV_LABEL` went with it. TAB_OF_PROV is the surviving spelling of the same idea and is
-   the one that reaches the screen, on a search result's tag. */
+   tab you are standing in. A tooltip whose content is already on the page costs a hover to
+   learn nothing. */
 const TAB_LABEL = { predefined: 'Predefined', user: 'Created by me', shared: 'Shared with me' }
 const emptyMsg = computed(() => {
   const plural = fType.value ? (fType.value === 'kpi' ? 'KPIs' : TYPE_LABEL[fType.value] + 's') : 'items'
@@ -281,7 +234,7 @@ const emptyHelp = computed(() => {
   if (tab.value === 'user') return 'Create one from the Create Widget tab, then it appears here.'
   return 'Predefined tiles curated by your admin will appear here.'
 })
-watch([tab], () => { search.value = ''; fModule.value = ''; fType.value = ''; selected.value = new Set() })
+watch([tab], () => { search.value = ''; fModule.value = ''; fType.value = '' })
 watch(fType, (v) => { if (v === 'shortcut') fModule.value = '' })   // Shortcut listing has no module filter
 
 function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
@@ -297,12 +250,15 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
         </div>
       </header>
 
-      <!-- GLOBAL search — above the tabs, and that is the contract. A control placed over
-           a switcher is read as governing it, so this one has to actually do that: it
-           searches every tab and every module at once, and the tabs go quiet while it has
-           text. Sitting under the tabs, as it did, it could only ever have meant "within
-           this tab" — which is the search we already had. -->
-      <div class="aw-search">
+      <!-- top tabs. No All, no Archive. -->
+      <div class="aw-tabs">
+        <button v-for="t in TABS" :key="t.v" class="awt" :class="{ on: tab === t.v }" @click="goTab(t.v)">{{ t.label }}</button>
+      </div>
+
+      <!-- Search sits under the tabs and only on the three reuse tabs — Create Widget is a
+           fixed grid of chart types, nothing to search. It filters the ACTIVE tab only, same
+           scope as the type pills and module dropdown right below it. -->
+      <div v-if="tab !== 'chart'" class="aw-search">
         <div class="srch">
           <Icon name="search" :size="15" class="muted" />
           <input v-model="search" placeholder="Search widgets, KPIs and Shortcuts…" />
@@ -310,18 +266,8 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
         </div>
       </div>
 
-      <!-- top tabs. No All: the search above already reaches every provenance, so the tab
-           that did the same was a second answer to the same question. While searching NO tab
-           reads as active — the results are not any one tab's — and clicking one returns you
-           to it by clearing the search. -->
-      <div class="aw-tabs">
-        <button v-for="t in TABS" :key="t.v" class="awt" :class="{ on: !searching && tab === t.v }" @click="goTab(t.v)">{{ t.label }}</button>
-      </div>
-
-      <!-- Per-tab filters: type pills, module, and Archive. All three are hidden while the
-           global search has text — they are narrower than it is, so leaving them on screen
-           would pose the question of which control owns the result list. -->
-      <div v-if="tab !== 'chart' && !searching" class="type-tabs" role="tablist">
+      <!-- Per-tab filters: type pills and module. -->
+      <div v-if="tab !== 'chart'" class="type-tabs" role="tablist">
         <button
           v-for="t in TYPE_FILTERS" :key="t.v" class="ttab" :class="{ on: fType === t.v }"
           role="tab" :aria-selected="fType === t.v" @click="fType = t.v"
@@ -331,15 +277,8 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
       </div>
 
       <div class="aw-body">
-        <!-- SEARCH RESULTS — grouped by module, because "something about assets" is the
-             shape the question arrives in. Each row carries the tab it came from, so
-             reaching for a shared widget instead of your own stays a decision. -->
-        <template v-if="searching">
-          <div class="res-h">{{ searchCount }} {{ searchCount === 1 ? 'result' : 'results' }} for “{{ search.trim() }}”</div>
-        </template>
-
         <!-- CHART TYPE: category card grid → opens centered builder -->
-        <template v-if="tab === 'chart' && !searching">
+        <template v-if="tab === 'chart'">
           <section v-for="g in GROUPS" :key="g.cat" class="cat">
             <div class="cat-h">{{ g.cat }}</div>
             <div class="cards">
@@ -365,95 +304,55 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
           </section>
         </template>
 
-        <!-- THE LISTING — one loop, both modes. Not searching, `sections` is a single
-             untitled group holding the current tab; searching, it is one group per module
-             plus the matching chart types. A second copy of this row under a v-else is
-             exactly how two listings start out agreeing and stop three commits later. -->
-        <template v-else-if="sections.length">
-          <section v-for="g in sections" :key="g.key" class="lsec">
-            <div v-if="g.cat" class="lsec-h">{{ g.cat }}<span class="lsec-n">{{ (g.items || g.types).length }}</span></div>
-
-            <!-- a matching chart TYPE is a Create Widget result: same card, same click -->
-            <div v-if="g.types" class="cards">
-              <button v-for="t in g.types" :key="t.id" class="tc" @click="builder = t">
-                <div class="tc-ico"><ChartIcon :name="t.id" :size="88" /></div>
-                <span class="tc-label">{{ t.label }}</span>
-                <span class="row-tag src">Create Widget</span>
-              </button>
-            </div>
-
-            <div v-else class="lst">
-              <!-- The WHOLE card selects. The checkbox is a 14px target in a 62px card, so
-                   asking for it specifically was a Fitts's Law tax on the one thing this list
-                   exists to do; the card is the object, so the card is the target. Archive rows
-                   are not selectable at all, so they get no handler rather than a dead one. -->
-              <div
-                v-for="l in g.items" :key="l.id" class="lrow"
-                :class="{ sel: isSel(l), placed: isPlaced(l), pick: !isPlaced(l) }"
-                @click="toggleSel(l)"
-              >
-                <!-- click.prevent, not @change: the browser is not allowed to toggle this box
-                     itself, so what it shows is only ever `isSel`. On @change it could disagree
-                     — refuse the 11th selection and the state says no while the box you just
-                     clicked sits there ticked. .stop keeps the card handler from undoing it. -->
-                <input
-                  type="checkbox" class="lcb"
-                  :checked="isSel(l) || isPlaced(l)" :disabled="isPlaced(l)"
-                  @click.prevent.stop="toggleSel(l)"
-                />
-                <!-- the artwork of the chart this row actually draws. It replaces the words
-                     "Widget" / "KPI" / "Shortcut", which used to open the meta line and now
-                     have nowhere to sit — a picture of the thing reads faster than its name
-                     anyway, and the name is still on hover for when it doesn't. -->
-                <span class="lt-ico"><ChartIcon :name="libIcon(l)" :size="34" /></span>
-                <div class="lt-main">
-                  <div class="lt-name-row">
-                    <span class="lt-name ellip">{{ l.title }}</span>
-                    <!-- Searching, the tag is the TAB the result came from — the thing you can no
-                         longer read off the page, since the results span all of them. Not searching,
-                         the tab is on screen and the module is not, so it is the module. Never both:
-                         in a module-grouped result list the module is already the heading above. -->
-                    <span class="row-tag" :class="searching ? 'src' : 'mod'">{{ searching ? TAB_OF_PROV[l.prov] : l.module }}</span>
-                  </div>
-                  <!-- Falls back to the type and module for an item saved without a
-                       description — an empty second line would collapse the row to a
-                       different height than its neighbours, for no gain. -->
-                  <div class="lt-desc ellip">{{ l.desc || (TYPE_LABEL[l.type] + ' · ' + l.module) }}</div>
+        <!-- THE LISTING — the active tab, filtered by type pill / module / search. -->
+        <template v-else-if="list.length">
+          <div v-if="searching" class="res-h">{{ list.length }} {{ list.length === 1 ? 'result' : 'results' }} for “{{ search.trim() }}”</div>
+          <div class="lst">
+            <!-- Each row is a static card — clicking it does nothing on its own. The
+                 actions (add / duplicate / edit / delete) live in `.lt-acts` and appear
+                 on hover, Add first from the left since it's the one action this list
+                 exists for. A row already on the dashboard swaps that whole group for a
+                 static "already added" mark instead of a click target. -->
+            <div v-for="l in list" :key="l.id" class="lrow" :class="{ placed: isPlaced(l) }">
+              <!-- the artwork of the chart this row actually draws. It replaces the words
+                   "Widget" / "KPI" / "Shortcut", which used to open the meta line and now
+                   have nowhere to sit — a picture of the thing reads faster than its name
+                   anyway, and the name is still on hover for when it doesn't. -->
+              <span class="lt-ico"><ChartIcon :name="libIcon(l)" :size="34" /></span>
+              <div class="lt-main">
+                <div class="lt-name-row">
+                  <span class="lt-name ellip">{{ l.title }}</span>
+                  <span class="row-tag mod">{{ l.module }}</span>
                 </div>
-                <!-- Duplicate / Edit / Delete. Outlined glyphs, as everywhere else in the app —
-                     what carries the weight is the button's FILL, not the glyph. See .la.
-
-                     @click.stop on the group: these open a builder or delete a tile, and none
-                     of them is also a request to select the card underneath. -->
-                <div class="lt-acts" @click.stop>
-                  <template v-if="!isPlaced(l)">
-                    <button v-if="canDuplicate(l)" class="la" title="Duplicate" @click="openLibBuilder(l)"><Icon name="copy" :size="15" /></button>
-                    <button v-if="canEdit(l)" class="la" title="Edit" @click="openLibBuilder(l)"><Icon name="edit" :size="15" /></button>
-                    <button v-if="canDelete(l)" class="la del" title="Delete" @click="delLib(l)"><Icon name="trash" :size="15" /></button>
-                  </template>
-                </div>
+                <!-- Falls back to the type and module for an item saved without a
+                     description — an empty second line would collapse the row to a
+                     different height than its neighbours, for no gain. -->
+                <div class="lt-desc ellip">{{ l.desc || (TYPE_LABEL[l.type] + ' · ' + l.module) }}</div>
+              </div>
+              <!-- Add / Duplicate / Edit / Delete. Outlined glyphs, as everywhere else in
+                   the app — what carries the weight is the button's FILL, not the glyph.
+                   See .la. Add is first from the left and reads primary, since it's the
+                   one action this whole list exists for. -->
+              <div class="lt-acts" :class="{ always: isPlaced(l) }">
+                <span v-if="isPlaced(l)" class="la-added" title="Already on this dashboard"><Icon name="check" :size="14" /></span>
+                <template v-else>
+                  <button class="la la-add" title="Add to dashboard" @click="quickAdd(l)"><Icon name="plus" :size="15" /></button>
+                  <button v-if="canDuplicate(l)" class="la" title="Duplicate" @click="openLibBuilder(l)"><Icon name="copy" :size="15" /></button>
+                  <button v-if="canEdit(l)" class="la" title="Edit" @click="openLibBuilder(l)"><Icon name="edit" :size="15" /></button>
+                  <button v-if="canDelete(l)" class="la del" title="Delete" @click="delLib(l)"><Icon name="trash" :size="15" /></button>
+                </template>
               </div>
             </div>
-          </section>
+          </div>
         </template>
-        <div v-else-if="searching" class="none"><Icon name="search" :size="24" /><p class="none-t">Nothing matches “{{ search.trim() }}”.</p><span class="none-h">The search covers every tab and every module — try a shorter word, or a module name.</span></div>
+        <div v-else-if="searching" class="none"><Icon name="search" :size="24" /><p class="none-t">Nothing matches “{{ search.trim() }}” in {{ TAB_LABEL[tab] }}.</p><span class="none-h">Try a shorter word, or clear the type / module filter.</span></div>
         <div v-else class="none"><Icon name="inbox" :size="24" /><p class="none-t">{{ emptyMsg }}</p><span class="none-h">{{ emptyHelp }}</span></div>
       </div>
 
-      <!-- multi-select footer: Add (n) / Cancel -->
-      <transition name="slideup">
-        <footer v-if="tab === 'chart' && !searching && !selected.size" class="dlg-foot">
-          <span />
-          <div class="fbtns"><button class="btn" @click="emit('close')">Cancel</button></div>
-        </footer>
-        <footer v-else-if="selected.size" class="dlg-foot">
-          <span class="selinfo spread">{{ selected.size }} selected<span v-if="selected.size >= MAX_SEL"> · max {{ MAX_SEL }}</span></span>
-          <div class="fbtns">
-            <button class="btn" @click="clearSel">Cancel</button>
-            <button class="btn btn-primary" @click="addSelected"><Icon name="plus" :size="15" /> Add</button>
-          </div>
-        </footer>
-      </transition>
+      <footer class="dlg-foot">
+        <span />
+        <div class="fbtns"><button class="btn" @click="emit('close')">Cancel</button></div>
+      </footer>
     </div>
 
     <!-- Centered builder — create from Chart type -->
@@ -594,18 +493,11 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
    it is decoration and can sit back at --picker-ico */
 .tc-label { font-size: 13px; font-weight: 500; color: var(--ink); }
 
-/* search-result section headings — the module, and how many it holds */
-/* 24, because the rows inside a group are 12 apart now. A between-group gap that does not
-   clearly beat the within-group gap stops grouping anything (Gestalt: proximity). */
-.lsec + .lsec { margin-top: 24px; }
-.lsec-h { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); margin: 2px 0 8px; }
-.lsec-n { font-size: 10px; font-weight: 600; background: var(--surface-2); color: var(--ink); border-radius: var(--r-pill); padding: 1px 6px; letter-spacing: 0; }
 .res-h { font-size: 13px; color: var(--muted); margin: 0 0 12px; }
 .lst { display: flex; flex-direction: column; gap: 12px; }
 /* A row is two lines now (title + description), so it is a card-sized object rather than
    a line of text — hence the white surface and the hairline, matching the type cards on
-   the Create Widget tab. gap drops 12 -> 10 because the icon between the checkbox and the
-   title adds a third column to the row. */
+   the Create Widget tab. */
 /* WHITE and outlined, on the white drawer — the edge is what makes it a card here, not a
    fill. The chart-type tiles keep their tint, and the difference is deliberate: a tile is
    133px of mostly-artwork and needs a ground to sit the drawing on, while a row is 62px of
@@ -614,25 +506,12 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
    none of them, so it gets no token — a var() named after a tier it does not belong to is
    how an off-scale value quietly becomes the scale. Same treatment as the 6px on .ttab. */
 .lrow { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: 0.625rem; background: var(--surface); border: 1px solid var(--picker-tile-border); transition: border-color .15s, box-shadow .15s, background .15s; }
-.lrow.pick { cursor: pointer; }
 /* the artwork block. 34px inside a 40px well: the icons are drawn on a 64 artboard with
    their own margins, so a tight well would crop the visual weight rather than the box. */
-/* The well takes the tint back. It was --surface while the ROW was tinted; on a white card a
-   white well is nothing at all. */
 .lt-ico { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: var(--r); background: var(--picker-tile-fill); color: var(--picker-ico); }
-.lrow.pick:hover { border-color: var(--primary); box-shadow: var(--sh-sm); }
-.lrow.sel { background: var(--primary-softer); border-color: var(--primary); }
-.lrow.sel .lt-ico { background: var(--surface); }
-/* A row already on the board is an ORDINARY card now — same fill, same edge. Its only tell
-   is the ticked, disabled checkbox, which is the whole convention of an "already added"
-   picker. The cursor stays default so the card does not offer a click it will refuse. */
+/* A row already on the board is an ORDINARY card, same fill, same edge — its only tell is
+   the static green "already added" mark that replaces the action icons. */
 .lrow.placed { cursor: default; }
-.lrow.placed .lcb { cursor: not-allowed; }
-/* 14px, not 16. The row grew a second line and a 40px artwork well; at 16 the checkbox
-   was competing with the icon beside it for the same job of opening the row, and it is
-   the smaller of the two duties. Still a comfortable target — the whole row is not
-   clickable, so this stays above the 14px floor rather than going lower. */
-.lcb { width: 14px; height: 14px; accent-color: var(--primary); flex: none; cursor: pointer; margin: 0; }
 .lt-main { flex: 1; min-width: 0; }
 .lt-name-row { display: flex; align-items: center; gap: 7px; } .lt-name { font-weight: 600; font-size: 13px; }
 /* The tag sits BESIDE the title now, not at the right edge of the column. Beside it, it reads
@@ -646,22 +525,9 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 /* the description, one line and clipped. It is context, not content — a wrapping
    description would make rows of different heights out of a list you scan by rhythm. */
 .lt-desc { font-size: 12px; color: var(--muted); margin-top: 1px; line-height: 1.45; }
-/* One tag class, two meanings (module while browsing, source tab while searching), because
-   they never appear together — a row shows whichever fact the page is not already showing. */
 .row-tag { flex: none; font-size: 11px; font-weight: 500; border-radius: var(--r-sm); padding: 1px 6px; white-space: nowrap; }
-/* A minimal chip: the badge radius (--r-sm, 2px per the guide), the quiet fill, no border.
-   It went flat once because a --surface-2 pill vanished on a tinted row — the rows are white
-   again, and the one state that is still tinted (selected) gets the override below rather
-   than the whole thing being flattened for it. */
+/* A minimal chip: the badge radius (--r-sm, 2px per the guide), the quiet fill, no border. */
 .row-tag.mod { background: var(--surface-2); color: var(--muted); border-radius: var(--r-sm); }
-.lrow.sel .row-tag.mod { background: var(--surface); }
-/* The source tag stays a chip: in a search result it is a CLASSIFICATION and has to be read
-   as one, not as more metadata. It takes the card colour on a tinted row for the same reason
-   the module tag stopped being a chip — its own tint is one step from the selected ground. */
-.row-tag.src { background: var(--primary-softer); color: var(--primary-700); }
-.lrow.sel .row-tag.src { background: var(--surface); }
-/* on a type card the source tag is a caption under the label, not a chip beside it */
-.tc .row-tag { margin-top: -2px; }
 /* the row tooltip and its arrow were deleted here — see the note by TYPE_LABEL */
 /* surface, padding and colour come from .tt now — only the placement is local */
 
@@ -670,12 +536,12 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
    is red at rest, not only on its own hover: it is the one action here you cannot undo. */
 /* focus-within as well as hover: these are the only actions on the row, and reaching them
    by keyboard should not require a mouse to be somewhere. */
-/* A FIXED gutter, three buttons wide, whether or not this row has three. The action count
-   is per-provenance — Predefined offers Duplicate only, your own offers three — so a gutter
-   that sized itself to its contents put the tag column in a different place on every row of
-   a search result, which mixes all three. The column only reads as a column if it is one.
-   Rows with fewer actions right-align into it. */
-.lt-acts { display: flex; align-items: center; justify-content: flex-end; gap: 6px; width: 96px; flex: none; opacity: 0; transition: opacity .12s; }
+/* A FIXED gutter, four buttons wide (Add + Duplicate + Edit + Delete), whether or not this
+   row has all four. The action count is per-provenance — Predefined offers Add + Duplicate
+   only, your own offers all four — so a gutter that sized itself to its contents put the
+   tag column in a different place on every row. The column only reads as a column if it is
+   one. Rows with fewer actions right-align into it. */
+.lt-acts { display: flex; align-items: center; justify-content: flex-end; gap: 6px; width: 130px; flex: none; opacity: 0; transition: opacity .12s; }
 .lrow:hover .lt-acts, .lrow:focus-within .lt-acts { opacity: 1; }
 .lt-acts.always { opacity: 1; }
 /* FILLED, not outlined — the box is solid and the glyph inside it stays a stroke. An
@@ -694,6 +560,14 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .la:hover { color: var(--primary-700); background: var(--primary-softer); }
 .la.del { color: var(--red); }
 .la.del:hover { color: var(--red); background: var(--red-soft); }
+/* Add is the one action this whole list exists for, so it reads primary at rest rather
+   than only on hover like Duplicate/Edit — and it sits first, leftmost of the group. */
+.la-add { color: var(--primary-700); background: var(--primary-softer); }
+.la-add:hover { background: var(--primary-soft); }
+/* The "already added" mark replaces the whole action group for a placed row. It is static
+   (no button, no hover state) and stays visible via `.lt-acts.always` — the old ticked
+   checkbox's job, now done without a checkbox. */
+.la-added { width: 28px; height: 28px; background: var(--green-soft); color: var(--green); border-radius: var(--r); display: grid; place-items: center; }
 /* delete confirmation modal */
 .cf-overlay { position: fixed; inset: 0; background: rgba(20,21,38,.5); backdrop-filter: blur(2px); z-index: 130; display: grid; place-items: center; padding: 24px; }
 .cf { width: min(400px, 92vw); background: var(--surface); border-radius: var(--r-xl); box-shadow: var(--sh-lg); padding: 24px; text-align: center; }
@@ -703,11 +577,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .cf-btns { display: flex; justify-content: center; gap: 10px; }
 .cf-del { background: var(--red); border-color: var(--red); color: #fff; }
 .cf-del:hover { background: #c73f34; border-color: #c73f34; }
-/* multi-select footer */
-.selinfo { font-size: 13px; font-weight: 500; color: var(--muted); }
 .fbtns { display: flex; gap: 10px; }
-.slideup-enter-active, .slideup-leave-active { transition: transform .2s ease, opacity .2s ease; }
-.slideup-enter-from, .slideup-leave-to { transform: translateY(100%); opacity: 0; }
 .none { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--muted-2); padding: 54px 20px; text-align: center; }
 .none-t { margin: 4px 0 0; font-size: 14px; font-weight: 600; color: var(--ink-2); }
 .none-h { font-size: 13px; color: var(--muted); max-width: 300px; }

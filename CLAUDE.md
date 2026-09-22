@@ -1,3 +1,5 @@
+**On session start:** If `HANDOFF.md` exists in this directory, read it before anything else for the latest state of the work.
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -182,7 +184,8 @@ positioned in viewport coordinates — follow that pattern for any new floating 
 | `components/dashboard/DataTable.vue` | TanStack table for Shortcut tiles — sort, search, per-column filters. |
 | `components/dashboard/TableFilterBar.vue` | The Requests-style filter bar: pick a field in the search box → `Field Operator Value` chip → operator popover. Chips AND across fields. |
 | `components/dashboard/WidgetBuilderModal.vue` | Create/edit a tile. |
-| `components/dashboard/AddWidgetModal.vue` | The widget picker drawer. A **global search above the tabs** (every provenance, every module, and the chart types) grouped by module with a source-tab tag; tabs Create Widget · Predefined · Created by me · Shared with me (no All, no Archive — Delete is a confirmed hard delete). Rows are two-line cards: artwork · title + module chip · description. Library items carry `desc` + `kind`. |
+| `components/dashboard/AddWidgetModal.vue` | The widget picker drawer. Tabs Create Widget · Predefined · Created by me · Shared with me (no All, no Archive — Delete is a confirmed hard delete); the search box sits **below the tabs** and only on the three reuse tabs, scoped to the active tab (same scope as the type pills / module dropdown beside it) — Create Widget has nothing to search. Rows are two-line cards: artwork · title + module chip · description, no checkboxes — each row's hover actions are **Add (leftmost) · Duplicate · Edit · Delete**; Add places the tile at the end of the board and leaves the drawer open (repeat for more), swapping to a static "already added" mark. Library items carry `desc` + `kind`. |
+| `components/dashboard/WidgetCard.vue` | The tile shell — header actions, ⋯ menu, per-widget AI hover card, and the **empty-widget states** (`tileState`: unconfigured / error / nodata). The nodata state draws the tile's own `ChartIcon` shape (bar/pie/KPI/shortcut/…) in a soft tinted well rather than one generic icon for every widget — `EMPTY_KIND_ICON` maps the renderer's `hbar`/`bar` kind naming onto ChartIcon's picker-style `bar`/`column` naming. Error/unconfigured keep the plain semantic glyph (alert/settings) since those are a system problem, not the widget's shape. |
 | `components/ui/FilterMenu.vue` | Shared two-level filter: OR within a field, AND across fields. |
 | `components/ai/AiAssistant.vue` | The whole AI side panel — composer, thread, creation flows. |
 | `components/ai/AiSummaryCard.vue` | The upfront AI Summary banner + its 3 CTAs. |
@@ -321,3 +324,7 @@ own. All three pickers are the same component (`TimeRangePopover.vue`) reading t
 - **The batch preamble is stripped before items are resolved** — any instruction stated once for
   the whole message ("4 KPIs", "as shortcuts") must be captured from the *original* text, not from
   the split fragments.
+
+## Handoff
+
+Latest session state is in [HANDOFF.md](HANDOFF.md) — read it first.

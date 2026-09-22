@@ -1,60 +1,102 @@
-# Handoff — 2026-08-04 00:54
+# Handoff — 2026-09-22 23:20
 
 ## Read first
-See **CLAUDE.md → "The 12 chart types + Free Text (PMG-ACT-01)"** and the Key-files
-rows for `records.js` / `chartOptions.js` — that's the architecture everything below
-plugs into. Locking rules are still in `data/chartTypes.js`.
+See **CLAUDE.md → Key files** rows for `AddWidgetModal.vue` and `WidgetCard.vue` —
+both were reworked this session and their table entries now describe the current
+behavior (the old entries were stale).
 
 ## What we worked on this session
-Built **PMG-ACT-01**: eight additional chart types + a Free Text tile family into the
-widget builder (create / edit / clone), each computing from a single deterministic
-48-record dataset. Shipped in 5 verified, separately-published batches.
+Two independent UI changes to the widget-adding flow and the empty-widget state,
+both requested against a screenshot of the "Add new widget" drawer:
 
-## Completed (all live)
-- **Dataset** — `src/data/records.js` REQUEST_RECORDS solved so the engine reproduces
-  **every** worked example in the reference *including resolution averages* (73/73).
-- **Scaffolding** — `chartData(spec)` dispatch in records.js; `chartOptions.js`
-  (`CHART_OPT` + `NEW_KINDS`); `ChartTile` renders new kinds from `chart.spec`;
-  builder chart-type grid + per-kind config sections + `MeasureConditions.vue`;
-  `Icon.vue` glyphs; `AddWidgetModal` gallery cards.
-- **Batch A** Stacked/Grouped · Multi-line. **B** Combo · Histogram · Funnel.
-  **C** Heatmap · Gauge. **D** Pie/Donut split · Free Text. **E** Map Bubble (India).
-- All 12 chart types + Free Text verified in-browser (builder preview AND placed on
-  the board) and pushed. Live at the GitHub Pages URL in CLAUDE.md → Deployment.
+1. **Add-widget drawer**: replaced the checkbox multi-select with a per-row hover
+   "Add" action, and moved the search box from above the tab strip to below it.
+2. **Widget empty state**: made the "no data" state type-aware — it now draws the
+   tile's own chart-shape illustration instead of one generic icon for every widget.
+
+## Completed (all live in the working tree, not yet pushed at time of writing)
+- **`components/dashboard/AddWidgetModal.vue`**
+  - Removed the checkbox / multi-select flow entirely (`selected`, `MAX_SEL`,
+    `isSel`, `toggleSel`, `clearSel`, `addSelected`, and the "N selected" footer are
+    gone).
+  - Each library row now shows hover-only actions — **Add (leftmost, primary-tinted)
+    · Duplicate · Edit · Delete** — via a new `quickAdd(l)` function. Add places the
+    tile at the **end** of the dashboard and **keeps the drawer open** (per the
+    user's explicit choice) so several widgets can be added in a row; the row then
+    swaps to a static green "already added" checkmark (`.la-added`) instead of a
+    click target.
+  - Search box moved from **above** the tab strip to **below** it, and only renders
+    on the three reuse tabs (Predefined / Created by me / Shared with me) — Create
+    Widget has nothing to search. Its scope changed too: it now filters **only the
+    active tab** (same scope as the type pills / module dropdown beside it), per
+    the user's explicit choice, rather than the old cross-tab/cross-module search
+    that grouped results by module with a source-tab tag.
+  - Removed the now-dead grouped-search machinery (`searchGroups`, `searchCount`,
+    `sections`, `TAB_OF_PROV`) and the CSS that went with the checkbox/selection
+    state (`.lcb`, `.lrow.sel`, `.lrow.pick`, `.lsec*`, `.row-tag.src`, the
+    multi-select footer transition).
+  - `.lt-acts` gutter widened from 3 buttons (96px) to 4 (130px) to fit Add.
+- **`components/dashboard/WidgetCard.vue`**
+  - Imported `ChartIcon` (the same illustrated artwork the Add-widget picker uses).
+  - New `emptyIconName` computed + `EMPTY_KIND_ICON` map (`{hbar:'bar', bar:
+    'column'}`) — translates a tile's renderer-style `chart.kind` into ChartIcon's
+    picker-style naming (see the naming note already in `data/chartTypes.js`).
+  - The `nodata` empty state now renders `<ChartIcon :name="emptyIconName" />` in a
+    60px soft rounded well (`--picker-tile-fill` / `--picker-ico` tokens, new
+    `.ws-ico-shape` class) instead of the old flat grey box with a generic
+    `chart-bar` icon. `error` / `unconfigured` states were left on their plain
+    semantic glyph (alert / settings) since those are a system problem, not the
+    widget's shape.
+  - Verified live for a horizontal-bar chart tile and a KPI tile (temporarily
+    emptied their mock data, screenshotted, then reverted — `mock.js` has no net
+    changes).
 
 ## In progress
-Nothing mid-flight — PMG-ACT-01 is complete and published (last commit `92e7b68`).
+Nothing mid-flight. Both changes are complete and were verified in the browser via
+Playwright MCP (drawer flow: opened, switched tabs, clicked Add, confirmed the tile
+landed at the end of the board and the row turned into a checkmark; empty state:
+confirmed the Bar icon renders correctly for an `hbar` tile and the KPI icon for an
+empty KPI).
 
 ## Next steps
-- Optional: add the 12 new types to the improvement-tracker docs in `../docs/`
-  (parent workspace — **not** this repo; keep planning docs out of the public repo).
-- Optional polish: seed one or two of the new kinds onto a demo board so they show
-  by default; give the AI summary bespoke phrasing for gauge/heatmap/map.
-- If the India map ever needs to be lighter, dissolve districts → states (needs a
-  geometry-union step; currently 651 district features simplified to ~175KB).
+- Push these two files live (`git add` + commit + `npm run build` implicitly via
+  the GitHub Actions pipeline) — this was requested and is the next action.
+- Flagged but not fixed: on the narrowest KPI tiles (`w: 2`, ~140px), the nodata
+  title "No data in this range" can wrap to several lines. Pre-existing text-sizing
+  constraint, not introduced by this session — worth a look if it comes up again.
+- Optional: confirm the pie/donut nodata icon mapping visually too (only `hbar`→bar
+  and the KPI icon were screenshotted this session; pie/donut/line pass through
+  their kind unchanged, which should be correct by the same logic, but wasn't
+  independently eyeballed).
 
 ## Decisions made
-- **Spec-driven kinds**: a new-kind tile stores `chart.spec`, and `ChartTile`
-  recomputes display data via `chartData(spec)` so preview and placed tile always
-  agree. Chosen over baking labels/series onto the tile.
-- **Native legends** for the multi-series new kinds (they carry their own legend in
-  the option); they sit out ChartTile's custom legend/rank machinery. Funnel/heatmap/
-  gauge/map self-label or need no legend, so `sideLegend` also excludes new kinds.
-- **Reused `kind:'funnel'`** for the engine-driven funnel — the legacy funnel path was
-  unreachable in the prototype, so no collision. New kinds are `isFrozen` (no switch).
-- **India map is code-split + lazy-registered** (35KB gzip chunk), not in the main
-  bundle. Simplified from a 4MB GeoJSON.
-- **Averages caveat**: the reconstructed dataset had to match the PDF's exact averages
-  (per the teammate), not just the counts — solved with an annealing search.
+- **Add stays open after adding** (not close-on-add) — explicit user choice, so
+  several widgets can be added back-to-back without reopening the drawer.
+- **Search is scoped to the active tab**, not global across all three reuse tabs —
+  explicit user choice, matching the screenshot layout (search sits with the other
+  per-tab filters, not above the tab switcher).
+- **Only `nodata` gets the type-aware chart icon**; `error`/`unconfigured` keep the
+  generic alert/settings glyph, because those describe a system problem rather than
+  "this chart has no data to draw" — the tile's shape isn't the relevant fact there.
+- Verified the empty-state redesign by **temporarily** editing `mock.js` (nulling
+  one KPI's value, emptying one chart's series), screenshotting, then reverting —
+  chosen over leaving a widget permanently broken on the "Helpdesk Overview" board,
+  which is the board shown to management.
 
 ## Gotchas & notes
-- **`WidgetCard.tileState` must treat `chart.spec` as `'ok'`** — otherwise every
-  placed new-kind tile falsely renders the "no data" empty state (this bit us; fixed).
-- **Percentages/denominators**: funnel labels are "% of first stage" (not slice-of-
-  total); histogram % uses the full pre-truncation total. Keep these.
-- **Never `resize()` an ECharts instance on mount** (existing gotcha) — it snaps the
-  entrance animation to its end state.
-- Dev-server HMR can corrupt after long sessions; restart `npm run dev` (or use
-  `npm run preview` on the built bundle) to isolate real bugs from HMR.
-- chrome-devtools-mcp browser occasionally wedges ("browser is already running") —
-  kill the `*chrome-devtools-mcp*` chrome processes via PowerShell, then reconnect.
+- **Icon-name mismatch between the renderer and the picker is real and easy to
+  trip on.** `tile.chart.kind` uses the renderer's naming (`hbar` = horizontal,
+  `bar` = vertical/Column), but `ChartIcon`'s `name` prop uses the picker's naming
+  (`bar` = horizontal, `column` = vertical) — see the note already in
+  `data/chartTypes.js` around `PICKER_GROUPS`. Passing a raw `chart.kind` straight
+  into `ChartIcon` without the `EMPTY_KIND_ICON` swap silently renders a blank icon
+  for `hbar` and the wrong (horizontal) icon for `bar`/Column. `AddWidgetModal`'s
+  own `libIcon()` doesn't need this swap because library items store `kind` as the
+  **picker id** already (`WidgetBuilderModal` emits `kind: curType.value.id` when
+  saving to the library) — only live dashboard tiles use the renderer kind.
+- **`ChartIcon.vue` has no fallback branch** — an unmapped `name` renders an empty
+  `<g>` (no visible icon, no error). If a new chart kind is ever added, its
+  `ChartIcon` name must be added there or nodata tiles of that kind will go blank.
+- Dev server on this machine defaults to port 5180 (`http://localhost:5180/ServiceOps_Dashboard_v2/`)
+  and falls back to 5181/5182 if occupied — check the actual `npm run dev` output
+  rather than assuming 5180 when driving it with Playwright.
