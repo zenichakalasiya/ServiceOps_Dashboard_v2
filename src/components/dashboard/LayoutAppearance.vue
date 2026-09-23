@@ -92,7 +92,7 @@ const SLIDERS = [
  * catches even in a preview. */
 const PREVIEW_TILES = [
   { title: 'Open Requests', kind: 'line' },
-  { title: 'By Priority', kind: 'pie' },
+  { title: 'By Priority', kind: 'donut' },
   { title: 'By Status', kind: 'bar' },
   { title: 'My Tasks', kind: 'funnel' },
 ]
@@ -333,7 +333,10 @@ function cancel() {
 
 /* ── the preview ──────────────────────────────────────────────────────────────── */
 .la-pv-cap { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 8px; }
-.la-pv-frame { background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-lg); }
+/* WHITE, not the board's grey ground. The preview is a figure on the panel, not a
+   miniature of the canvas, and a grey frame put a third surface behind cards that are
+   already sitting on one. */
+.la-pv-frame { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); }
 .la-pv-grid { display: grid; grid-template-columns: 1fr 1fr; }
 .la-pv-tile { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); display: flex; flex-direction: column; overflow: hidden; }
 /* The header BAND — tinted and ruled off, exactly as a real tile's header is. It is the

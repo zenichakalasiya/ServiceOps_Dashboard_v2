@@ -1,103 +1,185 @@
 <script setup>
 /**
- * ChartSkeleton — wireframe chart shapes for the layout preview.
+ * ChartSkeleton — wireframe charts for the layout preview.
  *
  * NOT ChartIcon. That one is a 64x64 identifying glyph on a fixed artboard, drawn to be
- * recognised in a picker; this one is a shape that has to FILL a preview card and keep
- * filling it as the Row-height slider moves. A square icon centred in a wide, short card
- * would sit as a small island in the middle and show nothing about the layout.
+ * recognised in a picker. This one is a small PORTRAIT of the real chart: the same
+ * anatomy ECharts renders for us — value axis, gridlines, category labels, series
+ * markers, legend — drawn in grey. Bare shapes were the first attempt and they read as
+ * decoration; what makes a skeleton look like a chart is the chrome around the data, not
+ * the data.
  *
- * So these are built from CSS box/gradient/clip-path rather than a fixed viewBox — each
- * one stretches on both axes on its own terms (the pie stays circular off its height, the
- * bars and funnel divide the width, the line stretches and keeps its stroke weight). Only
- * the line needs SVG, and it takes `preserveAspectRatio="none"` plus a non-scaling stroke
- * so the distortion lands on the path and not on its thickness.
+ * Each kind mirrors what the board actually draws:
+ *   line    → gridded plot, ringed point markers, legend       (ChartTile's line)
+ *   bar     → gridded plot, one series, no rounded caps        (ChartTile's column)
+ *   donut   → ring with the centre total, as every pie tile on the board renders
+ *   funnel  → full-width tapering bands with knocked-out labels
+ * Donut and funnel carry no axes or legend, because neither of those charts has any.
  *
- * The ramp is ChartIcon's idiom: steps of `currentColor`, so the call site's `color` sets
- * the whole drawing and both themes work from one declaration.
+ * ── Two mechanics worth knowing ─────────────────────────────────────────────────
+ * 1. The plot SVGs take `preserveAspectRatio="none"` so they stretch to any card shape.
+ *    That would stretch the strokes with them, so every stroke sets `vector-effect:
+ *    non-scaling-stroke` and stays the width written here.
+ * 2. A round MARKER cannot be a <circle> for the same reason — it would render as an
+ *    ellipse. Each one is a zero-length path with a round cap, which the renderer draws
+ *    as a disc in screen units and the distortion cannot touch.
+ *
+ * The ramp is ChartIcon's idiom: steps of `currentColor`, so the call site's `color`
+ * drives the whole drawing and both themes work from one declaration.
  */
 defineProps({
-  // pie | bar | line | funnel
+  // line | bar | donut | funnel
   kind: { type: String, required: true },
 })
 
-/* Percentages of the plot height, not values — a skeleton has no data. The tallest is
-   inked a step darker, the way ChartIcon's histogram inks its modal bin: it gives the
-   row a focal point so six identical grey stubs read as a chart. */
-const BARS = [46, 72, 34, 88, 58, 76]
-const TALLEST = BARS.indexOf(Math.max(...BARS))
+/* Y-axis tick labels. The last is stubbier on purpose — it is the zero, and a real axis
+   ends on a one-character label. Small truths like that are most of why a skeleton reads
+   as a chart rather than as grey boxes. */
+const Y_TICKS = [16, 16, 16, 16, 9]
+const X_TICKS_LINE = [22, 22, 22, 22, 22, 22]
+const X_TICKS_BAR = [30, 30, 30, 30]
+
+/* One series, four categories, as the reference draws it — and all four the SAME tone.
+   Inking the tallest was tried; a single-series chart colours every bar alike, and the
+   odd one out read as a selection. */
+/* Centred in four equal slots (12.5 / 37.5 / 62.5 / 87.5), at a bar width near a third
+   of the slot — the proportion the real chart draws. Wider bars read as a stacked block
+   rather than a series. */
+const BARS = [
+  { x: 8, y: 10, h: 50 },
+  { x: 33, y: 35, h: 25 },
+  { x: 58, y: 24, h: 36 },
+  { x: 83, y: 47, h: 13 },
+]
+const LINE_PTS = [[6, 38], [23.6, 26], [41.2, 30], [58.8, 16], [76.4, 20], [94, 12]]
+const LINE_D = LINE_PTS.map((p, i) => `${i ? 'L' : 'M'}${p[0]},${p[1]}`).join(' ')
+const GRID_Y = [2, 16.5, 31, 45.5, 60]
 </script>
 
 <template>
   <div class="cs" aria-hidden="true">
-    <!-- PIE — a conic gradient on a circle sized off its own height, so it stays round
-         at every row height instead of squashing into an ellipse. -->
-    <div v-if="kind === 'pie'" class="cs-pie" />
+    <!-- ── LINE and BAR: the same gridded frame, a different series ── -->
+    <template v-if="kind === 'line' || kind === 'bar'">
+      <div class="cs-plot">
+        <div class="cs-yax">
+          <span v-for="(w, i) in Y_TICKS" :key="i" class="cs-stub" :style="{ width: w + 'px' }" />
+        </div>
+        <svg class="cs-canvas" viewBox="0 0 100 60" preserveAspectRatio="none">
+          <!-- gridlines first, so the series sits over them -->
+          <path
+            v-for="(y, i) in GRID_Y" :key="'g' + i" class="cs-grid"
+            :d="`M0,${y} H100`" vector-effect="non-scaling-stroke"
+          />
+          <template v-if="kind === 'bar'">
+            <rect v-for="(b, i) in BARS" :key="'b' + i" class="cs-col" :x="b.x" :y="b.y" width="9" :height="b.h" />
+          </template>
+          <template v-else>
+            <path class="cs-series" :d="LINE_D" vector-effect="non-scaling-stroke" />
+            <!-- ringed markers: a disc in the series tone, then a smaller one in the
+                 card colour punched out of it -->
+            <path
+              v-for="(p, i) in LINE_PTS" :key="'m' + i" class="cs-mark"
+              :d="`M${p[0]},${p[1]} l0.01,0`" vector-effect="non-scaling-stroke"
+            />
+            <path
+              v-for="(p, i) in LINE_PTS" :key="'mi' + i" class="cs-mark-in"
+              :d="`M${p[0]},${p[1]} l0.01,0`" vector-effect="non-scaling-stroke"
+            />
+          </template>
+        </svg>
+      </div>
+      <!-- A CATEGORY axis centres each label in its slot, under the bar it names; a value
+           axis runs its first and last labels to the ends of the plot, under the first
+           and last point. Same row, two different alignments, and using one for both
+           puts every bar label off its bar. -->
+      <div class="cs-xax" :class="kind === 'bar' ? 'cat' : 'val'">
+        <span
+          v-for="(w, i) in (kind === 'bar' ? X_TICKS_BAR : X_TICKS_LINE)" :key="i"
+          class="cs-slot"
+        ><i class="cs-stub" :style="{ width: w + 'px' }" /></span>
+      </div>
+      <div class="cs-leg"><span class="cs-dot" /><span class="cs-stub" style="width: 30px" /></div>
+    </template>
 
-    <!-- BAR — the columns divide the width, so they widen with the card rather than
-         leaving it half empty. -->
-    <div v-else-if="kind === 'bar'" class="cs-bars">
-      <span
-        v-for="(h, i) in BARS" :key="i"
-        class="cs-bar" :class="{ ink: i === TALLEST }" :style="{ height: h + '%' }"
-      />
+    <!-- ── DONUT: a ring with the centre total, the way every pie tile renders ── -->
+    <div v-else-if="kind === 'donut'" class="cs-donut-wrap">
+      <div class="cs-donut">
+        <div class="cs-hole">
+          <span class="cs-stub cs-total" />
+          <span class="cs-stub cs-total-lbl" />
+        </div>
+      </div>
     </div>
 
-    <!-- LINE — stretched on both axes (`preserveAspectRatio="none"`). The stroke would
-         stretch with it, so it is pinned with `vector-effect` and stays 2px however
-         short the card gets. -->
-    <svg v-else-if="kind === 'line'" class="cs-line" viewBox="0 0 100 40" preserveAspectRatio="none">
-      <path class="cs-area" d="M2,29 L21,18 L40,24 L59,9 L78,15 L98,5 L98,40 L2,40 Z" />
-      <path
-        class="cs-stroke" d="M2,29 L21,18 L40,24 L59,9 L78,15 L98,5"
-        vector-effect="non-scaling-stroke"
-      />
-    </svg>
-
-    <!-- FUNNEL — three bands, each clipped to a trapezoid whose top edge is the band
-         above's bottom edge, so the taper is continuous rather than three loose bars. -->
+    <!-- ── FUNNEL: full-width bands, each clipped so the taper is continuous ── -->
     <div v-else-if="kind === 'funnel'" class="cs-funnel">
-      <span class="cs-fb b1" />
-      <span class="cs-fb b2" />
-      <span class="cs-fb b3" />
+      <span v-for="i in 4" :key="i" class="cs-fb" :class="'b' + i"><i class="cs-fb-lbl" /></span>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* One ramp, all four shapes, driven by the caller's `color` — see the header note. */
 /* The CALLER gives this box its height, and every shape fills it. That is not a detail:
    an SVG with a viewBox and no definite height claims its own aspect ratio as intrinsic
-   height (a 100x40 viewBox at 238px wide asked for 95px), so the line tile grew to 146px
-   while the bar and funnel tiles sat at 75px — one row of the preview twice the other.
-   Sizing from outside is what keeps the four tiles identical. */
+   height, which once made the line tile twice the height of the bar tile beside it. */
 .cs {
-  --sk-1: color-mix(in srgb, currentColor 62%, transparent);
-  --sk-2: color-mix(in srgb, currentColor 42%, transparent);
-  --sk-3: color-mix(in srgb, currentColor 24%, transparent);
-  --sk-rule: color-mix(in srgb, currentColor 28%, transparent);
-  min-width: 0;
-  display: flex;
+  --sk-1: color-mix(in srgb, currentColor 58%, transparent);
+  --sk-2: color-mix(in srgb, currentColor 40%, transparent);
+  --sk-3: color-mix(in srgb, currentColor 26%, transparent);
+  --sk-grid: color-mix(in srgb, currentColor 16%, transparent);
+  min-width: 0; display: flex; flex-direction: column; gap: 7px;
 }
-.cs-pie {
-  height: 100%; aspect-ratio: 1; margin: 0 auto; border-radius: 50%;
-  background: conic-gradient(var(--sk-1) 0 150deg, var(--sk-2) 150deg 270deg, var(--sk-3) 270deg 360deg);
+/* A placeholder for a label. One class, every axis and the legend. */
+.cs-stub { height: 5px; border-radius: 2px; background: var(--sk-3); flex: none; }
+
+/* ── gridded plot ── */
+.cs-plot { flex: 1; min-height: 0; display: flex; gap: 6px; }
+/* space-between puts a tick against each gridline, which is what ties the two together */
+.cs-yax { width: 16px; flex: none; display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; }
+.cs-canvas { flex: 1; min-width: 0; height: 100%; display: block; overflow: visible; }
+.cs-grid { stroke: var(--sk-grid); stroke-width: 1; fill: none; }
+.cs-col { fill: var(--sk-2); }
+.cs-series { fill: none; stroke: var(--sk-1); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.cs-mark { stroke: var(--sk-1); stroke-width: 7; stroke-linecap: round; }
+/* the knockout, so a marker reads as a ring — the card colour, not white, or it breaks
+   the moment the theme flips */
+.cs-mark-in { stroke: var(--surface); stroke-width: 3.5; stroke-linecap: round; }
+/* indented by the y-axis and its gap, so the labels line up under the plot instead of
+   under the axis */
+.cs-xax { flex: none; display: flex; padding-left: 22px; }
+.cs-xax .cs-slot { display: flex; }
+/* category: one equal slot per bar, label centred in it */
+.cs-xax.cat .cs-slot { flex: 1; justify-content: center; }
+/* value: the ends run to the edges of the plot, as a time axis does */
+.cs-xax.val { justify-content: space-between; }
+.cs-leg { flex: none; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.cs-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--sk-2); flex: none; }
+
+/* ── donut ── */
+.cs-donut-wrap { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+/* sized off its own height so it stays round at every row height rather than becoming
+   an ellipse in a wide card */
+.cs-donut {
+  height: 100%; aspect-ratio: 1; border-radius: 50%; position: relative;
+  background: conic-gradient(var(--sk-1) 0 142deg, var(--sk-2) 142deg 250deg, var(--sk-3) 250deg 318deg, var(--sk-2) 318deg 360deg);
 }
-/* The baseline is what stops the columns reading as loose blocks — the same reason
-   ChartIcon draws an axis under every cartesian kind. */
-.cs-bars { flex: 1; display: flex; align-items: flex-end; gap: 7%; border-bottom: 1px solid var(--sk-rule); }
-.cs-bar { flex: 1; min-height: 2px; border-radius: 2px 2px 0 0; background: var(--sk-2); }
-.cs-bar.ink { background: var(--sk-1); }
-.cs-line { flex: 1; width: 100%; height: 100%; display: block; }
-.cs-area { fill: var(--sk-3); }
-.cs-stroke { fill: none; stroke: var(--sk-1); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
-/* Light at the mouth, dark at the spout — the ramp ChartIcon's funnel runs.
-   It is CENTRED and capped, not stretched across the card like the bars and the line: a
-   full-width taper over a short card flattens into a chevron, and the thing that makes a
-   funnel legible is the angle of its sides. */
-.cs-funnel { flex: 1; max-width: 58%; margin: 0 auto; display: flex; flex-direction: column; gap: 3px; }
-.cs-fb { flex: 1; min-height: 3px; }
-.cs-fb.b1 { background: var(--sk-3); clip-path: polygon(0 0, 100% 0, 86% 100%, 14% 100%); }
-.cs-fb.b2 { background: var(--sk-2); clip-path: polygon(14% 0, 86% 0, 72% 100%, 28% 100%); }
-.cs-fb.b3 { background: var(--sk-1); clip-path: polygon(28% 0, 72% 0, 58% 100%, 42% 100%); }
+/* the hole takes the CARD's colour, which is what makes this a ring and not a pie */
+.cs-hole {
+  position: absolute; inset: 27%; border-radius: 50%; background: var(--surface);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+}
+.cs-total { width: 54%; height: 8px; background: var(--sk-2); }
+.cs-total-lbl { width: 34%; height: 4px; }
+
+/* ── funnel ── */
+/* Full width, as the reference draws it. Each band's top edge is the previous band's
+   bottom edge, so the taper is continuous rather than four loose bars. */
+.cs-funnel { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 2px; }
+.cs-fb { flex: 1; min-height: 4px; display: grid; place-items: center; }
+.cs-fb.b1 { background: var(--sk-3); clip-path: polygon(0 0, 100% 0, 93.1% 100%, 6.9% 100%); }
+.cs-fb.b2 { background: var(--sk-2); clip-path: polygon(6.9% 0, 93.1% 0, 86.2% 100%, 13.8% 100%); }
+.cs-fb.b3 { background: var(--sk-2); clip-path: polygon(13.8% 0, 86.2% 0, 79.4% 100%, 20.6% 100%); }
+.cs-fb.b4 { background: var(--sk-1); clip-path: polygon(20.6% 0, 79.4% 0, 72.5% 100%, 27.5% 100%); }
+/* the value each band would print, knocked out of it in the card colour */
+.cs-fb-lbl { width: 30%; max-width: 46px; height: 5px; border-radius: 2px; background: var(--surface); opacity: .75; }
 </style>
