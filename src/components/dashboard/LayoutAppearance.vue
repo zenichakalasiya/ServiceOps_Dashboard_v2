@@ -23,6 +23,7 @@ import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import Icon from '../ui/Icon.vue'
 import Hint from '../ui/Hint.vue'
+import ChartSkeleton from '../ui/ChartSkeleton.vue'
 import {
   store, byId, toast,
   LAYOUT_FIELD as FIELD, LAYOUT_KEYS as KEYS,
@@ -81,11 +82,34 @@ const SLIDERS = [
   { key: 'rowHeight', label: 'Row height', hint: 'How tall one row of widgets is', min: 110, max: 260, step: 10 },
 ]
 
+/* The preview tiles. Each carries a chart SHAPE rather than the two grey stub lines it
+ * used to: a row-height change is a change to the plot area, and stub lines are the one
+ * thing in a card that does not grow with it — the slider moved and the card looked the
+ * same. Four different shapes also stop the four tiles reading as one repeated unit.
+ *
+ * The pairing is deliberate, not decorative: a split goes on the pie, categories on the
+ * bars, a period on the line. A pie labelled "Open Requests" is a small lie the eye
+ * catches even in a preview. */
+const PREVIEW_TILES = [
+  { title: 'Open Requests', kind: 'line' },
+  { title: 'By Priority', kind: 'pie' },
+  { title: 'By Status', kind: 'bar' },
+  { title: 'My Tasks', kind: 'funnel' },
+]
+
 // how many boards a GLOBAL change actually moves — the ones that haven't overridden
 const inheriting = computed(() =>
   store.dashboards.filter((d) => !d.archived && KEYS.every((k) => d[FIELD[k]] == null)).length)
 
 const titlePx = computed(() => SIZES.find((s) => s.id === val('titleSize'))?.px || 13)
+
+/* Row height drives the PLOT, not the tile's min-height, and the tile follows from it.
+ * The old min-height was dead weight: the stub lines it was sized around always added up
+ * to more than it, so the tile never actually reached it and the slider moved nothing.
+ * Driving the chart instead means every tile is the same height (title + this + padding)
+ * AND the slider visibly grows the drawing, which is the thing being previewed.
+ * 0.34 keeps all four tiles inside the drawer at the top of the slider's range. */
+const previewChartH = computed(() => Math.round(val('rowHeight') * 0.34))
 // the slider works in stop indexes; the stored value stays 'S' | 'M' | 'L'
 const sizeIdx = computed(() => Math.max(0, SIZES.findIndex((s) => s.id === val('titleSize'))))
 
@@ -188,12 +212,11 @@ function cancel() {
         <div class="la-pv-frame" :style="{ padding: store.layout.boardMargin + 'px' }">
           <div class="la-pv-grid" :style="{ columnGap: val('hGap') + 'px', rowGap: val('vGap') + 'px' }">
             <div
-              v-for="t in ['Open Requests', 'By Priority', 'By Status', 'My Tasks']" :key="t"
-              class="la-pv-tile" :style="{ padding: store.layout.cardPad + 'px', minHeight: Math.round(val('rowHeight') * 0.42) + 'px' }"
+              v-for="t in PREVIEW_TILES" :key="t.title"
+              class="la-pv-tile" :style="{ padding: store.layout.cardPad + 'px' }"
             >
-              <span class="la-pv-title" :style="{ fontSize: titlePx + 'px' }">{{ t }}</span>
-              <span class="la-pv-bar" />
-              <span class="la-pv-bar short" />
+              <span class="la-pv-title" :style="{ fontSize: titlePx + 'px' }">{{ t.title }}</span>
+              <ChartSkeleton :kind="t.kind" class="la-pv-chart" :style="{ height: previewChartH + 'px' }" />
             </div>
           </div>
         </div>
@@ -307,6 +330,8 @@ function cancel() {
 .la-pv-grid { display: grid; grid-template-columns: 1fr 1fr; }
 .la-pv-tile { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
 .la-pv-title { font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.la-pv-bar { height: 6px; border-radius: var(--r-sm); background: var(--inset); }
-.la-pv-bar.short { width: 60%; }
+/* The skeleton's whole ramp resolves from this one colour — see ChartSkeleton.vue.
+   --muted-2 keeps it a wireframe: present enough to read as a chart, quiet enough that
+   the preview is still about spacing rather than about the drawings in it. */
+.la-pv-chart { color: var(--muted-2); }
 </style>
