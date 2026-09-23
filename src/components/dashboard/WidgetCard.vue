@@ -951,11 +951,16 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
    square read as a second, smaller card inside the card. */
 .ws-ico { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); margin-bottom: 3px; }
 .wstate.err .ws-ico { background: var(--red-soft); color: var(--red); }
-/* The no-data well: bigger, round, and on the PRIMARY tint rather than the near-white
-   --picker-tile-fill it started on — at #f6f9fc against a white card the disc was barely
-   a disc. Blue is the module's one accent, and the artwork's own ink (--picker-ico) is a
-   blue-grey, so the tint is the colour the glyph already belongs to. */
-.ws-ico-shape { width: 60px; height: 60px; border-radius: 50%; background: var(--primary-soft); color: var(--picker-ico); margin-bottom: 5px; }
+/* The no-data well: bigger, round, and a NEUTRAL grey. It went through the near-white
+   --picker-tile-fill (#f6f9fc — barely a disc against a white card) and then the primary
+   tint (a blue disc, which read as a state worth acting on rather than a quiet absence).
+   --icon-hover is the one neutral that steps far enough off the card in BOTH themes:
+   #f3f4f6 on white, and #2a2a35 on the dark card. Named for icon-button hover, but it is
+   literally "the grey that sits behind an icon", which is what this is.
+   Do NOT swap it for --inset or --surface-2 without checking dark: --inset is 4 units off
+   the dark card (#212129 vs #1d1d27) and the disc disappears there while looking correct
+   in light, which is exactly how this rule got it wrong once already. */
+.ws-ico-shape { width: 60px; height: 60px; border-radius: 50%; background: var(--icon-hover); color: var(--picker-ico); margin-bottom: 5px; }
 .wstate .btn { margin-top: 9px; }
 /* full-area hover: the whole numeric region (below the title) fills on hover,
    with generous padding so the highlight surrounds the number on every side */
