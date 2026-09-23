@@ -6,10 +6,13 @@ import DateRangePicker from '../ui/DateRangePicker.vue'
 import ChartTile from './ChartTile.vue'
 import MeasureConditions from './MeasureConditions.vue'
 import FreeTextTile from './FreeTextTile.vue'
-import NoteEditor from './NoteEditor.vue'
+import FormattingHelp from './FormattingHelp.vue'
 import Hint from '../ui/Hint.vue'
-import { noteTitle, noteIsEmpty } from '../../data/freeText.js'
-import { store } from '../../store/index.js'
+import {
+  noteTitle, noteIsEmpty, ftPresetOf,
+  FT_SIZES, FT_COLORS, FT_BGS, FT_ALIGNS, FT_VALIGNS, FT_PRESETS, FT_DEFAULTS,
+} from '../../data/freeText.js'
+import { store, toast } from '../../store/index.js'
 import { chart as mkChart, kpi as mkKpi, shortcut as mkShortcut, text as mkText, ACCESS } from '../../data/mock.js'
 import { CONDITION_FIELD_LABELS, NUMERIC_FIELD_LABELS, AGG_FNS, MAP_FNS } from '../../data/records.js'
 import { NEW_KINDS } from '../../data/chartOptions.js'
@@ -133,6 +136,26 @@ const isKpi = computed(() => curType.value.type === 'kpi')
 const isShortcut = computed(() => curType.value.type === 'shortcut')
 const isText = computed(() => curType.value.type === 'text')
 const ctaLabel = computed(() => (isChart.value ? 'Widget' : curType.value.label))
+
+/* ── Free Text presentation ───────────────────────────────────────────────────────
+ * The option lists come from data/freeText.js — the same module the tile renders
+ * through — so the builder cannot offer a size, colour or background the renderer does
+ * not understand. Only the label/swatch shaping for our Dropdown happens here. */
+const FT_SIZE_OPTS = FT_SIZES.map((s) => ({ value: s.id, label: s.id }))
+const FT_COLOR_OPTS = FT_COLORS.map((c) => ({ value: c.id, label: c.id, swatch: c.css }))
+const FT_BG_OPTS = FT_BGS.map((b) => ({ value: b.id, label: b.id, swatch: b.css }))
+// Tabler-style glyphs; the horizontal trio is our own align set
+const VALIGN_ICON = { top: 'align-top', middle: 'align-middle', bottom: 'align-bottom' }
+
+const helpOpen = ref(false)
+const activePreset = computed(() => ftPresetOf(cfg.ft))
+/* A preset writes the fields and nothing else — `span` is the tile's width, which is why
+ * it is applied at save time rather than here (see the `w` it sets in `build`). */
+function applyPreset(p) {
+  Object.assign(cfg.ft, p.cfg)
+  cfg.ftSpan = p.span
+  toast(`Preset “${p.label}” applied — every option is still editable`)
+}
 function switchType(t) {
   if (typeBlock(t)) return
   // a note is filed under its own first line, so it never carries a placeholder name —
@@ -256,6 +279,13 @@ function initCfg() {
     gaugeBadAt: ex?.chart?.spec?.badAt ?? 90,
     // Free Text (§4) — the tile's markdown-lite content
     content: ex?.content || '',
+    /* A Free Text widget's own presentation. Spread over the defaults rather than read
+       straight off the tile: a note saved before these options existed carries none of
+       them, and a half-filled config would render with `undefined` where a size or an
+       alignment should be. */
+    ft: { ...FT_DEFAULTS, ...(ex?.ft || {}) },
+    // the width a preset asks for; only applied when one is actually picked
+    ftSpan: ex?.w || null,
   }
 }
 const isPie = computed(() => curType.value.kind === 'pie' || curType.value.kind === 'donut')
@@ -353,7 +383,13 @@ const ctaHint = computed(() =>
 
 const previewTile = computed(() => {
   const title = effectiveName.value || `New ${curType.value.label}`
-  if (isText.value) return mkText(title, cfg.content, cfg.description)
+  if (isText.value) {
+    const t = mkText(title, cfg.content, cfg.description)
+    t.ft = { ...cfg.ft }
+    // a Header preset is a BANNER, so it also claims the row — see FT_PRESETS.span
+    if (cfg.ftSpan) t.w = cfg.ftSpan
+    return t
+  }
   if (isKpi.value) {
     return ex
       ? mkKpi(title, ex.value, ex.unit, ex.delta, ex.status, cfg.description)
@@ -451,7 +487,12 @@ function save(place) {
     }
     else if (isShortcut.value) { t.columns = pv.columns; t.rows = pv.rows; t.sql = cfg.sqlQuery; t.chart = undefined }
     else if (isKpi.value) { t.value = pv.value; t.unit = pv.unit; t.chart = undefined; t.columns = undefined; t.rows = undefined }
-    else if (isText.value) { t.content = cfg.content; t.chart = undefined; t.columns = undefined; t.rows = undefined; t.value = undefined }
+    else if (isText.value) {
+      t.content = cfg.content
+      t.ft = { ...cfg.ft }
+      if (cfg.ftSpan) t.w = cfg.ftSpan
+      t.chart = undefined; t.columns = undefined; t.rows = undefined; t.value = undefined
+    }
     if (!isShortcut.value && !isText.value) t.sql = cfg.mode === 'query' ? cfg.sqlQuery : undefined
     applyAccess(t)
     applySticky(t)
@@ -519,7 +560,7 @@ function save(place) {
                      preview that shows one would be previewing something else -->
                 <div v-if="isKpi" class="pv-kpi">{{ previewTile.value }}<span v-if="previewTile.unit" class="u">{{ previewTile.unit }}</span></div>
                 <ChartTile v-else-if="isChart" :chart="previewTile.chart" :legend="cfg.legend" :data-labels="cfg.dataLabels" :height="320" />
-                <div v-else-if="isText" class="pv-text"><FreeTextTile :content="cfg.content" /></div>
+                <div v-else-if="isText" class="pv-text"><FreeTextTile :content="cfg.content" :ft="cfg.ft" /></div>
                 <table v-else class="pv-tbl"><thead><tr><th v-for="c in previewTile.columns" :key="c">{{ c }}</th></tr></thead><tbody><tr v-for="(r,i) in previewTile.rows" :key="i"><td v-for="(c,j) in r" :key="j">{{ c }}</td></tr></tbody></table>
               </div>
             </div>
@@ -793,12 +834,74 @@ function save(place) {
                 </div>
               </template>
 
-              <!-- Note — Free Text only (§4). A full editor rather than a textarea: this
-                   family exists so somebody can leave a written note on the board, and a
-                   note that cannot hold a bold word or a list is a note nobody writes in. -->
+              <!-- Free Text. The content is markdown and the rest is how it is PRESENTED —
+                   the one widget family that carries its own look, so the controls below
+                   are the whole configuration. Every one of them is a standard control
+                   from this builder's own vocabulary: pill rows, our Dropdown, our field
+                   labels — nothing bespoke, so a Free Text widget is configured the same
+                   way as everything else on this screen. -->
               <div v-if="isText" class="sec">
-                <div class="sec-h">Free Text</div>
-                <NoteEditor v-model="cfg.content" :min-height="230" placeholder="Write a note for whoever opens this dashboard…" />
+                <div class="q-head">
+                  <div class="sec-h" style="margin:0">Text to display <i class="req">*</i></div>
+                  <button class="btn btn-sm" @click="helpOpen = true"><Icon name="info" :size="14" /> Formatting help</button>
+                </div>
+                <textarea
+                  v-model="cfg.content" class="ft-ta" maxlength="600" rows="5"
+                  placeholder="Enter the text — markdown is supported"
+                />
+                <p class="hint ft-count">{{ (cfg.content || '').length }} / 600</p>
+
+                <!-- Two starting points, not two modes: a preset writes the same fields
+                     the controls below write, so everything stays editable after. -->
+                <div class="fld">
+                  <label>Preset</label>
+                  <div class="seg">
+                    <button
+                      v-for="p in FT_PRESETS" :key="p.id" class="seg-b"
+                      :class="{ on: activePreset === p.id }" @click="applyPreset(p)"
+                    >{{ p.label }}</button>
+                  </div>
+                </div>
+
+                <div class="ft-grid">
+                  <div class="fld">
+                    <label>Font size</label>
+                    <Dropdown v-model="cfg.ft.size" :options="FT_SIZE_OPTS" />
+                  </div>
+                  <div class="fld">
+                    <label>Alignment</label>
+                    <div class="seg">
+                      <button
+                        v-for="a in FT_ALIGNS" :key="a" class="seg-b ft-ic"
+                        :class="{ on: cfg.ft.align === a }" :title="'Align ' + a" @click="cfg.ft.align = a"
+                      ><Icon :name="'align-' + a" :size="15" /></button>
+                    </div>
+                  </div>
+                  <div class="fld">
+                    <label>Vertical alignment</label>
+                    <div class="seg">
+                      <button
+                        v-for="v in FT_VALIGNS" :key="v" class="seg-b ft-ic"
+                        :class="{ on: cfg.ft.valign === v }" :title="'Align ' + v" @click="cfg.ft.valign = v"
+                      ><Icon :name="VALIGN_ICON[v]" :size="15" /></button>
+                    </div>
+                  </div>
+                  <div class="fld">
+                    <label>Padding</label>
+                    <div class="seg">
+                      <button class="seg-b" :class="{ on: cfg.ft.pad !== false }" @click="cfg.ft.pad = true">On</button>
+                      <button class="seg-b" :class="{ on: cfg.ft.pad === false }" @click="cfg.ft.pad = false">None</button>
+                    </div>
+                  </div>
+                  <div class="fld">
+                    <label>Font colour</label>
+                    <Dropdown v-model="cfg.ft.color" :options="FT_COLOR_OPTS" />
+                  </div>
+                  <div class="fld">
+                    <label>Background</label>
+                    <Dropdown v-model="cfg.ft.bg" :options="FT_BG_OPTS" />
+                  </div>
+                </div>
               </div>
 
               <!-- Data Configuration -->
@@ -936,6 +1039,10 @@ function save(place) {
       </div>
     </div>
   </teleport>
+
+  <!-- What the Free Text field accepts. Generated from the same list the renderer
+       implements, so it cannot document a mark that does nothing. -->
+  <FormattingHelp v-if="helpOpen" @close="helpOpen = false" />
 </template>
 
 <style scoped>
@@ -1090,6 +1197,22 @@ function save(place) {
 .sec-h { font-weight: 600; font-size: 15px; color: var(--ink); margin-bottom: 12px; }
 /* heading and its action on one line, the action right-aligned */
 .q-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 5px; }
+/* ── Free Text ── */
+.ft-ta {
+  width: 100%; min-height: 104px; resize: vertical; padding: 10px 12px;
+  border: 1px solid var(--border-strong); border-radius: var(--r); background: var(--surface);
+  color: var(--ink); font-size: 13px; line-height: 1.55; outline: none;
+}
+.ft-ta:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+/* right-aligned, so the count sits under the field's own right edge rather than reading
+   as a caption for the label on the left */
+.ft-count { text-align: right; margin-top: 5px; }
+/* Two columns: these are six SHORT controls, and one per row turned the panel into a
+   column of near-empty strips you had to scroll past. */
+.ft-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; margin-top: 4px; }
+.ft-grid .fld { margin-bottom: 0; }
+/* an icon segment is square-ish, so the trio fills the field rather than hugging the left */
+.seg-b.ft-ic { flex: 1; display: grid; place-items: center; padding: 0; }
 /* a heading that OWNS the line under it sits tight to it — 12px of air between a title
    and its own description reads as two separate things */
 .sec-h:has(+ .hint) { margin-bottom: 5px; }

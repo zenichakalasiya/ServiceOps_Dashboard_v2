@@ -193,7 +193,8 @@ positioned in viewport coordinates — follow that pattern for any new floating 
 | `data/aiEngine.js` | **Deterministic, no-LLM** engine: facts, anomalies, explanations, briefings. |
 | `data/aiAssistant.js` | Intent routing, tile/fact resolution, and `resolveWidget` (description → configured widget). |
 | `data/freeText.js` | Note content: allowlist sanitiser, markdown-lite upgrade, derived title. |
-| `components/dashboard/NoteEditor.vue` | The note rich-text editor — contenteditable + execCommand, no dependency. |
+| `components/dashboard/FormattingHelp.vue` | What the Free Text field accepts, generated from `FT_SYNTAX` and rendered through the real `toNoteHtml()`. |
+| `components/dashboard/NoteEditor.vue` | The old note rich-text editor (contenteditable + execCommand). **Currently unreferenced** — the Free Text builder moved to a markdown field; kept pending a decision on whether WYSIWYG editing comes back. |
 | `components/dashboard/TimeRangePopover.vue` | The two-pane date picker for **per-widget and per-group** overrides. NOT the topbar — `TimeFilter.vue` has its own copy of the markup and does not import this. Change one and check the other. |
 | `components/dashboard/ExportDialog.vue` | Board Export — Image / PDF / Email as PDF. |
 | `components/ui/Hint.vue` | Info icon beside a field label, carrying what was once a one-liner. |
@@ -274,11 +275,28 @@ beside the board title opens a read-only **"Shared with"** list. **Export** — 
 header and in every widget's ⋯ — offers exactly **Image · PDF · Email as PDF**.
 
 **Free Text is a NOTE, not a widget.** No header band, no title, no data, no time range,
-no AI summary; a warm paper surface (`--note-*`) with the ⋯ floating on hover. Content is
-rich HTML from `NoteEditor.vue`, rendered through `toNoteHtml()` in `data/freeText.js`,
-which **allowlist-sanitises** it (it goes out via `v-html`) and upgrades older
-markdown-lite content in place — one render path, no migration. Notes are not named: the
-title is derived from the first line.
+no AI summary; the ⋯ floats on hover. Notes are not named — the title is derived from the
+first line.
+
+Content is **markdown**, written in a plain "Text to display" field (600 chars) with a
+**Formatting help** modal beside it. The grammar is `#` / `##`, `**bold**`, `*italic*`,
+`` `code` ``, `-` and `1.` lists, `[label](url)`, a bare URL, and `![alt](url)` — and the
+help modal is GENERATED from `FT_SYNTAX`, rendered through the same `toNoteHtml()` the
+tile uses, so it cannot document a mark the renderer does not support. Older notes are
+rich HTML; `toNoteHtml()` takes either and **allowlist-sanitises** the result (it goes out
+via `v-html`) — one render path, no migration.
+
+It is also the one family that carries **its own presentation**: font size (Auto → 88px),
+horizontal and vertical alignment, padding on/off, font colour and background, plus two
+presets (**Default** a left-aligned note, **Header** a centred full-width banner — a preset
+sets the tile's `span` too). All of it lives on `tile.ft` and resolves through `ftStyle()`
+in `data/freeText.js`, which the builder's live preview and the placed tile both read, so
+a setting cannot mean two things. Because the background is now a per-widget choice, the
+CARD is neutral and `FreeTextTile` paints the colour across the whole body — `.tile.note`
+no longer hardcodes the paper it used to always wear.
+
+⚠️ `.note-body` headings size in **`em`, not px**: the widget sets its own base font size,
+and pinned pixel headings rendered a `##` heading *smaller* than 16px body text.
 
 **Dates resolve widget → group → dashboard**, most specific wins. A group header carries
 its own date filter and every widget in it inherits that range unless the widget set its

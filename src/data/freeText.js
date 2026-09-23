@@ -60,6 +60,11 @@ const ALLOWED = new Set([
   'UL', 'OL', 'LI',
   'H3', 'H4', 'BLOCKQUOTE',
   'A',
+  /* IMG is allowed because `![alt](url)` is part of the grammar the Formatting-help
+     modal documents. It is the one tag here that makes the browser FETCH something, so
+     its src runs through the same scheme test as a link's href — an `<img>` cannot run
+     script, but it can point at anything, and a note is shared content. */
+  'IMG',
 ])
 // tags that mean the same as an allowed one — normalised rather than dropped, because
 // execCommand and pasted markup both produce these
@@ -107,7 +112,17 @@ function clean(node) {
      * after stripped every valid link of its href, so `<a href="https://…">` came out
      * as bare text. */
     const href = el.tagName === 'A' ? (el.getAttribute('href') || '').trim() : ''
+    const src = el.tagName === 'IMG' ? (el.getAttribute('src') || '').trim() : ''
+    const alt = el.tagName === 'IMG' ? (el.getAttribute('alt') || '') : ''
     for (const attr of [...el.attributes]) el.removeAttribute(attr.name)
+    if (el.tagName === 'IMG') {
+      // an image we won't load is nothing at all — it has no text to keep
+      if (!SAFE_URL.test(src)) { el.remove(); continue }
+      el.setAttribute('src', src)
+      el.setAttribute('alt', alt)
+      el.setAttribute('loading', 'lazy')
+      continue
+    }
     if (el.tagName === 'A') {
       if (SAFE_URL.test(href)) {
         el.setAttribute('href', href)
@@ -162,26 +177,84 @@ export function sanitizeNote(html) {
 const HTML_RE = /<(p|div|span|ul|ol|li|h[1-6]|blockquote|b|strong|i|em|u|s|strike|del|mark|code|pre|a|br|hr|font|center|table|thead|tbody|tr|td|th|section|article|header|footer|figure|img)\b[^>]*>/i
 export const isNoteHtml = (s) => HTML_RE.test(s || '')
 
-/** Markdown-lite (or plain prose) → the same HTML a note is written in. */
+/* ── the markdown a Free Text widget is written in ─────────────────────────────────
+ * The grammar is exactly what the Formatting-help modal documents, and that is not a
+ * coincidence: the help is generated from FT_SYNTAX below, so a mark this renderer
+ * gains or loses cannot quietly disagree with the list that teaches it.
+ *
+ * Output still goes through `sanitizeNote` — this function builds a string, and a string
+ * built from user text is exactly the thing that must not be trusted on the way out. */
+
+/** Inline marks, applied to ONE line. */
+function inlineMd(raw) {
+  let s = escapeHtml(raw)
+
+  /* Code spans are lifted out FIRST and put back LAST. Whatever is inside one is meant
+     to be read literally — `**not bold**` inside backticks is the example that breaks if
+     the marks are applied in place. \u0000 is the placeholder because it cannot survive
+     escapeHtml and so cannot be typed into a note to forge one. */
+  const code = []
+  s = s.replace(/`([^`]+)`/g, (_, t) => `\u0000${code.push(t) - 1}\u0000`)
+
+  // image BEFORE link: the two syntaxes differ only by the leading '!', so a link rule
+  // run first would match the `[alt](url)` inside an image and leave a stray '!'
+  s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (m, alt, url) =>
+    SAFE_URL.test(url) ? `<img src="${url}" alt="${alt}">` : m)
+  s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, label, url) =>
+    SAFE_URL.test(url) ? `<a href="${url}" target="_blank" rel="noopener noreferrer">${label}</a>` : label)
+
+  /* A bare URL becomes a link too. The leading `(^|[\s(])` is what keeps it from eating
+     the URLs in the href/src just written above: those are preceded by a quote, which is
+     not whitespace, so an already-linked URL cannot be linked twice. */
+  s = s.replace(/(^|[\s(])(https?:\/\/[^\s<>()]+)/g,
+    (_, pre, url) => `${pre}<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`)
+
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')          // bold before italic: ** is two *
+  s = s.replace(/(^|[^*])\*([^*]+)\*/g, '$1<i>$2</i>')
+  return s.replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${escapeHtml(code[+i])}</code>`)
+}
+
+/** Markdown (or plain prose) → the HTML a note renders. */
 function mdToHtml(md) {
   const out = []
-  let inList = false
-  const inline = (segs) => segs.map((s) =>
-    s.href && SAFE_URL.test(s.href)
-      ? `<a href="${escapeHtml(s.href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(s.text)}</a>`
-      : escapeHtml(s.text)).join('')
-  for (const b of parseFreeText(md)) {
-    if (b.type === 'li') {
-      if (!inList) { out.push('<ul>'); inList = true }
-      out.push(`<li>${inline(b.segments)}</li>`)
-      continue
-    }
-    if (inList) { out.push('</ul>'); inList = false }
-    out.push(b.type === 'h' ? `<h3>${inline(b.segments)}</h3>` : `<p>${inline(b.segments)}</p>`)
+  let list = null   // 'ul' | 'ol' | null
+  const closeList = () => { if (list) { out.push(`</${list}>`); list = null } }
+  const openList = (t) => { if (list !== t) { closeList(); out.push(`<${t}>`); list = t } }
+
+  for (const rawLine of String(md).split('\n')) {
+    const line = rawLine.replace(/\s+$/, '')
+    if (!line.trim()) { closeList(); continue }
+
+    const bullet = line.match(/^\s*[-*]\s+(.*)$/)
+    if (bullet) { openList('ul'); out.push(`<li>${inlineMd(bullet[1])}</li>`); continue }
+
+    const numbered = line.match(/^\s*\d+[.)]\s+(.*)$/)
+    if (numbered) { openList('ol'); out.push(`<li>${inlineMd(numbered[1])}</li>`); continue }
+
+    closeList()
+    const h = line.match(/^(#{1,2})\s+(.*)$/)
+    // '#' is the bigger heading and '##' the smaller, which maps onto the two heading
+    // levels the note allowlist carries — a note has no business holding an h1.
+    if (h) { out.push(h[1].length === 1 ? `<h3>${inlineMd(h[2])}</h3>` : `<h4>${inlineMd(h[2])}</h4>`); continue }
+    out.push(`<p>${inlineMd(line)}</p>`)
   }
-  if (inList) out.push('</ul>')
+  closeList()
   return out.join('')
 }
+
+/* What the Formatting-help modal lists, and the only place that list exists. */
+export const FT_SYNTAX = [
+  { md: '# sample text', note: 'a heading' },
+  { md: '## sample text', note: 'a smaller heading' },
+  { md: '**sample text**', note: 'bold' },
+  { md: '*sample text*', note: 'italic' },
+  { md: '`sample text`', note: 'inline code' },
+  { md: '- apple\n- pear\n- mango', note: 'a bulleted list' },
+  { md: '1. apple\n2. pear\n3. mango', note: 'a numbered list' },
+  { md: '[a link](https://example.com)', note: 'a link' },
+  { md: 'https://example.com', note: 'a bare URL becomes a link too' },
+  { md: '![alt text](https://example.com/logo.png)', note: 'an image' },
+]
 
 /** The one entry point a renderer needs: any stored content → safe note HTML. */
 export function toNoteHtml(content) {
@@ -220,4 +293,104 @@ export function noteTitle(content, fallback = 'Note') {
   const first = (noteText(content).split('\n')[0] || '').replace(/[.,;:]+$/, '').trim()
   if (!first) return fallback
   return first.length > 48 ? first.slice(0, 47).trimEnd() + '…' : first
+}
+
+/* ── presentation ──────────────────────────────────────────────────────────────────
+ * A Free Text widget carries its own look, which no other tile does. Everything below
+ * is that model: the option lists the builder offers, the defaults a new one starts on,
+ * and the one function that turns a saved config into styles the tile can wear.
+ *
+ * Colours are named, not hex. A note saying "Red" keeps meaning red when the theme
+ * flips; a note saying "#dc2626" becomes unreadable on the dark card. `Custom` is the
+ * escape hatch and is the only value stored as a literal — see `ftValue`.
+ */
+
+/** Font size. `Auto` means "inherit the note's own type scale", which is why it is 0. */
+export const FT_SIZES = [
+  { id: 'Auto', px: 0 },
+  { id: '16px', px: 16 },
+  { id: '24px', px: 24 },
+  { id: '36px', px: 36 },
+  { id: '56px', px: 56 },
+  { id: '72px', px: 72 },
+  { id: '88px', px: 88 },
+]
+
+export const FT_COLORS = [
+  { id: 'Default', css: 'var(--ink)' },
+  { id: 'Gray', css: 'var(--muted)' },
+  { id: 'Green', css: 'var(--green)' },
+  { id: 'Blue', css: 'var(--primary)' },
+  { id: 'Yellow', css: 'var(--amber)' },
+  { id: 'Orange', css: 'var(--orange)' },
+  { id: 'Red', css: 'var(--red)' },
+]
+
+/* Each background is a WASH of its colour over the card, not the colour itself: a note
+   is something you read, and solid green behind body text is not readable in either
+   theme. `Default` is the warm paper this tile has always worn. */
+export const FT_BGS = [
+  { id: 'Default', css: 'var(--note-bg)' },
+  { id: 'Transparent', css: 'transparent' },
+  { id: 'Gray', css: 'var(--surface-2)' },
+  { id: 'Green', css: 'color-mix(in srgb, var(--green) 14%, var(--surface))' },
+  { id: 'Blue', css: 'color-mix(in srgb, var(--primary) 14%, var(--surface))' },
+  { id: 'Yellow', css: 'color-mix(in srgb, var(--amber) 16%, var(--surface))' },
+  { id: 'Orange', css: 'color-mix(in srgb, var(--orange) 14%, var(--surface))' },
+  { id: 'Red', css: 'color-mix(in srgb, var(--red) 12%, var(--surface))' },
+]
+
+export const FT_ALIGNS = ['left', 'center', 'right']
+export const FT_VALIGNS = ['top', 'middle', 'bottom']
+
+/** What a brand-new Free Text widget starts as — the `Default` preset, spelled out. */
+export const FT_DEFAULTS = {
+  size: '16px', align: 'left', valign: 'top', color: 'Default', bg: 'Default', pad: true,
+}
+
+/* Two starting points, not two modes: a preset writes the same fields the controls
+   write, so every option stays editable afterwards. `span` is part of the preset because
+   a Header is a BANNER — a centred title in a 4-column tile is not the same object. */
+export const FT_PRESETS = [
+  { id: 'Default', label: 'Default', cfg: { size: '16px', align: 'left', valign: 'top', bg: 'Default', pad: true }, span: 4 },
+  { id: 'Header', label: 'Header', cfg: { size: 'Auto', align: 'center', valign: 'middle', bg: 'Transparent', pad: true }, span: 12 },
+]
+
+const isHex = (v) => /^#[0-9a-f]{3,8}$/i.test(String(v || ''))
+/** A named option resolves through its list; anything else is a Custom literal. */
+function ftValue(list, key, fallback) {
+  if (isHex(key)) return key
+  const hit = list.find((x) => x.id === key)
+  return hit ? hit.css : fallback
+}
+
+/**
+ * A stored config → the styles the placed tile wears.
+ *
+ * Returns two objects because they sit on two elements: the BOX owns the alignment, the
+ * background and the padding; the TEXT owns the size and the colour. Putting the colour
+ * on the box would leak it into the tile's own chrome, and putting the alignment on the
+ * text would stop `align-items` from working at all.
+ */
+export function ftStyle(ft = {}) {
+  const size = FT_SIZES.find((s) => s.id === (ft.size || 'Auto'))
+  const px = size ? size.px : 0
+  return {
+    box: {
+      textAlign: ft.align || 'left',
+      alignItems: { top: 'flex-start', middle: 'center', bottom: 'flex-end' }[ft.valign || 'top'] || 'flex-start',
+      background: ftValue(FT_BGS, ft.bg || 'Default', 'var(--note-bg)'),
+      padding: ft.pad === false ? '0' : '10px 14px',
+    },
+    text: {
+      ...(px ? { fontSize: px + 'px', lineHeight: 1.25 } : {}),
+      color: ftValue(FT_COLORS, ft.color || 'Default', 'var(--ink)'),
+    },
+  }
+}
+
+/** Which preset a config currently matches, for the builder's pill row. */
+export function ftPresetOf(ft = {}) {
+  const hit = FT_PRESETS.find((p) => Object.keys(p.cfg).every((k) => ft[k] === p.cfg[k]))
+  return hit ? hit.id : null
 }

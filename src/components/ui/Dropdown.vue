@@ -20,6 +20,12 @@ const selectedLabel = computed(() => {
   const s = norm.value.find((o) => o.value === props.modelValue)
   return s ? s.label : ''
 })
+// only single-select shows a swatch in the button: a multi-select has no one colour
+const selectedSwatch = computed(() => {
+  if (props.multiple) return ''
+  const s = norm.value.find((o) => o.value === props.modelValue)
+  return s && s.swatch ? s.swatch : ''
+})
 function isOn(o) { return props.multiple ? arr.value.includes(o.value) : o.value === props.modelValue }
 function pick(o) {
   if (props.multiple) {
@@ -31,6 +37,10 @@ function pick(o) {
 <template>
   <div class="dd" :class="[{ open }, 'dd-' + size]">
     <button type="button" class="dd-btn" :disabled="disabled" @click.stop="disabled || (open = !open)">
+      <!-- An option may carry a `swatch` (any CSS colour). It shows beside the label in
+           the button and in every row, which is what lets one dropdown serve a colour
+           field without a second component existing to do the same job. -->
+      <span v-if="selectedSwatch" class="dd-sw" :style="{ background: selectedSwatch }" />
       <span class="dd-val" :class="{ ph: !selectedLabel }">{{ selectedLabel || placeholder }}</span>
       <Icon name="chevron-down" :size="16" class="dd-chev" />
     </button>
@@ -38,6 +48,7 @@ function pick(o) {
     <transition name="dd-pop">
       <div v-if="open" class="dd-menu">
         <button v-for="o in norm" :key="o.value" type="button" class="dd-opt" :class="{ on: isOn(o) }" @click="pick(o)">
+          <span v-if="o.swatch" class="dd-sw" :style="{ background: o.swatch }" />
           <span class="ellip">{{ o.label }}</span>
           <Icon v-if="isOn(o)" name="check" :size="15" class="dd-ck" />
         </button>
@@ -58,6 +69,9 @@ function pick(o) {
 .dd-btn:hover { border-color: #c7cad9; }
 .dd.open .dd-btn { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
 .dd-val { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The colour chip. It carries its own hairline because the two quietest options —
+   Transparent and a white Default — have nothing to show against the field otherwise. */
+.dd-sw { width: 13px; height: 13px; flex: none; border-radius: 3px; border: 1px solid var(--border-strong); }
 .dd-val.ph { color: var(--muted-2); }
 .dd-chev { color: var(--muted); transition: transform .15s; flex: none; }
 .dd.open .dd-chev { transform: rotate(180deg); }
@@ -65,6 +79,9 @@ function pick(o) {
 .dd-menu { position: absolute; z-index: 70; top: calc(100% + 5px); left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-pop); padding: 5px; max-height: 240px; overflow: auto; }
 .dd-opt { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 8px 10px; border: none; background: transparent; border-radius: 4px; font-size: 13px; color: var(--ink-2); text-align: left; }
 .dd-opt:hover { background: var(--surface-2); }
+/* the row is space-between, so the label has to claim the middle or a swatch and its
+   text drift apart to opposite ends */
+.dd-opt > .ellip { flex: 1; min-width: 0; }
 .dd-opt.on { color: var(--primary-700); font-weight: 500; }
 .dd-ck { color: var(--primary); flex: none; }
 .dd-none { padding: 10px; text-align: center; color: var(--muted-2); font-size: 13px; }

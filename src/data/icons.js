@@ -30,6 +30,7 @@ import {
   PenLine, Palette, Square, Circle, MoveUpRight, Eraser, Mail, MousePointer2, ChartArea,
   Donut, Filter, Triangle, ChartBarBig, ChartBarStacked, ChartNoAxesColumn, ChartSpline, ChartNoAxesCombined,
   ChartColumnBig, Grid3x3, Gauge, AlignLeft, Map, ArrowRight, MessageSquare,
+  AlignCenter, AlignRight, AlignStartHorizontal, AlignCenterHorizontal, AlignEndHorizontal,
   ChartNoAxesColumnIncreasing, Zap, Send, Paperclip, Brain, Flag, Telescope, Crosshair,
   MonitorSmartphone, Shield, Boxes, PanelLeftOpen, PanelLeftClose, Bold, Italic, Underline,
   Strikethrough, Highlighter, Heading, Quote, Code, ListOrdered, IndentIncrease,
@@ -93,6 +94,11 @@ export const ICON_MAP = {
   'chart-multiline': ChartSpline,
   'chart-combo': ChartNoAxesCombined, 'chart-hist': ChartColumnBig, 'chart-heatmap': Grid3x3,
   'chart-gauge': Gauge, 'chart-text': AlignLeft, 'chart-map': Map,
+  /* Text alignment, for the Free Text widget's own controls. The horizontal trio is the
+     text-align set; the vertical one is the BOX set (…Horizontal names an axis the items
+     are laid along, so "start horizontal" is items stacked to the top). */
+  'align-left': AlignLeft, 'align-center': AlignCenter, 'align-right': AlignRight,
+  'align-top': AlignStartHorizontal, 'align-middle': AlignCenterHorizontal, 'align-bottom': AlignEndHorizontal,
   'open-in': ArrowRight, chat: MessageSquare, 'auto-graph': ChartNoAxesColumnIncreasing,
   bolt: Zap, send: Send, attach: Paperclip, brain: Brain, flag: Flag, research: Telescope,
   target: Crosshair, insights: ChartNoAxesCombined,
@@ -122,7 +128,7 @@ export const ICON_GROUPS = {
   "AI": ['sparkles', 'brain', 'bolt', 'research', 'target', 'chat'],
   "Files & content": ['folder', 'folder-open', 'file-text', 'image', 'note', 'clipboard', 'package', 'mail', 'inbox'],
   "People & access": ['user', 'users', 'user-check', 'team', 'globe', 'home', 'default-home', 'predefined-monitor'],
-  "Text editor": ['bold', 'italic', 'underline', 'strikethrough', 'highlight', 'title', 'quote', 'code', 'list-bullet', 'list-number', 'indent', 'outdent', 'clear-format', 'palette'],
+  "Text editor": ['bold', 'italic', 'underline', 'strikethrough', 'highlight', 'title', 'quote', 'code', 'list-bullet', 'list-number', 'indent', 'outdent', 'clear-format', 'palette', 'align-left', 'align-center', 'align-right', 'align-top', 'align-middle', 'align-bottom'],
   "Shapes & markup": ['shape-rect', 'shape-ellipse', 'shape-arrow'],
   "Modules": ['assets', 'patch', 'packages'],
   "Settings & display": ['settings', 'appearance', 'moon', 'sun', 'keyboard', 'calendar', 'calendar2', 'bulb'],

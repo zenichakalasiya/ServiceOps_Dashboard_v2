@@ -634,7 +634,7 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
       </template>
 
       <template v-else-if="tile.type === 'text'">
-        <FreeTextTile :content="tile.content" />
+        <FreeTextTile :content="tile.content" :ft="tile.ft" />
       </template>
 
       <template v-else>
@@ -704,7 +704,7 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
           <div class="pbody" :class="{ tbl: tile.type === 'shortcut' }">
             <ChartTile v-if="tile.type === 'chart'" :chart="tile.chart" :legend="showLegend" :data-labels="tile.dataLabels === true" :height="620" />
             <div v-else-if="tile.type === 'kpi'" class="kpi big"><div class="kpinum">{{ tile.value }}<span class="unit">{{ tile.unit }}</span></div></div>
-            <FreeTextTile v-else-if="tile.type === 'text'" :content="tile.content" />
+            <FreeTextTile v-else-if="tile.type === 'text'" :content="tile.content" :ft="tile.ft" />
             <div v-else class="stbl big">
               <!-- full screen: the same bar, always there, and the whole record set scrolls
                    in the dialog -->
@@ -748,8 +748,11 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
    The actions do not disappear, they just stop occupying a permanent band: the header
    is overlaid on the note's top-right and fades in on hover, the way it works in every
    notes app. */
-/* the overlaid header is absolute, so the card has to be its containing block */
-.tile.note { position: relative; background: var(--note-bg); border-color: var(--note-line); }
+/* the overlaid header is absolute, so the card has to be its containing block.
+   The CARD is neutral now and FreeTextTile paints the note's own background across the
+   whole body — the colour is a per-widget setting, so the card can no longer hardcode
+   the paper it used to always wear. */
+.tile.note { position: relative; background: var(--surface); border-color: var(--note-line); }
 .tile.note .thead {
   position: absolute; top: 0; right: 0; left: auto; width: auto; height: auto; z-index: 3;
   background: transparent; padding: 6px 6px 0 0;
@@ -771,7 +774,9 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
    own, not the white every other tile's header sits on */
 .tile.note .mwrap .ti, .tile.note .draghandle { width: 24px; height: 24px; display: grid; place-items: center; background: var(--note-bg); border: 1px solid var(--note-line); border-radius: var(--r); }
 .tile.note .mwrap .ti:hover, .tile.note .draghandle:hover { background: var(--surface-2); }
-.tile.note .tbody { padding: 12px; }
+/* No inset: the note's background is a setting, so it has to reach the card's edges.
+   Its own padding is the widget's `pad` option, applied inside FreeTextTile. */
+.tile.note .tbody { padding: 0; }
 /* the title + action row sits in its own slight-neutral band, with room to breathe */
 /* --bg (#F6F9FC) at 37px tall — shorter than the old 46px, and lighter than the solid
    --surface-2 band that competed with the chart under it. */
