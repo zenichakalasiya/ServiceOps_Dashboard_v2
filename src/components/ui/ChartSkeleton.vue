@@ -128,6 +128,12 @@ const GRID_Y = [2, 16.5, 31, 45.5, 60]
   --sk-3: color-mix(in srgb, currentColor 26%, transparent);
   --sk-grid: color-mix(in srgb, currentColor 16%, transparent);
   min-width: 0; display: flex; flex-direction: column; gap: 7px;
+  /* An inset of the drawing's own, inside the card's padding. A chart that runs to the
+     edge of its card reads as CROPPED rather than placed — the donut in particular grew
+     to the full height of the body and pressed on both rules. Because box-sizing is
+     border-box everywhere, this shrinks the drawing and leaves the card exactly where
+     the Row-height slider put it. */
+  padding: 10px 12px;
 }
 /* A placeholder for a label. One class, every axis and the legend. */
 .cs-stub { height: 5px; border-radius: 2px; background: var(--sk-3); flex: none; }
@@ -159,8 +165,12 @@ const GRID_Y = [2, 16.5, 31, 45.5, 60]
 .cs-donut-wrap { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
 /* sized off its own height so it stays round at every row height rather than becoming
    an ellipse in a wide card */
+/* 84%, not the full height. The line and bar spend part of their box on an axis and a
+   legend, so their plot never touches the card; the donut and funnel have no chrome to
+   share with and would grow until they pressed on both rules. Holding them back is what
+   makes the four tiles read as one set. */
 .cs-donut {
-  height: 100%; aspect-ratio: 1; border-radius: 50%; position: relative;
+  height: 84%; aspect-ratio: 1; border-radius: 50%; position: relative;
   background: conic-gradient(var(--sk-1) 0 142deg, var(--sk-2) 142deg 250deg, var(--sk-3) 250deg 318deg, var(--sk-2) 318deg 360deg);
 }
 /* the hole takes the CARD's colour, which is what makes this a ring and not a pie */
@@ -174,7 +184,12 @@ const GRID_Y = [2, 16.5, 31, 45.5, 60]
 /* ── funnel ── */
 /* Full width, as the reference draws it. Each band's top edge is the previous band's
    bottom edge, so the taper is continuous rather than four loose bars. */
-.cs-funnel { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 2px; }
+/* Held back from the card's edges for the same reason as the donut — and centred, so
+   the taper stays symmetrical about the middle of the tile. */
+.cs-funnel {
+  flex: 1; min-height: 0; width: 86%; margin: 0 auto; padding: 5px 0;
+  display: flex; flex-direction: column; gap: 2px;
+}
 .cs-fb { flex: 1; min-height: 4px; display: grid; place-items: center; }
 .cs-fb.b1 { background: var(--sk-3); clip-path: polygon(0 0, 100% 0, 93.1% 100%, 6.9% 100%); }
 .cs-fb.b2 { background: var(--sk-2); clip-path: polygon(6.9% 0, 93.1% 0, 86.2% 100%, 13.8% 100%); }
