@@ -106,10 +106,15 @@ const titlePx = computed(() => SIZES.find((s) => s.id === val('titleSize'))?.px 
 /* Row height drives the PLOT, not the tile's min-height, and the tile follows from it.
  * The old min-height was dead weight: the stub lines it was sized around always added up
  * to more than it, so the tile never actually reached it and the slider moved nothing.
- * Driving the chart instead means every tile is the same height (title + this + padding)
+ * Driving the chart instead means every tile is the same height (header + padding + this)
  * AND the slider visibly grows the drawing, which is the thing being previewed.
- * 0.34 keeps all four tiles inside the drawer at the top of the slider's range. */
-const previewChartH = computed(() => Math.round(val('rowHeight') * 0.34))
+ *
+ * The factor sets the card's SHAPE. At 1.2 a default board (rowHeight 140) makes a tile
+ * about as tall as it is wide, which is what the reference asks for — a letterbox strip
+ * leaves a pie the size of its own height and wastes the width on nothing. Dragging the
+ * slider to the top makes the tiles taller than wide, which is correct: that is what a
+ * 260px row does to a real board. */
+const previewChartH = computed(() => Math.round(val('rowHeight') * 1.2))
 // the slider works in stop indexes; the stored value stays 'S' | 'M' | 'L'
 const sizeIdx = computed(() => Math.max(0, SIZES.findIndex((s) => s.id === val('titleSize'))))
 
@@ -211,12 +216,14 @@ function cancel() {
              override them -->
         <div class="la-pv-frame" :style="{ padding: store.layout.boardMargin + 'px' }">
           <div class="la-pv-grid" :style="{ columnGap: val('hGap') + 'px', rowGap: val('vGap') + 'px' }">
-            <div
-              v-for="t in PREVIEW_TILES" :key="t.title"
-              class="la-pv-tile" :style="{ padding: store.layout.cardPad + 'px' }"
-            >
-              <span class="la-pv-title" :style="{ fontSize: titlePx + 'px' }">{{ t.title }}</span>
-              <ChartSkeleton :kind="t.kind" class="la-pv-chart" :style="{ height: previewChartH + 'px' }" />
+            <!-- Header band, then body — the two parts a real widget card has. The title
+                 used to float at the top of one undivided box, which is the one thing
+                 that stopped the preview reading as a widget at all. -->
+            <div v-for="t in PREVIEW_TILES" :key="t.title" class="la-pv-tile">
+              <div class="la-pv-head" :style="{ fontSize: titlePx + 'px' }">{{ t.title }}</div>
+              <div class="la-pv-body" :style="{ padding: store.layout.cardPad + 'px' }">
+                <ChartSkeleton :kind="t.kind" class="la-pv-chart" :style="{ height: previewChartH + 'px' }" />
+              </div>
             </div>
           </div>
         </div>
@@ -328,10 +335,24 @@ function cancel() {
 .la-pv-cap { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 8px; }
 .la-pv-frame { background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-lg); }
 .la-pv-grid { display: grid; grid-template-columns: 1fr 1fr; }
-.la-pv-tile { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
-.la-pv-title { font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.la-pv-tile { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); display: flex; flex-direction: column; overflow: hidden; }
+/* The header BAND — tinted and ruled off, exactly as a real tile's header is. It is the
+   Widget-title-size slider's only target, so it carries the bound font size. */
+.la-pv-head {
+  padding: 8px 12px; background: var(--bg); border-bottom: 1px solid var(--border);
+  font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* Widget padding applies to the BODY, not the whole card — a header band has its own
+   inset, and letting cardPad push the band around would move the title away from a rule
+   that stays put. */
+.la-pv-body { flex: 1; display: flex; min-height: 0; }
 /* The skeleton's whole ramp resolves from this one colour — see ChartSkeleton.vue.
    --muted-2 keeps it a wireframe: present enough to read as a chart, quiet enough that
-   the preview is still about spacing rather than about the drawings in it. */
-.la-pv-chart { color: var(--muted-2); }
+   the preview is still about spacing rather than about the drawings in it.
+
+   `flex: 1` is load-bearing, not tidiness: the body is a ROW flex container, so without
+   it the skeleton takes content width — and the bar and funnel, which have no intrinsic
+   width, collapse to nothing while the line and pie (an SVG and an aspect-ratio box)
+   survive on theirs. Two of the four silently disappear. */
+.la-pv-chart { color: var(--muted-2); flex: 1; min-width: 0; }
 </style>
