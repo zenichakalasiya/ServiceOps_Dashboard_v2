@@ -350,12 +350,14 @@ function cancel() {
    that stays put. */
 .la-pv-body { flex: 1; display: flex; min-height: 0; }
 /* The skeleton's whole ramp resolves from this one colour — see ChartSkeleton.vue.
-   --muted-2 keeps it a wireframe: present enough to read as a chart, quiet enough that
-   the preview is still about spacing rather than about the drawings in it.
+   --picker-ico is the SAME ink the chart artwork uses everywhere else: the widget
+   picker's type tiles and the disc on an empty widget. A neutral grey (--muted-2) was
+   here first and read as disabled rather than as a drawing; the blue-grey is what the
+   product already means by "a chart, rendered quietly".
 
    `flex: 1` is load-bearing, not tidiness: the body is a ROW flex container, so without
    it the skeleton takes content width — and the bar and funnel, which have no intrinsic
    width, collapse to nothing while the line and pie (an SVG and an aspect-ratio box)
    survive on theirs. Two of the four silently disappear. */
-.la-pv-chart { color: var(--muted-2); flex: 1; min-width: 0; }
+.la-pv-chart { color: var(--picker-ico); flex: 1; min-width: 0; }
 </style>
