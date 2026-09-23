@@ -91,6 +91,16 @@ function pickSub(m, sub) {
       <transition name="fade"><span v-if="!store.ui.railExpanded && hoverKey === 'icons'" class="tt tip">Icon Library</span></transition>
     </button>
 
+    <!-- Empty states — the other reference page, so it sits with the Icon Library rather
+         than among the modules. `inbox` is the product's "nothing here" glyph and is
+         already what an empty listing draws. -->
+    <button class="mod lib" :class="{ active: route.path === '/empty-states' }"
+      @click="router.push('/empty-states')" @mouseenter="hoverKey = 'empty'" @mouseleave="hoverKey = ''">
+      <span class="mod-ic"><Icon name="inbox" :size="19" /></span>
+      <span v-if="store.ui.railExpanded" class="mod-nm">Empty States</span>
+      <transition name="fade"><span v-if="!store.ui.railExpanded && hoverKey === 'empty'" class="tt tip">Empty States</span></transition>
+    </button>
+
     <!-- submodule flyout (Assets / CMDB / Patches / Packages) -->
     <teleport to="body">
       <div v-if="flyout" class="fly" :style="{ top: flyout.top + 'px', left: flyout.left + 'px' }"

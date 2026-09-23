@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import Icon from '../ui/Icon.vue'
-import ChartIcon from '../ui/ChartIcon.vue'
+import WidgetEmpty from './WidgetEmpty.vue'
 import ChartTile from './ChartTile.vue'
 import DataTable from './DataTable.vue'
 import FreeTextTile from './FreeTextTile.vue'
@@ -13,6 +13,7 @@ import TimeRangePopover, { rectOf } from './TimeRangePopover.vue'
 import { typesFor, isFrozen, frozenReason, whyDisabled } from '../../data/chartTypes.js'
 import { conditionFields, matchesConds } from '../../data/filters.js'
 import { windowFor, relativeFor, stampFor } from '../../data/timeRanges.js'
+import { emptyStateFor } from '../../data/emptyStates.js'
 import { widgetBrief } from '../../data/aiEngine.js'
 import { store, toast } from '../../store/index.js'
 // `group` is the group object this tile sits in, or null when it is out on the canvas.
@@ -369,24 +370,9 @@ const tileState = computed(() => {
   }
   return (props.tile.rows || []).length ? 'ok' : 'nodata'
 })
-const WS = {
-  nodata: { icon: 'chart-bar', title: 'No data in this range', sub: 'Try a wider time filter or different conditions.' },
-  error: { icon: 'alert', title: 'Couldn’t load data', sub: 'Something went wrong fetching this tile.' },
-  unconfigured: { icon: 'settings', title: 'Not configured yet', sub: 'Pick a data source to start showing data.' },
-}
-/* ChartIcon's own names are the PICKER's ('bar' = horizontal, 'column' = vertical), but a
- * tile's `chart.kind` is the RENDERER's ('hbar' = horizontal, 'bar' = vertical) — see the
- * naming note in data/chartTypes.js. Only those two need swapping; every other kind
- * (line/pie/donut/stack/…) already spells the same way in both places. */
-const EMPTY_KIND_ICON = { hbar: 'bar', bar: 'column' }
-// The no-data state draws the tile's OWN shape — a ghost of the chart that would be
-// there — rather than one generic icon for every empty widget.
-const emptyIconName = computed(() => {
-  if (props.tile.type === 'kpi') return 'kpi'
-  if (props.tile.type === 'shortcut') return 'shortcut'
-  const k = props.tile.chart?.kind
-  return EMPTY_KIND_ICON[k] || k || 'column'
-})
+/* The wording, the artwork and the per-kind split all live in data/emptyStates.js, so
+ * the tile and the catalogue at /empty-states cannot drift apart. */
+const emptyState = computed(() => emptyStateFor(props.tile, tileState.value))
 function retry() { loading.value = true; setTimeout(() => { props.tile.state = undefined; loading.value = false }, 800) }
 
 function exportAs(f) { menu.value = false; exportOpen.value = false; toast(`Exporting “${props.tile.title}” as ${f.id === 'pdf' ? 'PDF' : 'an image'}`) }
@@ -624,19 +610,14 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
         <div class="skeleton" style="height:14px;width:50%;margin-top:10px" />
       </div>
 
-      <!-- empty-widget states: unconfigured / error / no-data.
-           No-data draws the tile's OWN chart shape — a ghost of what would be there —
-           on the same soft tinted well the Add-widget picker uses; error and
-           unconfigured are about a SYSTEM problem, not this widget's shape, so they
-           keep the plain semantic glyph instead. -->
-      <div v-else-if="tileState !== 'ok'" class="wstate" :class="{ err: tileState === 'error' }">
-        <span v-if="tileState === 'nodata'" class="ws-ico ws-ico-shape"><ChartIcon :name="emptyIconName" :size="34" /></span>
-        <span v-else class="ws-ico"><Icon :name="WS[tileState].icon" :size="22" /></span>
-        <b>{{ WS[tileState].title }}</b>
-        <span class="ws-sub">{{ WS[tileState].sub }}</span>
-        <button v-if="tileState === 'error'" class="btn btn-sm" @click="retry"><Icon name="refresh" :size="14" /> Retry</button>
-        <button v-else-if="tileState === 'unconfigured' && canEdit" class="btn btn-sm btn-primary" @click="emit('edit', tile)"><Icon name="edit" :size="14" /> Configure</button>
-      </div>
+      <!-- empty-widget states: unconfigured / error / no-data. One component, shared with
+           the catalogue at /empty-states; the wording lives in data/emptyStates.js. -->
+      <WidgetEmpty
+        v-else-if="tileState !== 'ok'"
+        :state="emptyState" :kind="tileState"
+        :can-act="tileState === 'error' || canEdit"
+        @act="(a) => (a === 'retry' ? retry() : emit('edit', tile))"
+      />
 
       <template v-else-if="tile.type === 'kpi'">
         <div class="kpi">
@@ -940,28 +921,10 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
    is one preference rather than a number repeated in every tile. */
 .tbody { flex: 1; padding: var(--tile-pad, 12px); display: flex; flex-direction: column; min-height: 0; }
 .loading { flex: 1; display: flex; flex-direction: column; justify-content: center; }
-/* empty-widget states. The tile itself is an ORDINARY card — white body, grey header
-   band, exactly like a tile that has data. Only the well behind the icon is tinted;
-   tinting the body as well was tried and reverted, because at that point the whole
-   board's worth of empty tiles changes colour to say something the icon already says. */
-.wstate { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 6px; color: var(--muted); padding: 14px; }
-.wstate b { color: var(--ink-2); font-size: 13px; font-weight: 600; }
-.ws-sub { font-size: 12px; max-width: 230px; line-height: 1.45; }
-/* Both wells are CIRCLES — a disc reads as a place the icon LIVES, where the old 4px
-   square read as a second, smaller card inside the card. */
-.ws-ico { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); margin-bottom: 3px; }
-.wstate.err .ws-ico { background: var(--red-soft); color: var(--red); }
-/* The no-data well: bigger, round, and a NEUTRAL grey. It went through the near-white
-   --picker-tile-fill (#f6f9fc — barely a disc against a white card) and then the primary
-   tint (a blue disc, which read as a state worth acting on rather than a quiet absence).
-   --icon-hover is the one neutral that steps far enough off the card in BOTH themes:
-   #f3f4f6 on white, and #2a2a35 on the dark card. Named for icon-button hover, but it is
-   literally "the grey that sits behind an icon", which is what this is.
-   Do NOT swap it for --inset or --surface-2 without checking dark: --inset is 4 units off
-   the dark card (#212129 vs #1d1d27) and the disc disappears there while looking correct
-   in light, which is exactly how this rule got it wrong once already. */
-.ws-ico-shape { width: 60px; height: 60px; border-radius: 50%; background: var(--icon-hover); color: var(--picker-ico); margin-bottom: 5px; }
-.wstate .btn { margin-top: 9px; }
+/* The empty-widget states live in WidgetEmpty.vue — the tile itself stays an ORDINARY
+   card (white body, grey header band) whichever state it is in. Tinting the body was
+   tried and reverted: at that point a board's worth of empty tiles all change colour to
+   say something the disc inside them already says. */
 /* full-area hover: the whole numeric region (below the title) fills on hover,
    with generous padding so the highlight surrounds the number on every side */
 /* No hover fill behind the number. Hovering a KPI does nothing — the fill implied a
