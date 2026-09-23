@@ -193,6 +193,7 @@ positioned in viewport coordinates — follow that pattern for any new floating 
 | `data/aiEngine.js` | **Deterministic, no-LLM** engine: facts, anomalies, explanations, briefings. |
 | `data/aiAssistant.js` | Intent routing, tile/fact resolution, and `resolveWidget` (description → configured widget). |
 | `data/freeText.js` | Note content: allowlist sanitiser, markdown-lite upgrade, derived title. |
+| `components/ui/ColorPicker.vue` | Named palette + a custom HSV picker (hue/alpha/hex/RGBA). Teleported to `<body>` and flipped above the field when there is no room below. |
 | `components/dashboard/FormattingHelp.vue` | What the Free Text field accepts, generated from `FT_SYNTAX` and rendered through the real `toNoteHtml()`. |
 | `components/dashboard/NoteEditor.vue` | The old note rich-text editor (contenteditable + execCommand). **Currently unreferenced** — the Free Text builder moved to a markdown field; kept pending a decision on whether WYSIWYG editing comes back. |
 | `components/dashboard/TimeRangePopover.vue` | The two-pane date picker for **per-widget and per-group** overrides. NOT the topbar — `TimeFilter.vue` has its own copy of the markup and does not import this. Change one and check the other. |

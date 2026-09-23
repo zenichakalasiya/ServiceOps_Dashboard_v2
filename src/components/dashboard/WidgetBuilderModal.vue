@@ -2,6 +2,7 @@
 import { reactive, computed, ref } from 'vue'
 import Icon from '../ui/Icon.vue'
 import Dropdown from '../ui/Dropdown.vue'
+import ColorPicker from '../ui/ColorPicker.vue'
 import DateRangePicker from '../ui/DateRangePicker.vue'
 import ChartTile from './ChartTile.vue'
 import MeasureConditions from './MeasureConditions.vue'
@@ -142,8 +143,6 @@ const ctaLabel = computed(() => (isChart.value ? 'Widget' : curType.value.label)
  * through — so the builder cannot offer a size, colour or background the renderer does
  * not understand. Only the label/swatch shaping for our Dropdown happens here. */
 const FT_SIZE_OPTS = FT_SIZES.map((s) => ({ value: s.id, label: s.id }))
-const FT_COLOR_OPTS = FT_COLORS.map((c) => ({ value: c.id, label: c.id, swatch: c.css }))
-const FT_BG_OPTS = FT_BGS.map((b) => ({ value: b.id, label: b.id, swatch: b.css }))
 // Tabler-style glyphs; the horizontal trio is our own align set
 const VALIGN_ICON = { top: 'align-top', middle: 'align-middle', bottom: 'align-bottom' }
 
@@ -895,11 +894,11 @@ function save(place) {
                   </div>
                   <div class="fld">
                     <label>Font colour</label>
-                    <Dropdown v-model="cfg.ft.color" :options="FT_COLOR_OPTS" />
+                    <ColorPicker v-model="cfg.ft.color" :options="FT_COLORS" />
                   </div>
                   <div class="fld">
                     <label>Background</label>
-                    <Dropdown v-model="cfg.ft.bg" :options="FT_BG_OPTS" />
+                    <ColorPicker v-model="cfg.ft.bg" :options="FT_BGS" />
                   </div>
                 </div>
               </div>
@@ -1122,7 +1121,12 @@ function save(place) {
 .pv-text { align-self: stretch; max-height: 100%; overflow: auto; align-self: start; }
 /* the preview has to be the tile, and a note's tile is paper — showing it on the white
    widget surface would preview something the board never renders */
-.pv-card:has(.pv-text) { background: var(--note-bg); border-color: var(--note-line); }
+/* The preview card is NEUTRAL for a note now — the note paints its own background, which
+   is a per-widget setting, so a card that also painted one showed the wrong colour behind
+   every choice except the old paper. Zero padding for the same reason the placed tile has
+   none: the note's inset is its own `pad` option. */
+.pv-card:has(.pv-text) { background: var(--surface); border-color: var(--border); padding: 0; overflow: hidden; }
+.pv-card:has(.pv-text) .pv-text { height: 100%; }
 .pv-kpi { font-size: 72px; font-weight: 700; letter-spacing: -2px; text-align: center; }
 .pv-tbl { width: 100%; border-collapse: collapse; font-size: 13px; align-self: start; }
 .pv-tbl th { text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .4px; padding: 7px 10px; border-bottom: 1px solid var(--border); }
@@ -1207,12 +1211,16 @@ function save(place) {
 /* right-aligned, so the count sits under the field's own right edge rather than reading
    as a caption for the label on the left */
 .ft-count { text-align: right; margin-top: 5px; }
-/* Two columns: these are six SHORT controls, and one per row turned the panel into a
-   column of near-empty strips you had to scroll past. */
-.ft-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; margin-top: 4px; }
+/* ONE control per row, like every other field in this panel. Two columns was tried and
+   it put Font size beside Alignment — two unrelated questions sharing a line, each
+   half-width, and the eye had to scan in two directions to read one section. */
+.ft-grid { display: flex; flex-direction: column; gap: 14px; margin-top: 4px; }
 .ft-grid .fld { margin-bottom: 0; }
-/* an icon segment is square-ish, so the trio fills the field rather than hugging the left */
-.seg-b.ft-ic { flex: 1; display: grid; place-items: center; padding: 0; }
+/* A SQUARE target with the glyph centred in it, sized to the 32px control height the rest
+   of the builder uses — the icons were 15px marks in a stretched strip, which read as
+   cramped next to the 36px fields above them. `flex: none` keeps them square rather than
+   letting the row stretch them into slabs. */
+.seg-b.ft-ic { flex: none; width: 32px; height: 32px; display: grid; place-items: center; padding: 0; }
 /* a heading that OWNS the line under it sits tight to it — 12px of air between a title
    and its own description reads as two separate things */
 .sec-h:has(+ .hint) { margin-bottom: 5px; }

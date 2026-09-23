@@ -330,7 +330,11 @@ export const FT_COLORS = [
    is something you read, and solid green behind body text is not readable in either
    theme. `Default` is the warm paper this tile has always worn. */
 export const FT_BGS = [
-  { id: 'Default', css: 'var(--note-bg)' },
+  /* WHITE, the same surface every other widget sits on — a note is a widget on this
+     board, not a sticky note pinned to it. The warm paper (--note-bg) is still one
+     choice away under 'Paper'. */
+  { id: 'Default', css: 'var(--surface)' },
+  { id: 'Paper', css: 'var(--note-bg)' },
   { id: 'Transparent', css: 'transparent' },
   { id: 'Gray', css: 'var(--surface-2)' },
   { id: 'Green', css: 'color-mix(in srgb, var(--green) 14%, var(--surface))' },
@@ -380,7 +384,13 @@ export function ftStyle(ft = {}) {
       textAlign: ft.align || 'left',
       alignItems: { top: 'flex-start', middle: 'center', bottom: 'flex-end' }[ft.valign || 'top'] || 'flex-start',
       background: ftValue(FT_BGS, ft.bg || 'Default', 'var(--note-bg)'),
-      padding: ft.pad === false ? '0' : '10px 14px',
+      /* 12 on every side, and a LANE at the top. Every other widget body in this product
+         uses one 12px gutter, so a note that insets differently reads as misaligned
+         rather than as styled — but the grip and the ⋯ float over this body rather than
+         sitting in a header band, and at 12px the grip landed on the first line's opening
+         characters exactly while you were hovering to reach it. 32 is that pair's own
+         lane: they never cover writing, and nothing has to move when they appear. */
+      padding: ft.pad === false ? '0' : '32px 12px 12px',
     },
     text: {
       ...(px ? { fontSize: px + 'px', lineHeight: 1.25 } : {}),

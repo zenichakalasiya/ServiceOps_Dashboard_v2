@@ -752,28 +752,32 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
    The CARD is neutral now and FreeTextTile paints the note's own background across the
    whole body — the colour is a per-widget setting, so the card can no longer hardcode
    the paper it used to always wear. */
-.tile.note { position: relative; background: var(--surface); border-color: var(--note-line); }
+.tile.note { position: relative; background: var(--surface); }
+/* The band SPANS the card, so the two controls land where they do on every other widget:
+   the grip at the top-left, the ⋯ at the top-right. It used to be a right-aligned cluster
+   holding both — which kept the left edge clear for writing, but made the note the one
+   tile whose grip you had to hunt for. Consistency wins: the writing starts below the
+   band, not beside it. */
 .tile.note .thead {
-  position: absolute; top: 0; right: 0; left: auto; width: auto; height: auto; z-index: 3;
-  background: transparent; padding: 6px 6px 0 0;
+  position: absolute; top: 0; right: 0; left: 0; width: auto; height: auto; z-index: 3;
+  background: transparent; padding: 6px 8px 0;
   opacity: 0; transition: opacity .15s ease; pointer-events: none;
 }
 .tile.note:hover .thead, .tile.note.acting .thead { opacity: 1; }
 .tile.note .thead .ractions, .tile.note .thead .draghandle { pointer-events: auto; }
 /* no title, no info, no provenance: a note is read, not identified */
 .tile.note .title, .tile.note .info { display: none; }
-/* BOTH controls sit top-right, together. The grip used to live top-left, which is
-   exactly where the first line of writing starts — so either it covered the first
-   character or the body had to reserve 30px of blank paper above the text to get out of
-   its way. Moving it beside the ⋯ frees the whole left edge, so the note can have the
-   same 12px margin on every side and the writing starts where the card does. */
 .tile.note .left { position: static; }
 .tile.note .draghandle { position: static; transform: none; opacity: 1; }
-.tile.note .thead { gap: 4px; }
-/* the controls float over the paper, so they need a surface behind them — the note's
-   own, not the white every other tile's header sits on */
-.tile.note .mwrap .ti, .tile.note .draghandle { width: 24px; height: 24px; display: grid; place-items: center; background: var(--note-bg); border: 1px solid var(--note-line); border-radius: var(--r); }
-.tile.note .mwrap .ti:hover, .tile.note .draghandle:hover { background: var(--surface-2); }
+/* Both controls float OVER the note's own background, which is a per-widget colour now —
+   so each needs a surface of its own to stay legible on a red wash as well as on white.
+   An outlined chip on `--surface` is what the rest of the app puts an icon on. */
+.tile.note .mwrap .ti, .tile.note .draghandle {
+  width: 26px; height: 26px; display: grid; place-items: center;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+  box-shadow: var(--sh-sm); color: var(--ink-2);
+}
+.tile.note .mwrap .ti:hover, .tile.note .draghandle:hover { background: var(--surface-2); color: var(--ink); }
 /* No inset: the note's background is a setting, so it has to reach the card's edges.
    Its own padding is the widget's `pad` option, applied inside FreeTextTile. */
 .tile.note .tbody { padding: 0; }
