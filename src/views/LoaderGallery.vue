@@ -13,8 +13,8 @@ const SPEEDS = [{ v: 0.75, l: 'Calm' }, { v: 1, l: 'Normal' }, { v: 1.5, l: 'Liv
 
 const VARIANTS = [
   { id: 'morph', name: 'Chart Morph', widget: 'Open Requests by Status',
-    what: 'One chart turns into the next — columns drop, their tops become a trend line, then everything curls into a donut.',
-    why: 'A little story in three beats; people watch to see what it becomes next.' },
+    what: 'One chart turns into the next — columns drop, their tops become a trend line, it curls into a donut, loose dots gather into a pattern, and blocks drop into columns.',
+    why: 'A little story in five beats; people watch to see what it becomes next.' },
   { id: 'trend', name: 'Live Trend', widget: 'Requests Created — Last 30 days',
     what: 'A line draws itself across the grid with a glowing dot riding its tip, and the area fills in behind it.',
     why: 'The eye follows the moving dot, the way it follows a cursor on a live ticker.' },

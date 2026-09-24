@@ -11,7 +11,8 @@
  * chart is "doing". prefers-reduced-motion swaps the motion for a gentle opacity breath.
  *
  * Variants
- *   morph     — one chart becoming the next: columns → dots + trend line → donut
+ *   morph     — one chart becoming the next: columns → dots + trend line → donut →
+ *               loose dots gathering into a trend → blocks dropping into columns
  *   equalizer — colour bars dancing like an audio meter
  *   trend     — a line drawing itself, a glowing dot riding its tip, the area filling in
  *   orbit     — donut arcs growing in turn while the ring turns, a counter ticking up
@@ -33,7 +34,7 @@ const reduce = typeof window !== 'undefined' && window.matchMedia?.('(prefers-re
 
 /* ── captions: what the chart is "doing", rotated ── */
 const LINES = {
-  morph: ['Stacking the columns…', 'Tracing the trend…', 'Slicing the donut…'],
+  morph: ['Stacking the columns…', 'Tracing the trend…', 'Slicing the donut…', 'Finding the pattern…', 'Filling the columns…'],
   equalizer: ['Tuning the numbers…', 'Balancing the bars…', 'Almost in rhythm…'],
   trend: ['Tracing the trend…', 'Connecting the dots…', 'Reading the curve…'],
   orbit: ['Counting every slice…', 'Rounding it up…', 'Closing the ring…'],
@@ -43,10 +44,13 @@ const LINES = {
   gauge: ['Taking a reading…', 'Settling the needle…', 'Checking the range…'],
 }
 const lineIdx = ref(0)
-const caption = computed(() => (LINES[props.variant] || LINES.morph)[lineIdx.value % 3])
+// morph's caption names the chart on screen; the others rotate through their three lines
+const caption = computed(() => (props.variant === 'morph' ? LINES.morph[phase.value] : (LINES[props.variant] || LINES.morph)[lineIdx.value % 3]))
 
-/* ── morph: a three-phase cycle driven from JS (CSS transitions do the tweening) ── */
-const phase = ref(0)                                      // 0 columns · 1 trend · 2 donut
+/* ── morph: a five-phase cycle driven from JS (CSS does the tweening) ──
+   0 columns · 1 trend line · 2 donut · 3 find the pattern · 4 block drop */
+const PHASES = 5
+const phase = ref(0)
 const BARS = [40, 62, 34, 70, 50]
 const bx = (i) => 22 + i * 28
 const TOPS = BARS.map((h, i) => [bx(i) + 8, 88 - h])
@@ -67,7 +71,7 @@ let tick = null, raf = null, t0 = 0
 function start() {
   stop()
   const period = 2000 / props.speed
-  tick = setInterval(() => { phase.value = (phase.value + 1) % 3; lineIdx.value++ }, period)
+  tick = setInterval(() => { phase.value = (phase.value + 1) % PHASES; lineIdx.value++ }, period)
   if (reduce) return
   t0 = performance.now()
   const loop = (now) => {
@@ -135,6 +139,17 @@ const blocks = COLS.flatMap((col, ci) => {
           <circle cx="80" cy="50" r="30" class="mring-track" />
           <circle v-for="s in segs" :key="'ms' + s.i" cx="80" cy="50" r="30" class="mseg" :stroke="s.color"
             :style="{ '--len': s.len, '--off': -s.off, '--circ': RING, transitionDelay: (s.i * 110) + 'ms' }" />
+        </g>
+        <!-- 3 · find the pattern: loose dots appear, drift into a trend, the line draws -->
+        <g class="msc" :class="{ on: phase === 3 }">
+          <path d="M26 78 L150 18" class="msc-line" pathLength="1" />
+          <circle v-for="p in DOTS" :key="'mp' + p.i" r="4" :fill="p.color" class="msc-dot"
+            :style="{ '--x1': p.x1 + 'px', '--y1': p.y1 + 'px', '--x2': p.x2 + 'px', '--y2': p.y2 + 'px', '--dl': (p.i * 0.04) + 's' }" />
+        </g>
+        <!-- 4 · block drop: blocks fall into their columns with a small bounce -->
+        <g class="mbk" :class="{ on: phase === 4 }">
+          <rect v-for="b in blocks" :key="'mk' + b.key" class="mbk-b" :x="b.x" :y="b.y" width="20" :height="b.h" rx="3"
+            :fill="b.color" :style="{ '--dl': (b.d * 0.4) + 's' }" />
         </g>
       </template>
 
@@ -225,8 +240,10 @@ const blocks = COLS.flatMap((col, ci) => {
 
 <style scoped>
 .cl { --spd: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 100%; min-height: 0; padding: 10px; }
-.cl-svg { width: 100%; max-width: 220px; height: auto; max-height: calc(100% - 28px); overflow: visible; display: block; }
-.cl-cap { margin: 0; font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: .01em; }
+/* SMALL on purpose (2026-09-24): a loader sits quietly in the widget body, it does not
+   fill it — 140px wide at most, with a smaller caption under it */
+.cl-svg { width: 100%; max-width: 140px; height: auto; max-height: calc(100% - 24px); overflow: visible; display: block; }
+.cl-cap { margin: 0; font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: .01em; }
 .clcap-enter-active, .clcap-leave-active { transition: opacity .3s ease, transform .3s ease; }
 .clcap-enter-from { opacity: 0; transform: translateY(4px); }
 .clcap-leave-to { opacity: 0; transform: translateY(-4px); }
@@ -246,6 +263,21 @@ const blocks = COLS.flatMap((col, ci) => {
 .mring-track { stroke: var(--border); stroke-width: 12; }
 .mseg { stroke-width: 12; stroke-dasharray: 0 var(--circ); stroke-dashoffset: var(--off); transition: stroke-dasharray calc(.6s / var(--spd)) ease-out; }
 .mring.on .mseg { stroke-dasharray: var(--len) var(--circ); }
+/* 3 · find the pattern — the dots pop in where they lie, then gather onto the trend */
+.msc-dot { opacity: 0; transform: translate(var(--x1), var(--y1)) scale(0); }
+.msc.on .msc-dot { animation: mscGather calc(2s / var(--spd)) cubic-bezier(.65, 0, .35, 1) var(--dl) both; }
+@keyframes mscGather {
+  0% { transform: translate(var(--x1), var(--y1)) scale(0); opacity: 0; }
+  16% { transform: translate(var(--x1), var(--y1)) scale(1); opacity: 1; }
+  62%, 100% { transform: translate(var(--x2), var(--y2)) scale(1); opacity: 1; }
+}
+.msc-line { stroke: var(--ink-2); stroke-width: 1.75; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; opacity: 0; }
+.msc.on .msc-line { animation: mscLine calc(2s / var(--spd)) ease both; }
+@keyframes mscLine { 0%, 58% { stroke-dashoffset: 1; opacity: .5; } 88%, 100% { stroke-dashoffset: 0; opacity: .5; } }
+/* 4 · block drop — each block falls in turn and settles with a bounce */
+.mbk-b { transform-box: fill-box; opacity: 0; }
+.mbk.on .mbk-b { animation: mbkIn calc(.7s / var(--spd)) cubic-bezier(.34, 1.5, .64, 1) calc(var(--dl) / var(--spd)) both; }
+@keyframes mbkIn { 0% { transform: translateY(-46px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
 
 /* ── equalizer ── */
 .eq { transform-box: fill-box; transform-origin: 50% 100%; animation: eq calc(var(--d) / var(--spd)) ease-in-out var(--dl) infinite alternate; }
