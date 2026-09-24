@@ -129,7 +129,8 @@ const blocks = COLS.flatMap((col, ci) => {
     <svg class="cl-svg" viewBox="0 0 160 100" fill="none" aria-hidden="true">
       <!-- ── MORPH ── columns → dots + trend → donut -->
       <template v-if="variant === 'morph'">
-        <path d="M14 88 H146" class="cl-base" />
+        <!-- the x-axis belongs to the axis charts only: it fades out for the donut -->
+        <path d="M14 88 H146" class="cl-base mbase" :class="{ off: phase === 2 }" />
         <rect v-for="(h, i) in BARS" :key="'mb' + i" class="mb" :class="{ down: phase !== 0 }"
           :x="bx(i)" :y="88 - h" width="16" :height="h" rx="3" :fill="C(i + 1)" :style="{ transitionDelay: (i * 60) + 'ms' }" />
         <path :d="TREND_D" class="mt" :class="{ on: phase === 1 }" pathLength="1" />
@@ -168,7 +169,7 @@ const blocks = COLS.flatMap((col, ci) => {
             <stop offset="1" stop-color="var(--chart-1)" stop-opacity="0" />
           </linearGradient>
         </defs>
-        <path v-for="y in [22, 44, 66, 88]" :key="'tg' + y" :d="`M14 ${y} H146`" class="cl-grid" />
+        <path d="M14 88 H146" class="cl-base" />
         <path d="M14 70 C 34 62, 44 78, 62 58 S 92 64, 104 40 S 132 36, 146 20" class="tr-ghost" />
         <path d="M14 70 C 34 62, 44 78, 62 58 S 92 64, 104 40 S 132 36, 146 20 L146 88 L14 88 Z" class="tr-area" fill="url(#clTrendFill)" />
         <path d="M14 70 C 34 62, 44 78, 62 58 S 92 64, 104 40 S 132 36, 146 20" class="tr-line" pathLength="1" />
@@ -207,7 +208,7 @@ const blocks = COLS.flatMap((col, ci) => {
 
       <!-- ── SCATTER ── loose points gather into a trend -->
       <template v-else-if="variant === 'scatter'">
-        <path v-for="y in [22, 44, 66, 88]" :key="'sg' + y" :d="`M14 ${y} H146`" class="cl-grid" />
+        <path d="M14 88 H146" class="cl-base" />
         <path d="M26 78 L150 18" class="sc-line" pathLength="1" />
         <circle v-for="p in DOTS" :key="'sd' + p.i" r="4" :fill="p.color" class="sc-dot"
           :style="{ '--x1': p.x1 + 'px', '--y1': p.y1 + 'px', '--x2': p.x2 + 'px', '--y2': p.y2 + 'px', '--dl': (p.i * 0.05) + 's' }" />
@@ -241,15 +242,19 @@ const blocks = COLS.flatMap((col, ci) => {
 <style scoped>
 .cl { --spd: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 100%; min-height: 0; padding: 10px; }
 /* SMALL on purpose (2026-09-24): a loader sits quietly in the widget body, it does not
-   fill it — 140px wide at most, with a smaller caption under it */
-.cl-svg { width: 100%; max-width: 140px; height: auto; max-height: calc(100% - 24px); overflow: visible; display: block; }
+   fill it — 100px wide at most, with a smaller caption under it */
+.cl-svg { width: 100%; max-width: 100px; height: auto; max-height: calc(100% - 24px); overflow: visible; display: block; }
 .cl-cap { margin: 0; font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: .01em; }
 .clcap-enter-active, .clcap-leave-active { transition: opacity .3s ease, transform .3s ease; }
 .clcap-enter-from { opacity: 0; transform: translateY(4px); }
 .clcap-leave-to { opacity: 0; transform: translateY(-4px); }
 
-.cl-base { stroke: var(--border-strong); stroke-width: 1; }
-.cl-grid { stroke: var(--border); stroke-width: 1; stroke-dasharray: 2 3; }
+/* ONE x-axis line on the axis charts (column · bar · stacked · line); no gridlines, and
+   nothing under a pie or donut. A crisp 1px that does NOT shrink with the drawing — at
+   100px wide a scaled stroke thinned below a pixel and vanished. */
+.cl-base { stroke: var(--muted-2); stroke-opacity: .6; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.mbase { transition: opacity calc(.35s / var(--spd)); }
+.mbase.off { opacity: 0; }
 
 /* ── morph ── */
 .mb { transform-box: fill-box; transform-origin: 50% 100%; transition: transform calc(.55s / var(--spd)) cubic-bezier(.34, 1.4, .64, 1), opacity calc(.4s / var(--spd)); }
