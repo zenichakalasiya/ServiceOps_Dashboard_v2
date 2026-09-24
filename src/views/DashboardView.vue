@@ -951,10 +951,13 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
                    it instead of the dashboard filter; a widget can still opt out with its
                    own calendar. It stays visible when SET — it reports a state — and joins
                    the hover actions when not. -->
+              <!-- Only when the group's configuration SETS a range — the same rule as a
+                   widget's calendar. It is set in Edit group; a click here still opens
+                   the picker to change or clear it. -->
               <button
-                class="gh-act gh-date" :class="{ on: !!g.dateFilter || gdOpen === g.id }"
+                v-if="g.dateFilter" class="gh-act gh-date on"
                 @click.stop="toggleGroupDate(g, $event)" :title="groupDateTitle(g)"
-              ><Icon name="calendar" :size="15" /></button>
+              ><Icon name="calendar" :size="13" /></button>
               <button class="gh-act gh-hov" title="Add a widget to this group" @click="addWidgetToGroup(g.id)"><Icon name="plus" :size="16" /></button>
               <button class="gh-act gh-hov" title="Group actions" @click.stop="openGroupMenu(g, $event)"><Icon name="dots-v" :size="16" /></button>
             </div>
@@ -1293,12 +1296,14 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .gh-tog:hover { opacity: 1; }
 
 /* Right side: + and ⋯ appear on hover, instantly, like a widget's actions. The date icon
-   stays when a range is SET, since then it reports a state rather than offering one. */
+   exists only when a range is set, and then it is always visible — it reports a state. */
 .gh-act { width: 28px; height: 28px; padding: 0; border: none; background: transparent; color: inherit; opacity: .75; display: grid; place-items: center; border-radius: var(--r); }
 .gh-act:hover { opacity: 1; background: color-mix(in srgb, currentColor 10%, transparent); }
-.gh-hov, .gh-date:not(.on) { visibility: hidden; }
-.grp-head:hover .gh-hov, .grp-head:hover .gh-date, .grp-head.acting .gh-hov, .grp-head.acting .gh-date { visibility: visible; }
-.gh-date.on { visibility: visible; opacity: 1; color: var(--df); background: var(--df-soft); }
+.gh-hov { visibility: hidden; }
+.grp-head:hover .gh-hov, .grp-head.acting .gh-hov { visibility: visible; }
+/* the widget's calendar chip exactly: 22px, 13px icon, a filled --df tint (WidgetCard .df-btn) */
+.gh-act.gh-date { width: 22px; height: 22px; margin-right: 4px; opacity: 1; color: var(--df); background: var(--df-soft); }
+.gh-act.gh-date:hover { background: var(--df-soft); color: var(--df-ink); }
 
 /* the body — widget padding is the group's own `pad` option */
 .grp-body { padding: 12px; }

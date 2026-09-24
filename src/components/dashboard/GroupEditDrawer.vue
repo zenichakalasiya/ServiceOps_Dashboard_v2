@@ -11,12 +11,13 @@
  * Every control is one the rest of the product already uses (our input, ColorPicker,
  * Dropdown and pill rows), so a group is configured the way a widget is.
  */
-import { reactive, onMounted, onBeforeUnmount } from 'vue'
+import { reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import Icon from '../ui/Icon.vue'
 import Dropdown from '../ui/Dropdown.vue'
 import ColorPicker from '../ui/ColorPicker.vue'
 import Hint from '../ui/Hint.vue'
 import { GRP_BGS, GRP_SIZES, GRP_DEFAULTS, grpStyleOf } from '../../data/groups.js'
+import { QUICK } from '../../data/timeRanges.js'
 import { toast } from '../../store/index.js'
 
 const props = defineProps({ group: { type: Object, required: true } })
@@ -27,17 +28,32 @@ if (!props.group.style) props.group.style = { ...GRP_DEFAULTS }
 else Object.assign(props.group.style, grpStyleOf(props.group))
 const st = props.group.style
 
-const snap = { name: props.group.name, style: { ...st } }
+const snap = { name: props.group.name, style: { ...st }, dateFilter: props.group.dateFilter ?? null }
 const SIZE_OPTS = GRP_SIZES.map((s) => ({ value: s.id, label: s.id }))
+/* The group's date filter is CONFIGURATION, as a widget's is: set here, and only then
+   does the header show its calendar. '' = follow the dashboard filter. The QUICK list
+   is the one every picker reads; a custom range set from the header's picker is kept
+   as an option so opening the drawer never silently drops it. */
+const DATE_OPTS = computed(() => {
+  const opts = [{ value: '', label: 'Dashboard filter' }, ...QUICK.map((q) => ({ value: q.label, label: q.label }))]
+  const cur = props.group.dateFilter
+  if (cur && !opts.some((o) => o.value === cur)) opts.push({ value: cur, label: cur })
+  return opts
+})
+const dateModel = computed({
+  get: () => props.group.dateFilter || '',
+  set: (v) => { props.group.dateFilter = v || null },
+})
 const ALIGN = [
   { v: 'left', icon: 'align-left', tip: 'Align title left' },
   { v: 'center', icon: 'align-center', tip: 'Centre the title' },
 ]
 const ui = reactive({ nameErr: '' })
 
-function reset() { Object.assign(st, GRP_DEFAULTS) }
+function reset() { Object.assign(st, GRP_DEFAULTS); props.group.dateFilter = null }
 function cancel() {
   props.group.name = snap.name
+  props.group.dateFilter = snap.dateFilter
   Object.assign(st, snap.style)
   emit('close')
 }
@@ -70,6 +86,11 @@ onBeforeUnmount(() => removeEventListener('keydown', onKey))
               placeholder="Name this group" @input="ui.nameErr = ''" @keyup.enter="save"
             />
             <p v-if="ui.nameErr" class="ge-err">{{ ui.nameErr }}</p>
+          </div>
+
+          <div class="fld">
+            <label>Date filter <Hint text="Every widget in this group reads this range instead of the dashboard filter — unless a widget set its own. When set, a calendar appears on the group header." /></label>
+            <Dropdown v-model="dateModel" :options="DATE_OPTS" />
           </div>
 
           <div class="fld">
