@@ -242,8 +242,8 @@ const blocks = COLS.flatMap((col, ci) => {
 <style scoped>
 .cl { --spd: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 100%; min-height: 0; padding: 10px; }
 /* SMALL on purpose (2026-09-24): a loader sits quietly in the widget body, it does not
-   fill it — 100px wide at most, with a smaller caption under it */
-.cl-svg { width: 100%; max-width: 100px; height: auto; max-height: calc(100% - 24px); overflow: visible; display: block; }
+   fill it — 76px wide at most, with a smaller caption under it */
+.cl-svg { width: 100%; max-width: 76px; height: auto; max-height: calc(100% - 24px); overflow: visible; display: block; }
 .cl-cap { margin: 0; font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: .01em; }
 .clcap-enter-active, .clcap-leave-active { transition: opacity .3s ease, transform .3s ease; }
 .clcap-enter-from { opacity: 0; transform: translateY(4px); }

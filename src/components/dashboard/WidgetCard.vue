@@ -337,10 +337,10 @@ function refresh() {
   loading.value = true; setTimeout(() => { loading.value = false }, 750)
 }
 /* The Chart Morph loader demo (tile.loaderDemo): the widget shows the loader centred in
-   its body — columns → trend → donut… — then reveals its data. On mount and on every
-   Refresh. 6s covers three of the loader's five charts: long enough to see it morph,
-   short enough that it still reads as loading. */
-const LOADER_MS = 6000
+   its body, then reveals its data. On mount and on every Refresh. 10s = ONE FULL LOOP of
+   the loader's five charts (2s each: columns → trend → donut → pattern → blocks), so the
+   data arrives just as the last chart has played. */
+const LOADER_MS = 10000
 const demoLoading = ref(false)
 let demoT = null
 function playLoader() {
