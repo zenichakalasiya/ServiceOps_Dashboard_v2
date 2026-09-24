@@ -114,7 +114,10 @@ function groupedHelpdesk() {
   ]
   // helpdeskTiles() order: 6 counters · status + priority · the two technician charts · 3 lists
   const slot = (i) => (i < 6 ? 0 : i < 8 ? 1 : i < 10 ? 2 : 3)
-  const base = helpdeskTiles().map((t, i) => ({ ...t, group: G[slot(i)].id }))
+  // `loaderDemo`: this one widget plays the Chart Morph loader (components/ui/ChartLoader)
+  // before its data shows — on open, and again on every Refresh — so the loader can be
+  // judged in place on a real board. Only on this copy; the original board is untouched.
+  const base = helpdeskTiles().map((t, i) => ({ ...t, group: G[slot(i)].id, ...(t.title === 'Open Requests By Status' ? { loaderDemo: true } : {}) }))
 
   /* …then each group filled out to ten with a MIX of widget types, so the board shows the
      whole catalogue in context: counters, gauges, legacy charts (line · column · bar · pie

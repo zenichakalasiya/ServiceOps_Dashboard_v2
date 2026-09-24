@@ -2,6 +2,7 @@
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import Icon from '../ui/Icon.vue'
 import WidgetEmpty from './WidgetEmpty.vue'
+import ChartLoader from '../ui/ChartLoader.vue'
 import ChartTile from './ChartTile.vue'
 import DataTable from './DataTable.vue'
 import FreeTextTile from './FreeTextTile.vue'
@@ -331,7 +332,24 @@ onMounted(() => {
 onBeforeUnmount(() => ro?.disconnect())
 // Below this width the two upfront controls (AI + Refresh) also fold into ⋯.
 const tiny = computed(() => cardW.value < 258)
-function refresh() { loading.value = true; setTimeout(() => { loading.value = false }, 750) }
+function refresh() {
+  if (props.tile.loaderDemo) { playLoader(); return }
+  loading.value = true; setTimeout(() => { loading.value = false }, 750)
+}
+/* The Chart Morph loader demo (tile.loaderDemo): the widget shows the loader centred in
+   its body — columns → trend → donut… — then reveals its data. On mount and on every
+   Refresh. 6s covers three of the loader's five charts: long enough to see it morph,
+   short enough that it still reads as loading. */
+const LOADER_MS = 6000
+const demoLoading = ref(false)
+let demoT = null
+function playLoader() {
+  clearTimeout(demoT)
+  demoLoading.value = true
+  demoT = setTimeout(() => { demoLoading.value = false }, LOADER_MS)
+}
+onMounted(() => { if (props.tile.loaderDemo) playLoader() })
+onBeforeUnmount(() => clearTimeout(demoT))
 /* Full screen opens WITH the filter bar shown, because that is where a long record list
    is actually read; the header toggle is there to reclaim the row, not to reveal it. */
 
@@ -648,7 +666,9 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 
     <!-- Body -->
     <div ref="bodyEl" class="tbody">
-      <div v-if="loading" class="loading">
+      <!-- the Chart Morph loader, centred, while a loaderDemo widget "loads" -->
+      <div v-if="demoLoading" class="demo-loader"><ChartLoader variant="morph" /></div>
+      <div v-else-if="loading" class="loading">
         <div class="skeleton" style="height:60%;width:80%" />
         <div class="skeleton" style="height:14px;width:50%;margin-top:10px" />
       </div>
@@ -997,6 +1017,8 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
    is one preference rather than a number repeated in every tile. */
 .tbody { flex: 1; padding: var(--tile-pad, 12px); display: flex; flex-direction: column; min-height: 0; }
 .loading { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+/* the loader sits dead centre of the body, whatever the widget's size */
+.demo-loader { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
 /* The empty-widget states live in WidgetEmpty.vue — the tile itself stays an ORDINARY
    card (white body, grey header band) whichever state it is in. Tinting the body was
    tried and reverted: at that point a board's worth of empty tiles all change colour to
