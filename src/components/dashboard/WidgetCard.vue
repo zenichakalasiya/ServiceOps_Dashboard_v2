@@ -380,6 +380,27 @@ function exportAs(f) { menu.value = false; exportOpen.value = false; toast(`Expo
 function duplicate() { menu.value = false; emit('duplicate', props.tile) }
 // deleting a widget is destructive and one click away — confirm it by name
 const confirmDel = ref(false)
+
+/* ── Move to another group ─────────────────────────────────────────────────────────
+ * The ⋯ row opens a second popup where the menu stood: every group on this board with
+ * its widget count, the current one marked. Only offered when there IS somewhere else to
+ * go — a board with no groups, or a lone group holding this tile, gets no dead row. */
+const board = computed(() => store.dashboards.find((d) => (d.tiles || []).includes(props.tile)))
+const moveGroups = computed(() => {
+  const d = board.value
+  if (!d?.groups?.length) return []
+  return d.groups.map((g) => ({ id: g.id, name: g.name, n: d.tiles.filter((t) => t.group === g.id).length }))
+})
+const canMove = computed(() => moveGroups.value.some((g) => g.id !== props.tile.group))
+const moveOpen = ref(false)
+function openMove() { menu.value = false; exportOpen.value = false; typeOpen.value = false; moveOpen.value = true }
+function moveTo(g) {
+  if (g.id === props.tile.group) return
+  props.tile.group = g.id
+  if (board.value) board.value.updated = new Date().toISOString()
+  moveOpen.value = false
+  toast(`Moved “${props.tile.title || 'widget'}” to ${g.name}`, 'success')
+}
 const emailOpen = ref(false)      // Export ▸ Email as PDF
 const scheduleOpen = ref(false)   // recurring delivery of this one widget
 // a disabled schedule delivers nothing, so it does not light the badge
@@ -398,7 +419,7 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
   <!-- `acting` holds the cluster open while a popover this header owns is up: the menu
        and the date popover are teleported, so moving the pointer into them drops :hover
        and the icons would collapse out from under the thing the user just opened. -->
-  <div ref="cardEl" class="tile card" :class="{ ['span-' + (tile.w || 3)]: true, ['rows-' + (tile.h || 1)]: true, acting: menu || dfOpen || aiHover, note: isNote }">
+  <div ref="cardEl" class="tile card" :class="{ ['span-' + (tile.w || 3)]: true, ['rows-' + (tile.h || 1)]: true, acting: menu || dfOpen || aiHover, note: isNote, clear: isNote && tile.ft?.bg === 'Transparent' }">
     <!-- Standardized header: title + info (left) · refresh · fullscreen · edit · ⋯ (right).
          EVERY tile uses this. The click-to-select floating toolbar three tiles used to
          have is gone — one board should not have two different ways to reach the same
@@ -585,6 +606,7 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
           </div>
           <button class="menu-item" @click="menu = false; present = true"><Icon name="maximize-tile" :size="15" /> Full screen</button>
           <button class="menu-item" @click="duplicate"><Icon name="copy" :size="15" /> Duplicate</button>
+          <button v-if="canMove" class="menu-item" @click="openMove"><Icon name="arrow-right" :size="15" /> Move to another group</button>
           <!-- divider between the widget's own actions and the export group -->
           <div class="menu-sep" />
           <!-- Export → submenu (Image / PDF / Email as PDF) -->
@@ -606,6 +628,22 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
             <div class="menu-sep" />
             <button class="menu-item danger" @click="menu = false; confirmDel = true"><Icon name="trash" :size="15" /> Delete card</button>
           </template>
+        </div>
+      </transition>
+      <!-- Move to another group — opens where the ⋯ menu stood -->
+      <div v-if="moveOpen" class="backdrop" @click="moveOpen = false" />
+      <transition name="pop">
+        <div v-if="moveOpen" class="menu tile-menu mv-pop" :style="{ top: menuPos.top + 'px', left: menuPos.left + 'px' }" @click.stop>
+          <div class="menu-label">Move to group</div>
+          <button
+            v-for="g in moveGroups" :key="g.id" class="menu-item mv-row" :class="{ cur: g.id === tile.group }"
+            :disabled="g.id === tile.group" :title="g.id === tile.group ? 'This widget is already here' : `Move to ${g.name}`"
+            @click="moveTo(g)"
+          >
+            <span class="mv-dot" />
+            <span class="mv-nm">{{ g.name }}</span>
+            <span class="mv-n">{{ g.n }}</span>
+          </button>
         </div>
       </transition>
     </teleport>
@@ -743,7 +781,7 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
    collapses to its header once the chart stops carrying a fixed pixel height. */
 /* §9.1 — a widget tile IS a content card, so it takes the surface radius, not the
    control one. */
-.tile { display: flex; flex-direction: column; overflow: hidden; min-height: 130px; flex: 1; border-radius: var(--r-lg); }
+.tile { display: flex; flex-direction: column; overflow: hidden; min-height: 130px; flex: 1; border-radius: var(--r-lg); border-color: var(--tile-border); }
 
 /* ── A note ────────────────────────────────────────────────────────────────────────
    The one tile with no header. Everything a widget header carries — a title, a data
@@ -760,17 +798,24 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
    whole body — the colour is a per-widget setting, so the card can no longer hardcode
    the paper it used to always wear. */
 .tile.note { position: relative; background: var(--surface); }
+/* A note set to the Transparent background has no card at all — no fill and no outline, so
+   its writing sits straight on the board (or group). Hover still shows the ⋯. */
+.tile.note.clear { background: transparent; border-color: transparent; box-shadow: none; }
 /* A note has no header band, so its header is a transparent LANE across the top — the
    32px FreeTextTile reserves above the writing. The lane itself is the drag handle: the
    cursor turns to a grab hand anywhere along it, and pressing there moves the tile (the
    mousedown is on the <header>). No grip glyph — the lane is wide enough to find by
    feel, and a grip icon floating over someone's writing was the one piece of chrome on
    the note that didn't say anything the cursor couldn't. */
+/* 2026-09-24: the lane is the note's own 12px top inset (it was 32px). The ⋯ is taken out
+   of the lane's flow and pinned to the corner, so a 12px strip can still carry a 24px
+   button — it floats over the end of the first line only while you hover. */
 .tile.note .thead {
-  position: absolute; top: 0; right: 0; left: 0; width: auto; height: 32px; z-index: 3;
-  background: transparent; padding: 0 6px; justify-content: flex-end;
+  position: absolute; top: 0; right: 0; left: 0; width: auto; height: 12px; min-height: 0; z-index: 3;
+  background: transparent; padding: 0; justify-content: flex-end; overflow: visible;
   cursor: grab;
 }
+.tile.note .ractions { position: absolute; top: 4px; right: 4px; }
 .tile.note .thead:active { cursor: grabbing; }
 /* no title, no info, no grip: a note is read, not identified */
 .tile.note .title, .tile.note .info, .tile.note .draghandle { display: none; }
@@ -909,6 +954,16 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 .backdrop { position: fixed; inset: 0; z-index: 130; }
 /* teleported menu — fixed to viewport, above the card so it is never clipped */
 .tile-menu { position: fixed; z-index: 140; min-width: 190px; }
+/* the group list: name on the left, widget count right; the current group bold with a dot */
+.mv-pop { min-width: 210px; max-height: 320px; overflow: auto; }
+.mv-row { gap: 8px; }
+.mv-dot { width: 6px; height: 6px; border-radius: 50%; flex: none; background: transparent; }
+.mv-nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mv-n { flex: none; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.mv-row.cur { font-weight: 600; cursor: default; }
+.mv-row.cur .mv-dot { background: var(--sel); }
+.mv-row.cur .mv-n { color: var(--ink); font-weight: 600; }
+.mv-row.cur:hover { background: transparent; }
 /* AI action, when it has collapsed into the ⋯ menu on a small tile */
 .menu-item.ai { color: var(--ai-ink); }
 .menu-item.ai :deep(.ico) { color: var(--ai); }

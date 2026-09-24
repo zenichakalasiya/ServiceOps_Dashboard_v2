@@ -287,7 +287,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
                    Bar / Column / Stacked / Histogram tell themselves apart. No rot90 —
                    Bar has its own horizontal artwork now. -->
               <button v-for="t in g.types" :key="t.id" class="tc" @click="builder = t">
-                <div class="tc-ico"><ChartIcon :name="t.id" :size="88" /></div>
+                <div class="tc-ico"><ChartIcon :name="t.id" :size="64" /></div>
                 <span class="tc-label">{{ t.label }}</span>
               </button>
             </div>
@@ -297,7 +297,7 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
             <div class="cat-h">Empty group</div>
             <div class="cards">
               <button class="tc tc-group" @click="emit('newgroup')">
-                <div class="tc-ico"><ChartIcon name="group" :size="88" /></div>
+                <div class="tc-ico"><ChartIcon name="group" :size="64" /></div>
                 <span class="tc-label">Empty Group</span>
               </button>
             </div>
@@ -454,7 +454,8 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 .aw-body { flex: 1; overflow: auto; padding: 16px; }
 .cat { margin-bottom: 18px; }
 .cat-h { font-size: 13px; color: var(--muted); font-weight: 500; margin: 6px 0 10px; }
-.cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+/* fixed-width cards (see .tc) — as many per row as the drawer fits, no stretching */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, 114px); gap: 12px; }
 /* §9.2 clickable / module card. Three things follow from that section:
    · it sits on --surface, not the grey --surface-2 — a card IS the surface, and a grey
      one on a white drawer reads as disabled rather than as pickable;
@@ -483,13 +484,16 @@ function onCreated(id) { tagGroup(id); emit('created', id); emit('close') }
 
    Hover is the primary edge now, not --muted-2 — the same edge the listing cards answer
    with, since blue is the module's one accent. */
-.tc { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 10px 12px; min-height: 133px; border: 1px solid transparent; background: var(--picker-tile-fill); border-radius: 0.625rem; color: var(--picker-ico); transition: border-color .15s, box-shadow .15s; }
+/* 2026-09-24: the artwork is 64px (was 88) and the CARD shrinks with it, keeping the same
+   frame around the icon — 25px each side, ~10px above and below the icon+label stack — so
+   114×109 where it was 138×133. */
+.tc { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; width: 114px; padding: 10px 6px; min-height: 109px; border: 1px solid transparent; background: var(--picker-tile-fill); border-radius: 0.625rem; color: var(--picker-ico); transition: border-color .15s, box-shadow .15s; }
 .tc:hover { border-color: var(--primary); box-shadow: var(--sh-sm); }
 /* Empty Group KEEPS its edge. It is the one tile whose border is not decoration — a dashed
    outline around nothing is what "empty" looks like, and it is the only tile here that adds
    a container rather than a widget. */
 .tc-group { border-style: dashed; border-color: var(--border-strong); }
-.tc-ico { width: 88px; height: 88px; display: grid; place-items: center; }
+.tc-ico { width: 64px; height: 64px; display: grid; place-items: center; }
 /* the label is READ, so it holds the primary ink while the icon stays quiet beside it */
 /* the LABEL stays --ink: it is text and has to stay readable, while the artwork beside
    it is decoration and can sit back at --picker-ico */

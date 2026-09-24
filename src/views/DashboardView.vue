@@ -440,6 +440,33 @@ function deleteGroup() {
     : `Deleted “${g.name}” and its ${inG.length} widget${inG.length === 1 ? '' : 's'}`, 'success')
 }
 
+/* ── Sticky group headers: which one is stuck right now ─────────────────────────────
+ * A header sticks 16px below the top of the scroller — the board's own side gutter, so a
+ * stuck band sits in the same frame as everything else. While it is stuck the 16px above
+ * it is filled with the board's white (`.grp-head.stuck::before`), otherwise the widgets
+ * of that group would scroll through the gap. Only the stuck one gets the fill: at rest
+ * the strip would lie over the gap between two groups. */
+const STICK_GAP = 16
+const stuckIds = ref(new Set())
+let scroller = null
+function markStuck() {
+  if (!scroller) return
+  const line = scroller.getBoundingClientRect().top + STICK_GAP
+  const next = new Set()
+  scroller.querySelectorAll('.group[data-gid]').forEach((sec) => {
+    const r = sec.getBoundingClientRect()
+    if (r.top < line - 0.5 && r.bottom > line) next.add(sec.dataset.gid)
+  })
+  const cur = stuckIds.value
+  if (next.size !== cur.size || [...next].some((id) => !cur.has(id))) stuckIds.value = next
+}
+onMounted(() => {
+  scroller = document.querySelector('.main')
+  scroller?.addEventListener('scroll', markStuck, { passive: true })
+  markStuck()
+})
+onBeforeUnmount(() => scroller?.removeEventListener('scroll', markStuck))
+
 /* ── Reordering groups: drag a group by its header ──────────────────────────────────
  * Armed on a header mousedown that did not land on a button or the rename field, so the
  * collapse arrow, +, ⋯ and date still just click. While a GROUP
@@ -914,7 +941,7 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
             'drop-into': dropGroup === g.id && !dragGroupId, 'as-section': gSections, collapsed: g.collapsed,
             'no-pad': grpStyleOf(g).pad === false, 'g-drop-before': dropBefore === g.id, 'g-dragging': dragGroupId === g.id,
           }"
-          :style="grpHeadVars(g)"
+          :style="grpHeadVars(g)" :data-gid="g.id"
           @dragover.prevent="onSectionDragOver(g)" @drop="onSectionDrop(g)"
         >
           <!-- The header is a BAND on the widget header's own colour (unless the group sets
@@ -925,7 +952,7 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
                The header itself is the drag handle (grab cursor); a press on a control
                or the rename field never arms it. The style vars live on the section. -->
           <header
-            class="grp-head" :class="{ 'gh-left-align': grpStyleOf(g).align === 'left', 'acting': gMenu.open && gMenu.g === g }"
+            class="grp-head" :class="{ 'gh-left-align': grpStyleOf(g).align === 'left', 'acting': gMenu.open && gMenu.g === g, stuck: stuckIds.has(g.id) }"
             :draggable="gDragArmed === g.id"
             @mousedown="!$event.target.closest('button, input') && armGroupDrag(g)"
             @dragstart="onGroupDragStart(g, $event)" @dragend="onGroupDragEnd"
@@ -1258,8 +1285,7 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 /* `overflow: clip`, NOT hidden: hidden makes the group a scroll container, and a sticky
    header then sticks inside the group (never) instead of to the page. clip still rounds
    the corners. */
-.group { border: 1px solid var(--gh-line, var(--border)); border-radius: var(--r-lg); background: var(--surface); overflow: clip; transition: box-shadow .15s, border-color .15s; }
-.group .cell > .tile { border-color: var(--border-strong); }
+.group { border: 1px solid var(--gh-line, var(--border)); border-radius: var(--r-lg); background: var(--gh-body, var(--surface)); overflow: clip; transition: box-shadow .15s, border-color .15s; }
 .group.drop-into, .grid.drop-into { border: 1px solid var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); border-radius: var(--r-lg); }
 .grid.drop-into { padding: 4px; }
 /* reordering: a primary rule where the dragged group will land, and the source dims */
@@ -1281,8 +1307,14 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
      leaves with it and the next group's header takes the top. A sticky element is bound
      by its parent, so the hand-off needs no script. z-index clears every layer inside a
      group (resize grip 6, row inserter 8) and stays under the FAB (40). */
-  position: sticky; top: 0; z-index: 20;
+  position: sticky; top: 16px; z-index: 20;
 }
+/* STUCK: fill the 16px above with the board's white (reaching over the group's own side
+   borders, hence -1px and the 1px clip margin), and give the band a top edge of its own
+   since the group's top border has scrolled away. See markStuck(). */
+.grp-head.stuck::before { content: ''; position: absolute; left: -1px; right: -1px; bottom: 100%; height: 17px; background: var(--surface); pointer-events: none; }
+.grp-head.stuck { box-shadow: inset 0 1px 0 var(--gh-line, var(--border)); }
+.group:has(> .grp-head.stuck) { overflow-clip-margin: 1px; }
 .grp-head:active { cursor: grabbing; }
 .grp-head button { cursor: pointer; }
 .grp-head.gh-left-align { grid-template-columns: auto minmax(0, 1fr) auto; }

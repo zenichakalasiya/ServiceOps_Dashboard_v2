@@ -5,9 +5,8 @@
  * Mirrors the reference build's Edit group panel, field for field: header colour, title
  * size, title alignment, padding and sharing. Two differences, both deliberate:
  *   · alignment DEFAULTS to centre (the reference defaults left);
- *   · the Default header colour is the widget header's own `--bg`, so a group band and the
- *     header of every widget inside it are the same strip — a group reads as a container
- *     of widgets, not as a second kind of widget.
+ *   · the Default header colour is `--grp-head` (#ecf1f9), and the body under any header
+ *     colour is that colour at 10% (`--gh-body`).
  *
  * Colours are named, not hex, so they survive the theme switch. Solid headers carry
  * their own text ink because white type on yellow and dark type on red are both wrong.
@@ -15,7 +14,8 @@
 import { FT_SIZES } from './freeText.js'
 
 export const GRP_BGS = [
-  { id: 'Default', css: 'var(--bg)', ink: 'var(--ink)' },
+  // 2026-09-24: a group's own default band (#ecf1f9), no longer the widget header's --bg
+  { id: 'Default', css: 'var(--grp-head)', ink: 'var(--ink)' },
   // "Transparent" = the group's own white body. Painted, not see-through, because the
   // header is sticky and a truly transparent one would show widgets scrolling under it.
   { id: 'Transparent', css: 'var(--surface)', ink: 'var(--ink)' },
@@ -58,6 +58,9 @@ export function grpHeadVars(g) {
      colour, so band and frame read as one object rather than a stripe on a grey box. */
   const neutral = !named ? false : ['Default', 'Transparent', 'Gray'].includes(named.id)
   return {
+    /* The BODY is the header colour at 10% over the card surface, whatever the header is —
+       so a group reads as one tinted object, band and all. Transparent stays the surface. */
+    '--gh-body': st.bg === 'Transparent' ? 'var(--surface)' : `color-mix(in srgb, ${bg} 10%, var(--surface))`,
     '--gh-line': neutral ? 'var(--border)' : bg,
     '--gh-bg': bg,
     '--gh-ink': ink,

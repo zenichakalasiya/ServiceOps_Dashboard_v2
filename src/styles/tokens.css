@@ -137,6 +137,10 @@
   --sel: #07101f;
   --sel-hover: #1d2a3e;
   --sel-ink: #ffffff;
+  /* every widget tile's edge — one value on the board, in or out of a group (2026-09-24) */
+  --tile-border: #dfe5ee;
+  /* a GROUP's default header band; its body is this at 10% (see data/groups.js) */
+  --grp-head: #ecf1f9;
   /* the grey track a segmented control sits in (Figma "switch-bg") */
   --seg-track: #eef2f6;
   /* field labels and helper text in the builder (Figma "text/subdued") */
@@ -259,6 +263,8 @@
   --sel-ink: #07101f;
   --seg-track: #25252f;
   --label: #8e90a6;
+  --tile-border: #34343f;
+  --grp-head: #232a38;
 
   --sh-sm: 0 1px 2px rgba(0,0,0,.4);
   --sh: 0 4px 14px rgba(0,0,0,.45);

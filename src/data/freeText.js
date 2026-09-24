@@ -384,13 +384,10 @@ export function ftStyle(ft = {}) {
       textAlign: ft.align || 'left',
       alignItems: { top: 'flex-start', middle: 'center', bottom: 'flex-end' }[ft.valign || 'top'] || 'flex-start',
       background: ftValue(FT_BGS, ft.bg || 'Default', 'var(--note-bg)'),
-      /* 12 on every side, and a LANE at the top. Every other widget body in this product
-         uses one 12px gutter, so a note that insets differently reads as misaligned
-         rather than as styled — but the grip and the ⋯ float over this body rather than
-         sitting in a header band, and at 12px the grip landed on the first line's opening
-         characters exactly while you were hovering to reach it. 32 is that pair's own
-         lane: they never cover writing, and nothing has to move when they appear. */
-      padding: ft.pad === false ? '0' : '32px 12px 12px',
+      /* 12 on EVERY side, top included (2026-09-24). The 32px top lane was for the grip,
+         which is gone; the note's drag lane is now just this 12px inset, and the ⋯ floats
+         in the top-right corner on hover over the end of the first line, as in a notes app. */
+      padding: ft.pad === false ? '0' : '12px',
     },
     text: {
       ...(px ? { fontSize: px + 'px', lineHeight: 1.25 } : {}),
