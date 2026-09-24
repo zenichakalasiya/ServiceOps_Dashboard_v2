@@ -93,7 +93,7 @@ const SLIDERS = [
 const PREVIEW_TILES = [
   { title: 'Open Requests', kind: 'line' },
   { title: 'By Priority', kind: 'donut' },
-  { title: 'By Status', kind: 'bar' },
+  { title: 'By Status', kind: 'hbar' },
   { title: 'Status by Priority', kind: 'stack' },
 ]
 

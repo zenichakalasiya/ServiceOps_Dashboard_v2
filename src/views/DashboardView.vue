@@ -918,10 +918,9 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
              Only on a board that has groups. It names the section you are in; the list
              jumps anywhere, and the footer folds or opens every group at once. -->
         <div v-if="sections.length" class="pop-wrap gnav-wrap">
-          <button class="gnav-btn" :class="{ on: gNav }" title="Jump to a group (G) · Alt+↑/↓ to step" @click.stop="gNav ? (gNav = false) : openNav()">
-            <Icon name="rows" :size="15" />
-            <span class="gnav-cur">{{ curSection?.name || 'Groups' }}</span>
-            <span class="gnav-pos">{{ sections.indexOf(curSection) + 1 }}/{{ sections.length }}</span>
+          <button class="gnav-btn" :class="{ on: gNav }" title="Jump to a group (G) · Alt+↑/↓ to step" aria-haspopup="menu" :aria-expanded="gNav" @click.stop="gNav ? (gNav = false) : openNav()">
+            <Icon name="grid" :size="15" />
+            <span class="gnav-cur">Groups</span>
             <Icon name="chevron-down" :size="14" class="gnav-chev" />
           </button>
           <div v-if="gNav" class="backdrop" @click="gNav = false" />
@@ -1359,14 +1358,13 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .t-row h1 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 360px; }
 .vsep { width: 1px; height: 24px; background: var(--border); margin: 0 2px; }
 /* ── Groups navigator (toolbar) ──
-   The trigger matches the toolbar's other bordered 32px controls; it NAMES the section
-   in view (scroll-spy), so it doubles as a "you are here" readout. */
+   The trigger matches the toolbar's other bordered 32px controls and just says "Groups";
+   where you are is marked inside the list (scroll-spy), not on the button. */
 .gnav-wrap { margin-right: 4px; }
 .gnav-btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; max-width: 240px; padding: 0 8px 0 10px; border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); color: var(--ink); font-size: 13px; font-weight: 500; }
 .gnav-btn:hover, .gnav-btn.on { background: var(--surface-2); border-color: var(--border-strong); }
 .gnav-btn :deep(.ico) { color: var(--ink-2); }
 .gnav-cur { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.gnav-pos { flex: none; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .gnav-chev { flex: none; }
 .gnav-pop { top: calc(100% + 6px); left: 0; width: 290px; padding: 4px 0 0; display: flex; flex-direction: column; max-height: min(440px, 70vh); }
 .gnav-search { display: flex; align-items: center; gap: 6px; margin: 6px 8px 2px; height: 30px; padding: 0 8px; border: 1px solid var(--border-control); border-radius: var(--r); color: var(--muted); }
@@ -1488,8 +1486,18 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 /* STUCK: fill the 16px above with the board's white (reaching over the group's own side
    borders, hence -1px and the 1px clip margin), and give the band a top edge of its own
    since the group's top border has scrolled away. See markStuck(). */
-.grp-head.stuck::before { content: ''; position: absolute; left: -1px; right: -1px; bottom: 100%; height: 17px; background: var(--surface); pointer-events: none; }
-.grp-head.stuck { box-shadow: inset 0 1px 0 var(--gh-line, var(--border)); }
+/* …and keep its ROUNDED top corners while it rides: the band is repainted as a rounded
+   layer (::after, edged like the group) over a white backing (::before) that runs from the
+   gap above down behind the band — so the corners show white, not the widgets scrolling
+   under. The header's own content is lifted above both. */
+.grp-head.stuck { background: transparent; }
+.grp-head.stuck::before { content: ''; position: absolute; left: -1px; right: -1px; top: -17px; bottom: 0; background: var(--surface); pointer-events: none; }
+.grp-head.stuck::after {
+  content: ''; position: absolute; left: -1px; right: -1px; top: 0; bottom: 0; pointer-events: none;
+  background: var(--gh-bg, var(--grp-head)); border: 1px solid var(--gh-line, var(--border)); border-bottom: none;
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+}
+.grp-head.stuck > * { position: relative; z-index: 1; }
 .group:has(> .grp-head.stuck) { overflow-clip-margin: 1px; }
 .grp-head:active { cursor: grabbing; }
 .grp-head button { cursor: pointer; }
@@ -1510,10 +1518,12 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
    exists only when a range is set, and then it is always visible — it reports a state. */
 .gh-act { width: 28px; height: 28px; padding: 0; border: none; background: transparent; color: inherit; opacity: .75; display: grid; place-items: center; border-radius: var(--r); }
 .gh-act:hover { opacity: 1; background: color-mix(in srgb, currentColor 10%, transparent); }
-.gh-hov { visibility: hidden; }
-.grp-head:hover .gh-hov, .grp-head.acting .gh-hov { visibility: visible; }
+/* + and ⋯ take NO room at rest (display, not visibility), so a set date chip sits hard
+   right; on hover they arrive and the chip steps left of them, instantly */
+.gh-hov { display: none; }
+.grp-head:hover .gh-hov, .grp-head.acting .gh-hov { display: grid; }
 /* the widget's calendar chip exactly: 22px, 13px icon, a filled --df tint (WidgetCard .df-btn) */
-.gh-act.gh-date { width: 22px; height: 22px; margin-right: 4px; opacity: 1; color: var(--df); background: var(--df-soft); }
+.gh-act.gh-date { width: 22px; height: 22px; margin: 0 3px; opacity: 1; color: var(--df); background: var(--df-soft); }
 .gh-act.gh-date:hover { background: var(--df-soft); color: var(--df-ink); }
 
 /* the body — widget padding is the group's own `pad` option */
@@ -1535,14 +1545,15 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .ge-sub { margin: 0; font-size: 13px; line-height: 1.45; color: var(--muted); max-width: 320px; }
 .grp-empty .btn { margin-top: 8px; }
 .grp-menu { position: fixed; z-index: 140; min-width: 188px; }
-/* arrival: the outline pulses once in the near-black, then settles back */
+/* arrival: the outline glows once, softly — a light slate ring and a faint halo, not the
+   solid near-black it started as (that read as an error/selection, not "you are here") */
 .group.g-flash { animation: gflash 1.2s ease-out; }
 @keyframes gflash {
   0%   { box-shadow: 0 0 0 0 transparent; }
-  20%  { box-shadow: 0 0 0 2px var(--sel), 0 0 0 6px color-mix(in srgb, var(--sel) 12%, transparent); }
+  20%  { box-shadow: 0 0 0 2px color-mix(in srgb, var(--sel) 22%, transparent), 0 0 0 7px color-mix(in srgb, var(--sel) 6%, transparent); }
   100% { box-shadow: 0 0 0 0 transparent; }
 }
-@media (prefers-reduced-motion: reduce) { .group.g-flash { animation: none; box-shadow: 0 0 0 2px var(--sel); } }
+@media (prefers-reduced-motion: reduce) { .group.g-flash { animation: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--sel) 22%, transparent); } }
 /* grouping-style demo switcher */
 .gstyle-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 12px; margin-bottom: 14px; background: var(--surface); border: 1px dashed var(--border-strong); border-radius: 4px; }
 .legend-bar .gsb-label em { font-style: normal; font-weight: 500; color: var(--muted); font-size: 11px; margin-left: 4px; }

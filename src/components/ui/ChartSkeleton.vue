@@ -12,6 +12,7 @@
  * Each kind mirrors what the board actually draws:
  *   line    → gridded plot, ringed point markers               (ChartTile's line)
  *   bar     → gridded plot, one series, no rounded caps        (ChartTile's column)
+ *   hbar    → the same turned on its side: categories down the left, bars across
  *   donut   → ring with the centre total, as every pie tile on the board renders
  *   stack   → gridded plot, four series stacked per category
  * The donut carries no axes, because that chart has none.
@@ -28,7 +29,7 @@
  * drives the whole drawing and both themes work from one declaration.
  */
 defineProps({
-  // line | bar | stack | donut
+  // line | bar | hbar | stack | donut
   kind: { type: String, required: true },
 })
 
@@ -67,7 +68,17 @@ const STACK_SEGS = STACK.flatMap((col, ci) => {
     return { x: ci * 25 + 8, y, h, cls: STACK_TONE[si], key: `${ci}-${si}` }
   })
 })
-const LINE_PTS = [[6, 38], [23.6, 26], [41.2, 30], [58.8, 16], [76.4, 20], [94, 12]]
+/* Horizontal bars (ChartTile's `hbar`): four categories down the side, each bar centred in
+   a 15-unit slot and about a third of it thick, growing from the value axis at x=0. The
+   grid turns with the chart — vertical rules, since the VALUE axis now runs across. */
+const HBARS = [
+  { y: 3.5, w: 82 },
+  { y: 18.5, w: 46 },
+  { y: 33.5, w: 64 },
+  { y: 48.5, w: 27 },
+]
+const GRID_X = [0, 25, 50, 75, 100]
+const LINE_PTS =[[6, 38], [23.6, 26], [41.2, 30], [58.8, 16], [76.4, 20], [94, 12]]
 const LINE_D = LINE_PTS.map((p, i) => `${i ? 'L' : 'M'}${p[0]},${p[1]}`).join(' ')
 const GRID_Y = [2, 16.5, 31, 45.5, 60]
 </script>
@@ -75,18 +86,29 @@ const GRID_Y = [2, 16.5, 31, 45.5, 60]
 <template>
   <div class="cs" aria-hidden="true">
     <!-- ── LINE and BAR: the same gridded frame, a different series ── -->
-    <template v-if="kind === 'line' || kind === 'bar' || kind === 'stack'">
+    <template v-if="kind === 'line' || kind === 'bar' || kind === 'stack' || kind === 'hbar'">
       <div class="cs-plot">
-        <div class="cs-yax">
-          <span v-for="(w, i) in Y_TICKS" :key="i" class="cs-stub" :style="{ width: w + 'px' }" />
+        <!-- hbar: one category pill per bar, centred on it; otherwise the value ticks -->
+        <div class="cs-yax" :class="{ cat: kind === 'hbar' }">
+          <span v-for="(w, i) in (kind === 'hbar' ? X_TICKS_BAR : Y_TICKS)" :key="i" class="cs-stub" :style="{ width: w + 'px' }" />
         </div>
         <svg class="cs-canvas" viewBox="0 0 100 60" preserveAspectRatio="none">
-          <!-- gridlines first, so the series sits over them -->
-          <path
-            v-for="(y, i) in GRID_Y" :key="'g' + i" class="cs-grid"
-            :d="`M0,${y} H100`" vector-effect="non-scaling-stroke"
-          />
-          <template v-if="kind === 'bar'">
+          <!-- gridlines first, so the series sits over them — vertical for hbar -->
+          <template v-if="kind === 'hbar'">
+            <path
+              v-for="(x, i) in GRID_X" :key="'gx' + i" class="cs-grid"
+              :d="`M${x},0 V60`" vector-effect="non-scaling-stroke"
+            />
+            <rect v-for="(b, i) in HBARS" :key="'hb' + i" class="cs-col" x="0" :y="b.y" :width="b.w" height="8" />
+          </template>
+          <template v-else>
+            <path
+              v-for="(y, i) in GRID_Y" :key="'g' + i" class="cs-grid"
+              :d="`M0,${y} H100`" vector-effect="non-scaling-stroke"
+            />
+          </template>
+          <template v-if="kind === 'hbar'" />
+          <template v-else-if="kind === 'bar'">
             <rect v-for="(b, i) in BARS" :key="'b' + i" class="cs-col" :x="b.x" :y="b.y" width="9" :height="b.h" />
           </template>
           <template v-else-if="kind === 'stack'">
@@ -111,9 +133,9 @@ const GRID_Y = [2, 16.5, 31, 45.5, 60]
            axis runs its first and last labels to the ends of the plot, under the first
            and last point. Same row, two different alignments, and using one for both
            puts every bar label off its bar. -->
-      <div class="cs-xax" :class="kind === 'line' ? 'val' : 'cat'">
+      <div class="cs-xax" :class="kind === 'line' || kind === 'hbar' ? 'val' : 'cat'">
         <span
-          v-for="(w, i) in (kind === 'line' ? X_TICKS_LINE : X_TICKS_BAR)" :key="i"
+          v-for="(w, i) in (kind === 'line' ? X_TICKS_LINE : kind === 'hbar' ? Y_TICKS : X_TICKS_BAR)" :key="i"
           class="cs-slot"
         ><i class="cs-stub" :style="{ width: w + 'px' }" /></span>
       </div>
@@ -159,6 +181,8 @@ const GRID_Y = [2, 16.5, 31, 45.5, 60]
 .cs-plot { flex: 1; min-height: 0; display: flex; gap: 6px; }
 /* space-between puts a tick against each gridline, which is what ties the two together */
 .cs-yax { width: 10px; flex: none; display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; }
+/* hbar: the categories sit one per bar, centred on its slot (bars at 1/8, 3/8, 5/8, 7/8) */
+.cs-yax.cat { justify-content: space-around; }
 .cs-canvas { flex: 1; min-width: 0; height: 100%; display: block; overflow: visible; }
 .cs-grid { stroke: var(--sk-grid); stroke-width: 1; fill: none; }
 .cs-col { fill: var(--sk-2); }
@@ -185,12 +209,10 @@ const GRID_Y = [2, 16.5, 31, 45.5, 60]
 .cs-donut-wrap { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
 /* sized off its own height so it stays round at every row height rather than becoming
    an ellipse in a wide card */
-/* 84%, not the full height. The line and bar spend part of their box on an axis and a
-   legend, so their plot never touches the card; the donut has no chrome to
-   share with and would grow until they pressed on both rules. Holding them back is what
-   makes the four tiles read as one set. */
+/* The full height of its box (it was 84%, and read as too small beside the charts). The
+   box already carries the skeleton's own 10px inset, so the ring still clears the card. */
 .cs-donut {
-  height: 84%; aspect-ratio: 1; border-radius: 50%; position: relative;
+  height: 100%; aspect-ratio: 1; border-radius: 50%; position: relative;
   background: conic-gradient(var(--sk-1) 0 142deg, var(--sk-2) 142deg 250deg, var(--sk-3) 250deg 318deg, var(--sk-2) 318deg 360deg);
 }
 /* the hole takes the CARD's colour, which is what makes this a ring and not a pie */

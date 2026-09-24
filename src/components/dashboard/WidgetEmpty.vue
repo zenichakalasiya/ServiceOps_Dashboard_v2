@@ -6,7 +6,7 @@
  * the SAME component rather than two copies that agree today. The copy itself lives in
  * `data/emptyStates.js`; this file owns only how it is laid out.
  *
- * The disc is 42px and the mark inside it 20px, with one grey line under it (no title). The mark is the tile's OWN chart artwork
+ * The disc is 42px and the mark inside it 24px, with one grey line under it (no title). The mark is the tile's OWN chart artwork
  * for an empty period — a ghost of the thing that would be there — and a plain semantic
  * glyph for a fault or unfinished setup, which are not about the widget's shape.
  */
@@ -28,9 +28,9 @@ defineEmits(['act'])
   <div class="we" :class="{ err: kind === 'error' }">
     <span class="we-disc">
       <!-- the tile's own chart shape for an empty period… -->
-      <ChartIcon v-if="state.art" :name="state.art" :size="20" />
+      <ChartIcon v-if="state.art" :name="state.art" :size="24" />
       <!-- …a semantic glyph for a fault or for setup that never happened -->
-      <Icon v-else :name="state.icon" :size="20" />
+      <Icon v-else :name="state.icon" :size="24" />
     </span>
     <!-- One grey line, no bold title: the widget's own header already names it. The
          title stays in data/emptyStates.js as the accessible label. -->
@@ -51,7 +51,7 @@ defineEmits(['act'])
   flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
   text-align: center; gap: 6px; color: var(--muted); padding: 14px;
 }
-/* 42px disc, 20px mark. A circle rather than the 4px rounded square this started as —
+/* 42px disc, 24px mark. A circle rather than the 4px rounded square this started as —
    a disc reads as a place the mark LIVES, where a small rounded rectangle inside a card
    reads as a second, smaller card. */
 .we-disc {
