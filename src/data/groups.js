@@ -16,7 +16,9 @@ import { FT_SIZES } from './freeText.js'
 
 export const GRP_BGS = [
   { id: 'Default', css: 'var(--bg)', ink: 'var(--ink)' },
-  { id: 'Transparent', css: 'transparent', ink: 'var(--ink)' },
+  // "Transparent" = the group's own white body. Painted, not see-through, because the
+  // header is sticky and a truly transparent one would show widgets scrolling under it.
+  { id: 'Transparent', css: 'var(--surface)', ink: 'var(--ink)' },
   { id: 'Gray', css: 'var(--surface-2)', ink: 'var(--ink)' },
   { id: 'Green', css: 'var(--green)', ink: '#fff' },
   { id: 'Blue', css: 'var(--primary)', ink: '#fff' },

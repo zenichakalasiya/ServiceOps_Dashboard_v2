@@ -200,7 +200,7 @@ positioned in viewport coordinates — follow that pattern for any new floating 
 | `components/dashboard/ExportDialog.vue` | Board Export — Image / PDF / Email as PDF. |
 | `components/ui/Hint.vue` | Info icon beside a field label, carrying what was once a one-liner. |
 | `data/groups.js` | A group's look: header colour, title size, alignment (default **centre**), padding, share. `grpHeadVars(g)` is the one resolver. The Default header colour is `--bg`, the widget header's own strip. |
-| `components/dashboard/GroupEditDrawer.vue` | Edit group: one field per row, applied live, and Cancel/Esc restores the snapshot. The group header's right side holds date · + · ⋯ (Edit / Clone / Ungroup / Delete, the menu flips up near the viewport bottom). An empty group is a dashed well. Ungrouped tiles still coexist with groups. |
+| `components/dashboard/GroupEditDrawer.vue` | Edit group: one field per row, applied live, and Cancel/Esc restores the snapshot. The group header's right side holds date · + · ⋯ (Edit / Clone / Ungroup / Delete, the menu flips up near the viewport bottom). An empty group is a dashed well. **Creating a group first wraps every loose widget** into a group of its own (`wrapLooseTiles`, named after the board if it is the first), as the reference does. Ungroup puts them back. The header is the drag handle and is **`position: sticky`**, so it holds the top while its group scrolls and hands off to the next. That needs `.group { overflow: clip }`: `hidden` would make the group a scroll container and kill the stick. |
 
 ## The AI assistant (`components/ai/AiAssistant.vue`)
 

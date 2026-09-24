@@ -94,20 +94,17 @@ function tilesIn(gid) {
     .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))   // pinned float to top
 }
 const addToGroup = ref(null)   // group id a newly-added widget should land in
-function addGroup(absorb = true) {
-  if (!d.value.groups) d.value.groups = []
+// Every new group first wraps the loose widgets (see wrapLooseTiles), then comes in empty.
+function addGroup() {
+  wrapLooseTiles()
   const g = { id: uid('g'), name: `New group ${d.value.groups.length + 1}`, collapsed: false, dateFilter: null }
-  const first = d.value.groups.length === 0
   d.value.groups.push(g)
-  // The very first group absorbs all currently-ungrouped widgets (canvas "New group").
-  // An Empty Group created from the Add-Widget flow (absorb=false) stays empty.
-  if (first && absorb === true) d.value.tiles.forEach((t) => { if (!t.group) t.group = g.id })
   dirty.value = true
   return g.id
 }
 // "Empty Group" card in the Add-Widget flow → make a genuinely empty group, then close.
 function onNewGroup() {
-  addGroup(false)
+  addGroup()
   showAdd.value = false; addToGroup.value = null
   toast('Empty group added — use its “Add widget” button to fill it', 'success')
 }
@@ -282,8 +279,24 @@ const showGroupCta = ref(false)       // post-release confirm CTA
 const marquee = ref({ active: false, l: 0, t: 0, w: 0, h: 0 })  // viewport coords (fixed overlay)
 let mqPending = null, mqStart = null
 // container-first: a labeled "Add group" makes an empty, collapsible group you fill later
-function insertEmptyGroup(i) {
+/* Creating a group gathers every loose widget first, as the reference does: the widgets
+   placed above the new group become a group of their own — named after the board when it
+   is the board's first group — so a grouped board is grouped all the way down. Ungroup
+   on that group puts them back. Returns how many groups it inserted at the top (0 or 1),
+   so a caller holding an index can shift it. */
+function wrapLooseTiles() {
   if (!d.value.groups) d.value.groups = []
+  const ids = new Set(d.value.groups.map((x) => x.id))
+  const loose = d.value.tiles.filter((t) => !t.group || !ids.has(t.group))
+  if (!loose.length) return 0
+  const name = d.value.groups.length ? `New group ${d.value.groups.length + 1}` : (d.value.name || 'Widgets')
+  const g = { id: uid('g'), name, collapsed: false, dateFilter: null }
+  d.value.groups.unshift(g)              // loose widgets render above every group
+  loose.forEach((t) => { t.group = g.id })
+  return 1
+}
+function insertEmptyGroup(i) {
+  i += wrapLooseTiles()
   const g = { id: uid('g'), name: `New group ${d.value.groups.length + 1}`, collapsed: false, dateFilter: null }
   d.value.groups.splice(i, 0, g)
   d.value.updated = new Date().toISOString(); dirty.value = true
@@ -1240,7 +1253,10 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
    the group ground with one 12px gutter. `overflow: hidden` rounds the band's corners —
    everything that must escape it (the ⋯ menu, the date popover) is teleported. */
 /* White body (the card surface), and an outline that follows the header colour. */
-.group { border: 1px solid var(--gh-line, var(--border)); border-radius: var(--r-lg); background: var(--surface); overflow: hidden; transition: box-shadow .15s, border-color .15s; }
+/* `overflow: clip`, NOT hidden: hidden makes the group a scroll container, and a sticky
+   header then sticks inside the group (never) instead of to the page. clip still rounds
+   the corners. */
+.group { border: 1px solid var(--gh-line, var(--border)); border-radius: var(--r-lg); background: var(--surface); overflow: clip; transition: box-shadow .15s, border-color .15s; }
 .group .cell > .tile { border-color: var(--border-strong); }
 .group.drop-into, .grid.drop-into { border: 1px solid var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); border-radius: var(--r-lg); }
 .grid.drop-into { padding: 4px; }
@@ -1258,6 +1274,12 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
   min-height: 40px; padding: 0 6px; background: var(--gh-bg, var(--bg)); color: var(--gh-ink, var(--ink));
   border-bottom: 1px solid var(--gh-line, var(--border));
   cursor: grab;
+  /* Sticky, as in the reference: while its group scrolls past, the header holds the top
+     of the page and the widgets slide under it; when the group's end arrives the header
+     leaves with it and the next group's header takes the top. A sticky element is bound
+     by its parent, so the hand-off needs no script. z-index clears the tiles' own layers
+     (resize grip 6). */
+  position: sticky; top: 0; z-index: 8;
 }
 .grp-head:active { cursor: grabbing; }
 .grp-head button { cursor: pointer; }
