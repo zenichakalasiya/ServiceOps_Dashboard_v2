@@ -95,9 +95,10 @@ function tilesIn(gid) {
     .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))   // pinned float to top
 }
 const addToGroup = ref(null)   // group id a newly-added widget should land in
-// Every new group first wraps the loose widgets (see wrapLooseTiles), then comes in empty.
+// A new group is just that group, empty. Widgets already on the board stay where they are,
+// ungrouped — the user decides what goes in it (drag, + in its header, or Move to group).
 function addGroup() {
-  wrapLooseTiles()
+  if (!d.value.groups) d.value.groups = []
   const g = { id: uid('g'), name: `New group ${d.value.groups.length + 1}`, collapsed: false, dateFilter: null }
   d.value.groups.push(g)
   dirty.value = true
@@ -279,25 +280,11 @@ const groupPicks = ref(new Set())     // currently-boxed tile ids
 const showGroupCta = ref(false)       // post-release confirm CTA
 const marquee = ref({ active: false, l: 0, t: 0, w: 0, h: 0 })  // viewport coords (fixed overlay)
 let mqPending = null, mqStart = null
-// container-first: a labeled "Add group" makes an empty, collapsible group you fill later
-/* Creating a group gathers every loose widget first, as the reference does: the widgets
-   placed above the new group become a group of their own — named after the board when it
-   is the board's first group — so a grouped board is grouped all the way down. Ungroup
-   on that group puts them back. Returns how many groups it inserted at the top (0 or 1),
-   so a caller holding an index can shift it. */
-function wrapLooseTiles() {
-  if (!d.value.groups) d.value.groups = []
-  const ids = new Set(d.value.groups.map((x) => x.id))
-  const loose = d.value.tiles.filter((t) => !t.group || !ids.has(t.group))
-  if (!loose.length) return 0
-  const name = d.value.groups.length ? `New group ${d.value.groups.length + 1}` : (d.value.name || 'Widgets')
-  const g = { id: uid('g'), name, collapsed: false, dateFilter: null }
-  d.value.groups.unshift(g)              // loose widgets render above every group
-  loose.forEach((t) => { t.group = g.id })
-  return 1
-}
+// container-first: a labeled "Add group" makes an empty, collapsible group you fill later.
+// Only that group — loose widgets are NOT gathered into a group of their own (removed
+// 2026-09-24: the user found an uninvited "Helpdesk Overview" group confusing).
 function insertEmptyGroup(i) {
-  i += wrapLooseTiles()
+  if (!d.value.groups) d.value.groups = []
   const g = { id: uid('g'), name: `New group ${d.value.groups.length + 1}`, collapsed: false, dateFilter: null }
   d.value.groups.splice(i, 0, g)
   d.value.updated = new Date().toISOString(); dirty.value = true

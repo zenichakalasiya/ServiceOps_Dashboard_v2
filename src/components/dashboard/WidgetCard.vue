@@ -606,7 +606,7 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
           </div>
           <button class="menu-item" @click="menu = false; present = true"><Icon name="maximize-tile" :size="15" /> Full screen</button>
           <button class="menu-item" @click="duplicate"><Icon name="copy" :size="15" /> Duplicate</button>
-          <button v-if="canMove" class="menu-item" @click="openMove"><Icon name="arrow-right" :size="15" /> Move to another group</button>
+          <button v-if="canMove" class="menu-item" @click="openMove"><Icon name="arrow-right" :size="15" /> {{ moveGroups.some((g) => g.id === tile.group) ? 'Move to another group' : 'Move to group' }}</button>
           <!-- divider between the widget's own actions and the export group -->
           <div class="menu-sep" />
           <!-- Export → submenu (Image / PDF / Email as PDF) -->
