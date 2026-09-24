@@ -34,7 +34,7 @@ import {
   ChartNoAxesColumnIncreasing, Zap, Send, Paperclip, Brain, Flag, Telescope, Crosshair,
   MonitorSmartphone, Shield, Boxes, PanelLeftOpen, PanelLeftClose, Bold, Italic, Underline,
   Strikethrough, Highlighter, Heading, Quote, Code, ListOrdered, IndentIncrease,
-  IndentDecrease, RemoveFormatting, StickyNote, SlidersHorizontal,
+  IndentDecrease, RemoveFormatting, StickyNote, SlidersHorizontal, ChevronsUpDown, CircleCheck,
 } from 'lucide-vue-next'
 
 export const ICON_MAP = {
@@ -114,6 +114,10 @@ export const ICON_MAP = {
   // Layout appearance — sliders, because this setting TUNES the board rather than
   // recolouring it; a paint palette would promise theming it does not do.
   appearance: SlidersHorizontal,
+  // a compact select's affordance (the legend filter's Value field, per the Figma)
+  updown: ChevronsUpDown,
+  // the chosen one of a pair of outlined chips (the builder's Manual / Query Based)
+  'check-circle': CircleCheck,
 }
 
 /** the only filled glyph in the set — a favourited star reads as filled, not outlined */
@@ -121,8 +125,8 @@ export const FILLED = new Set(['star-fill'])
 
 /** Shelving for the Icon Library page. Order here is the order on the page. */
 export const ICON_GROUPS = {
-  "Navigation & layout": ['chevron-up', 'chevron-down', 'chevron-left', 'chevron-right', 'arrow-left', 'open-in', 'menu', 'panel-left', 'panel-close', 'grid', 'list', 'rows', 'layout', 'template', 'sitemap', 'drag', 'rearrange', 'fullscreen', 'maximize-tile', 'minimize-tile'],
-  "Actions": ['plus', 'search', 'edit', 'pen', 'copy', 'trash', 'archive', 'restore', 'download', 'export', 'share', 'link', 'refresh', 'reset', 'undo', 'redo', 'filter', 'pin', 'check', 'x', 'send', 'attach', 'erase', 'cursor', 'wand', 'dots-v', 'dots-h', 'sort-asc', 'sort-desc', 'ungroup', 'new-group'],
+  "Navigation & layout": ['chevron-up', 'chevron-down', 'chevron-left', 'chevron-right', 'updown','arrow-left', 'open-in', 'menu', 'panel-left', 'panel-close', 'grid', 'list', 'rows', 'layout', 'template', 'sitemap', 'drag', 'rearrange', 'fullscreen', 'maximize-tile', 'minimize-tile'],
+  "Actions": ['plus', 'search', 'edit', 'pen', 'copy', 'trash', 'archive', 'restore', 'download', 'export', 'share', 'link', 'refresh', 'reset', 'undo', 'redo', 'filter', 'pin', 'check', 'check-circle','x', 'send', 'attach', 'erase', 'cursor', 'wand', 'dots-v', 'dots-h', 'sort-asc', 'sort-desc', 'ungroup', 'new-group'],
   "Status & feedback": ['info', 'alert', 'verified', 'clock', 'history', 'bell', 'flag', 'thumb-up', 'thumb-down', 'star', 'star-fill', 'eye', 'lock'],
   "Widgets & charts": ['kpi', 'table', 'chart-bar', 'chart-line', 'chart-pie', 'chart-area', 'chart-donut', 'chart-funnel', 'chart-pyramid', 'chart-hbar', 'chart-stack', 'chart-grouped', 'chart-multiline', 'chart-combo', 'chart-hist', 'chart-heatmap', 'chart-gauge', 'chart-text', 'chart-map', 'trend', 'auto-graph', 'insights'],
   "AI": ['sparkles', 'brain', 'bolt', 'research', 'target', 'chat'],

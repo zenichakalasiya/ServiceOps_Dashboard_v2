@@ -1064,22 +1064,25 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
       <transition name="fabpop">
         <div v-if="fabMenu" class="fab-menu">
           <!-- Generate with AI — the first, primary CTA (the full conversational create flow) -->
+          <!-- 2026-09-24 Figma: compact outlined pills, a small glyph inline, no coloured
+               discs and no separator; AI keeps its gradient edge and violet label -->
           <button class="fab-opt ai" @click="fabMenu = false; onCardAsk('createstart', 'Generate with AI')">
-            <span class="fo-ic ai"><Icon name="sparkles" :size="18" /></span> Generate with AI
+            <Icon name="sparkles" :size="14" /> Generate With AI
           </button>
-          <div class="fab-sep" />
           <button class="fab-opt" @click="fabMenu = false; store.ui.cloneTarget = null; store.ui.editTarget = null; store.ui.createOpen = true">
-            <span class="fo-ic dash"><Icon name="layout" :size="18" /></span> Create Dashboard
+            <Icon name="layout" :size="14" /> Create Dashboard
           </button>
           <button class="fab-opt" @click="fabMenu = false; addToGroup = null; showAdd = true">
-            <span class="fo-ic wid"><Icon name="chart-bar" :size="18" /></span> Create Widget
+            <Icon name="chart-bar" :size="14" /> Create Widget
           </button>
           <button v-if="gShowFabGroup" class="fab-opt" @click="fabMenu = false; addEmptyGroup()">
-            <span class="fo-ic grp"><Icon name="new-group" :size="18" /></span> Empty Group
+            <Icon name="new-group" :size="14" /> Empty Group
           </button>
         </div>
       </transition>
-      <button class="fab" :class="{ on: fabMenu }" @click="fabMenu = !fabMenu" title="Add"><Icon name="plus" :size="26" /></button>
+      <button class="fab" :class="{ on: fabMenu }" @click="fabMenu = !fabMenu" :title="fabMenu ? 'Close' : 'Add'" aria-label="Add">
+        <Icon :name="fabMenu ? 'x' : 'plus'" :size="18" />
+      </button>
     </div>
 
     <!-- the docked assistant panel — the shared destination every entry opens into -->
@@ -1366,7 +1369,6 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .ai-slide-enter-active, .ai-slide-leave-active { transition: transform .22s ease, opacity .22s ease; }
 .ai-slide-enter-from, .ai-slide-leave-to { transform: translateX(24px); opacity: 0; }
 @media (prefers-reduced-motion: reduce) { .ai-slide-enter-active, .ai-slide-leave-active { transition: none; } }
-.fo-ic.ai { background: var(--ai-grad); }
 .bg-toolbar { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
 /* ⑨ auto-group: segmented "Group by" control */
 .auto-seg { display: inline-flex; gap: 3px; background: var(--surface-2); padding: 3px; border-radius: 4px; border: 1px solid var(--border); }
@@ -1424,29 +1426,25 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .empty p b { color: var(--ink-2); font-weight: 600; }
 .big-cta { height: 40px; padding: 0 20px; font-size: 14px; }
 .missing { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 90px; color: var(--muted); }
-.fab-wrap { position: fixed; right: 26px; bottom: 26px; z-index: 40; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+/* 2026-09-24 Figma: a 32px near-black square (6px corners) that shows + and turns to ×,
+   with 28px outlined pills stacked 13px apart above it */
+.fab-wrap { position: fixed; right: 26px; bottom: 26px; z-index: 40; display: flex; flex-direction: column; align-items: flex-end; gap: 13px; }
 .fab-backdrop { position: fixed; inset: 0; z-index: -1; }
-.fab { position: relative; width: 56px; height: 56px; border-radius: 50%; border: none; background: var(--primary); color: #fff; display: grid; place-items: center; box-shadow: 0 8px 22px rgba(61,139,208,.42); transition: transform .18s, box-shadow .15s, background .15s; }
-.fab:hover { background: var(--primary-600); transform: translateY(-2px) scale(1.04); box-shadow: 0 12px 28px rgba(61,139,208,.5); }
-.fab:active { transform: translateY(0) scale(.98); }
-.fab.on { transform: rotate(45deg); }
+.fab { position: relative; width: 32px; height: 32px; padding: 0; border-radius: 6px; border: none; background: var(--sel); color: var(--sel-ink); display: grid; place-items: center; box-shadow: 0 4px 12px rgba(7,16,31,.22); transition: background .15s, box-shadow .15s; }
+.fab:hover { background: var(--sel-hover); box-shadow: 0 6px 16px rgba(7,16,31,.28); }
 /* ③/⑩ live inside this menu — tint it AI-purple and pulse so the entry is findable */
-.fab.ai-hint { background: var(--ai-grad); box-shadow: 0 8px 22px rgba(139,92,246,.42); animation: fabpulse 2.2s ease-in-out infinite; }
-@keyframes fabpulse { 0%, 100% { box-shadow: 0 8px 22px rgba(139,92,246,.42), 0 0 0 0 rgba(139,92,246,.35); } 50% { box-shadow: 0 8px 22px rgba(139,92,246,.42), 0 0 0 9px rgba(139,92,246,0); } }
+.fab.ai-hint { background: var(--ai-grad); box-shadow: 0 4px 12px rgba(139,92,246,.42); animation: fabpulse 2.2s ease-in-out infinite; }
+@keyframes fabpulse { 0%, 100% { box-shadow: 0 4px 12px rgba(139,92,246,.42), 0 0 0 0 rgba(139,92,246,.35); } 50% { box-shadow: 0 4px 12px rgba(139,92,246,.42), 0 0 0 9px rgba(139,92,246,0); } }
 @media (prefers-reduced-motion: reduce) { .fab.ai-hint { animation: none; } }
-.fab.on:hover { transform: rotate(45deg) translateY(-2px) scale(1.04); }
 /* slide-up menu above the FAB */
-.fab-menu { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
-.fab-opt { display: inline-flex; align-items: center; gap: 11px; height: 46px; padding: 0 18px 0 14px; border: 1px solid var(--border); background: var(--surface); color: var(--ink); border-radius: 999px; font-weight: 600; font-size: 13px; box-shadow: var(--sh-md); white-space: nowrap; }
-.fab-opt:hover { background: var(--surface-2); border-color: var(--primary); color: var(--primary-700); transform: translateY(-1px); }
-/* Generate with AI — primary CTA with the gradient border (blue→purple→pink) */
-.fab-opt.ai { border: 1.5px solid transparent; background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--ai-grad-line) border-box; color: var(--ai-ink); }
-.fab-opt.ai:hover { background: linear-gradient(var(--ai-soft), var(--ai-soft)) padding-box, var(--ai-grad-line) border-box; color: var(--ai-ink); transform: translateY(-1px); }
-.fab-sep { align-self: stretch; height: 1px; background: var(--border); margin: -2px 6px; opacity: .7; }
-.fo-ic { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; color: #fff; flex: none; }
-.fo-ic.dash { background: var(--primary); }
-.fo-ic.wid { background: var(--green); }
-.fo-ic.grp { background: var(--amber); }
+.fab-menu { display: flex; flex-direction: column; gap: 13px; align-items: flex-end; }
+.fab-opt { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px 0 8px; border: 1px solid var(--sel); background: var(--surface); color: var(--sel); border-radius: 6px; font-weight: 500; font-size: 12px; white-space: nowrap; box-shadow: var(--sh-sm); }
+.fab-opt:hover { background: var(--surface-2); }
+/* Generate With AI — the gradient edge (blue→purple→pink) and the violet label */
+.fab-opt.ai { padding-left: 6px; border: 1px solid transparent; background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--ai-grad-line) border-box; color: #7d1dfa; }
+.fab-opt.ai :deep(.ico) { color: var(--ai); opacity: .8; }
+.fab-opt.ai:hover { background: linear-gradient(var(--ai-softer), var(--ai-softer)) padding-box, var(--ai-grad-line) border-box; }
+[data-theme="dark"] .fab-opt.ai { color: var(--ai-ink); }
 .fabpop-enter-active { transition: opacity .2s ease, transform .22s cubic-bezier(.2,.8,.2,1); }
 .fabpop-leave-active { transition: opacity .14s ease, transform .14s ease; }
 .fabpop-enter-from, .fabpop-leave-to { opacity: 0; transform: translateY(16px); }

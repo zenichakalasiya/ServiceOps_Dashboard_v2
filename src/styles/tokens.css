@@ -129,6 +129,19 @@
   --placeholder: #9ca3af;      /* Placeholder / disabled / empty values */
   --muted-2: #9ca3af;          /* legacy alias of --placeholder; same role */
 
+  /* SELECTED + PRIMARY — the design system's near-black (Figma "core/black").
+     2026-09-24: the chosen segment, the chosen tile edge and every primary button are
+     this, not the blue (per the "Change UI by given instructions" Figma). Blue stays for
+     links, focus and charts. Dark inverts it, as the Figma variables do: a light chip
+     with near-black text. */
+  --sel: #07101f;
+  --sel-hover: #1d2a3e;
+  --sel-ink: #ffffff;
+  /* the grey track a segmented control sits in (Figma "switch-bg") */
+  --seg-track: #eef2f6;
+  /* field labels and helper text in the builder (Figma "text/subdued") */
+  --label: #8e9fbc;
+
   /* Radius — §3.1. The tiers are the point: a CONTROL and a SURFACE must not share a
      corner, because the difference is what tells you which one you can click.
        4px  every interactive control — buttons, inputs, selects, tabs, pills, chips
@@ -240,6 +253,12 @@
   --muted: #8e90a6;
   --muted-2: #6a6c80;
   --placeholder: #8a8ca2;
+
+  --sel: #e3e8f2;
+  --sel-hover: #cad3e2;
+  --sel-ink: #07101f;
+  --seg-track: #25252f;
+  --label: #8e90a6;
 
   --sh-sm: 0 1px 2px rgba(0,0,0,.4);
   --sh: 0 4px 14px rgba(0,0,0,.45);

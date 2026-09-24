@@ -1,6 +1,7 @@
 <script setup>
 import { reactive, computed, ref } from 'vue'
 import Icon from '../ui/Icon.vue'
+import ChartIcon from '../ui/ChartIcon.vue'
 import Dropdown from '../ui/Dropdown.vue'
 import ColorPicker from '../ui/ColorPicker.vue'
 import DateRangePicker from '../ui/DateRangePicker.vue'
@@ -546,7 +547,7 @@ function save(place) {
                   v-for="f in FAMILIES" :key="f.id" class="seg-b"
                   :class="{ on: familyOn(f) }" :title="`Build a ${f.label}`" @click="pickFamily(f)"
                 >
-                  <Icon :name="f.icon" :size="16" /> {{ f.label }}
+                  <Icon :name="f.icon" :size="14" /> {{ f.label }}
                 </button>
               </div>
             </div>
@@ -569,14 +570,16 @@ function save(place) {
           <!-- RIGHT: scrollable config (ServiceOps fields) -->
           <aside class="config">
             <div class="cfg-scroll">
-              <!-- predefined widget: only the chart type + Highlights (both below) can change -->
-              <div v-if="predefinedEdit" class="sec pe-note">
-                <Icon name="verified" :size="15" />
+              <!-- predefined widget: an info line, then ONLY what can change — Chart Type
+                   (Bar/Column/Line) and Highlights. 2026-09-24 Figma: the read-only details
+                   (name, module, visibility) are no longer listed under it. -->
+              <div v-if="predefinedEdit" class="pe-note">
+                <Icon name="info" :size="14" />
                 <span v-if="frozenType">
-                  This is a <b>predefined {{ curType.label }}</b>. Its details are shown below <b>read-only</b>, its type can’t be changed, and only <b>Highlights</b> are editable.
+                  This is a <b>predefined {{ curType.label }}</b> — its type can’t be changed, and only <b>Highlights</b> below are editable.
                 </span>
                 <span v-else>
-                  This is a <b>predefined</b> widget. Its details are shown below <b>read-only</b>; you can change its <b>Chart Type</b> (within its family) and <b>Highlights</b>.
+                  This is a <b>predefined {{ curType.label }}</b> — you can switch its <b>Chart Type</b>, and only <b>Highlights</b> below are editable.
                 </span>
               </div>
               <!-- Editing a switchable chart (Bar/Column/Line): the type switch lives here as
@@ -589,9 +592,9 @@ function save(place) {
                 <div class="kinds">
                   <button
                     v-for="t in editTabs" :key="t.id" class="kind"
-                    :class="{ on: curType.id === t.id }" :title="`Show as ${t.label}`" @click="pickKind(t)"
+                    :class="{ on: curType.id === t.id }" :title="`Show as ${t.label}`" :aria-label="t.label" @click="pickKind(t)"
                   >
-                    <Icon :name="t.icon" :size="22" :class="{ rot90: t.id === 'bar' }" />
+                    <ChartIcon :name="t.id" :size="40" />
                   </button>
                 </div>
               </div>
@@ -603,7 +606,7 @@ function save(place) {
                    way it is drawn. On a predefined widget it is shown read-only: a native
                    disabled <fieldset> switches off every control inside it, including the
                    ones in nested components, which per-field :disabled could not reach. -->
-              <fieldset class="ro-fs" :disabled="predefinedEdit">
+              <fieldset v-if="!predefinedEdit" class="ro-fs">
               <div v-if="!isText" class="sec">
                 <div class="sec-h">{{ isShortcut ? 'Basic Shortcut Details' : 'Basic Widget Details' }}</div>
                 <div class="grid2">
@@ -626,15 +629,13 @@ function save(place) {
               <div class="sec">
                 <div class="sec-h">Visibility &amp; sharing</div>
                 <label class="acc-lbl">Widget Access Level <i v-if="!predefinedEdit">*</i></label>
-                <div class="seg fill" :class="{ ro: predefinedEdit }">
+                <div class="seg fill acc-seg">
                   <button
                     v-for="(a, k) in ACCESS" :key="k" class="seg-b" :class="{ on: cfg.access === k }"
-                    :disabled="predefinedEdit" @click="cfg.access = k"
-                  >
-                    <Icon :name="a.icon" :size="15" /> {{ a.label }}
-                  </button>
+                    @click="cfg.access = k"
+                  >{{ a.label }}</button>
                 </div>
-                <p class="hint acc-note"><Icon name="info" :size="13" /> {{ ACC_DESC[cfg.access] }}</p>
+                <p class="acc-note"><Icon name="info" :size="14" /> {{ ACC_DESC[cfg.access] }}</p>
                 <div v-if="cfg.access === 'restricted'" class="grid2" style="margin-top:12px">
                   <div class="fld"><label>Technician Access Level <i>*</i></label><Dropdown v-model="cfg.techAccess" :options="store.owners" :multiple="true" placeholder="Select technicians" /></div>
                   <div class="fld"><label>Technician Group Access Level <i>*</i></label><Dropdown v-model="cfg.groupAccess" :options="GROUP_OPTS" placeholder="Select" /></div>
@@ -671,7 +672,7 @@ function save(place) {
                       v-for="k in g.types" :key="k.id" class="kind"
                       :class="{ on: curType.id === k.id }" :title="k.label" :aria-label="k.label" @click="pickKind(k)"
                     >
-                      <Icon :name="k.icon" :size="22" :class="{ rot90: k.id === 'bar' }" />
+                      <ChartIcon :name="k.id" :size="40" />
                     </button>
                   </div>
                 </div>
@@ -679,11 +680,13 @@ function save(place) {
                   <!-- 26px, not 14: Manual / Query Based is a different question from the
                        chart type above it — how the data is fetched, not how it is drawn —
                        and at 14 it read as a fifth row of the Chart Type control. -->
-                  <div class="seg" style="margin-top:26px">
-                    <button class="seg-b" :class="{ on: cfg.mode==='manual' }" @click="cfg.mode='manual'">Manual</button>
-                    <button class="seg-b" :class="{ on: cfg.mode==='query' }" @click="cfg.mode='query'">Query</button>
+                  <!-- 2026-09-24 Figma: two outlined chips, the chosen one edged near-black
+                       with a check — not the segmented track -->
+                  <div class="mode-row" style="margin-top:20px">
+                    <button class="mode-b" :class="{ on: cfg.mode==='manual' }" @click="cfg.mode='manual'">Manual <Icon v-if="cfg.mode==='manual'" name="check-circle" :size="13" /></button>
+                    <button class="mode-b" :class="{ on: cfg.mode==='query' }" @click="cfg.mode='query'">Query Based <Icon v-if="cfg.mode==='query'" name="check-circle" :size="13" /></button>
                   </div>
-                  <p class="hint" style="margin-top:8px">{{ modeHint }}</p>
+                  <p class="hint" style="margin-top:6px">{{ modeHint }}</p>
                 </template>
               </div>
               <!-- families without a chart type still need the Manual / Query switch -->
@@ -692,9 +695,9 @@ function save(place) {
                    Axes. It asks how the data is FETCHED, so it says so. -->
               <div v-else-if="!isShortcut && !isText" class="sec">
                 <div class="sec-h">Data source</div>
-                <div class="seg">
-                  <button class="seg-b" :class="{ on: cfg.mode==='manual' }" @click="cfg.mode='manual'">Manual</button>
-                  <button class="seg-b" :class="{ on: cfg.mode==='query' }" @click="cfg.mode='query'">Query</button>
+                <div class="mode-row">
+                  <button class="mode-b" :class="{ on: cfg.mode==='manual' }" @click="cfg.mode='manual'">Manual <Icon v-if="cfg.mode==='manual'" name="check-circle" :size="13" /></button>
+                  <button class="mode-b" :class="{ on: cfg.mode==='query' }" @click="cfg.mode='query'">Query Based <Icon v-if="cfg.mode==='query'" name="check-circle" :size="13" /></button>
                 </div>
               </div>
 
@@ -1008,8 +1011,8 @@ function save(place) {
               </fieldset>
               <div v-if="(manualMode && !isNewKind && !isText) || predefinedEdit" class="sec">
                 <div class="sec-h">Highlights</div>
-                <p class="hint">Color the value when it crosses a threshold.</p>
-                <button class="add-line"><Icon name="plus" :size="14" /> Add Highlights</button>
+                <p class="hint">Color the number when it crosses a threshold.</p>
+                <button class="add-line"><Icon name="plus" :size="13" /> Add Highlights</button>
               </div>
             </div>
 
@@ -1029,7 +1032,7 @@ function save(place) {
                 <!-- the prototype leads with the place-it action, then the plain create,
                      then Cancel — placing is the common case, so it takes the emphasis -->
                 <button class="btn btn-primary" :disabled="!canSave" :title="ctaHint" @click="save(true)">{{ prefix }} &amp; Add to Dashboard</button>
-                <button class="btn commit" :disabled="!canSave" :title="ctaHint" @click="save(false)">{{ prefix }}</button>
+                <button class="btn btn-primary" :disabled="!canSave" :title="ctaHint" @click="save(false)">{{ prefix }}</button>
               </template>
               <button class="btn" @click="emit('close')">Cancel</button>
             </footer>
@@ -1047,10 +1050,9 @@ function save(place) {
 <style scoped>
 .overlay { position: fixed; inset: 0; background: rgba(20,21,38,.5); backdrop-filter: blur(2px); z-index: 120; display: grid; place-items: center; padding: 16px; }
 .builder { width: 100%; height: 100%; background: var(--surface); border-radius: var(--r-xl); box-shadow: var(--sh-lg); display: flex; flex-direction: column; overflow: hidden; }
-.bhead { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); flex: none; }
-/* the dialog title type from global.css — this header is a .bhead rather than a .dlg-head,
-   but it is the same kind of thing and should not read as a smaller one */
-.btitle { margin: 0; font-size: 17px; font-weight: 700; }
+/* 2026-09-24 Figma: a 46px header band, 12px inset, 16px medium title */
+.bhead { display: flex; align-items: center; justify-content: space-between; height: 46px; padding: 0 8px 0 12px; border-bottom: 1px solid var(--border); flex: none; }
+.btitle { margin: 0; font-size: 16px; font-weight: 500; }
 .hacts { display: flex; gap: 2px; }
 .ic { width: 34px; height: 32px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .ic:hover { background: var(--surface-2); color: var(--ink); }
@@ -1070,7 +1072,8 @@ function save(place) {
    The bottom 12 stays. It is not the same spacing: with the left/right 12 on .pv-card it is
    the frame the preview card sits in, and dropping it would put the card hard against the
    foot of the pane. Only the top was doubling up. */
-.preview { flex: 1.5; display: flex; flex-direction: column; min-width: 0; padding: 0 0 12px; background: var(--surface-2); }
+/* Figma: the preview side is white — the card inside it carries the border */
+.preview { flex: 1.5; display: flex; flex-direction: column; min-width: 0; padding: 12px 0; background: var(--surface); }
 /* One segmented control on a soft track with the active family filled near-black — the
    same control the reference uses for every either/or in this panel (family, access,
    Manual/Query, Top/Bottom/All). Four loose outlined buttons with a blue fill read as
@@ -1084,7 +1087,8 @@ function save(place) {
    16 rather than the 8 that centring alone would have given: the space UNDER the switcher was
    never the problem, so the fix adds a matching gap above instead of splitting the existing
    one in half. */
-.pv-top { display: flex; align-items: center; gap: 12px; height: 62px; padding: 0 12px; flex: none; }
+/* Figma: the family track 12px from the pane's edges, the preview card 10px under it */
+.pv-top { display: flex; align-items: center; gap: 12px; padding: 0 12px 10px; flex: none; }
 /* .seg carries `align-self: flex-start` globally, which is what stops it stretching to full
    width inside the COLUMN form layouts it usually lives in. This row is a flex ROW, so the
    cross axis is vertical and that same declaration pins it to the top. It arrived when the
@@ -1107,14 +1111,15 @@ function save(place) {
 /* A group of kinds: a quiet caption over its own row of squares. The caption is
    deliberately lighter and smaller than .sec-h — "Chart Type" is the field, these
    are subdivisions of it, and matching weights would have read as four fields. */
-.kind-grp + .kind-grp { margin-top: 14px; }
-.kind-grp-h { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
-.kinds { display: flex; flex-wrap: wrap; gap: 10px; }
-.kind { flex: none; display: grid; place-items: center; width: 56px; height: 50px; padding: 0; border: 1px solid var(--border-control); background: var(--surface); color: var(--ink-2); border-radius: var(--r-lg); transition: border-color .15s, color .15s; }
-.kind:hover { border-color: var(--muted-2); color: var(--ink); }
-/* selected: the primary, as an edge and a wash — the same statement the pills make */
-.kind.on { border: 1.5px solid var(--primary); background: var(--primary-softer); color: var(--primary-700); }
-.kind .rot90 { transform: rotate(90deg); }
+.kind-grp + .kind-grp { margin-top: 12px; }
+.kind-grp-h { font-size: 11px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; color: var(--label); margin-bottom: 6px; }
+/* 2026-09-24 Figma: 56×50 tiles, 8px corners, 8px apart, each carrying the chart's
+   illustrated artwork (ChartIcon) rather than a line glyph */
+.kinds { display: flex; flex-wrap: wrap; gap: 8px; }
+.kind { flex: none; display: grid; place-items: center; width: 56px; height: 50px; padding: 0; border: 1px solid var(--border-control); background: var(--surface); color: var(--picker-ico); border-radius: var(--r-lg); transition: border-color .15s, color .15s, background .15s; }
+.kind:hover { border-color: var(--muted-2); }
+/* selected: a near-black edge on a faint fill, the artwork darkening with it */
+.kind.on { border-color: var(--sel); background: var(--surface-2); color: var(--ink); }
 .pv-card { position: relative; flex: 1; margin: 0 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-sm); display: flex; flex-direction: column; overflow: hidden; }
 .pv-canvas { flex: 1; display: grid; place-items: center; padding: 22px; min-height: 0; }
 .pv-canvas > * { width: 100%; }
@@ -1127,7 +1132,7 @@ function save(place) {
    none: the note's inset is its own `pad` option. */
 .pv-card:has(.pv-text) { background: var(--surface); border-color: var(--border); padding: 0; overflow: hidden; }
 .pv-card:has(.pv-text) .pv-text { height: 100%; }
-.pv-kpi { font-size: 72px; font-weight: 700; letter-spacing: -2px; text-align: center; }
+.pv-kpi { font-size: 72px; font-weight: 500; letter-spacing: -2px; text-align: center; }
 .pv-tbl { width: 100%; border-collapse: collapse; font-size: 13px; align-self: start; }
 .pv-tbl th { text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .4px; padding: 7px 10px; border-bottom: 1px solid var(--border); }
 .pv-tbl td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
@@ -1136,7 +1141,11 @@ function save(place) {
    of the preview's own right padding — the two together read as an undivided drift
    rather than as two regions. Fields keep 20px off the rule so they do not touch it. */
 .config { width: 480px; flex: none; display: flex; flex-direction: column; min-height: 0; border-left: 1px solid var(--border); }
-.cfg-scroll { flex: 1; overflow: auto; padding: 18px 20px; }
+.cfg-scroll { flex: 1; overflow: auto; padding: 12px 12px 12px 16px; }
+/* 2026-09-24 Figma: 30px fields with 12px type and 4px corners, throughout the panel */
+.config .input { height: 30px; font-size: 12px; }
+.config textarea.input { height: auto; }
+.config :deep(.dd-btn) { height: 30px; font-size: 12px; }
 /* No rules between sections — the config sidebar had one under every section, so a Gauge
    scrolled past six or seven of them. Each heading is already a bold line with space above
    it; the rule was drawing a border around something the type had already separated.
@@ -1145,10 +1154,9 @@ function save(place) {
 /* A section owns its own bottom space. Its LAST child was adding a 12px margin on top
    of that, so the gap between two sections was 22px or 34px depending on whether the
    section happened to end in a field, a hint or a toggle. */
-.sec { padding-bottom: 22px; margin-bottom: 0; border-bottom: none; }
+/* 20px between sections, as the Figma spaces them */
+.sec { padding-bottom: 20px; margin-bottom: 0; border-bottom: none; }
 .sec > *:last-child { margin-bottom: 0; }
-/* the predefined note is a banner, not a section — it sits closer to what it introduces */
-.sec.pe-note { padding-bottom: 10px; margin-bottom: 18px; }
 /* Manage Legend — the segmented control and the value field share the row and fill it
    together, both at input height. The value box was 74px, which is a box for a number
    rather than a field you are asked to fill in. */
@@ -1178,8 +1186,11 @@ function save(place) {
 .tgl.on i { left: 38px; background: var(--green); }
 .tgl.on b { right: auto; left: 9px; color: var(--green); }
 
-.pe-note { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; color: var(--primary-700); background: var(--primary-softer); border: 1px solid var(--primary-soft); border-radius: 4px; padding: 10px 12px; }
-.pe-note :deep(.ico) { flex: none; margin-top: 1px; }
+/* the predefined info line — Figma: a quiet grey band at the top of the panel, info glyph,
+   ink text with the two facts in bold, 20px above the first section */
+.pe-note { display: flex; align-items: flex-start; gap: 6px; font-size: 11px; line-height: 1.45; color: var(--ink); background: var(--surface-2); border: none; border-radius: var(--r); padding: 6px 8px; margin-bottom: 20px; }
+.pe-note :deep(.ico) { flex: none; margin-top: 1px; color: var(--ink-2); }
+.pe-note b { font-weight: 600; }
 /* Duplicate-name warning. It belongs to the Name field, so it hugs it: the top
  * margin pulls back most of the field's 12px, and the gap it owns sits *below*.
  * It used to be the other way round — 16px above, 0 below — which read as though
@@ -1198,7 +1209,8 @@ function save(place) {
    the trailing 22px at the very bottom keeps the last control off the footer. */
 /* 14px matches Create/Edit Dashboard — the two panels sit one click apart and were
    using different heading sizes for the same level of heading. */
-.sec-h { font-weight: 600; font-size: 15px; color: var(--ink); margin-bottom: 12px; }
+/* Figma: a 14px medium heading, 12px above its fields */
+.sec-h { font-weight: 500; font-size: 14px; color: var(--ink); margin-bottom: 12px; }
 /* heading and its action on one line, the action right-aligned */
 .q-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 5px; }
 /* ── Free Text ── */
@@ -1220,14 +1232,15 @@ function save(place) {
    of the builder uses — the icons were 15px marks in a stretched strip, which read as
    cramped next to the 36px fields above them. `flex: none` keeps them square rather than
    letting the row stretch them into slabs. */
-.seg-b.ft-ic { flex: none; width: 32px; height: 32px; display: grid; place-items: center; padding: 0; }
+.seg-b.ft-ic { flex: none; width: 28px; height: 24px; display: grid; place-items: center; padding: 0; }
 /* a heading that OWNS the line under it sits tight to it — 12px of air between a title
    and its own description reads as two separate things */
-.sec-h:has(+ .hint) { margin-bottom: 5px; }
+.sec-h:has(+ .hint) { margin-bottom: 2px; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .fld { display: flex; flex-direction: column; margin-bottom: 12px; }
 .fld:last-child { margin-bottom: 0; }
-.fld label { font-size: 12px; font-weight: 500; color: var(--ink-2); margin-bottom: 5px; }
+/* Figma: field labels are the subdued 12px, 4px over their field */
+.fld label { font-size: 12px; font-weight: 400; color: var(--label); margin-bottom: 4px; }
 .fld label i { color: var(--red); font-style: normal; }
 .selw { position: relative; }
 .selw select { appearance: none; padding-right: 30px; cursor: pointer; }
@@ -1236,10 +1249,11 @@ function save(place) {
    follows a segmented control is the configuration it governs, so it belongs against it. */
 /* No top margin. A hint is the DESCRIPTION of the heading above it, not a paragraph in
    its own right — it belongs against that heading, with the air below the pair. */
-.hint { font-size: 12px; color: var(--muted); margin: 0 0 10px; }
-/* Visibility & Sharing — the same three-way control the dashboard panel uses, sized for
-   the narrower config column (the board's 38px pills would crowd it). */
-.acc-lbl { display: block; font-size: 12px; font-weight: 500; color: var(--ink-2); margin-bottom: 6px; }
+.hint { font-size: 12px; color: var(--label); margin: 0 0 12px; }
+/* Visibility & Sharing — Figma: a 276px switch (three equal segments), then the grey
+   note band under it */
+.acc-lbl { display: block; font-size: 12px; font-weight: 500; color: var(--label); margin-bottom: 6px; }
+.acc-seg { width: 276px; max-width: 100%; }
 .acc-lbl i { color: var(--red); font-style: normal; }
 
 /* Read-only, on a predefined widget. The value stays legible — showing WHAT it is set
@@ -1256,7 +1270,14 @@ function save(place) {
   background: var(--surface-2); color: var(--ink-2); cursor: default;
   border-color: var(--border); -webkit-text-fill-color: var(--ink-2); opacity: 1;
 }
-.acc-note { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; }
+.acc-note { display: inline-flex; align-items: center; gap: 10px; margin: 6px 0 0; padding: 6px 10px; border-radius: var(--r); background: var(--surface-2); font-size: 10px; color: var(--label); }
+.acc-note :deep(.ico) { flex: none; color: var(--label); }
+/* Manual / Query Based — two outlined chips; the chosen one edged near-black, with a check */
+.mode-row { display: flex; gap: 6px; }
+.mode-b { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border: 1px solid var(--border-control); border-radius: var(--r); background: var(--surface); color: var(--ink); font-size: 12px; font-weight: 400; }
+.mode-b:hover { border-color: var(--muted-2); }
+.mode-b.on { border-color: var(--sel); font-weight: 500; }
+.mode-b.on :deep(.ico) { color: var(--sel-ink); fill: var(--sel); }
 .open-dd { display: flex; flex-direction: column; gap: 3px; border: 1px solid var(--primary-soft); border-radius: 4px; padding: 5px; background: var(--primary-softer); }
 .dd-opt { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border: none; background: transparent; border-radius: 4px; font-size: 13px; text-align: left; }
 .dd-opt:hover { background: var(--surface); } .dd-opt.on { background: var(--surface); color: var(--primary-700); font-weight: 600; }
@@ -1264,8 +1285,9 @@ function save(place) {
 .sw { width: 38px; height: 22px; border-radius: 999px; border: none; background: var(--border-strong); position: relative; transition: background .15s; }
 .sw i { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: var(--sh-sm); }
 .sw.on { background: var(--primary); } .sw.on i { left: 18px; }
-.add-line { display: inline-flex; align-items: center; gap: 6px; border: 1px dashed var(--border-strong); background: transparent; border-radius: 4px; padding: 8px 12px; font-size: 13px; font-weight: 500; color: var(--primary-700); }
-.add-line:hover { background: var(--primary-softer); }
+/* Figma "+ Add Highlights": an outlined button edged in the near-black */
+.add-line { display: inline-flex; align-items: center; gap: 4px; height: 26px; border: 1px solid var(--sel); background: var(--surface); border-radius: var(--r); padding: 0 8px; font-size: 12px; font-weight: 500; color: var(--sel); }
+.add-line:hover { background: var(--surface-2); }
 .sec-h .req { color: var(--red); font-style: normal; }
 /* the derived-title note under the editor — states what the note will be filed as, so
    the missing Name field never reads as something that was forgotten */
@@ -1276,15 +1298,9 @@ function save(place) {
 .pv-kpi .u { font-size: 28px; font-weight: 600; color: var(--muted); margin-left: 4px; }
 .spin { animation: bsp .7s linear infinite; } @keyframes bsp { to { transform: rotate(360deg); } }
 .qrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 9px; }
-/* .btn-primary is NOT overridden here any more. It was repainted near-black on the grounds
-   that the design reference drew it that way; the effect was a scoped rule quietly beating
-   the global one, so this footer was the only place in the app where the primary button was
-   not the primary colour.
-
-   `.commit` is the second of two primaries in this row — same verb, different destination —
-   so it takes the primary look by class rather than by a local repaint. */
-.cfg-foot .btn.commit { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 600; }
-.cfg-foot .btn.commit:hover:not(:disabled) { background: var(--primary-600); border-color: var(--primary-600); }
+/* Footer — Figma: 30px buttons, 12px medium labels; both creates are the global primary
+   (near-black), Cancel the outlined default. No local repaint of .btn-primary. */
+.cfg-foot .btn { height: 30px; padding: 0 12px; font-size: 12px; }
 @media (max-width: 900px) {
   .bbody { flex-direction: column; }
   .preview { flex: none; height: 240px; border-right: none; }

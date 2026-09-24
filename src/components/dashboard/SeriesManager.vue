@@ -125,7 +125,7 @@ watch(rows, () => { pickFor.value = null })
           class="sw" :class="{ open: pickFor === e.key }" :style="{ background: e.color }"
           :title="`Change ${e.name}’s colour`" @click.stop="openPick(e.key, $event)"
         />
-        <span class="nm">{{ e.name }}: {{ pct(e.value) }}%</span>
+        <span class="nm"><span class="nm-k">{{ e.name }}</span>: {{ pct(e.value) }}%</span>
       </div>
       <div v-if="!rows.length" class="sm-empty">No series match “{{ q }}”</div>
     </div>
@@ -157,10 +157,12 @@ watch(rows, () => { pickFor.value = null })
 </template>
 
 <style scoped>
-.sm { display: flex; flex-direction: column; min-height: 0; gap: 6px; font-size: 12px; }
+/* 2026-09-24 Figma: no rules inside the panel — the list, then a quiet "n / N is shown" */
+.sm { display: flex; flex-direction: column; min-height: 0; gap: 8px; font-size: 11px; }
 
-/* one row: either the sort header (with a search icon) or the expanded search box */
-.sm-bar { display: flex; align-items: center; gap: 6px; min-height: 28px; padding: 0 2px 2px; border-bottom: 1px solid var(--border); flex: none; }
+/* the search affordance (All only), or the expanded search box */
+.sm-bar { display: flex; align-items: center; justify-content: flex-end; gap: 6px; padding: 0; flex: none; }
+.sm-bar:empty { display: none; }
 .si { border: none; background: transparent; color: var(--muted); display: grid; place-items: center; padding: 3px; border-radius: 4px; flex: none; }
 .si:hover { background: var(--surface-2); color: var(--primary-700); }
 
@@ -175,13 +177,14 @@ watch(rows, () => { pickFor.value = null })
 .sh.on { color: var(--primary); }
 
 /* virtualisation would go here for 1000+ series; 63 scrolls fine */
-.sm-list { flex: 1; overflow: auto; min-height: 0; }
-.sm-row { display: flex; align-items: center; gap: 7px; padding: 4px; border-radius: 4px; cursor: pointer; user-select: none; }
+.sm-list { flex: 1; overflow: auto; min-height: 0; display: flex; flex-direction: column; gap: 4px; }
+/* Figma: an 11px square swatch, 6px to the label; rows 12px apart (4px here + 4px padding each side) */
+.sm-row { display: flex; align-items: center; gap: 6px; padding: 4px 2px; border-radius: 4px; cursor: pointer; user-select: none; }
 .sm-row:hover { background: var(--surface-2); }
 .sm-row.off { opacity: .38; }
 .sm-row.off .nm { text-decoration: line-through; }
-/* the swatch is a control, so it says so on hover — a bare 10px block reads as a bullet */
-.sw { width: 12px; height: 12px; border-radius: 3px; flex: none; padding: 0; border: none; cursor: pointer; box-shadow: 0 0 0 0 var(--primary-soft); transition: box-shadow .12s, transform .12s; }
+/* the swatch is a control, so it says so on hover — a bare 11px block reads as a bullet */
+.sw { width: 11px; height: 11px; border-radius: 2px; flex: none; padding: 0; border: none; cursor: pointer; box-shadow: 0 0 0 0 var(--primary-soft); transition: box-shadow .12s, transform .12s; }
 .sm-row:hover .sw { box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--border-strong); }
 .sw:hover, .sw.open { transform: scale(1.15); box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--primary) !important; }
 
@@ -199,13 +202,17 @@ watch(rows, () => { pickFor.value = null })
 .cp-cl { flex: 1; }
 /* the native input is the escape hatch, not the affordance — it sits invisibly over the row */
 .cp-custom input { position: absolute; inset: 0; opacity: 0; width: 100%; cursor: pointer; }
-.nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-2); }
+/* the name in slate, the share after it in ink — the Figma's two-tone label */
+.nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+.nm-k { color: #516381; }
+[data-theme="dark"] .nm-k { color: var(--ink-2); }
 .vl { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
 .pc { width: 42px; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
 .sm-empty { padding: 14px; text-align: center; color: var(--muted-2); }
 
-.sm-foot { display: flex; align-items: center; gap: 6px; padding-top: 5px; border-top: 1px solid var(--border); color: var(--muted); font-size: 11px; flex: none; }
-.sm-foot b { color: var(--ink); }
+.sm-foot { display: flex; align-items: center; gap: 4px; padding-top: 2px; color: #6a7fa0; font-size: 10px; line-height: 1.36; flex: none; }
+.sm-foot b { color: inherit; font-weight: 400; }
+[data-theme="dark"] .sm-foot { color: var(--muted); }
 .rst { margin-left: auto; border: none; background: transparent; color: var(--primary-700); font-weight: 600; font-size: 11px; }
 .rst:hover { text-decoration: underline; }
 

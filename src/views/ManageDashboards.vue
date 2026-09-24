@@ -81,17 +81,16 @@ const rows = computed(() => {
   return arr
 })
 
-// ---- column selection (task 8) ----
+// ---- columns — the 2026-09-24 Figma's set and order: Category · Technician Group
+// Access · Technician Access · Status · Description (Updated and Owner are gone) ----
 const COLUMNS = [
   { key: 'category', label: 'Category' },
-  { key: 'tech', label: 'Technician access' },
-  { key: 'group', label: 'Group access' },
-  { key: 'description', label: 'Description' },
-  { key: 'owner', label: 'Owner' },
+  { key: 'group', label: 'Technician Group Access' },
+  { key: 'tech', label: 'Technician Access' },
   { key: 'status', label: 'Status' },
-  { key: 'updated', label: 'Updated' },
+  { key: 'description', label: 'Description' },
 ]
-const visibleCols = ref(new Set(['category', 'tech', 'status', 'updated']))
+const visibleCols = ref(new Set(COLUMNS.map((c) => c.key)))
 const draftCols = ref(null)
 const colsOpen = ref(false)
 function openCols() { draftCols.value = new Set(visibleCols.value); colsOpen.value = true }
@@ -126,7 +125,6 @@ function chips(list) { const a = list || []; return { first: a[0], rest: a.slice
 const confirmId = ref(null)
 function doDelete(d) { (isArchive.value ? deleteForever : archiveDashboard)(d); confirmId.value = null }
 
-function rel(iso) { const dd = Math.round((Date.now() - new Date(iso)) / 864e5); return dd < 1 ? 'today' : dd < 30 ? `${dd}d ago` : dd < 365 ? `${Math.round(dd / 30)}mo ago` : `${Math.round(dd / 365)}y ago` }
 function open(d) { recordView(d); router.push(`/dashboard/${d.id}`) }
 function edit(d) { store.ui.cloneTarget = null; store.ui.editTarget = d; store.ui.createOpen = true }
 function clone(d) { store.ui.editTarget = null; store.ui.cloneTarget = d; store.ui.createOpen = true }
@@ -153,32 +151,27 @@ function onDrop(target) {
 <template>
   <div class="page">
     <div class="page-head">
-      <div><h1>Manage dashboards</h1></div>
-      <div class="ph-acts">
-        <!-- No layout entry here. Layout is reached from a board's ⋯ menu, where you can
-             see what you are changing; this page shows no board, so the drawer opened from
-             here previewed against nothing and had to disable its own "this dashboard"
-             option. One entry, in the place where the preview means something. -->
-        <button class="btn btn-primary" @click="store.ui.cloneTarget = null; store.ui.editTarget = null; store.ui.createOpen = true"><Icon name="plus" :size="16" /> New dashboard</button>
+      <div class="ph-l">
+        <button class="listing-toggle" :title="store.ui.listingOpen ? 'Collapse dashboard listing' : 'Expand dashboard listing'" @click="store.ui.listingOpen = !store.ui.listingOpen">
+          <Icon :name="store.ui.listingOpen ? 'panel-close' : 'panel-left'" :size="14" />
+        </button>
+        <h1>Manage dashboards</h1>
       </div>
+      <!-- No layout entry here. Layout is reached from a board's ⋯ menu, where you can
+           see what you are changing. -->
+      <button class="btn btn-primary btn-sm" @click="store.ui.cloneTarget = null; store.ui.editTarget = null; store.ui.createOpen = true">New Dashboard</button>
     </div>
 
-    <!-- Search + filter sits ABOVE the tabs, full width, exactly as the Shortcut tables
-         have it: it searches across every tab, so putting it beside them read as
-         "search within this tab". The Columns picker is gone — the default set is the
-         one the reference ships, and a per-user column choice on a shared listing was a
-         preference with nowhere to live. -->
+    <!-- 2026-09-24 Figma: the tabs FIRST (the product's segmented track), then the one
+         search/filter field full width beneath them. -->
+    <div class="seg mtabs">
+      <button class="seg-b" :class="{ on: tab === 'all' }" @click="tab = 'all'; sel = new Set()">All</button>
+      <button class="seg-b" :class="{ on: tab === 'mine' }" @click="tab = 'mine'; sel = new Set()">Created by me</button>
+      <button class="seg-b" :class="{ on: tab === 'shared' }" @click="tab = 'shared'; sel = new Set()">Shared with me</button>
+      <button class="seg-b" :class="{ on: tab === 'archive' }" @click="tab = 'archive'; sel = new Set()">Archive</button>
+    </div>
     <div class="searchbar">
       <TableFilterBar v-model="conds" v-model:search="q" :fields="filterFields" :closable="false" />
-    </div>
-
-    <div class="toolbar">
-      <div class="tabs">
-        <button class="t" :class="{ on: tab === 'all' }" @click="tab = 'all'; sel = new Set()">All <span class="c">{{ manageable.length }}</span></button>
-        <button class="t" :class="{ on: tab === 'mine' }" @click="tab = 'mine'; sel = new Set()">Created by me</button>
-        <button class="t" :class="{ on: tab === 'shared' }" @click="tab = 'shared'; sel = new Set()">Shared with me</button>
-        <button class="t" :class="{ on: tab === 'archive' }" @click="tab = 'archive'; sel = new Set()">Archive <span class="c">{{ archived.length }}</span></button>
-      </div>
     </div>
 
     <!-- bulk action bar -->
@@ -235,39 +228,45 @@ function onDrop(target) {
                    the neighbouring cells and the row rule visibly breaks -->
               <div class="nm-in">
                 <Icon v-if="!isArchive" name="drag" :size="15" class="drag" />
-                <b class="nm-t ellip" @click="open(d)">{{ d.name }}</b>
+                <span class="nm-t ellip" @click="open(d)">{{ d.name }}</span>
                 <!-- favourite + default are independent → shown together when both apply -->
                 <button v-if="!isArchive" class="nm-ic fav" :class="{ on: d.favorite }" :title="d.favorite ? 'Favourite' : 'Add to favourites'" @click.stop="toggleFavorite(d)"><Icon :name="d.favorite ? 'star-fill' : 'star'" :size="14" /></button>
                 <Icon v-if="d.default" name="default-home" :size="15" class="nm-ic def" title="Default dashboard" />
               </div>
             </td>
-            <td v-if="col('category')"><span v-if="d.category" class="cat-pill">{{ d.category }}</span><span v-else class="muted">—</span></td>
-            <td v-if="col('tech')" class="techcell">
-              <template v-if="chips(d.techAccess).first">
-                <span class="tp">{{ chips(d.techAccess).first }}</span>
-                <span v-if="chips(d.techAccess).rest.length" class="tp more" @click.stop="openTech = openTech === d.id ? null : d.id">+{{ chips(d.techAccess).rest.length }}</span>
-                <div v-if="openTech === d.id" class="tp-back" @click="openTech = null" />
-                <div v-if="openTech === d.id" class="tp-pop"><span v-for="t in chips(d.techAccess).rest" :key="t" class="tp">{{ t }}</span></div>
-              </template>
-              <span v-else class="muted">—</span>
-            </td>
-            <td v-if="col('group')"><span v-if="(d.groupAccess||[]).length" class="tp">{{ d.groupAccess[0] }}</span><span v-else class="muted">—</span></td>
-            <td v-if="col('description')" class="desc ellip" :title="d.description">{{ d.description || '—' }}</td>
-            <td v-if="col('owner')" class="muted">{{ d.owner }}</td>
-            <td v-if="col('status')">
-              <button class="sw" :class="{ on: d.enabled !== false }" :title="d.enabled !== false ? 'Published' : 'Unpublished'" @click="togglePublished(d)"><i /></button>
-            </td>
-            <td v-if="col('updated')" class="muted">{{ rel(d.updated) }}</td>
+            <!-- Cells render in COLUMNS order. Values are plain text, as the Figma draws
+                 them; a list shows its first entry and a "+N" that opens the rest. -->
+            <template v-for="c in COLUMNS.filter((x) => col(x.key))" :key="c.key">
+              <td v-if="c.key === 'category'">{{ d.category || '—' }}</td>
+              <td v-else-if="c.key === 'group' || c.key === 'tech'" class="techcell">
+                <template v-if="chips(c.key === 'tech' ? d.techAccess : d.groupAccess).first">
+                  <span>{{ chips(c.key === 'tech' ? d.techAccess : d.groupAccess).first }}</span>
+                  <span
+                    v-if="chips(c.key === 'tech' ? d.techAccess : d.groupAccess).rest.length" class="tp more"
+                    @click.stop="openTech = openTech === d.id + c.key ? null : d.id + c.key"
+                  >+{{ chips(c.key === 'tech' ? d.techAccess : d.groupAccess).rest.length }}</span>
+                  <div v-if="openTech === d.id + c.key" class="tp-back" @click="openTech = null" />
+                  <div v-if="openTech === d.id + c.key" class="tp-pop"><span v-for="t in chips(c.key === 'tech' ? d.techAccess : d.groupAccess).rest" :key="t" class="tp">{{ t }}</span></div>
+                </template>
+                <span v-else class="muted">—</span>
+              </td>
+              <td v-else-if="c.key === 'status'">
+                <!-- the Figma's ON/OFF switch: outlined pill, the state written in it -->
+                <button class="sw" :class="{ on: d.enabled !== false }" :title="d.enabled !== false ? 'Published' : 'Unpublished'" @click="togglePublished(d)">
+                  <span class="sw-t">{{ d.enabled !== false ? 'ON' : 'OFF' }}</span><i />
+                </button>
+              </td>
+              <td v-else-if="c.key === 'description'" class="desc ellip" :title="d.description">{{ d.description || '—' }}</td>
+            </template>
             <td class="acts">
               <div class="acts-in">
-                <button v-if="isArchive" class="ia" title="Restore" @click="restoreDashboard(d)"><Icon name="restore" :size="15" /></button>
+                <button v-if="isArchive" class="ia" title="Restore" @click="restoreDashboard(d)"><Icon name="restore" :size="16" /></button>
                 <template v-else>
-                  <!-- No "Open" action: the row is the open target. A button that repeats
-                       what clicking the thing already does is a button you have to explain. -->
-                  <button class="ia" title="Duplicate" @click="clone(d)"><Icon name="copy" :size="15" /></button>
-                  <button class="ia" title="Edit" @click="edit(d)"><Icon name="edit" :size="15" /></button>
-                  <button class="ia" title="Schedule" @click="scheduleTarget = d"><Icon name="calendar2" :size="15" /></button>
-                  <button class="ia" title="History" @click="historyTarget = d"><Icon name="history" :size="15" /></button>
+                  <!-- No "Open" action: the row is the open target. -->
+                  <button class="ia" title="Duplicate" @click="clone(d)"><Icon name="copy" :size="16" /></button>
+                  <button class="ia" title="Edit" @click="edit(d)"><Icon name="edit" :size="16" /></button>
+                  <button class="ia" title="Schedule" @click="scheduleTarget = d"><Icon name="calendar2" :size="16" /></button>
+                  <button class="ia" title="History" @click="historyTarget = d"><Icon name="history" :size="16" /></button>
                 </template>
                 <div class="del-wrap">
                   <!-- A predefined board can't be deleted. The slot used to hold a disabled
@@ -275,7 +274,7 @@ function onDrop(target) {
                        invited a click that does nothing. An empty slot of the same width
                        keeps the column aligned and says nothing at all. -->
                   <span v-if="d.predefined && !isArchive" class="ia-blank" title="Predefined dashboard — can’t be deleted" />
-                  <button v-else class="ia del" :title="isArchive ? 'Delete forever' : 'Archive'" @click.stop="confirmId = confirmId === d.id ? null : d.id"><Icon name="trash" :size="15" /></button>
+                  <button v-else class="ia del" :title="isArchive ? 'Delete forever' : 'Archive'" @click.stop="confirmId = confirmId === d.id ? null : d.id"><Icon name="trash" :size="16" /></button>
                   <div v-if="confirmId === d.id" class="cfm-back" @click="confirmId = null" />
                   <div v-if="confirmId === d.id" class="cfm">
                     <span>{{ isArchive ? 'Delete forever?' : 'Archive this dashboard?' }}</span>
@@ -301,24 +300,16 @@ function onDrop(target) {
    floating on the tinted canvas — a container around content that already fills the
    screen adds a frame and takes width without earning either. White ground, rows ruled
    by hairlines, nothing boxed. */
-.page { padding: 16px 20px 40px; height: 100%; display: flex; flex-direction: column; background: var(--surface); }
-.page-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
-.page-head h1 { margin: 0; font-size: 20px; }
-.searchbar { margin-bottom: 12px; }
-.toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
-/* one segmented control, not four loose buttons: a soft track with the active segment
-   filled solid, exactly as the reference has it */
-/* The same pill the whole module now uses, with the count it has always carried — this is
-   the shape the reference draws for a filter tab, and a listing tab is one. It was a track
-   with a near-black filled segment, which is the sixth copy of that control this file has
-   had to unlearn. */
-.tabs { display: inline-flex; flex-wrap: wrap; gap: 6px; }
-.t { display: inline-flex; align-items: center; gap: 6px; height: 30px; border: 1px solid var(--border-control); background: var(--surface); padding: 0 12px; border-radius: 6px; font-weight: 500; font-size: 13px; color: var(--ink-2); transition: color .15s, border-color .15s, background .15s; }
-.t:not(.on):hover { color: var(--ink); border-color: var(--muted-2); }
-.t.on { background: var(--primary-soft); border-color: var(--primary); color: var(--primary-700); font-weight: 600; }
-.t .c { font-size: 10px; font-weight: 600; background: var(--surface-2); border-radius: var(--r-pill); padding: 1px 6px; color: var(--ink); }
-/* the count inverts on the active pill, the way it does on the Add-Widget filters */
-.t.on .c { background: var(--primary); color: #fff; }
+/* 2026-09-24 Figma: a 62px head (16px inset) with the listing toggle and title, the
+   segmented tabs, the search 12px under them, then the table. */
+.page { padding: 16px 16px 40px; height: 100%; display: flex; flex-direction: column; background: var(--surface); }
+.page-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; min-height: 30px; }
+.ph-l { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.page-head h1 { margin: 0; font-size: 16px; font-weight: 500; line-height: 24px; color: var(--ink); }
+.listing-toggle { width: 24px; height: 24px; padding: 0; border: 1px solid var(--border); background: var(--surface); color: var(--ink-2); border-radius: 4px; display: grid; place-items: center; flex: none; }
+.listing-toggle:hover { background: var(--surface-2); color: var(--ink); border-color: var(--border-strong); }
+.mtabs { margin-bottom: 12px; }
+.searchbar { margin-bottom: 14px; }
 .tr { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .srch { display: flex; align-items: center; gap: 7px; background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 4px; padding: 0 10px; height: 36px; width: 200px; }
 .srch input { border: none; outline: none; background: transparent; width: 100%; font-size: 13px; }
@@ -359,19 +350,17 @@ function onDrop(target) {
    that are, and it carries an icon none of them have. */
 .t-sep { width: 1px; height: 18px; background: var(--border); margin: 0 4px; flex: none; }
 .t-appearance { display: inline-flex; align-items: center; gap: 6px; }
-.mtbl { width: 100%; border-collapse: collapse; font-size: 13px; }
-/* header row on the page's own white, in sentence case — the grey band was the only thing
-   left implying a card once the container went */
-.mtbl thead th { position: sticky; top: 0; z-index: 2; background: var(--surface); text-align: left; font-size: 13px; color: var(--ink); font-weight: 600; padding: 12px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
-.mtbl td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-/* sortable headers */
+/* Figma: 12px type throughout, semibold headers, 42px rows ruled by hairlines */
+.mtbl { width: 100%; border-collapse: collapse; font-size: 12px; color: var(--ink); }
+.mtbl thead th { position: sticky; top: 0; z-index: 2; background: var(--surface); text-align: left; font-size: 12px; color: var(--ink); font-weight: 600; padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.mtbl td { height: 42px; padding: 0 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+/* sortable headers — the Figma draws the sort mark on every sortable column at rest */
 .mtbl thead th.srt { cursor: pointer; user-select: none; }
 .mtbl thead th.srt:hover { color: var(--ink-2); }
-.mtbl thead th.on { color: var(--primary); }
-.th-in { display: inline-flex; align-items: center; gap: 3px; }
-.sc { opacity: 0; color: var(--muted-2); transition: opacity .12s; flex: none; }
-.mtbl thead th.srt:hover .sc { opacity: .6; }
-.sc.vis { opacity: 1; color: var(--primary); }
+.th-in { display: inline-flex; align-items: center; gap: 4px; }
+.sc { opacity: .55; color: var(--muted-2); transition: opacity .12s; flex: none; }
+.mtbl thead th.srt:hover .sc { opacity: .9; }
+.sc.vis { opacity: 1; color: var(--ink); }
 
 /* the whole row opens the board, so it says so */
 .mtbl tbody tr.row-open { cursor: pointer; }
@@ -385,8 +374,10 @@ function onDrop(target) {
    rule then visibly breaks at that cell's edges. Same for .acts below. */
 .nm { min-width: 220px; }
 .nm-in { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.drag { color: var(--muted-2); cursor: grab; flex: none; }
-.nm-t { cursor: pointer; min-width: 0; } .nm-t:hover { color: var(--primary-700); }
+/* the reorder grip is there when you reach for the row, not on every row at rest */
+.drag { color: var(--muted-2); cursor: grab; flex: none; opacity: 0; }
+.mtbl tbody tr:hover .drag { opacity: 1; }
+.nm-t { cursor: pointer; min-width: 0; } .nm-t:hover { color: var(--primary-700); text-decoration: underline; }
 /* favourite (star) + default (home) indicators, side by side */
 .nm-ic { flex: none; display: inline-grid; place-items: center; }
 .nm-ic.def { color: var(--primary); }
@@ -394,26 +385,35 @@ function onDrop(target) {
 .nm:hover .nm-ic.fav, .nm-ic.fav.on { opacity: 1; }
 .nm-ic.fav.on { color: #f5a623; }
 .nm-ic.fav:hover { background: var(--surface); }
-.cat-pill { font-size: 12px; color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; }
-/* minimal technician pills (task 7): 6px radius, subtle color, 1 + N */
+/* plain text + a small "+N" that opens the rest */
 .techcell { position: relative; white-space: nowrap; }
-.tp { display: inline-flex; align-items: center; font-size: 12px; color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; margin-right: 4px; }
-.tp.more { cursor: pointer; color: var(--primary-700); background: var(--primary-softer); border-color: var(--primary-soft); font-weight: 600; }
+.tp { display: inline-flex; align-items: center; font-size: 11px; color: var(--ink-2); background: var(--seg-track); border-radius: 4px; padding: 1px 6px; margin-right: 4px; }
+.tp.more { cursor: pointer; margin-left: 6px; color: var(--ink); font-weight: 500; }
+.tp.more:hover { background: var(--border); }
 .tp-back { position: fixed; inset: 0; z-index: 40; }
 .tp-pop { position: absolute; top: calc(100% + 3px); left: 0; z-index: 41; display: flex; flex-wrap: wrap; gap: 4px; max-width: 240px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-pop); padding: 8px; }
-.desc { color: var(--muted); max-width: 260px; }
-.sw { width: 38px; height: 22px; border-radius: 999px; border: none; background: var(--border-strong); position: relative; flex: none; }
-.sw i { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: var(--sh-sm); }
-.sw.on { background: var(--green); } .sw.on i { left: 18px; }
+.desc { color: var(--ink); max-width: 240px; }
+/* The Figma's ON/OFF switch — an outlined 44×20 pill with the state written inside and a
+   16px knob: green (#89c540) on the right when ON, grey on the left when OFF. */
+.sw { position: relative; width: 44px; height: 20px; padding: 0; border: 1px solid #dee5ed; border-radius: 50px; background: var(--surface); flex: none; display: block; }
+.sw-t { position: absolute; top: 50%; transform: translateY(-50%); font-size: 10px; line-height: 1; color: #a5bad0; }
+.sw i { position: absolute; top: 1px; width: 16px; height: 16px; border-radius: 50%; background: #a5bad0; box-shadow: 0 2px 2px rgba(0,0,0,.1); transition: left .15s, background .15s; }
+.sw.on i { left: 24px; background: #89c540; }
+.sw.on .sw-t { left: 6px; }
+.sw:not(.on) { width: 47px; }
+.sw:not(.on) i { left: 2px; }
+.sw:not(.on) .sw-t { right: 6px; }
 .acts { white-space: nowrap; }
-.acts-in { display: flex; gap: 2px; align-items: center; }
-.ia { width: 30px; height: 30px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
+/* Figma: 16px glyphs in 20px boxes, 4px apart, in the icon slate; delete in red */
+.acts-in { display: flex; gap: 4px; align-items: center; }
+.ia { width: 20px; height: 20px; padding: 0; border: none; background: transparent; color: var(--picker-ico); border-radius: 5px; display: grid; place-items: center; }
 .ia:disabled { color: var(--muted-2); cursor: not-allowed; }
 .ia:disabled:hover { background: transparent; }
-.ia:hover { background: var(--surface); color: var(--ink); }
+.ia:hover { background: var(--icon-hover); color: var(--ink); }
+.ia.del { color: var(--red); }
 .ia.del:hover { color: var(--red); background: var(--red-soft); }
 /* holds the delete slot's width open on a row that has no delete action */
-.ia-blank { display: block; width: 30px; height: 30px; }
+.ia-blank { display: block; width: 20px; height: 20px; }
 .del-wrap { position: relative; }
 .cfm-back { position: fixed; inset: 0; z-index: 45; }
 .cfm { position: absolute; top: 50%; right: calc(100% + 6px); transform: translateY(-50%); z-index: 46; display: flex; align-items: center; gap: 6px; white-space: nowrap; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; box-shadow: var(--sh-pop); padding: 7px 10px; font-size: 13px; color: var(--ink-2); }

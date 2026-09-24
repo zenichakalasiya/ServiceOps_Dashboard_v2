@@ -159,7 +159,8 @@ onBeforeUnmount(() => removeEventListener('keydown', onKey))
 .ge-in.err { border-color: var(--red); }
 .ge-err { margin: 0; font-size: 12px; color: var(--red); }
 .seg { align-self: flex-start; }
-.seg-b.ge-ic { width: 32px; height: 32px; padding: 0; display: grid; place-items: center; }
+/* square icon segments, sized to the segmented track's 24px row */
+.seg-b.ge-ic { width: 28px; height: 24px; padding: 0; display: grid; place-items: center; }
 .seg-b :deep(.ico) { display: inline-block; vertical-align: -2px; margin-right: 2px; }
 .ge-foot { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-top: 1px solid var(--border); }
 .ge-reset { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 8px; border: none; background: transparent; color: var(--muted); border-radius: var(--r); font-size: 13px; }

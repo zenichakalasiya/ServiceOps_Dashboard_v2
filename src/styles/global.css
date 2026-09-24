@@ -51,11 +51,12 @@ button { cursor: pointer; }
 }
 .btn:hover { background: var(--surface-2); }
 
-/* §4.1 Primary. Disabled is a GREY FILL, not reduced opacity — opacity leaves white
-   label text unreadable on a washed-out blue. */
-.btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: var(--sh-sm); }
-.btn-primary:hover { background: var(--primary-600); border-color: var(--primary-600); }
-.btn-primary:active { background: var(--primary-700); border-color: var(--primary-700); }
+/* §4.1 Primary — the design system's near-black (--sel), per the 2026-09-24 Figma. Every
+   Create / Update / Save / New in the product reads it. Disabled is a GREY FILL, not
+   reduced opacity — opacity leaves the label unreadable on a washed-out fill. */
+.btn-primary { background: var(--sel); border-color: var(--sel); color: var(--sel-ink); box-shadow: none; }
+.btn-primary:hover { background: var(--sel-hover); border-color: var(--sel-hover); }
+.btn-primary:active { background: var(--sel); border-color: var(--sel); }
 .btn-primary:disabled { background: #cbd5e1; border-color: #cbd5e1; color: #fff; opacity: 1; }
 
 /* §4.3 Tertiary (text / link) */
@@ -134,11 +135,12 @@ label.field { display:block; font-size:13px; font-weight: 500; color: var(--ink)
 /* §11: a section label inside a menu */
 .menu-label { padding: 6px 12px 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--placeholder); }
 
-/* §10.2 Segmented toggle — a control: 4px track, 4px segments, active on the brand tint */
-.tabs { display: inline-flex; gap: 2px; background: var(--surface); padding: 2px; border-radius: var(--r); border: 1px solid var(--border-control); }
-.tab { height: 28px; padding: 0 10px; border-radius: var(--r); border: none; background: transparent; font-weight: 500; font-size: 12px; color: var(--ink-2); }
-.tab:hover { background: var(--surface-2); }
-.tab.active { background: var(--primary-soft); color: var(--primary); box-shadow: none; }
+/* §10.2 Segmented toggle — the same track as .seg (grey track, near-black active), so the
+   product has one segmented control, not two */
+.tabs { display: inline-flex; gap: 3px; background: var(--seg-track); padding: 4px; border-radius: 8px; border: none; }
+.tab { height: 24px; padding: 0 12px; border-radius: 5px; border: none; background: transparent; font-weight: 400; font-size: 12px; color: var(--ink); }
+.tab:hover { background: color-mix(in srgb, var(--surface) 70%, transparent); }
+.tab.active { background: var(--sel); color: var(--sel-ink); font-weight: 500; box-shadow: none; }
 
 /* §14 Modal — a surface (8px), shadow-xl, scrim per §3.4 */
 .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 100; display: grid; place-items: center; padding: 24px; }
@@ -303,33 +305,40 @@ label.field { display:block; font-size:13px; font-weight: 500; color: var(--ink)
    · The old note here said #fff must not be used for the active label because --ink is
      near-WHITE in dark, so white-on-ink measured 1.13:1. That trap is gone with the fill:
      --primary-soft and --primary-700 are both defined per theme and resolve on their own. */
+/* 2026-09-24: a TRACK again, per the "Change UI by given instructions" Figma — a grey
+   track (4px inset, 8px corners), borderless segments (5px corners, 12px type) and the
+   chosen one filled near-black (--sel). This supersedes the 2026-09-07 blue-pill note
+   above: the design system now owns the choice, and it is one definition product-wide —
+   the builder's type tabs, access level, Manual/Query, Top/Bottom/All, Manage's tabs. */
 .seg {
-  display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px;
+  display: inline-flex; align-items: center; flex-wrap: wrap; gap: 3px;
+  padding: 4px; border-radius: 8px; background: var(--seg-track);
   align-self: flex-start;
 }
 .seg-b {
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  height: 30px; padding: 0 12px; border: 1px solid var(--border-control);
-  background: var(--surface); border-radius: 6px; color: var(--ink-2);
-  font-weight: 500; font-size: 13px; white-space: nowrap;
-  transition: color .15s, border-color .15s, background .15s;
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  height: 24px; padding: 0 12px; border: none;
+  background: transparent; border-radius: 5px; color: var(--ink);
+  font-weight: 400; font-size: 12px; line-height: 1.36; white-space: nowrap;
+  transition: color .15s, background .15s;
 }
-/* :not(.on) so hover can never out-specify the active rule — a plain `.seg-b:hover` is
-   (0,2,0) and beat `.seg-b.on` (0,2,0) on source order. */
-.seg-b:not(.on):not(:disabled):hover { color: var(--ink); border-color: var(--muted-2); }
-.seg-b.on { background: var(--primary-soft); border-color: var(--primary); color: var(--primary-700); font-weight: 600; }
-.seg-b.on .ico { color: var(--primary-700); }
+.seg-b .ico { color: currentColor; }
+/* :not(.on) so hover can never out-specify the active rule */
+.seg-b:not(.on):not(:disabled):hover { background: color-mix(in srgb, var(--surface) 70%, transparent); }
+.seg-b.on { background: var(--sel); color: var(--sel-ink); font-weight: 500; }
+.seg-b.on .ico { color: var(--sel-ink); }
 .seg-b:disabled { opacity: .45; cursor: not-allowed; }
 .seg-b.on:disabled { opacity: 1; }
-/* equal-width segments, for a row that should fill its column */
-.seg.fill { display: flex; }
-.seg.fill .seg-b { flex: 1; padding: 0 10px; }
+/* equal-width segments filling their column — the Figma's access switch: 28px segments,
+   8px apart, 6px corners, in a 6px-corner track */
+.seg.fill { display: flex; gap: 8px; border-radius: 6px; }
+.seg.fill .seg-b { flex: 1; height: 28px; padding: 0 12px; border-radius: 6px; }
 /* compact, for a popover */
-.seg.sm .seg-b { height: 24px; font-size: 11px; padding: 0 10px; }
+.seg.sm .seg-b { height: 22px; font-size: 11px; padding: 0 10px; }
 /* read-only: still says which one is in force, without looking pressable */
 .seg.ro .seg-b { cursor: default; color: var(--muted); }
-.seg.ro .seg-b:hover { color: var(--muted); border-color: var(--border-control); }
-.seg.ro .seg-b.on { background: var(--surface-2); border-color: var(--border-strong); color: var(--ink); }
+.seg.ro .seg-b:hover { background: transparent; }
+.seg.ro .seg-b.on { background: var(--surface); color: var(--ink); box-shadow: 0 0 4px rgba(54,70,88,.08); }
 .seg.ro .seg-b.on .ico { color: var(--ink); }
 
 /* ── Dialog chrome, ONE definition ───────────────────────────────────────────

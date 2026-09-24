@@ -733,16 +733,19 @@ onBeforeUnmount(() => {
             <div class="rp-row">
               <div class="rp-col">
                 <span class="rp-l">Sort Order</span>
-                <div class="seg sm fill">
+                <div class="seg">
                   <button v-for="r in RANKS" :key="r.id" class="seg-b" :class="{ on: rankMode === r.id }" @click="rankMode = r.id">{{ r.label }}</button>
                 </div>
               </div>
               <div class="rp-col n">
                 <span class="rp-l">Value</span>
                 <!-- disabled on All: there is no N to pick when nothing is windowed -->
-                <select class="rp-sel" v-model.number="rankN" :disabled="rankMode === 'all'">
-                  <option v-for="n in RANK_NS" :key="n" :value="n">{{ n }}</option>
-                </select>
+                <div class="rp-selw">
+                  <select class="rp-sel" v-model.number="rankN" :disabled="rankMode === 'all'">
+                    <option v-for="n in RANK_NS" :key="n" :value="n">{{ n }}</option>
+                  </select>
+                  <Icon name="updown" :size="16" class="rp-chev" />
+                </div>
               </div>
             </div>
             <!-- The "colour stops carrying meaning past about 10" warning used to sit
@@ -846,18 +849,20 @@ onBeforeUnmount(() => {
 /* ④ overflow popover — teleported to <body>, so it floats over the whole card
    instead of being clipped by it. Positioned in viewport coords from the chip. */
 .more-back { position: fixed; inset: 0; z-index: 299; }
-.more-pop { position: fixed; z-index: 300; display: flex; flex-direction: column; gap: 7px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-pop); }
+/* 2026-09-24 Figma "Legend Filter": a borderless card lifted by a soft all-round shadow,
+   10px corners, 10/12/12 padding, sections 12px apart */
+.more-pop { position: fixed; z-index: 300; display: flex; flex-direction: column; gap: 12px; padding: 10px 12px 12px; background: var(--surface); border: none; border-radius: 10px; box-shadow: 0 0 6px rgba(0,0,0,.12), var(--sh-pop); }
 /* only the series list grows and scrolls; tabs, field and footnote stay put */
 .more-pop > * { flex: none; }
 .more-pop > .sm { flex: 1; min-height: 0; }
-.mp-arrow { position: absolute; bottom: -6px; width: 10px; height: 10px; flex: none; background: var(--surface); border: 1px solid var(--border); border-top: none; border-left: none; transform: translateX(-50%) rotate(45deg); }
-.more-pop.below .mp-arrow { top: -6px; bottom: auto; border: 1px solid var(--border); border-bottom: none; border-right: none; }
+.mp-arrow { position: absolute; bottom: -5px; width: 10px; height: 10px; flex: none; background: var(--surface); transform: translateX(-50%) rotate(45deg); box-shadow: 2px 2px 3px rgba(0,0,0,.06); }
+.more-pop.below .mp-arrow { top: -5px; bottom: auto; box-shadow: -2px -2px 3px rgba(0,0,0,.06); }
 /* the popover's title reads as a title: sentence case at panel-heading size, and ruled
    off from the controls under it. At 10.5px uppercase muted it looked like a field label
    for the Sort Order row rather than the name of the panel. */
 /* No rule under the title. The gap alone groups it away from the controls (Gestalt:
    proximity), and a divider two rows above another divider read as a boxed-in header. */
-.mp-h { display: flex; align-items: center; justify-content: space-between; flex: none; font-size: 13px; font-weight: 600; letter-spacing: -.1px; color: var(--ink); margin-bottom: 14px; }
+.mp-h { display: flex; align-items: center; justify-content: space-between; flex: none; font-size: 14px; font-weight: 500; color: var(--ink); margin-bottom: -6px; }
 .mp-x { border: none; background: transparent; color: var(--muted); display: grid; place-items: center; padding: 2px; border-radius: 4px; }
 .mp-x:hover { background: var(--surface-2); color: var(--ink); }
 
@@ -872,12 +877,17 @@ onBeforeUnmount(() => {
 
 /* rank window — tabs, then the one field that tab needs */
 /* Sort Order (tabs) and Value (select) share one row, each under its own label */
-.rp-row { display: flex; align-items: flex-end; gap: 10px; padding-bottom: 9px; border-bottom: 1px solid var(--border); }
-.rp-col { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 0; }
-.rp-col.n { flex: none; width: 84px; }
-.rp-l { font-size: 12px; font-weight: 500; color: var(--ink-2); }
-.rp-sel { height: 30px; border: 1px solid var(--border-strong); border-radius: 4px; background: var(--surface); color: var(--ink); font: inherit; font-size: 12px; font-weight: 600; padding: 0 6px; }
+/* Sort Order's track sizes to its labels; Value takes the rest of the row */
+.rp-row { display: flex; align-items: flex-end; gap: 8px; }
+.rp-col { display: flex; flex-direction: column; gap: 4px; flex: none; min-width: 0; }
+.rp-col.n { flex: 1; }
+.rp-l { font-size: 12px; font-weight: 400; color: var(--label); }
+/* a 30px field with the up/down affordance drawn over a native select */
+.rp-selw { position: relative; }
+.rp-sel { width: 100%; height: 30px; border: 1px solid var(--border-control); border-radius: var(--r); background: var(--surface); color: var(--ink); font: inherit; font-size: 12px; padding: 0 28px 0 12px; appearance: none; -webkit-appearance: none; }
+.rp-sel:focus { outline: none; border-color: var(--sel); }
 .rp-sel:disabled { opacity: .5; cursor: not-allowed; }
+.rp-chev { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: var(--label); pointer-events: none; }
 .rp-field { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-height: 30px; padding-bottom: 7px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--muted); }
 .rp-field label { font-size: 12px; color: var(--ink-2); font-weight: 500; }
 .rp-n { width: 56px; height: 26px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--ink); font: inherit; font-size: 12px; font-weight: 600; text-align: center; }
