@@ -94,7 +94,7 @@ const PREVIEW_TILES = [
   { title: 'Open Requests', kind: 'line' },
   { title: 'By Priority', kind: 'donut' },
   { title: 'By Status', kind: 'bar' },
-  { title: 'My Tasks', kind: 'funnel' },
+  { title: 'Status by Priority', kind: 'stack' },
 ]
 
 // how many boards a GLOBAL change actually moves — the ones that haven't overridden
@@ -358,5 +358,7 @@ function cancel() {
    it the skeleton takes content width — and the bar and funnel, which have no intrinsic
    width, collapse to nothing while the line and pie (an SVG and an aspect-ratio box)
    survive on theirs. Two of the four silently disappear. */
-.la-pv-chart { color: var(--picker-ico); flex: 1; min-width: 0; }
+/* #8E9FBC is the skeleton ink, fixed across themes: a mid blue-grey that stays a quiet
+   wireframe on the white card and still reads on the dark one. */
+.la-pv-chart { color: #8E9FBC; flex: 1; min-width: 0; }
 </style>

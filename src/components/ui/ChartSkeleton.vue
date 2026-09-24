@@ -13,8 +13,8 @@
  *   line    → gridded plot, ringed point markers, legend       (ChartTile's line)
  *   bar     → gridded plot, one series, no rounded caps        (ChartTile's column)
  *   donut   → ring with the centre total, as every pie tile on the board renders
- *   funnel  → full-width tapering bands with knocked-out labels
- * Donut and funnel carry no axes or legend, because neither of those charts has any.
+ *   stack   → gridded plot, four series stacked per category, a four-item legend
+ * The donut carries no axes or legend, because that chart has none.
  *
  * ── Two mechanics worth knowing ─────────────────────────────────────────────────
  * 1. The plot SVGs take `preserveAspectRatio="none"` so they stretch to any card shape.
@@ -28,7 +28,7 @@
  * drives the whole drawing and both themes work from one declaration.
  */
 defineProps({
-  // line | bar | donut | funnel
+  // line | bar | stack | donut
   kind: { type: String, required: true },
 })
 
@@ -51,6 +51,21 @@ const BARS = [
   { x: 58, y: 24, h: 36 },
   { x: 83, y: 47, h: 13 },
 ]
+/* Stacked: the reference's four categories × four statuses, in its own proportions
+   (Low 3·1·2·5, Medium 3·3·3·8, High 3·3·2·6, Urgent 1·1·1·3 on an 18 axis). Segments
+   are laid bottom-up, and each series keeps ONE tone across every column — that is what
+   makes it read as four series stacked, not as sixteen unrelated blocks.
+   Four series, four distinct tones — see .cs-s1..4 — ordered so no two neighbours match. */
+const STACK = [[3, 1, 2, 5], [3, 3, 3, 8], [3, 3, 2, 6], [1, 1, 1, 3]]
+const STACK_TONE = ['cs-s1', 'cs-s2', 'cs-s3', 'cs-s4']
+const STACK_SEGS = STACK.flatMap((col, ci) => {
+  let y = 60
+  return col.map((v, si) => {
+    const h = (v / 18) * 58
+    y -= h
+    return { x: ci * 25 + 8, y, h, cls: STACK_TONE[si], key: `${ci}-${si}` }
+  })
+})
 const LINE_PTS = [[6, 38], [23.6, 26], [41.2, 30], [58.8, 16], [76.4, 20], [94, 12]]
 const LINE_D = LINE_PTS.map((p, i) => `${i ? 'L' : 'M'}${p[0]},${p[1]}`).join(' ')
 const GRID_Y = [2, 16.5, 31, 45.5, 60]
@@ -59,7 +74,7 @@ const GRID_Y = [2, 16.5, 31, 45.5, 60]
 <template>
   <div class="cs" aria-hidden="true">
     <!-- ── LINE and BAR: the same gridded frame, a different series ── -->
-    <template v-if="kind === 'line' || kind === 'bar'">
+    <template v-if="kind === 'line' || kind === 'bar' || kind === 'stack'">
       <div class="cs-plot">
         <div class="cs-yax">
           <span v-for="(w, i) in Y_TICKS" :key="i" class="cs-stub" :style="{ width: w + 'px' }" />
@@ -72,6 +87,9 @@ const GRID_Y = [2, 16.5, 31, 45.5, 60]
           />
           <template v-if="kind === 'bar'">
             <rect v-for="(b, i) in BARS" :key="'b' + i" class="cs-col" :x="b.x" :y="b.y" width="9" :height="b.h" />
+          </template>
+          <template v-else-if="kind === 'stack'">
+            <rect v-for="s in STACK_SEGS" :key="s.key" :class="s.cls" :x="s.x" :y="s.y" width="9" :height="s.h" />
           </template>
           <template v-else>
             <path class="cs-series" :d="LINE_D" vector-effect="non-scaling-stroke" />
@@ -92,13 +110,17 @@ const GRID_Y = [2, 16.5, 31, 45.5, 60]
            axis runs its first and last labels to the ends of the plot, under the first
            and last point. Same row, two different alignments, and using one for both
            puts every bar label off its bar. -->
-      <div class="cs-xax" :class="kind === 'bar' ? 'cat' : 'val'">
+      <div class="cs-xax" :class="kind === 'line' ? 'val' : 'cat'">
         <span
-          v-for="(w, i) in (kind === 'bar' ? X_TICKS_BAR : X_TICKS_LINE)" :key="i"
+          v-for="(w, i) in (kind === 'line' ? X_TICKS_LINE : X_TICKS_BAR)" :key="i"
           class="cs-slot"
         ><i class="cs-stub" :style="{ width: w + 'px' }" /></span>
       </div>
-      <div class="cs-leg"><span class="cs-dot" /><span class="cs-stub" style="width: 30px" /></div>
+      <!-- a stacked chart keys every series, in the series' own tone -->
+      <div v-if="kind === 'stack'" class="cs-leg">
+        <span v-for="t in STACK_TONE" :key="t" class="cs-leg-i"><span class="cs-dot" :class="t" /><span class="cs-stub" style="width: 22px" /></span>
+      </div>
+      <div v-else class="cs-leg"><span class="cs-dot" /><span class="cs-stub" style="width: 30px" /></div>
     </template>
 
     <!-- ── DONUT: a ring with the centre total, the way every pie tile renders ── -->
@@ -110,11 +132,6 @@ const GRID_Y = [2, 16.5, 31, 45.5, 60]
         </div>
       </div>
     </div>
-
-    <!-- ── FUNNEL: full-width bands, each clipped so the taper is continuous ── -->
-    <div v-else-if="kind === 'funnel'" class="cs-funnel">
-      <span v-for="i in 4" :key="i" class="cs-fb" :class="'b' + i"><i class="cs-fb-lbl" /></span>
-    </div>
   </div>
 </template>
 
@@ -123,10 +140,14 @@ const GRID_Y = [2, 16.5, 31, 45.5, 60]
    an SVG with a viewBox and no definite height claims its own aspect ratio as intrinsic
    height, which once made the line tile twice the height of the bar tile beside it. */
 .cs {
-  --sk-1: color-mix(in srgb, currentColor 58%, transparent);
-  --sk-2: color-mix(in srgb, currentColor 40%, transparent);
-  --sk-3: color-mix(in srgb, currentColor 26%, transparent);
-  --sk-grid: color-mix(in srgb, currentColor 16%, transparent);
+  /* 60 / 30 / 16 / 12 — a lighter ramp than the chart-icon one, so the preview reads as a
+     wireframe of a board rather than a board. The caller sets currentColor (#8E9FBC). */
+  --sk-1: color-mix(in srgb, currentColor 60%, transparent);
+  --sk-2: color-mix(in srgb, currentColor 30%, transparent);
+  --sk-3: color-mix(in srgb, currentColor 16%, transparent);
+  --sk-grid: color-mix(in srgb, currentColor 12%, transparent);
+  /* the one extra step a four-series stack needs between 60 and 30 */
+  --sk-mid: color-mix(in srgb, currentColor 45%, transparent);
   min-width: 0; display: flex; flex-direction: column; gap: 7px;
   /* An inset of the drawing's own, inside the card's padding. A chart that runs to the
      edge of its card reads as CROPPED rather than placed — the donut in particular grew
@@ -145,6 +166,12 @@ const GRID_Y = [2, 16.5, 31, 45.5, 60]
 .cs-canvas { flex: 1; min-width: 0; height: 100%; display: block; overflow: visible; }
 .cs-grid { stroke: var(--sk-grid); stroke-width: 1; fill: none; }
 .cs-col { fill: var(--sk-2); }
+/* stack series, bottom-up: dark, light, mid, dark again — no two neighbours share a tone */
+.cs-s1 { fill: var(--sk-1); background: var(--sk-1); }
+.cs-s2 { fill: var(--sk-3); background: var(--sk-3); }
+.cs-s3 { fill: var(--sk-mid); background: var(--sk-mid); }
+.cs-s4 { fill: var(--sk-2); background: var(--sk-2); }
+.cs-leg-i { display: inline-flex; align-items: center; gap: 4px; }
 .cs-series { fill: none; stroke: var(--sk-1); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .cs-mark { stroke: var(--sk-1); stroke-width: 7; stroke-linecap: round; }
 /* the knockout, so a marker reads as a ring — the card colour, not white, or it breaks
@@ -166,7 +193,7 @@ const GRID_Y = [2, 16.5, 31, 45.5, 60]
 /* sized off its own height so it stays round at every row height rather than becoming
    an ellipse in a wide card */
 /* 84%, not the full height. The line and bar spend part of their box on an axis and a
-   legend, so their plot never touches the card; the donut and funnel have no chrome to
+   legend, so their plot never touches the card; the donut has no chrome to
    share with and would grow until they pressed on both rules. Holding them back is what
    makes the four tiles read as one set. */
 .cs-donut {
@@ -181,20 +208,4 @@ const GRID_Y = [2, 16.5, 31, 45.5, 60]
 .cs-total { width: 54%; height: 8px; background: var(--sk-2); }
 .cs-total-lbl { width: 34%; height: 4px; }
 
-/* ── funnel ── */
-/* Full width, as the reference draws it. Each band's top edge is the previous band's
-   bottom edge, so the taper is continuous rather than four loose bars. */
-/* Held back from the card's edges for the same reason as the donut — and centred, so
-   the taper stays symmetrical about the middle of the tile. */
-.cs-funnel {
-  flex: 1; min-height: 0; width: 86%; margin: 0 auto; padding: 5px 0;
-  display: flex; flex-direction: column; gap: 2px;
-}
-.cs-fb { flex: 1; min-height: 4px; display: grid; place-items: center; }
-.cs-fb.b1 { background: var(--sk-3); clip-path: polygon(0 0, 100% 0, 93.1% 100%, 6.9% 100%); }
-.cs-fb.b2 { background: var(--sk-2); clip-path: polygon(6.9% 0, 93.1% 0, 86.2% 100%, 13.8% 100%); }
-.cs-fb.b3 { background: var(--sk-2); clip-path: polygon(13.8% 0, 86.2% 0, 79.4% 100%, 20.6% 100%); }
-.cs-fb.b4 { background: var(--sk-1); clip-path: polygon(20.6% 0, 79.4% 0, 72.5% 100%, 27.5% 100%); }
-/* the value each band would print, knocked out of it in the card colour */
-.cs-fb-lbl { width: 30%; max-width: 46px; height: 5px; border-radius: 2px; background: var(--surface); opacity: .75; }
 </style>
