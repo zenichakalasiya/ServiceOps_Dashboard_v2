@@ -980,7 +980,7 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
                  the title — the group header right above already names the thing. The
                  well keeps a widget row's worth of height so a drag has a real target. -->
             <div v-if="!tilesIn(g.id).length" class="grp-empty" :style="{ minHeight: Math.round(lay('rowHeight') * 0.6) + 'px' }">
-              <span class="ge-disc"><Icon name="layout" :size="24" /></span>
+              <span class="ge-disc"><Icon name="layout" :size="20" /></span>
               <p class="ge-sub">No widgets yet — drag one here, or add a widget.</p>
               <button class="btn btn-sm" @click="addWidgetToGroup(g.id)"><Icon name="plus" :size="14" /> Add widget</button>
             </div>
@@ -994,8 +994,9 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
         <!-- 3 · always-available: add a new group at the end of the board. Styled as the
              same panel a group uses, so what you are about to create is what you see. -->
         <div v-if="!loadingBoard && (d.tiles.length || (d.groups && d.groups.length))" class="new-group-bar">
-          <button class="ng-btn" @click="addEmptyGroup"><Icon name="new-group" :size="15" /> New Group</button>
-          <p class="ng-note">Group widgets into collapsible sections to focus on what matters right now.</p>
+          <span class="ge-disc"><Icon name="new-group" :size="20" /></span>
+          <p class="ge-sub">Group widgets into collapsible sections to focus on what matters right now.</p>
+          <button class="btn btn-sm" @click="addEmptyGroup"><Icon name="plus" :size="14" /> New Group</button>
         </div>
         </template>
       </div>
@@ -1313,12 +1314,12 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .grp-date-note b { font-weight: 600; }
 /* an EMPTY group is a dashed drop well and nothing else — see the template */
 .grp-empty {
-  grid-column: 1 / -1; border: 1px dashed var(--border-strong); border-radius: var(--r-lg); background: color-mix(in srgb, var(--surface) 55%, transparent);
+  grid-column: 1 / -1; border: 1px dashed var(--border-strong); border-radius: var(--r-lg); background: var(--surface);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 20px 16px; text-align: center;
 }
-/* the same 56px disc / 24px mark as WidgetEmpty, so an empty group and an empty widget
+/* the same 42px disc / 20px mark as WidgetEmpty, so an empty group and an empty widget
    speak one language — see WidgetEmpty.vue for why --icon-hover and not --surface-2 */
-.ge-disc { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--icon-hover); color: var(--picker-ico); margin-bottom: 4px; }
+.ge-disc { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: var(--icon-hover); color: var(--picker-ico); margin-bottom: 4px; }
 .ge-sub { margin: 0; font-size: 13px; line-height: 1.45; color: var(--muted); max-width: 320px; }
 .grp-empty .btn { margin-top: 8px; }
 .grp-menu { position: fixed; z-index: 140; min-width: 188px; }
@@ -1379,12 +1380,13 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .new-section-bar { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 12px; padding: 9px; border: 1px dashed var(--border-strong); background: transparent; border-radius: 4px; color: var(--primary-700); font-weight: 600; font-size: 13px; }
 .new-section-bar:hover { background: var(--primary-softer); border-color: var(--primary); }
 /* persistent "New group" bar at the board's end (grouping method 3) */
-/* the New Group panel wears the group's own skin — same ground, same border, same radius
-   — so it previews the container it creates instead of announcing itself as a CTA bar */
-.new-group-bar { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; margin-top: 14px; padding: 16px 12px; border: 1px solid var(--border); background: var(--group-bg); border-radius: 4px; }
-.ng-btn { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 15px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink-2); border-radius: 4px; font-weight: 600; font-size: 13px; }
-.ng-btn:hover { border-color: var(--primary); color: var(--primary-700); background: var(--primary-softer); }
-.ng-note { margin: 0; font-size: 12px; color: var(--muted-2); text-align: center; }
+/* the New Group panel is the empty group's twin — white, dashed, disc · grey line ·
+   secondary CTA (it reuses .ge-disc / .ge-sub) — so it previews the container it creates */
+.new-group-bar {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; margin-top: 14px;
+  padding: 20px 16px; border: 1px dashed var(--border-strong); background: var(--surface); border-radius: var(--r-lg); text-align: center;
+}
+.new-group-bar .btn { margin-top: 8px; }
 /* ⑦ per-widget group chip (hover-reveal, bottom-left, out of the header actions' way) */
 .cell-grp-chip { position: absolute; left: 10px; bottom: 8px; z-index: 7; display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 11px; border: 1px solid var(--primary-soft); background: var(--surface); color: var(--primary-700); border-radius: 999px; font-size: 12px; font-weight: 600; box-shadow: var(--sh-sm); opacity: 0; transition: opacity .14s; }
 .cell:hover .cell-grp-chip { opacity: 1; }

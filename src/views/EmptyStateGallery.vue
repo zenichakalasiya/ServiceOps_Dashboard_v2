@@ -125,12 +125,11 @@ function demoAct(a) {
       <div class="es-table-wrap">
         <table class="es-table">
           <thead>
-            <tr><th>Widget</th><th>Title</th><th>Line below</th></tr>
+            <tr><th>Widget</th><th>Line shown</th></tr>
           </thead>
           <tbody>
             <tr v-for="c in [...charts, ...nonCharts, ...faults]" :key="'r-' + c.key">
               <td class="es-td-k">{{ c.label }}</td>
-              <td class="es-td-t">{{ c.state.title }}</td>
               <td>{{ c.state.sub }}</td>
             </tr>
           </tbody>
