@@ -446,6 +446,7 @@ const stuckIds = ref(new Set())
 let scroller = null
 function markStuck() {
   if (!scroller) return
+  if (gdTip.value) gdTip.value = null          // a fixed hover card would drift off its chip
   const line = stickLine()
   const next = new Set()
   scroller.querySelectorAll('.group[data-gid]').forEach((sec) => {
@@ -646,9 +647,20 @@ function groupDateTitle(g) {
   const { start, end } = windowFor(g.dateFilter)
   return `${stampFor(start)} → ${stampFor(end)}\nEvery widget in “${g.name}” reads this instead of the dashboard filter`
 }
-// how many widgets in this group opted out with a range of their own — the group note
+// how many widgets in this group opted out with a range of their own — the hover card
 // says so rather than claiming a reach it doesn't have
 function ownDated(gid) { return tilesIn(gid).filter((t) => t.dateFilter).length }
+/* The group date chip's hover card — the sentence that used to sit as a band under the
+   header, now shown only when you point at the chip. Same look as the predefined-widget
+   note in the builder (grey band, info glyph, ink text, the facts in bold). Anchored
+   under the chip, right-aligned to it, since the chip sits at the header's right edge. */
+const gdTip = ref(null)
+const GD_W = 300
+function showGdTip(g, e) {
+  if (gdOpen.value) return
+  const r = e.currentTarget.getBoundingClientRect()
+  gdTip.value = { g, top: r.bottom + 8, left: Math.max(8, Math.min(r.right - GD_W, window.innerWidth - GD_W - 8)) }
+}
 /* The group header's Rearrange button is gone. It reset every widget in the group to
  * its default footprint and repacked them — an action whose result you could only judge
  * after it had already destroyed the layout you arranged by hand. Widgets are still
@@ -1130,21 +1142,18 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
               <!-- Only when the group's configuration SETS a range — the same rule as a
                    widget's calendar. It is set in Edit group; a click here still opens
                    the picker to change or clear it. -->
+              <!-- what the range does is said on HOVER of this chip (the info band below
+                   the header was removed) — see the .gd-tip card -->
               <button
-                v-if="g.dateFilter" class="gh-act gh-date on"
-                @click.stop="toggleGroupDate(g, $event)" :title="groupDateTitle(g)"
+                v-if="g.dateFilter" class="gh-act gh-date on" :aria-label="groupDateTitle(g)"
+                @click.stop="gdTip = null; toggleGroupDate(g, $event)"
+                @mouseenter="showGdTip(g, $event)" @mouseleave="gdTip = null"
               ><Icon name="calendar" :size="13" /></button>
               <button class="gh-act gh-hov" title="Add a widget to this group" @click="addWidgetToGroup(g.id)"><Icon name="plus" :size="16" /></button>
               <button class="gh-act gh-hov" title="Group actions" @click.stop="openGroupMenu(g, $event)"><Icon name="dots-v" :size="16" /></button>
             </div>
           </header>
-          <!-- the one-liner: what the range above actually does to the widgets below it -->
           <div v-if="!g.collapsed" class="grp-body">
-          <p v-if="g.dateFilter" class="grp-date-note">
-            <Icon name="info" :size="13" />
-            All {{ tilesIn(g.id).length }} widget{{ tilesIn(g.id).length === 1 ? '' : 's' }} in
-            “{{ g.name }}” use <b>{{ g.dateFilter }}</b> instead of the dashboard filter<template v-if="ownDated(g.id)">, except {{ ownDated(g.id) }} on {{ ownDated(g.id) === 1 ? 'its' : 'their' }} own range</template>.
-          </p>
           <div class="grid" :style="gridStyle">
             <div v-for="t in tilesIn(g.id)" :key="t.id" :data-tile="t.id" class="cell"
               :class="{ flash: highlightId === t.id, dragging: dragId === t.id }" :style="cellStyle(t)" :draggable="dragArmed === t.id"
@@ -1188,6 +1197,18 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
         <div class="menu-sep" />
         <button class="menu-item danger" @click="askDeleteGroup(gMenu.g)"><Icon name="trash" :size="15" /> Delete group</button>
       </div>
+    </teleport>
+    <!-- group date chip — hover card -->
+    <teleport to="body">
+      <transition name="fade">
+        <div v-if="gdTip" class="gd-tip" :style="{ top: gdTip.top + 'px', left: gdTip.left + 'px', width: GD_W + 'px' }" role="tooltip">
+          <Icon name="info" :size="14" />
+          <span>
+            All {{ tilesIn(gdTip.g.id).length }} widget{{ tilesIn(gdTip.g.id).length === 1 ? '' : 's' }} in
+            “{{ gdTip.g.name }}” use <b>{{ gdTip.g.dateFilter }}</b> instead of the dashboard filter<template v-if="ownDated(gdTip.g.id)">, except {{ ownDated(gdTip.g.id) }} on {{ ownDated(gdTip.g.id) === 1 ? 'its' : 'their' }} own range</template>.
+          </span>
+        </div>
+      </transition>
     </teleport>
     <GroupEditDrawer v-if="editGroupTarget" :group="editGroupTarget" @close="editGroupTarget = null; dirty = true" />
     <ConfirmDialog
@@ -1530,9 +1551,11 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .grp-body { padding: 12px; }
 .group.no-pad .grp-body { padding: 0; }
 /* the one-liner under the header: what that range does to the widgets below it */
-.grp-date-note { display: flex; align-items: center; gap: 6px; margin: 0 0 10px; font-size: 12px; line-height: 1.45; color: var(--df-ink); }
-.grp-date-note :deep(.ico) { color: var(--df); flex: none; }
-.grp-date-note b { font-weight: 600; }
+/* the group date chip's hover card: the builder's predefined note (.pe-note) — grey band,
+   info glyph, ink text, facts in bold — lifted onto a floating card */
+.gd-tip { position: fixed; z-index: 150; display: flex; align-items: flex-start; gap: 6px; padding: 6px 8px; border-radius: var(--r); background: var(--surface-2); border: 1px solid var(--border); box-shadow: var(--sh-pop); font-size: 11px; line-height: 1.45; color: var(--ink); pointer-events: none; }
+.gd-tip :deep(.ico) { flex: none; margin-top: 1px; color: var(--ink-2); }
+.gd-tip b { font-weight: 600; }
 /* an EMPTY group is a dashed drop well and nothing else — see the template */
 .grp-empty {
   grid-column: 1 / -1; border: 1px dashed var(--border-strong); border-radius: var(--r-lg); background: var(--surface);
