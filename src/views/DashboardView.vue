@@ -532,6 +532,7 @@ function openNav(focus = false) {
   gNav.value = true
   if (focus) nextTick(() => gNavInput.value?.focus())
 }
+const allExpanded = computed(() => (d.value?.groups || []).every((g) => !g.collapsed))
 function collapseAll(v) {
   (d.value.groups || []).forEach((g) => { g.collapsed = v })
   gNav.value = false
@@ -942,7 +943,6 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
                 <Icon name="search" :size="14" />
                 <input ref="gNavInput" v-model="gNavQ" placeholder="Find a group…" @keydown.enter="navList[0] && jumpToGroup(navList[0].id)" />
               </div>
-              <div class="menu-label">Jump to section</div>
               <div class="gnav-list">
                 <button
                   v-for="s in navList" :key="s.id" class="menu-item gnav-row" :class="{ cur: s.id === curSection?.id, ug: s.id === '__ug' }"
@@ -955,8 +955,10 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
                 <div v-if="!navList.length" class="gnav-none">No group matches “{{ gNavQ }}”</div>
               </div>
               <div class="gnav-foot">
-                <button class="gnav-act" @click="collapseAll(true)"><Icon name="chevron-up" :size="14" /> Collapse all</button>
-                <button class="gnav-act" @click="collapseAll(false)"><Icon name="chevron-down" :size="14" /> Expand all</button>
+                <!-- ONE action, the one that applies: Collapse all while every group is
+                     open, Expand all as soon as any is folded -->
+                <button v-if="allExpanded" class="gnav-act" @click="collapseAll(true)"><Icon name="chevron-up" :size="14" /> Collapse all</button>
+                <button v-else class="gnav-act" @click="collapseAll(false)"><Icon name="chevron-down" :size="14" /> Expand all</button>
                 <span class="gnav-keys"><kbd>G</kbd> <kbd>Alt ↑↓</kbd></span>
               </div>
             </div>
