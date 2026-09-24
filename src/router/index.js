@@ -18,6 +18,7 @@ const routes = [
   /* Every empty state on one page. Same kind of page as the icon catalogue — it
      documents the product rather than being part of it. */
   { path: '/empty-states', name: 'empty-states', component: () => import('../views/EmptyStateGallery.vue') },
+  { path: '/loaders', name: 'loaders', component: () => import('../views/LoaderGallery.vue') },
   // AI-insights placement lab — compare three entry-point placements over the real board
   { path: '/ai-placement', name: 'ai-placement', component: () => import('../views/AiPlacementLab.vue') },
   // non-dashboard module (stub content) — the two-sidebar shell around a real listing

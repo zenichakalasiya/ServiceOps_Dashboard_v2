@@ -101,6 +101,14 @@ function pickSub(m, sub) {
       <transition name="fade"><span v-if="!store.ui.railExpanded && hoverKey === 'empty'" class="tt tip">Empty States</span></transition>
     </button>
 
+    <!-- Chart loaders — the third reference page: widget loading-state candidates -->
+    <button class="mod lib" :class="{ active: route.path === '/loaders' }"
+      @click="router.push('/loaders')" @mouseenter="hoverKey = 'loaders'" @mouseleave="hoverKey = ''">
+      <span class="mod-ic"><Icon name="trend" :size="19" /></span>
+      <span v-if="store.ui.railExpanded" class="mod-nm">Chart Loaders</span>
+      <transition name="fade"><span v-if="!store.ui.railExpanded && hoverKey === 'loaders'" class="tt tip">Chart Loaders</span></transition>
+    </button>
+
     <!-- submodule flyout (Assets / CMDB / Patches / Packages) -->
     <teleport to="body">
       <div v-if="flyout" class="fly" :style="{ top: flyout.top + 'px', left: flyout.left + 'px' }"
