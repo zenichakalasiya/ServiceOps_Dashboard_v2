@@ -959,11 +959,15 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
               <span v-if="!layoutLocked" class="resize" title="Drag to resize" @mousedown.stop.prevent="startResize($event, t)" />
               <button v-if="gHoverIcon" class="cell-grp-chip" title="Group this widget" @click.stop="openTileMenu(t, $event)"><Icon name="new-group" :size="13" /> Group</button>
             </div>
-            <!-- An empty group is a dashed drop well and nothing else, as the reference
-                 draws it: the header's + is the add action, and dragging a widget in is
-                 the other. The well takes the height of one widget row so the group has
-                 a real target to drop onto rather than a strip. -->
-            <div v-if="!tilesIn(g.id).length" class="grp-empty" :style="{ minHeight: Math.round(lay('rowHeight') * 0.6) + 'px' }" />
+            <!-- An empty group is a drop well that says what it is for: the product's
+                 empty-state pattern (grey disc · one grey line · a secondary CTA), minus
+                 the title — the group header right above already names the thing. The
+                 well keeps a widget row's worth of height so a drag has a real target. -->
+            <div v-if="!tilesIn(g.id).length" class="grp-empty" :style="{ minHeight: Math.round(lay('rowHeight') * 0.6) + 'px' }">
+              <span class="ge-disc"><Icon name="layout" :size="24" /></span>
+              <p class="ge-sub">No widgets yet — drag one here, or add a widget.</p>
+              <button class="btn btn-sm" @click="addWidgetToGroup(g.id)"><Icon name="plus" :size="14" /> Add widget</button>
+            </div>
           </div>
           </div>
         </section>
@@ -1282,7 +1286,15 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .grp-date-note :deep(.ico) { color: var(--df); flex: none; }
 .grp-date-note b { font-weight: 600; }
 /* an EMPTY group is a dashed drop well and nothing else — see the template */
-.grp-empty { grid-column: 1 / -1; border: 1px dashed var(--border-strong); border-radius: var(--r-lg); background: color-mix(in srgb, var(--surface) 55%, transparent); }
+.grp-empty {
+  grid-column: 1 / -1; border: 1px dashed var(--border-strong); border-radius: var(--r-lg); background: color-mix(in srgb, var(--surface) 55%, transparent);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 20px 16px; text-align: center;
+}
+/* the same 56px disc / 24px mark as WidgetEmpty, so an empty group and an empty widget
+   speak one language — see WidgetEmpty.vue for why --icon-hover and not --surface-2 */
+.ge-disc { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--icon-hover); color: var(--picker-ico); margin-bottom: 4px; }
+.ge-sub { margin: 0; font-size: 13px; line-height: 1.45; color: var(--muted); max-width: 320px; }
+.grp-empty .btn { margin-top: 8px; }
 .grp-menu { position: fixed; z-index: 140; min-width: 188px; }
 /* grouping-style demo switcher */
 .gstyle-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 12px; margin-bottom: 14px; background: var(--surface); border: 1px dashed var(--border-strong); border-radius: 4px; }
