@@ -1202,7 +1202,8 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .resize { position: absolute; right: 3px; bottom: 3px; width: 16px; height: 16px; z-index: 6; cursor: nwse-resize; opacity: 0; }
 .resize::after {
   content: ''; position: absolute; right: 2px; bottom: 2px; width: 6px; height: 6px;
-  border-right: 2px solid var(--picker-ico); border-bottom: 2px solid var(--picker-ico);
+  /* --muted-2, the info icon's grey — the two sit in the same card and read as one set */
+  border-right: 2px solid var(--muted-2); border-bottom: 2px solid var(--muted-2);
   border-bottom-right-radius: 2px;
 }
 .cell:hover .resize { opacity: 1; }
