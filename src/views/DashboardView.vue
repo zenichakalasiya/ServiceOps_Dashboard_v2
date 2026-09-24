@@ -14,6 +14,7 @@ import ExportDialog from '../components/dashboard/ExportDialog.vue'
 import ScheduleDialog from '../components/dashboard/ScheduleDialog.vue'
 import TimeRangePopover, { rectOf } from '../components/dashboard/TimeRangePopover.vue'
 import GroupEditDrawer from '../components/dashboard/GroupEditDrawer.vue'
+import EmptyGroupArt from '../components/ui/EmptyGroupArt.vue'
 import ConfirmDialog from '../components/ui/ConfirmDialog.vue'
 import { grpHeadVars, grpStyleOf } from '../data/groups.js'
 import AiSummaryCard from '../components/ai/AiSummaryCard.vue'
@@ -1057,7 +1058,7 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
                  the title — the group header right above already names the thing. The
                  well keeps a widget row's worth of height so a drag has a real target. -->
             <div v-if="!tilesIn(g.id).length" class="grp-empty" :style="{ minHeight: Math.round(lay('rowHeight') * 0.6) + 'px' }">
-              <span class="ge-disc"><Icon name="layout" :size="20" /></span>
+              <EmptyGroupArt class="ge-art" :width="132" />
               <p class="ge-sub">No widgets yet — drag one here, or add a widget.</p>
               <button class="btn btn-sm" @click="addWidgetToGroup(g.id)"><Icon name="plus" :size="14" /> Add widget</button>
             </div>
@@ -1418,7 +1419,8 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 }
 /* the same 42px disc / 20px mark as WidgetEmpty, so an empty group and an empty widget
    speak one language — see WidgetEmpty.vue for why --icon-hover and not --surface-2 */
-.ge-disc { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: var(--icon-hover); color: var(--picker-ico); margin-bottom: 4px; }
+/* the empty group's illustration (EmptyGroupArt) — painted in the chart-artwork slate */
+.ge-art { color: var(--picker-ico); margin-bottom: 6px; }
 .ge-sub { margin: 0; font-size: 13px; line-height: 1.45; color: var(--muted); max-width: 320px; }
 .grp-empty .btn { margin-top: 8px; }
 .grp-menu { position: fixed; z-index: 140; min-width: 188px; }
