@@ -1387,6 +1387,8 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
   padding: 20px 16px; border: 1px dashed var(--border-strong); background: var(--surface); border-radius: var(--r-lg); text-align: center;
 }
 .new-group-bar .btn { margin-top: 8px; }
+/* the invitation is one sentence and reads as one line; the full-width panel has room */
+.new-group-bar .ge-sub { max-width: none; }
 /* ⑦ per-widget group chip (hover-reveal, bottom-left, out of the header actions' way) */
 .cell-grp-chip { position: absolute; left: 10px; bottom: 8px; z-index: 7; display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 11px; border: 1px solid var(--primary-soft); background: var(--surface); color: var(--primary-700); border-radius: 999px; font-size: 12px; font-weight: 600; box-shadow: var(--sh-sm); opacity: 0; transition: opacity .14s; }
 .cell:hover .cell-grp-chip { opacity: 1; }

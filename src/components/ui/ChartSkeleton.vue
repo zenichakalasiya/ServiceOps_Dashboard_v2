@@ -5,16 +5,16 @@
  * NOT ChartIcon. That one is a 64x64 identifying glyph on a fixed artboard, drawn to be
  * recognised in a picker. This one is a small PORTRAIT of the real chart: the same
  * anatomy ECharts renders for us — value axis, gridlines, category labels, series
- * markers, legend — drawn in grey. Bare shapes were the first attempt and they read as
+ * markers — drawn in grey. (No legend: at preview scale it read as a smudge.) Bare shapes were the first attempt and they read as
  * decoration; what makes a skeleton look like a chart is the chrome around the data, not
  * the data.
  *
  * Each kind mirrors what the board actually draws:
- *   line    → gridded plot, ringed point markers, legend       (ChartTile's line)
+ *   line    → gridded plot, ringed point markers               (ChartTile's line)
  *   bar     → gridded plot, one series, no rounded caps        (ChartTile's column)
  *   donut   → ring with the centre total, as every pie tile on the board renders
- *   stack   → gridded plot, four series stacked per category, a four-item legend
- * The donut carries no axes or legend, because that chart has none.
+ *   stack   → gridded plot, four series stacked per category
+ * The donut carries no axes, because that chart has none.
  *
  * ── Two mechanics worth knowing ─────────────────────────────────────────────────
  * 1. The plot SVGs take `preserveAspectRatio="none"` so they stretch to any card shape.
@@ -32,12 +32,13 @@ defineProps({
   kind: { type: String, required: true },
 })
 
-/* Y-axis tick labels. The last is stubbier on purpose — it is the zero, and a real axis
-   ends on a one-character label. Small truths like that are most of why a skeleton reads
-   as a chart rather than as grey boxes. */
-const Y_TICKS = [16, 16, 16, 16, 9]
-const X_TICKS_LINE = [22, 22, 22, 22, 22, 22]
-const X_TICKS_BAR = [30, 30, 30, 30]
+/* Axis tick labels: ONE small width on both axes. Varied widths (a stubby zero, wider
+   category labels) were tried and read as noise at this size; an even row of short pills
+   reads as an axis. No legend either — at preview scale it was a smudge under the plot. */
+const TICK = 10
+const Y_TICKS = Array(5).fill(TICK)
+const X_TICKS_LINE = Array(6).fill(TICK)
+const X_TICKS_BAR = Array(4).fill(TICK)
 
 /* One series, four categories, as the reference draws it — and all four the SAME tone.
    Inking the tallest was tried; a single-series chart colours every bar alike, and the
@@ -116,11 +117,6 @@ const GRID_Y = [2, 16.5, 31, 45.5, 60]
           class="cs-slot"
         ><i class="cs-stub" :style="{ width: w + 'px' }" /></span>
       </div>
-      <!-- a stacked chart keys every series, in the series' own tone -->
-      <div v-if="kind === 'stack'" class="cs-leg">
-        <span v-for="t in STACK_TONE" :key="t" class="cs-leg-i"><span class="cs-dot" :class="t" /><span class="cs-stub" style="width: 22px" /></span>
-      </div>
-      <div v-else class="cs-leg"><span class="cs-dot" /><span class="cs-stub" style="width: 30px" /></div>
     </template>
 
     <!-- ── DONUT: a ring with the centre total, the way every pie tile renders ── -->
@@ -157,21 +153,20 @@ const GRID_Y = [2, 16.5, 31, 45.5, 60]
   padding: 10px 12px;
 }
 /* A placeholder for a label. One class, every axis and the legend. */
-.cs-stub { height: 5px; border-radius: 2px; background: var(--sk-3); flex: none; }
+.cs-stub { height: 4px; border-radius: 2px; background: var(--sk-3); flex: none; }
 
 /* ── gridded plot ── */
 .cs-plot { flex: 1; min-height: 0; display: flex; gap: 6px; }
 /* space-between puts a tick against each gridline, which is what ties the two together */
-.cs-yax { width: 16px; flex: none; display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; }
+.cs-yax { width: 10px; flex: none; display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; }
 .cs-canvas { flex: 1; min-width: 0; height: 100%; display: block; overflow: visible; }
 .cs-grid { stroke: var(--sk-grid); stroke-width: 1; fill: none; }
 .cs-col { fill: var(--sk-2); }
 /* stack series, bottom-up: dark, light, mid, dark again — no two neighbours share a tone */
-.cs-s1 { fill: var(--sk-1); background: var(--sk-1); }
-.cs-s2 { fill: var(--sk-3); background: var(--sk-3); }
-.cs-s3 { fill: var(--sk-mid); background: var(--sk-mid); }
-.cs-s4 { fill: var(--sk-2); background: var(--sk-2); }
-.cs-leg-i { display: inline-flex; align-items: center; gap: 4px; }
+.cs-s1 { fill: var(--sk-1); }
+.cs-s2 { fill: var(--sk-3); }
+.cs-s3 { fill: var(--sk-mid); }
+.cs-s4 { fill: var(--sk-2); }
 .cs-series { fill: none; stroke: var(--sk-1); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .cs-mark { stroke: var(--sk-1); stroke-width: 7; stroke-linecap: round; }
 /* the knockout, so a marker reads as a ring — the card colour, not white, or it breaks
@@ -179,14 +174,12 @@ const GRID_Y = [2, 16.5, 31, 45.5, 60]
 .cs-mark-in { stroke: var(--surface); stroke-width: 3.5; stroke-linecap: round; }
 /* indented by the y-axis and its gap, so the labels line up under the plot instead of
    under the axis */
-.cs-xax { flex: none; display: flex; padding-left: 22px; }
+.cs-xax { flex: none; display: flex; padding-left: 16px; }
 .cs-xax .cs-slot { display: flex; }
 /* category: one equal slot per bar, label centred in it */
 .cs-xax.cat .cs-slot { flex: 1; justify-content: center; }
 /* value: the ends run to the edges of the plot, as a time axis does */
 .cs-xax.val { justify-content: space-between; }
-.cs-leg { flex: none; display: flex; align-items: center; justify-content: center; gap: 6px; }
-.cs-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--sk-2); flex: none; }
 
 /* ── donut ── */
 .cs-donut-wrap { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
