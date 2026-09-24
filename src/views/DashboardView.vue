@@ -991,13 +991,8 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
         <div v-if="gShowInserters && (d.groups || []).length" class="grp-insert" @click.stop="insertEmptyGroup((d.groups || []).length)"><span class="gi-line" /><span class="gi-btn"><Icon name="new-group" :size="13" /> New group here</span><span class="gi-line" /></div>
         <!-- F: a slim full-width "+ New section" bar (sections are typed headings) -->
         <button v-if="gSections" class="new-section-bar" @click="addEmptyGroup"><Icon name="new-group" :size="15" /> New section</button>
-        <!-- 3 · always-available: add a new group at the end of the board. Styled as the
-             same panel a group uses, so what you are about to create is what you see. -->
-        <div v-if="!loadingBoard && (d.tiles.length || (d.groups && d.groups.length))" class="new-group-bar">
-          <span class="ge-disc"><Icon name="new-group" :size="20" /></span>
-          <p class="ge-sub">Group widgets into collapsible sections to focus on what matters right now.</p>
-          <button class="btn btn-sm" @click="addEmptyGroup"><Icon name="plus" :size="14" /> New Group</button>
-        </div>
+        <!-- No standing "New Group" panel at the board's end — a group is created from
+             the Add Widget drawer's Empty Group card. -->
         </template>
       </div>
     </div>
@@ -1379,16 +1374,6 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .group.as-section > .grid { padding: 12px 0 4px; }
 .new-section-bar { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 12px; padding: 9px; border: 1px dashed var(--border-strong); background: transparent; border-radius: 4px; color: var(--primary-700); font-weight: 600; font-size: 13px; }
 .new-section-bar:hover { background: var(--primary-softer); border-color: var(--primary); }
-/* persistent "New group" bar at the board's end (grouping method 3) */
-/* the New Group panel is the empty group's twin — white, dashed, disc · grey line ·
-   secondary CTA (it reuses .ge-disc / .ge-sub) — so it previews the container it creates */
-.new-group-bar {
-  display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; margin-top: 14px;
-  padding: 20px 16px; border: 1px dashed var(--border-strong); background: var(--surface); border-radius: var(--r-lg); text-align: center;
-}
-.new-group-bar .btn { margin-top: 8px; }
-/* the invitation is one sentence and reads as one line; the full-width panel has room */
-.new-group-bar .ge-sub { max-width: none; }
 /* ⑦ per-widget group chip (hover-reveal, bottom-left, out of the header actions' way) */
 .cell-grp-chip { position: absolute; left: 10px; bottom: 8px; z-index: 7; display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 11px; border: 1px solid var(--primary-soft); background: var(--surface); color: var(--primary-700); border-radius: 999px; font-size: 12px; font-weight: 600; box-shadow: var(--sh-sm); opacity: 0; transition: opacity .14s; }
 .cell:hover .cell-grp-chip { opacity: 1; }

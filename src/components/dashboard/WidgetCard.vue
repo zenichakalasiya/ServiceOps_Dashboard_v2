@@ -100,9 +100,10 @@ const ownRange = computed(() => props.tile.dateFilter || null)
 const effRange = computed(() => ownRange.value || groupRange.value)
 // 'own' | 'group' | 'none' — drives both the styling and what the tooltip can claim
 const dfSource = computed(() => (ownRange.value ? 'own' : groupRange.value ? 'group' : 'none'))
-// shown at all? always inside a group; only when overridden outside one
-// …but never on a note, which has no query for a range to filter
-const showDf = computed(() => !isNote.value && (!!props.group || !!ownRange.value))
+// shown only on a widget whose OWN configuration sets a date filter — a calendar on
+// every tile said nothing. A group's range is shown once, on the group header.
+// Never on a note, which has no query for a range to filter.
+const showDf = computed(() => !isNote.value && !!ownRange.value)
 
 const dfChipEl = ref(null)
 const dfOpen = ref(false)
