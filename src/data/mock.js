@@ -236,7 +236,9 @@ export function seed() {
     // a user's copy of Helpdesk Overview, organised into four coloured groups
     { name: 'Helpdesk Overview (Grouped)', folder: 'f-svc', category: 'Service Desk', owner: 'Aarav Mehta', access: 'public', predefined: false, favorite: false, description: 'A copy of Helpdesk Overview organised into groups — counters, status & priority, technician load and my worklists — each with its own header colour.', ...groupedHelpdesk(), updated: days(0), mine: true },
   ].map((d, i) => ({
-    id: uid('d'), enabled: true, archived: false, default: i === 0, groups: [],
+    // the landing board: the grouped copy of Helpdesk Overview (2026-09-24), so a first
+    // visit opens on the grouping features; the original keeps everything else it had
+    id: uid('d'), enabled: true, archived: false, default: d.name === 'Helpdesk Overview (Grouped)', groups: [],
     history: demoHistory(), schedules: demoSchedules(),
     mine: d.owner === 'Aarav Mehta', viewedAt: i < 3 ? days(i) : null, ...d,
     // Tag each tile's provenance so the dashboard can show a predefined / user / shared icon.
