@@ -467,6 +467,44 @@ onMounted(() => {
 })
 onBeforeUnmount(() => scroller?.removeEventListener('scroll', markStuck))
 
+/* ── Group switcher (▾ beside a group's title) ───────────────────────────────────────
+ * The header sticks, so the switcher is always one click away wherever you are in a long
+ * board. It lists every group with its widget count and marks the one this header belongs
+ * to; picking another GLIDES there — the target's header lands at the sticky line — and
+ * its outline flashes once so the eye knows where it arrived. A collapsed target opens. */
+const gSw = ref({ open: false, gid: null, top: 0, left: 0 })
+const SW_W = 240
+function openSwitcher(g, e) {
+  const r = e.currentTarget.getBoundingClientRect()
+  const rows = (d.value.groups || []).length
+  const H = Math.min(320, 34 + rows * 34)
+  const below = window.innerHeight - r.bottom >= H + 8
+  gSw.value = {
+    open: true, gid: g.id,
+    top: below ? r.bottom + 6 : Math.max(8, r.top - H - 6),
+    left: Math.max(8, Math.min(r.left + r.width / 2 - SW_W / 2, window.innerWidth - SW_W - 8)),
+  }
+}
+const swGroups = computed(() => (d.value?.groups || []).map((g) => ({ id: g.id, name: g.name, n: tilesIn(g.id).length })))
+const flashGid = ref(null)
+let flashT = null
+function jumpToGroup(id) {
+  gSw.value = { ...gSw.value, open: false }
+  const g = (d.value.groups || []).find((x) => x.id === id)
+  if (!g) return
+  if (g.collapsed) g.collapsed = false
+  nextTick(() => {
+    const sec = scroller?.querySelector(`.group[data-gid="${id}"]`)
+    if (!sec || !scroller) return
+    const y = scroller.scrollTop + sec.getBoundingClientRect().top - scroller.getBoundingClientRect().top - STICK_GAP
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    scroller.scrollTo({ top: Math.max(0, y), behavior: reduce ? 'auto' : 'smooth' })
+    clearTimeout(flashT); flashGid.value = null
+    // flash once the glide has (about) landed, so the highlight is seen, not scrolled past
+    flashT = setTimeout(() => { flashGid.value = id; flashT = setTimeout(() => { flashGid.value = null }, 1200) }, reduce ? 0 : 420)
+  })
+}
+
 /* ── Reordering groups: drag a group by its header ──────────────────────────────────
  * Armed on a header mousedown that did not land on a button or the rename field, so the
  * collapse arrow, +, ⋯ and date still just click. While a GROUP
@@ -940,6 +978,7 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
           :class="{
             'drop-into': dropGroup === g.id && !dragGroupId, 'as-section': gSections, collapsed: g.collapsed,
             'no-pad': grpStyleOf(g).pad === false, 'g-drop-before': dropBefore === g.id, 'g-dragging': dragGroupId === g.id,
+            'g-flash': flashGid === g.id,
           }"
           :style="grpHeadVars(g)" :data-gid="g.id"
           @dragover.prevent="onSectionDragOver(g)" @drop="onSectionDrop(g)"
@@ -972,6 +1011,14 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
               />
               <b v-else class="grp-name" title="Rename group" @click="editingGroup = g.id">{{ g.name }}</b>
               <span v-if="grpStyleOf(g).share === 'private'" class="gh-lock" title="Private group — only you can see it"><Icon name="lock" :size="12" /></span>
+              <!-- the switcher: ▾ and where this group sits in the board (2/5) -->
+              <button
+                v-if="(d.groups || []).length > 1" class="gh-sw" :class="{ on: gSw.open && gSw.gid === g.id }"
+                title="Switch to another group" @click.stop="openSwitcher(g, $event)"
+              >
+                <Icon name="chevron-down" :size="14" />
+                <span class="gh-pos">{{ d.groups.indexOf(g) + 1 }}/{{ d.groups.length }}</span>
+              </button>
             </div>
             <div class="gh-r">
               <!-- The group's own time range. Set once here, every widget in the group reads
@@ -1039,6 +1086,23 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
         <div class="menu-sep" />
         <button class="menu-item danger" @click="askDeleteGroup(gMenu.g)"><Icon name="trash" :size="15" /> Delete group</button>
       </div>
+    </teleport>
+    <!-- group switcher — every group with its widget count, this header's own marked -->
+    <teleport to="body">
+      <div v-if="gSw.open" class="backdrop" @click="gSw = { ...gSw, open: false }" />
+      <transition name="pop">
+        <div v-if="gSw.open" class="menu gsw-pop" :style="{ top: gSw.top + 'px', left: gSw.left + 'px', width: SW_W + 'px' }" @click.stop>
+          <div class="menu-label">Jump to group</div>
+          <button
+            v-for="s in swGroups" :key="s.id" class="menu-item gsw-row" :class="{ cur: s.id === gSw.gid }"
+            @click="s.id === gSw.gid ? (gSw = { ...gSw, open: false }) : jumpToGroup(s.id)"
+          >
+            <span class="gsw-dot" />
+            <span class="gsw-nm">{{ s.name }}</span>
+            <span class="gsw-n">{{ s.n }}</span>
+          </button>
+        </div>
+      </transition>
     </teleport>
     <GroupEditDrawer v-if="editGroupTarget" :group="editGroupTarget" @close="editGroupTarget = null; dirty = true" />
     <ConfirmDialog
@@ -1358,6 +1422,26 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .ge-sub { margin: 0; font-size: 13px; line-height: 1.45; color: var(--muted); max-width: 320px; }
 .grp-empty .btn { margin-top: 8px; }
 .grp-menu { position: fixed; z-index: 140; min-width: 188px; }
+/* the switcher trigger — quiet at rest (it inherits the band's ink), a soft chip on hover */
+.gh-sw { display: inline-flex; align-items: center; gap: 3px; height: 22px; padding: 0 6px 0 4px; border: none; border-radius: var(--r); background: transparent; color: inherit; opacity: .7; flex: none; }
+.gh-sw:hover, .gh-sw.on { opacity: 1; background: color-mix(in srgb, currentColor 10%, transparent); }
+.gh-pos { font-size: 11px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.gsw-pop { position: fixed; z-index: 140; max-height: 320px; overflow: auto; }
+.gsw-row { gap: 8px; }
+.gsw-dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+.gsw-nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gsw-n { flex: none; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.gsw-row.cur { font-weight: 600; }
+.gsw-row.cur .gsw-dot { background: var(--sel); }
+.gsw-row.cur .gsw-n { color: var(--ink); font-weight: 600; }
+/* arrival: the outline pulses once in the near-black, then settles back */
+.group.g-flash { animation: gflash 1.2s ease-out; }
+@keyframes gflash {
+  0%   { box-shadow: 0 0 0 0 transparent; }
+  20%  { box-shadow: 0 0 0 2px var(--sel), 0 0 0 6px color-mix(in srgb, var(--sel) 12%, transparent); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+@media (prefers-reduced-motion: reduce) { .group.g-flash { animation: none; box-shadow: 0 0 0 2px var(--sel); } }
 /* grouping-style demo switcher */
 .gstyle-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 12px; margin-bottom: 14px; background: var(--surface); border: 1px dashed var(--border-strong); border-radius: 4px; }
 .legend-bar .gsb-label em { font-style: normal; font-weight: 500; color: var(--muted); font-size: 11px; margin-left: 4px; }
