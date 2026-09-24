@@ -101,6 +101,21 @@ function helpdeskTiles() {
       'Approval requests waiting on me.'), w: 4, total: 7 },
   ]
 }
+/* A COPY of Helpdesk Overview laid out in groups — the demo board for the grouping
+ * features (sticky headers, the Groups navigator, header colours, Move to group). Same
+ * thirteen widgets as the original, sorted by what they are about, each group in its own
+ * header colour. The original board is left exactly as it is. */
+function groupedHelpdesk() {
+  const G = [
+    { id: uid('g'), name: 'Request Counters', collapsed: false, dateFilter: null, style: { bg: 'Yellow' } },
+    { id: uid('g'), name: 'Status & Priority', collapsed: false, dateFilter: null, style: { bg: 'Green' } },
+    { id: uid('g'), name: 'Technician Load', collapsed: false, dateFilter: null, style: { bg: 'Blue' } },
+    { id: uid('g'), name: 'My Worklists', collapsed: false, dateFilter: null, style: { bg: 'Orange' } },
+  ]
+  // helpdeskTiles() order: 6 counters · status + priority · the two technician charts · 3 lists
+  const slot = (i) => (i < 6 ? 0 : i < 8 ? 1 : i < 10 ? 2 : 3)
+  return { groups: G, tiles: helpdeskTiles().map((t, i) => ({ ...t, group: G[slot(i)].id })) }
+}
 function assetTiles() {
   return [
     kpi('Total Assets', 4820, '', { dir: 'up', pct: 2 }, 'good', 'All managed hardware + software assets.'),
@@ -218,6 +233,8 @@ export function seed() {
     { name: 'test 1', folder: 'f-mine', category: '', owner: 'Aarav Mehta', access: 'private', predefined: false, favorite: false, description: 'Custom board (mirrors the “test 1” dashboard on the ServiceOps instance): mixed request/patch counters and a custom line chart.', tiles: test1Tiles(), updated: days(3), mine: true },
     { name: 'Vulnerability and Remediation Dashboard', folder: 'f-noc', category: 'Patch Management', owner: 'Aarav Mehta', access: 'public', predefined: false, favorite: false, description: 'Custom board (mirrors the “Vulnerability and Remediation Dashboard” on the ServiceOps instance): patch installation/deployment counters plus status, category and severity breakdowns.', tiles: vulnRemediationTiles(), updated: days(1), mine: true },
     { name: 'My SLA drafts', folder: 'f-mine', category: '', owner: 'Aarav Mehta', access: 'private', predefined: false, favorite: false, description: 'Work in progress — includes empty-widget state demos.', tiles: [...execTiles().slice(0, 3), ...demoStateTiles()], updated: days(5), mine: true },
+    // a user's copy of Helpdesk Overview, organised into four coloured groups
+    { name: 'Helpdesk Overview (Grouped)', folder: 'f-svc', category: 'Service Desk', owner: 'Aarav Mehta', access: 'public', predefined: false, favorite: false, description: 'A copy of Helpdesk Overview organised into groups — counters, status & priority, technician load and my worklists — each with its own header colour.', ...groupedHelpdesk(), updated: days(0), mine: true },
   ].map((d, i) => ({
     id: uid('d'), enabled: true, archived: false, default: i === 0, groups: [],
     history: demoHistory(), schedules: demoSchedules(),
