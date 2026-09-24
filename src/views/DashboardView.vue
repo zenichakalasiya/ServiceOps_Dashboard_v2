@@ -13,6 +13,9 @@ import HistoryDialog from '../components/dashboard/HistoryDialog.vue'
 import ExportDialog from '../components/dashboard/ExportDialog.vue'
 import ScheduleDialog from '../components/dashboard/ScheduleDialog.vue'
 import TimeRangePopover, { rectOf } from '../components/dashboard/TimeRangePopover.vue'
+import GroupEditDrawer from '../components/dashboard/GroupEditDrawer.vue'
+import ConfirmDialog from '../components/ui/ConfirmDialog.vue'
+import { grpHeadVars, grpStyleOf } from '../data/groups.js'
 import AiSummaryCard from '../components/ai/AiSummaryCard.vue'
 import AiInsightChip from '../components/ai/AiInsightChip.vue'
 import AiInsightCard from '../components/ai/AiInsightCard.vue'
@@ -365,9 +368,97 @@ function createGroupFromPicks() {
 }
 function addWidgetToGroup(gid) { addToGroup.value = gid; showAdd.value = true }
 function ungroup(g) {
+  const n = tilesIn(g.id).length
   d.value.tiles.forEach((t) => { if (t.group === g.id) t.group = null })
   d.value.groups = d.value.groups.filter((x) => x.id !== g.id)
   dirty.value = true
+  toast(n ? `Ungrouped “${g.name}” — its ${n} widget${n === 1 ? '' : 's'} stay on the dashboard` : `Removed the empty group “${g.name}”`, 'success')
+}
+
+/* ── The group ⋯ menu: Edit · Clone · Ungroup · Delete ─────────────────────────────
+ * Teleported and placed in viewport coords, like every other menu that sits inside a
+ * card — the group's rounded body clips anything that tries to hang out of it. */
+const gMenu = ref({ open: false, g: null, top: 0, left: 0 })
+function openGroupMenu(g, e) {
+  const r = e.currentTarget.getBoundingClientRect()
+  /* Flips ABOVE the button when there is no room below. A group header near the foot of
+     the viewport opened this downward, and the last item — Delete — landed off-screen. */
+  const W = 188, H = 172, GAP = 6
+  const top = window.innerHeight - r.bottom >= H + GAP ? r.bottom + GAP : Math.max(8, r.top - H - GAP)
+  gMenu.value = { open: true, g, top, left: Math.max(8, Math.min(r.right - W, window.innerWidth - W - 8)) }
+}
+const closeGroupMenu = () => { gMenu.value = { ...gMenu.value, open: false } }
+const editGroupTarget = ref(null)
+function editGroup(g) { closeGroupMenu(); editGroupTarget.value = g }
+/* A clone looks like its source — style, range and widgets are copied, not defaulted —
+   and lands directly below it, so it is in view the moment it exists. The widgets are
+   copies with fresh ids: a group of the SAME tiles would be one set of widgets in two
+   places, and deleting either would take them from both. */
+function cloneGroup(g) {
+  closeGroupMenu()
+  const names = new Set(d.value.groups.map((x) => x.name))
+  let name = `Copy of ${g.name}`, n = 2
+  while (names.has(name)) name = `Copy of ${g.name} (${n++})`
+  const copy = { ...JSON.parse(JSON.stringify(g)), id: uid('g'), name, collapsed: false }
+  d.value.groups.splice(d.value.groups.indexOf(g) + 1, 0, copy)
+  const src = tilesIn(g.id)
+  src.forEach((t) => d.value.tiles.push({ ...JSON.parse(JSON.stringify(t)), id: uid('t'), group: copy.id, seeded: false }))
+  d.value.updated = new Date().toISOString(); dirty.value = true
+  toast(`Cloned as “${name}” with ${src.length} widget${src.length === 1 ? '' : 's'}`, 'success')
+}
+function ungroupFromMenu(g) { closeGroupMenu(); ungroup(g) }
+/* Delete takes the widgets WITH it — that is the difference from Ungroup, which keeps
+   them. A seeded widget (shipped with a predefined board) cannot be removed, so it is
+   released onto the board instead of deleted, and the toast says so rather than quietly
+   doing less than asked. */
+const delGroupTarget = ref(null)
+function askDeleteGroup(g) { closeGroupMenu(); delGroupTarget.value = g }
+function deleteGroup() {
+  const g = delGroupTarget.value; delGroupTarget.value = null
+  if (!g) return
+  const inG = tilesIn(g.id)
+  const kept = inG.filter((t) => t.seeded)
+  kept.forEach((t) => { t.group = null })
+  d.value.tiles = d.value.tiles.filter((t) => t.group !== g.id || t.seeded)
+  d.value.groups = d.value.groups.filter((x) => x.id !== g.id)
+  d.value.updated = new Date().toISOString(); dirty.value = true
+  toast(kept.length
+    ? `Deleted “${g.name}” — ${kept.length} predefined widget${kept.length === 1 ? '' : 's'} moved to the dashboard, the rest removed`
+    : `Deleted “${g.name}” and its ${inG.length} widget${inG.length === 1 ? '' : 's'}`, 'success')
+}
+
+/* ── Reordering groups: drag a group by its header grip ─────────────────────────────
+ * Armed on the grip's mousedown, the same way a widget's grip arms its tile — so a press
+ * anywhere else in the header (the title, to rename) never starts a drag. While a GROUP
+ * is in flight the section's own tile-drop highlight stays off. */
+const gDragArmed = ref(null)
+const dragGroupId = ref(null)
+const dropBefore = ref(null)
+function armGroupDrag(g) {
+  gDragArmed.value = g.id
+  window.addEventListener('mouseup', () => { if (!dragGroupId.value) gDragArmed.value = null }, { once: true })
+}
+function onGroupDragStart(g, e) {
+  if (gDragArmed.value !== g.id) { e.preventDefault(); return }
+  dragGroupId.value = g.id
+  e.dataTransfer.effectAllowed = 'move'
+}
+function onGroupDragEnd() { dragGroupId.value = null; gDragArmed.value = null; dropBefore.value = null }
+function onSectionDragOver(g) {
+  if (dragGroupId.value) { dropBefore.value = dragGroupId.value === g.id ? null : g.id; return }
+  dropGroup.value = g.id
+}
+function onSectionDrop(g) {
+  if (!dragGroupId.value) { onDropGroup(g.id); return }
+  const arr = d.value.groups
+  const from = arr.findIndex((x) => x.id === dragGroupId.value)
+  const to = arr.findIndex((x) => x.id === g.id)
+  if (from >= 0 && to >= 0 && from !== to) {
+    const [m] = arr.splice(from, 1)
+    arr.splice(to, 0, m)
+    d.value.updated = new Date().toISOString(); dirty.value = true
+  }
+  onGroupDragEnd()
 }
 const editingGroup = ref(null)
 
@@ -804,36 +895,62 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
         <!-- groups (each preceded by a hover-reveal "+ New group here" inserter) -->
         <template v-for="(g, gi) in (d.groups || [])" :key="g.id">
         <div v-if="gShowInserters" class="grp-insert" @click.stop="insertEmptyGroup(gi)"><span class="gi-line" /><span class="gi-btn"><Icon name="new-group" :size="13" /> New group here</span><span class="gi-line" /></div>
-        <section class="group" :class="{ 'drop-into': dropGroup === g.id, 'as-section': gSections, collapsed: g.collapsed }"
-          @dragover.prevent="dropGroup = g.id" @drop="onDropGroup(g.id)">
-          <header class="grp-head">
-            <button class="grp-toggle" @click="g.collapsed = !g.collapsed"><Icon :name="g.collapsed ? 'chevron-right' : 'chevron-down'" :size="16" /></button>
-            <input v-if="editingGroup === g.id" class="grp-name-input" v-model="g.name" @blur="editingGroup = null" @keyup.enter="editingGroup = null" />
-            <b v-else class="grp-name" @click="editingGroup = g.id">{{ g.name }}</b>
-            <span class="grp-count">{{ tilesIn(g.id).length }}</span>
-            <div class="grow" />
-            <!-- The group's own time range. Set it once here and every widget the group
-                 holds reads it instead of the dashboard filter; leave it unset and the
-                 group inherits the dashboard filter like anything else. A widget can
-                 still opt out individually — its own calendar wins over this one. -->
-            <button
-              class="grp-date" :class="{ on: !!g.dateFilter || gdOpen === g.id }"
-              @click.stop="toggleGroupDate(g, $event)"
-              :title="groupDateTitle(g)"
-            >
-              <Icon name="calendar" :size="14" />
-              <span>{{ g.dateFilter ? relativeFor(g.dateFilter) : 'Date filter' }}</span>
-            </button>
-            <button v-if="tilesIn(g.id).length" class="grp-add" title="Add widget to this group" @click="addWidgetToGroup(g.id)"><Icon name="plus" :size="14" /> Add Widget</button>
-            <button class="grp-act" title="Ungroup" @click="ungroup(g)"><Icon name="ungroup" :size="15" /></button>
+        <section
+          class="group"
+          :class="{
+            'drop-into': dropGroup === g.id && !dragGroupId, 'as-section': gSections, collapsed: g.collapsed,
+            'no-pad': grpStyleOf(g).pad === false, 'g-drop-before': dropBefore === g.id, 'g-dragging': dragGroupId === g.id,
+          }"
+          @dragover.prevent="onSectionDragOver(g)" @drop="onSectionDrop(g)"
+        >
+          <!-- The header is a BAND on the widget header's own colour (unless the group sets
+               another), with three zones: grip + collapse on the left, the title — centred
+               by default — and the actions on the right. The title sits in its own
+               middle column, so centring it means the middle of the BAND, not the middle
+               of whatever space the two side clusters happen to leave. -->
+          <header
+            class="grp-head" :class="{ 'gh-left-align': grpStyleOf(g).align === 'left', 'acting': gMenu.open && gMenu.g === g }"
+            :style="grpHeadVars(g)" :draggable="gDragArmed === g.id"
+            @dragstart="onGroupDragStart(g, $event)" @dragend="onGroupDragEnd"
+          >
+            <div class="gh-l">
+              <span class="gh-grip" title="Drag to reorder this group" @mousedown="armGroupDrag(g)"><Icon name="drag" :size="14" /></span>
+              <button class="gh-tog" :title="g.collapsed ? 'Expand this group' : 'Collapse this group'" @click="g.collapsed = !g.collapsed">
+                <Icon :name="g.collapsed ? 'chevron-right' : 'chevron-down'" :size="16" />
+              </button>
+            </div>
+            <div class="gh-t">
+              <!-- focused on mount: a new group opens straight into rename, and an input
+                   that never takes focus can never blur — it sat in edit mode forever -->
+              <input
+                v-if="editingGroup === g.id" class="grp-name-input" v-model="g.name"
+                @vue:mounted="({ el }) => { el.focus(); el.select() }"
+                @blur="editingGroup = null" @keyup.enter="editingGroup = null" @keyup.esc="editingGroup = null"
+              />
+              <b v-else class="grp-name" title="Rename group" @click="editingGroup = g.id">{{ g.name }}</b>
+              <span v-if="grpStyleOf(g).share === 'private'" class="gh-lock" title="Private group — only you can see it"><Icon name="lock" :size="12" /></span>
+            </div>
+            <div class="gh-r">
+              <!-- The group's own time range. Set once here, every widget in the group reads
+                   it instead of the dashboard filter; a widget can still opt out with its
+                   own calendar. It stays visible when SET — it reports a state — and joins
+                   the hover actions when not. -->
+              <button
+                class="gh-act gh-date" :class="{ on: !!g.dateFilter || gdOpen === g.id }"
+                @click.stop="toggleGroupDate(g, $event)" :title="groupDateTitle(g)"
+              ><Icon name="calendar" :size="15" /></button>
+              <button class="gh-act gh-hov" title="Add a widget to this group" @click="addWidgetToGroup(g.id)"><Icon name="plus" :size="16" /></button>
+              <button class="gh-act gh-hov" title="Group actions" @click.stop="openGroupMenu(g, $event)"><Icon name="dots-v" :size="16" /></button>
+            </div>
           </header>
           <!-- the one-liner: what the range above actually does to the widgets below it -->
-          <p v-if="g.dateFilter && !g.collapsed" class="grp-date-note">
+          <div v-if="!g.collapsed" class="grp-body">
+          <p v-if="g.dateFilter" class="grp-date-note">
             <Icon name="info" :size="13" />
             All {{ tilesIn(g.id).length }} widget{{ tilesIn(g.id).length === 1 ? '' : 's' }} in
             “{{ g.name }}” use <b>{{ g.dateFilter }}</b> instead of the dashboard filter<template v-if="ownDated(g.id)">, except {{ ownDated(g.id) }} on {{ ownDated(g.id) === 1 ? 'its' : 'their' }} own range</template>.
           </p>
-          <div v-if="!g.collapsed" class="grid" :style="gridStyle">
+          <div class="grid" :style="gridStyle">
             <div v-for="t in tilesIn(g.id)" :key="t.id" :data-tile="t.id" class="cell"
               :class="{ flash: highlightId === t.id, dragging: dragId === t.id }" :style="cellStyle(t)" :draggable="dragArmed === t.id"
               @dragstart="onDragStart(t)" @dragend="onDragEnd" @dragover.prevent @drop.stop.prevent="onDropTile(t)" @contextmenu="onCellContext(t, $event)">
@@ -842,10 +959,12 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
               <span v-if="!layoutLocked" class="resize" title="Drag to resize" @mousedown.stop.prevent="startResize($event, t)" />
               <button v-if="gHoverIcon" class="cell-grp-chip" title="Group this widget" @click.stop="openTileMenu(t, $event)"><Icon name="new-group" :size="13" /> Group</button>
             </div>
-            <div v-if="!tilesIn(g.id).length" class="grp-empty">
-              <p>No widgets yet — drag one here, or</p>
-              <button class="eg-btn" @click="addWidgetToGroup(g.id)">Add Widget</button>
-            </div>
+            <!-- An empty group is a dashed drop well and nothing else, as the reference
+                 draws it: the header's + is the add action, and dragging a widget in is
+                 the other. The well takes the height of one widget row so the group has
+                 a real target to drop onto rather than a strip. -->
+            <div v-if="!tilesIn(g.id).length" class="grp-empty" :style="{ minHeight: Math.round(lay('rowHeight') * 0.6) + 'px' }" />
+          </div>
           </div>
         </section>
         </template>
@@ -861,6 +980,29 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
         </template>
       </div>
     </div>
+
+    <!-- a group's ⋯ menu — Edit · Clone · Ungroup, then Delete apart, as the reference
+         orders it: the destructive action sits under a rule so it is never the one your
+         pointer lands on by moving down the list -->
+    <teleport to="body">
+      <div v-if="gMenu.open" class="backdrop" @click="closeGroupMenu" />
+      <div v-if="gMenu.open" class="menu grp-menu" :style="{ top: gMenu.top + 'px', left: gMenu.left + 'px' }" @click.stop>
+        <button class="menu-item" @click="editGroup(gMenu.g)"><Icon name="edit" :size="15" /> Edit group</button>
+        <button class="menu-item" @click="cloneGroup(gMenu.g)"><Icon name="copy" :size="15" /> Clone group</button>
+        <button class="menu-item" @click="ungroupFromMenu(gMenu.g)"><Icon name="ungroup" :size="15" /> Ungroup</button>
+        <div class="menu-sep" />
+        <button class="menu-item danger" @click="askDeleteGroup(gMenu.g)"><Icon name="trash" :size="15" /> Delete group</button>
+      </div>
+    </teleport>
+    <GroupEditDrawer v-if="editGroupTarget" :group="editGroupTarget" @close="editGroupTarget = null; dirty = true" />
+    <ConfirmDialog
+      v-if="delGroupTarget"
+      title="Delete this group?"
+      :target="delGroupTarget.name"
+      :message="`and the ${tilesIn(delGroupTarget.id).length} widget${tilesIn(delGroupTarget.id).length === 1 ? '' : 's'} in it will be removed from this dashboard. To keep the widgets, use Ungroup instead.`"
+      confirm-label="Delete group"
+      @confirm="deleteGroup" @cancel="delGroupTarget = null"
+    />
 
     <!-- per-tile group menu (B: right-click · E: hover chip) -->
     <teleport to="body">
@@ -1084,63 +1226,63 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
    inside got their own stronger edge the container's border was a third frame stacked on
    the same content. It comes back only while something is being dragged into it, where
    the border IS the message. */
-.group { border: 1px solid transparent; border-radius: 4px; background: var(--group-bg); padding: 6px 12px 14px; transition: box-shadow .15s, border-color .15s; }
-/* A tile inside a group sits on --group-bg (#FAFBFD), which is within four units of the
-   tile header's own --bg (#F6F9FC) — close enough that the header strip merges into the
-   ground and the tile appears to begin at its white body. The tile's EDGE does the
-   separating, and a STRONGER BORDER is all it takes.
-
-   There was a shadow here too. It lifted the card off the group, which is the problem:
-   a widget reads as focused — picked out, acted on — when it sits above its ground, and
-   these are just the widgets that happen to live in this group. The border draws the
-   edge without claiming any attention for it.
-
-   Not solved by recolouring the header inside a group: that would give one widget two
-   different looks depending on where it was dropped, which is worse than the problem. */
+/* ── A GROUP: a bordered card with a header BAND and a body of widgets ──────────────
+   Matches the reference: the band is a strip on the widget header's own colour, so the
+   group and the widgets in it share one header language; the body holds the widgets on
+   the group ground with one 12px gutter. `overflow: hidden` rounds the band's corners —
+   everything that must escape it (the ⋯ menu, the date popover) is teleported. */
+.group { border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--group-bg); overflow: hidden; transition: box-shadow .15s, border-color .15s; }
 .group .cell > .tile { border-color: var(--border-strong); }
 .group.drop-into, .grid.drop-into { border: 1px solid var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); border-radius: var(--r-lg); }
 .grid.drop-into { padding: 4px; }
-.grp-head { display: flex; align-items: center; gap: 8px; padding: 6px 0 12px; }
-/* Collapsed, the header IS the whole group — so its bottom padding (which exists to
-   separate it from the widget grid) and the group's own bottom padding stack into 26px
-   of empty space under a single row. Both drop to the 6px the top uses, so a collapsed
-   group is symmetrical. */
-.group.collapsed { padding-bottom: 6px; }
-.group.collapsed .grp-head { padding-bottom: 6px; }
-/* No hover fill and no 26px box. The rounded background needed padding around the glyph
-   to look right, and that padding is what pushed the chevron in from the container's left
-   edge — so the heading never lined up with the widgets below it. The icon is the target
-   now; it sits flush and only changes colour. */
-.grp-toggle { border: none; background: transparent; color: var(--muted); display: grid; place-items: center; width: 16px; height: 26px; padding: 0; border-radius: 0; }
-.grp-toggle:hover { background: transparent; color: var(--ink); }
-.grp-name { font-weight: 600; font-size: 14px; cursor: text; }
-.grp-name-input { font-weight: 600; font-size: 14px; border: 1px solid var(--primary); border-radius: 4px; padding: 2px 8px; outline: none; box-shadow: 0 0 0 3px var(--primary-soft); }
-.grp-count { font-size: 12px; font-weight: 600; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; }
-.grp-act { width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
-.grp-act:hover { background: var(--surface); color: var(--ink); }
-.grp-act[title="Ungroup"]:hover { background: var(--red-soft); color: var(--red); }
-.grp-add { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--primary-700); border-radius: 4px; font-weight: 500; font-size: 12px; }
-.grp-add:hover { background: var(--primary-soft); border-color: transparent; }
-/* the group's time range, in the indigo "time" hue every date control in the product
-   uses — distinct from the primary blue of Add widget beside it, so the two read as
-   different kinds of action rather than a pair */
-.grp-date { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--muted); border-radius: 4px; font-weight: 500; font-size: 12px; white-space: nowrap; }
-.grp-date :deep(.ico) { color: var(--muted); }
-.grp-date:hover { color: var(--df-ink); border-color: var(--df-line); background: var(--df-soft); }
-.grp-date:hover :deep(.ico) { color: var(--df); }
-.grp-date.on { background: var(--df-soft); border-color: var(--df-line); color: var(--df-ink); }
-.grp-date.on :deep(.ico) { color: var(--df); }
+/* reordering: a primary rule where the dragged group will land, and the source dims */
+.group.g-drop-before { box-shadow: 0 -3px 0 var(--primary); }
+.group.g-dragging { opacity: .5; }
+
+/* Three columns. Centred (the default) the title owns the middle track, so it centres
+   on the BAND; the side tracks are equal so the middle one really is the middle. Left-
+   aligned, the title's track grows and sits straight after the collapse caret. */
+.grp-head {
+  display: grid; grid-template-columns: 1fr minmax(0, auto) 1fr; align-items: center; gap: 8px;
+  min-height: 40px; padding: 0 8px; background: var(--gh-bg, var(--bg)); color: var(--gh-ink, var(--ink));
+  border-bottom: 1px solid var(--border);
+}
+.grp-head.gh-left-align { grid-template-columns: auto minmax(0, 1fr) auto; }
+.group.collapsed .grp-head { border-bottom-color: transparent; }
+.gh-l, .gh-r { display: flex; align-items: center; gap: 2px; }
+.gh-r { justify-content: flex-end; }
+.gh-t { display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; }
+.gh-left-align .gh-t { justify-content: flex-start; }
+.grp-name { font-weight: 600; font-size: var(--gh-size, 14px); line-height: 1.2; cursor: text; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.grp-name-input { font-weight: 600; font-size: 14px; border: 1px solid var(--primary); border-radius: var(--r); padding: 2px 8px; outline: none; box-shadow: 0 0 0 3px var(--primary-soft); background: var(--surface); color: var(--ink); min-width: 0; }
+.gh-lock { display: inline-grid; place-items: center; opacity: .7; }
+
+/* The grip answers the HEADER hover, like a widget's does. */
+.gh-grip { width: 20px; height: 24px; display: grid; place-items: center; color: inherit; opacity: 0; cursor: grab; border-radius: var(--r-sm); }
+.grp-head:hover .gh-grip, .grp-head.acting .gh-grip { opacity: .6; }
+.gh-grip:hover { opacity: 1 !important; }
+.gh-grip:active { cursor: grabbing; }
+.gh-tog { width: 24px; height: 28px; border: none; background: transparent; color: inherit; opacity: .7; display: grid; place-items: center; padding: 0; border-radius: var(--r); }
+.gh-tog:hover { opacity: 1; }
+
+/* Right side: + and ⋯ appear on hover, instantly, like a widget's actions. The date icon
+   stays when a range is SET, since then it reports a state rather than offering one. */
+.gh-act { width: 28px; height: 28px; border: none; background: transparent; color: inherit; opacity: .75; display: grid; place-items: center; border-radius: var(--r); }
+.gh-act:hover { opacity: 1; background: color-mix(in srgb, currentColor 10%, transparent); }
+.gh-hov, .gh-date:not(.on) { visibility: hidden; }
+.grp-head:hover .gh-hov, .grp-head:hover .gh-date, .grp-head.acting .gh-hov, .grp-head.acting .gh-date { visibility: visible; }
+.gh-date.on { visibility: visible; opacity: 1; color: var(--df); background: var(--df-soft); }
+
+/* the body — widget padding is the group's own `pad` option */
+.grp-body { padding: 12px; }
+.group.no-pad .grp-body { padding: 0; }
 /* the one-liner under the header: what that range does to the widgets below it */
-.grp-date-note { display: flex; align-items: center; gap: 6px; margin: -6px 0 10px; font-size: 12px; line-height: 1.45; color: var(--df-ink); }
+.grp-date-note { display: flex; align-items: center; gap: 6px; margin: 0 0 10px; font-size: 12px; line-height: 1.45; color: var(--df-ink); }
 .grp-date-note :deep(.ico) { color: var(--df); flex: none; }
 .grp-date-note b { font-weight: 600; }
-/* an empty group's drop target: a dashed well on the group's own ground, with a plain
-   bordered button. The button used to be btn-primary — a solid blue CTA inside an empty
-   placeholder pulled more attention than the widgets the group is meant to hold. */
-.grp-empty { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 26px 24px; color: var(--muted-2); font-size: 13px; border: 1px dashed var(--border-strong); border-radius: 4px; }
-.grp-empty p { margin: 0; }
-.grp-empty .eg-btn { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 14px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink-2); border-radius: 4px; font-size: 13px; font-weight: 600; }
-.grp-empty .eg-btn:hover { border-color: var(--primary); color: var(--primary-700); background: var(--primary-softer); }
+/* an EMPTY group is a dashed drop well and nothing else — see the template */
+.grp-empty { grid-column: 1 / -1; border: 1px dashed var(--border-strong); border-radius: var(--r-lg); background: color-mix(in srgb, var(--surface) 55%, transparent); }
+.grp-menu { position: fixed; z-index: 140; min-width: 188px; }
 /* grouping-style demo switcher */
 .gstyle-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 12px; margin-bottom: 14px; background: var(--surface); border: 1px dashed var(--border-strong); border-radius: 4px; }
 .legend-bar .gsb-label em { font-style: normal; font-weight: 500; color: var(--muted); font-size: 11px; margin-left: 4px; }

@@ -199,6 +199,8 @@ positioned in viewport coordinates — follow that pattern for any new floating 
 | `components/dashboard/TimeRangePopover.vue` | The two-pane date picker for **per-widget and per-group** overrides. NOT the topbar — `TimeFilter.vue` has its own copy of the markup and does not import this. Change one and check the other. |
 | `components/dashboard/ExportDialog.vue` | Board Export — Image / PDF / Email as PDF. |
 | `components/ui/Hint.vue` | Info icon beside a field label, carrying what was once a one-liner. |
+| `data/groups.js` | A group's look: header colour, title size, alignment (default **centre**), padding, share. `grpHeadVars(g)` is the one resolver. The Default header colour is `--bg`, the widget header's own strip. |
+| `components/dashboard/GroupEditDrawer.vue` | Edit group: one field per row, applied live, and Cancel/Esc restores the snapshot. The group header's right side holds date · + · ⋯ (Edit / Clone / Ungroup / Delete, the menu flips up near the viewport bottom). An empty group is a dashed well. Ungrouped tiles still coexist with groups. |
 
 ## The AI assistant (`components/ai/AiAssistant.vue`)
 
