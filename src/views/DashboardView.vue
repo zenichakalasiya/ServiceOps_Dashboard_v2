@@ -427,9 +427,9 @@ function deleteGroup() {
     : `Deleted “${g.name}” and its ${inG.length} widget${inG.length === 1 ? '' : 's'}`, 'success')
 }
 
-/* ── Reordering groups: drag a group by its header grip ─────────────────────────────
- * Armed on the grip's mousedown, the same way a widget's grip arms its tile — so a press
- * anywhere else in the header (the title, to rename) never starts a drag. While a GROUP
+/* ── Reordering groups: drag a group by its header ──────────────────────────────────
+ * Armed on a header mousedown that did not land on a button or the rename field, so the
+ * collapse arrow, +, ⋯ and date still just click. While a GROUP
  * is in flight the section's own tile-drop highlight stays off. */
 const gDragArmed = ref(null)
 const dragGroupId = ref(null)
@@ -901,20 +901,23 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
             'drop-into': dropGroup === g.id && !dragGroupId, 'as-section': gSections, collapsed: g.collapsed,
             'no-pad': grpStyleOf(g).pad === false, 'g-drop-before': dropBefore === g.id, 'g-dragging': dragGroupId === g.id,
           }"
+          :style="grpHeadVars(g)"
           @dragover.prevent="onSectionDragOver(g)" @drop="onSectionDrop(g)"
         >
           <!-- The header is a BAND on the widget header's own colour (unless the group sets
-               another), with three zones: grip + collapse on the left, the title — centred
-               by default — and the actions on the right. The title sits in its own
-               middle column, so centring it means the middle of the BAND, not the middle
-               of whatever space the two side clusters happen to leave. -->
+               another), with three zones: collapse on the left, the title — centred by
+               default — and the actions on the right. The title sits in its own middle
+               column, so centring it means the middle of the BAND, not the middle of
+               whatever space the two side clusters happen to leave.
+               The header itself is the drag handle (grab cursor); a press on a control
+               or the rename field never arms it. The style vars live on the section. -->
           <header
             class="grp-head" :class="{ 'gh-left-align': grpStyleOf(g).align === 'left', 'acting': gMenu.open && gMenu.g === g }"
-            :style="grpHeadVars(g)" :draggable="gDragArmed === g.id"
+            :draggable="gDragArmed === g.id"
+            @mousedown="!$event.target.closest('button, input') && armGroupDrag(g)"
             @dragstart="onGroupDragStart(g, $event)" @dragend="onGroupDragEnd"
           >
             <div class="gh-l">
-              <span class="gh-grip" title="Drag to reorder this group" @mousedown="armGroupDrag(g)"><Icon name="drag" :size="14" /></span>
               <button class="gh-tog" :title="g.collapsed ? 'Expand this group' : 'Collapse this group'" @click="g.collapsed = !g.collapsed">
                 <Icon :name="g.collapsed ? 'chevron-right' : 'chevron-down'" :size="16" />
               </button>
@@ -1236,7 +1239,8 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
    group and the widgets in it share one header language; the body holds the widgets on
    the group ground with one 12px gutter. `overflow: hidden` rounds the band's corners —
    everything that must escape it (the ⋯ menu, the date popover) is teleported. */
-.group { border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--group-bg); overflow: hidden; transition: box-shadow .15s, border-color .15s; }
+/* White body (the card surface), and an outline that follows the header colour. */
+.group { border: 1px solid var(--gh-line, var(--border)); border-radius: var(--r-lg); background: var(--surface); overflow: hidden; transition: box-shadow .15s, border-color .15s; }
 .group .cell > .tile { border-color: var(--border-strong); }
 .group.drop-into, .grid.drop-into { border: 1px solid var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); border-radius: var(--r-lg); }
 .grid.drop-into { padding: 4px; }
@@ -1249,9 +1253,14 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
    aligned, the title's track grows and sits straight after the collapse caret. */
 .grp-head {
   display: grid; grid-template-columns: 1fr minmax(0, auto) 1fr; align-items: center; gap: 8px;
-  min-height: 40px; padding: 0 8px; background: var(--gh-bg, var(--bg)); color: var(--gh-ink, var(--ink));
-  border-bottom: 1px solid var(--border);
+  /* 6px sides: with 28px controls in a 40px band that is 6px above them too, so the
+     collapse arrow sits as far from the left edge as from the top, and ⋯ likewise right */
+  min-height: 40px; padding: 0 6px; background: var(--gh-bg, var(--bg)); color: var(--gh-ink, var(--ink));
+  border-bottom: 1px solid var(--gh-line, var(--border));
+  cursor: grab;
 }
+.grp-head:active { cursor: grabbing; }
+.grp-head button { cursor: pointer; }
 .grp-head.gh-left-align { grid-template-columns: auto minmax(0, 1fr) auto; }
 .group.collapsed .grp-head { border-bottom-color: transparent; }
 .gh-l, .gh-r { display: flex; align-items: center; gap: 2px; }
@@ -1262,12 +1271,7 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .grp-name-input { font-weight: 600; font-size: 14px; border: 1px solid var(--primary); border-radius: var(--r); padding: 2px 8px; outline: none; box-shadow: 0 0 0 3px var(--primary-soft); background: var(--surface); color: var(--ink); min-width: 0; }
 .gh-lock { display: inline-grid; place-items: center; opacity: .7; }
 
-/* The grip answers the HEADER hover, like a widget's does. */
-.gh-grip { width: 20px; height: 24px; display: grid; place-items: center; color: inherit; opacity: 0; cursor: grab; border-radius: var(--r-sm); }
-.grp-head:hover .gh-grip, .grp-head.acting .gh-grip { opacity: .6; }
-.gh-grip:hover { opacity: 1 !important; }
-.gh-grip:active { cursor: grabbing; }
-.gh-tog { width: 24px; height: 28px; border: none; background: transparent; color: inherit; opacity: .7; display: grid; place-items: center; padding: 0; border-radius: var(--r); }
+.gh-tog { width: 28px; height: 28px; border: none; background: transparent; color: inherit; opacity: .7; display: grid; place-items: center; padding: 0; border-radius: var(--r); }
 .gh-tog:hover { opacity: 1; }
 
 /* Right side: + and ⋯ appear on hover, instantly, like a widget's actions. The date icon

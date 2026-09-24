@@ -51,7 +51,12 @@ export function grpHeadVars(g) {
   const bg = named ? named.css : isHex(st.bg) ? st.bg : 'var(--bg)'
   const ink = named ? named.ink : isHex(st.bg) ? inkFor(st.bg) : 'var(--ink)'
   const px = (GRP_SIZES.find((s) => s.id === st.size) || {}).px || 0
+  /* The group's outline follows its header. A neutral header (Default / Transparent /
+     Gray) keeps the ordinary border; a coloured one outlines the whole group in that
+     colour, so band and frame read as one object rather than a stripe on a grey box. */
+  const neutral = !named ? false : ['Default', 'Transparent', 'Gray'].includes(named.id)
   return {
+    '--gh-line': neutral ? 'var(--border)' : bg,
     '--gh-bg': bg,
     '--gh-ink': ink,
     '--gh-size': px ? px + 'px' : '14px',
