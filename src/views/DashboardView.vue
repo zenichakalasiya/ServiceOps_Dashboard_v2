@@ -1278,9 +1278,9 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
   /* Sticky, as in the reference: while its group scrolls past, the header holds the top
      of the page and the widgets slide under it; when the group's end arrives the header
      leaves with it and the next group's header takes the top. A sticky element is bound
-     by its parent, so the hand-off needs no script. z-index clears the tiles' own layers
-     (resize grip 6). */
-  position: sticky; top: 0; z-index: 8;
+     by its parent, so the hand-off needs no script. z-index clears every layer inside a
+     group (resize grip 6, row inserter 8) and stays under the FAB (40). */
+  position: sticky; top: 0; z-index: 20;
 }
 .grp-head:active { cursor: grabbing; }
 .grp-head button { cursor: pointer; }
@@ -1299,7 +1299,7 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 
 /* Right side: + and ⋯ appear on hover, instantly, like a widget's actions. The date icon
    stays when a range is SET, since then it reports a state rather than offering one. */
-.gh-act { width: 28px; height: 28px; border: none; background: transparent; color: inherit; opacity: .75; display: grid; place-items: center; border-radius: var(--r); }
+.gh-act { width: 28px; height: 28px; padding: 0; border: none; background: transparent; color: inherit; opacity: .75; display: grid; place-items: center; border-radius: var(--r); }
 .gh-act:hover { opacity: 1; background: color-mix(in srgb, currentColor 10%, transparent); }
 .gh-hov, .gh-date:not(.on) { visibility: hidden; }
 .grp-head:hover .gh-hov, .grp-head:hover .gh-date, .grp-head.acting .gh-hov, .grp-head.acting .gh-date { visibility: visible; }

@@ -851,14 +851,14 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 .ti.df-btn :deep(.ico) { color: var(--df); flex: none; }
 .ti.df-btn.on { background: var(--df-soft); color: var(--df-ink); }
 .ti.df-btn.on :deep(.ico) { color: var(--df); }
-/* Three states, and the difference between them has to be legible at a glance:
-   .own    — this widget set its own range: filled, the strongest of the three
-   .group  — it is reading the group's range: outlined, present but clearly borrowed
+/* Three states:
+   .own    — this widget set its own range: filled
+   .group  — it is reading the group's range: filled the same way (a tinted chip, never
+             an outline, so every set calendar — widget or group — is one look); the
+             tooltip says whose range it is
    .none   — nothing set yet: a plain grey action like Refresh beside it, because an
              indigo icon on a widget with no override would claim one it doesn't have */
-.ti.df-btn.own { background: var(--df-soft); color: var(--df-ink); }
-.ti.df-btn.group { background: transparent; color: var(--df-ink); box-shadow: inset 0 0 0 1px var(--df-line); }
-.ti.df-btn.group:hover { background: var(--df-soft); }
+.ti.df-btn.own, .ti.df-btn.group { background: var(--df-soft); color: var(--df-ink); }
 .ti.df-btn.none { color: var(--muted); }
 .ti.df-btn.none :deep(.ico) { color: var(--muted); }
 .ti.df-btn.none:hover { background: var(--surface); color: var(--ink); }
@@ -872,7 +872,9 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 @media (prefers-reduced-motion: reduce) {
   .right, .lrev { transition: none; }
 }
-.ti { width: 28px; height: 28px; border-radius: 4px; border: none; background: transparent; color: var(--muted); display: grid; place-items: center; }
+/* padding 0: the UA's 1px 6px leaves a 22px button a 10px content box, a 13px icon
+   overflows it to the right and sits 1.5px off centre */
+.ti { width: 28px; height: 28px; padding: 0; border-radius: 4px; border: none; background: transparent; color: var(--muted); display: grid; place-items: center; }
 /* hover uses the card surface (white) so it reads against the neutral header band */
 .ti:hover { background: var(--surface); color: var(--ink); }
 .ti.on { background: var(--primary-soft); color: var(--primary-700); }
