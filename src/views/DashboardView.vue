@@ -182,11 +182,13 @@ watch(() => store.ui.aiHighlight, (title) => {
     setTimeout(() => { if (highlightId.value === t.id) highlightId.value = null }, 2600)
   })
 })
-// Grouping is fixed to FOUR methods now (the style switcher is gone): 1+2 marquee
-// select & Shift-click, 3 a persistent "New group" bar at the board's end, and 4 the
-// Add-New-Widget panel's Empty group. Right-click / hover-chip / sections / auto-group
-// / inline row-inserters are all off.
-const gUseMarquee = computed(() => true)          // 1 + 2: marquee-drag & Shift-click select-to-group
+// Grouping is down to TWO methods: the persistent "New group" bar at the board's end,
+// and the Add-New-Widget panel's Empty group. Marquee-drag and Shift-click
+// select-to-group were removed: a press-and-drag on empty board space is too easy to do
+// by accident, and it left dashed selection frames plus a "Create Group" bar on the
+// board for something nobody meant to start. Right-click / hover-chip / sections /
+// auto-group / inline row-inserters stay off. The machinery is left behind this flag.
+const gUseMarquee = computed(() => false)
 const gShowAddGroupBtn = computed(() => false)
 const gShowInserters = computed(() => false)
 const gShowRowInserters = computed(() => false)
@@ -1053,13 +1055,13 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
    Drawn with two borders on an empty box, so it is crisp at any zoom and needs no asset;
    the rounded outer corner echoes the card's radius instead of cutting across it. Inset
    5px clears the tile's 1px border and its corner arc. The HIT area stays 16px even though
-   the mark is 10: a drag target should be easier to grab than it is to see. Instant on
+   the mark is 6: a drag target should be easier to grab than it is to see. Instant on
    hover, like the widget's other actions. */
 .resize { position: absolute; right: 3px; bottom: 3px; width: 16px; height: 16px; z-index: 6; cursor: nwse-resize; opacity: 0; }
 .resize::after {
-  content: ''; position: absolute; right: 2px; bottom: 2px; width: 10px; height: 10px;
+  content: ''; position: absolute; right: 2px; bottom: 2px; width: 6px; height: 6px;
   border-right: 2px solid var(--picker-ico); border-bottom: 2px solid var(--picker-ico);
-  border-bottom-right-radius: 3px;
+  border-bottom-right-radius: 2px;
 }
 .cell:hover .resize { opacity: 1; }
 .resize:hover::after { border-color: var(--primary); }
