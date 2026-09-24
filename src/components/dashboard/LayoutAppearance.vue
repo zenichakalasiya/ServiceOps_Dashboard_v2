@@ -109,12 +109,11 @@ const titlePx = computed(() => SIZES.find((s) => s.id === val('titleSize'))?.px 
  * Driving the chart instead means every tile is the same height (header + padding + this)
  * AND the slider visibly grows the drawing, which is the thing being previewed.
  *
- * The factor sets the card's SHAPE. At 1.2 a default board (rowHeight 140) makes a tile
- * about as tall as it is wide, which is what the reference asks for — a letterbox strip
- * leaves a pie the size of its own height and wastes the width on nothing. Dragging the
- * slider to the top makes the tiles taller than wide, which is correct: that is what a
- * 260px row does to a real board. */
-const previewChartH = computed(() => Math.round(val('rowHeight') * 1.2))
+ * The factor sets the card's SIZE and shape. 1.2 made a default tile about square but
+ * left the whole preview ~480px tall — more than half the drawer spent on a picture of
+ * four widgets, pushing the sliders it is previewing out of view. 0.85 keeps the tiles
+ * close to square while giving that height back; the slider still grows them. */
+const previewChartH = computed(() => Math.round(val('rowHeight') * 0.85))
 // the slider works in stop indexes; the stored value stays 'S' | 'M' | 'L'
 const sizeIdx = computed(() => Math.max(0, SIZES.findIndex((s) => s.id === val('titleSize'))))
 

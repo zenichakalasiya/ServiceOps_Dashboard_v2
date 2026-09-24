@@ -796,13 +796,17 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
    through the gaps between the six dots and the two read as one smudge. The fill is
    the header band's own colour, and it runs the full width of the glyph — the title's
    fade then starts where the grip ENDS, not underneath it. */
-.draghandle { position: absolute; left: 0; top: 50%; transform: translateY(-50%); z-index: 2; width: 20px; height: 20px; display: inline-grid; place-items: center; background: var(--bg); border-radius: var(--r-sm); color: var(--muted); cursor: grab; opacity: 0; transition: opacity .16s ease; }
+.draghandle { position: absolute; left: 0; top: 50%; transform: translateY(-50%); z-index: 2; width: 20px; height: 20px; display: inline-grid; place-items: center; background: var(--bg); border-radius: var(--r-sm); color: var(--muted); cursor: grab; opacity: 0; }
 .draghandle:active { cursor: grabbing; }
-.tile:hover .draghandle, .tile.acting .draghandle { opacity: 1; }
+/* The grip answers the HEADER, not the whole tile. Hovering a chart to read it is not a
+   request to move it, and a grip that appeared over the title every time the pointer
+   crossed the tile covered the first letters of the name for no reason. You reach for
+   the header when you want to drag — that is where it shows. */
+.thead:hover .draghandle { opacity: 1; }
 /* fully hidden for the grip's 20px, THEN a 10px ramp — so no glyph ever overlaps a
    half-faded letter. It used to clear only 4px, which left the title at ~30% opacity
    directly behind the dots. */
-.tile:hover .title, .tile.acting .title { -webkit-mask-image: linear-gradient(90deg, transparent 0, transparent 21px, #000 31px); mask-image: linear-gradient(90deg, transparent 0, transparent 21px, #000 31px); }
+.thead:hover .title { -webkit-mask-image: linear-gradient(90deg, transparent 0, transparent 21px, #000 31px); mask-image: linear-gradient(90deg, transparent 0, transparent 21px, #000 31px); }
 .pinbadge { display: inline-grid; place-items: center; color: var(--primary); flex: none; transform: rotate(35deg); }
 .title { font-weight: 600; font-size: var(--tile-title, 13.5px); }
 
@@ -812,8 +816,10 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 /* the schedule badge is always on — it reports a fact, it is not a hover action */
 .sch-mark { flex: none; width: 20px; height: 20px; border: none; background: transparent; color: var(--green); border-radius: 4px; display: grid; place-items: center; }
 .sch-mark:hover { background: var(--green-soft); }
-.info { position: relative; color: var(--muted-2); display: inline-grid; place-items: center; cursor: help; opacity: 0; transition: opacity .14s; }
-.tile:hover .info, .tile.acting .info { opacity: 1; }
+.info { position: relative; color: var(--muted-2); display: inline-grid; place-items: center; cursor: help; opacity: 0; }
+/* left-side extras follow the grip onto the header; the tile hover reveals the RIGHT
+   actions only */
+.thead:hover .info { opacity: 1; }
 .info:hover { color: var(--primary); }
 .info-tt { position: fixed; z-index: 200; width: 240px; }
 /* the audience, folded in below a rule — mirrors the dashboard info card's .dinfo-acc.
@@ -827,7 +833,10 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 .ractions { display: flex; align-items: center; gap: 2px; flex: none; }
 /* grid 0fr→1fr is what makes an AUTO width animatable at all: max-width would have to
    ease toward a guessed number and would land with a snap once it passed the real one. */
-.right, .lrev { display: grid; grid-template-columns: 0fr; opacity: 0; transition: grid-template-columns .24s cubic-bezier(.2,.7,.3,1), opacity .16s ease; }
+/* INSTANT, no slide. The 0fr→1fr ease read as the actions sweeping in from the right on
+   every pass of the pointer — motion that said nothing and made a quick scan of the
+   board feel busy. They now simply appear. */
+.right, .lrev { display: grid; grid-template-columns: 0fr; opacity: 0; }
 .r-in { display: flex; align-items: center; gap: 1px; min-width: 0; overflow: hidden; }
 .tile:hover .right, .tile.searching .right, .tile.acting .right,
 .tile:hover .lrev, .tile.searching .lrev, .tile.acting .lrev { grid-template-columns: 1fr; opacity: 1; }
