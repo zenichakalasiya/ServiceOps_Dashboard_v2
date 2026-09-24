@@ -392,13 +392,12 @@ const moveGroups = computed(() => {
   return d.groups.map((g) => ({ id: g.id, name: g.name, n: d.tiles.filter((t) => t.group === g.id).length }))
 })
 const canMove = computed(() => moveGroups.value.some((g) => g.id !== props.tile.group))
-const moveOpen = ref(false)
-function openMove() { menu.value = false; exportOpen.value = false; typeOpen.value = false; moveOpen.value = true }
+const moveOpen = ref(false)      // the Move-to-group SUBMENU (hover), like Export's
 function moveTo(g) {
   if (g.id === props.tile.group) return
   props.tile.group = g.id
   if (board.value) board.value.updated = new Date().toISOString()
-  moveOpen.value = false
+  moveOpen.value = false; menu.value = false
   toast(`Moved “${props.tile.title || 'widget'}” to ${g.name}`, 'success')
 }
 const emailOpen = ref(false)      // Export ▸ Email as PDF
@@ -545,7 +544,7 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 
     <!-- ⋯ menu: teleported so it overlays the card instead of being clipped by overflow -->
     <teleport to="body">
-      <div v-if="menu" class="backdrop" @click="menu = false; exportOpen = false; typeOpen = false" />
+      <div v-if="menu" class="backdrop" @click="menu = false; exportOpen = false; typeOpen = false; moveOpen = false" />
       <transition name="pop">
         <div v-if="menu" ref="menuEl" class="menu tile-menu" :class="{ 'sub-right': !subLeft }" :style="{ top: menuPos.top + 'px', left: menuPos.left + 'px' }" @click.stop>
           <!-- AI first, ruled off from the rest: it is the only item that answers a
@@ -558,7 +557,7 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
                flat in the menu made you pick an answer before seeing the question. -->
           <div
             v-if="WIDGET_CTAS.length && tiny" class="menu-item sub ai"
-            @mouseenter="aiSubOpen = true; typeOpen = false; exportOpen = false" @mouseleave="aiSubOpen = false"
+            @mouseenter="aiSubOpen = true; typeOpen = false; exportOpen = false; moveOpen = false" @mouseleave="aiSubOpen = false"
           >
             <span class="mi-l"><Icon name="sparkles" :size="15" /> AI Insights</span><Icon name="chevron-right" :size="14" class="mi-c" />
             <transition name="pop"><div v-if="aiSubOpen" class="submenu ai-sub">
@@ -589,7 +588,7 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
           <div
             v-if="tile.type === 'chart' && tile.chart" class="menu-item sub"
             :class="{ dis: typeFrozen }" :title="typeFrozen ? typeFrozenWhy : ''"
-            @mouseenter="typeOpen = !typeFrozen; exportOpen = false" @mouseleave="typeOpen = false"
+            @mouseenter="typeOpen = !typeFrozen; exportOpen = false; moveOpen = false" @mouseleave="typeOpen = false"
           >
             <span class="mi-l"><Icon name="chart-bar" :size="15" /> Chart type</span><Icon name="chevron-right" :size="14" class="mi-c" />
             <transition name="pop"><div v-if="typeOpen" class="submenu types">
@@ -606,11 +605,26 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
           </div>
           <button class="menu-item" @click="menu = false; present = true"><Icon name="maximize-tile" :size="15" /> Full screen</button>
           <button class="menu-item" @click="duplicate"><Icon name="copy" :size="15" /> Duplicate</button>
-          <button v-if="canMove" class="menu-item" @click="openMove"><Icon name="arrow-right" :size="15" /> {{ moveGroups.some((g) => g.id === tile.group) ? 'Move to another group' : 'Move to group' }}</button>
+          <!-- Move to group → submenu, the same shape as Export: chevron right, the list
+               flies out beside the menu on hover -->
+          <div v-if="canMove" class="menu-item sub" @mouseenter="moveOpen = true; exportOpen = false; typeOpen = false" @mouseleave="moveOpen = false">
+            <span class="mi-l"><Icon name="arrow-right" :size="15" /> {{ moveGroups.some((g) => g.id === tile.group) ? 'Move to another group' : 'Move to group' }}</span><Icon name="chevron-right" :size="14" class="mi-c" />
+            <transition name="pop"><div v-if="moveOpen" class="submenu mv-sub">
+              <button
+                v-for="g in moveGroups" :key="g.id" class="menu-item mv-row" :class="{ cur: g.id === tile.group }"
+                :disabled="g.id === tile.group" :title="g.id === tile.group ? 'This widget is already here' : `Move to ${g.name}`"
+                @click="moveTo(g)"
+              >
+                <span class="mv-dot" />
+                <span class="mv-nm">{{ g.name }}</span>
+                <span class="mv-n">{{ g.n }}</span>
+              </button>
+            </div></transition>
+          </div>
           <!-- divider between the widget's own actions and the export group -->
           <div class="menu-sep" />
           <!-- Export → submenu (Image / PDF / Email as PDF) -->
-          <div class="menu-item sub" @mouseenter="exportOpen = true; typeOpen = false" @mouseleave="exportOpen = false">
+          <div class="menu-item sub" @mouseenter="exportOpen = true; typeOpen = false; moveOpen = false" @mouseleave="exportOpen = false">
             <span class="mi-l"><Icon name="export" :size="15" /> Export</span><Icon name="chevron-right" :size="14" class="mi-c" />
             <transition name="pop"><div v-if="exportOpen" class="submenu ex">
               <button v-for="f in EXPORTS" :key="f.id" class="menu-item" @click="exportAs(f)"><Icon :name="f.icon" :size="15" /> {{ f.label }}</button>
@@ -628,22 +642,6 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
             <div class="menu-sep" />
             <button class="menu-item danger" @click="menu = false; confirmDel = true"><Icon name="trash" :size="15" /> Delete card</button>
           </template>
-        </div>
-      </transition>
-      <!-- Move to another group — opens where the ⋯ menu stood -->
-      <div v-if="moveOpen" class="backdrop" @click="moveOpen = false" />
-      <transition name="pop">
-        <div v-if="moveOpen" class="menu tile-menu mv-pop" :style="{ top: menuPos.top + 'px', left: menuPos.left + 'px' }" @click.stop>
-          <div class="menu-label">Move to group</div>
-          <button
-            v-for="g in moveGroups" :key="g.id" class="menu-item mv-row" :class="{ cur: g.id === tile.group }"
-            :disabled="g.id === tile.group" :title="g.id === tile.group ? 'This widget is already here' : `Move to ${g.name}`"
-            @click="moveTo(g)"
-          >
-            <span class="mv-dot" />
-            <span class="mv-nm">{{ g.name }}</span>
-            <span class="mv-n">{{ g.n }}</span>
-          </button>
         </div>
       </transition>
     </teleport>
@@ -955,7 +953,8 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 /* teleported menu — fixed to viewport, above the card so it is never clipped */
 .tile-menu { position: fixed; z-index: 140; min-width: 190px; }
 /* the group list: name on the left, widget count right; the current group bold with a dot */
-.mv-pop { min-width: 210px; max-height: 320px; overflow: auto; }
+/* the Move-to-group submenu — Export's flyout, sized for group names; long lists scroll */
+.submenu.mv-sub { min-width: 220px; max-height: 280px; overflow: auto; }
 .mv-row { gap: 8px; }
 .mv-dot { width: 6px; height: 6px; border-radius: 50%; flex: none; background: transparent; }
 .mv-nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
