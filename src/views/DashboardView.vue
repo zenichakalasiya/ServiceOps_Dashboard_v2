@@ -434,12 +434,19 @@ function deleteGroup() {
  * it is filled with the board's white (`.grp-head.stuck::before`), otherwise the widgets
  * of that group would scroll through the gap. Only the stuck one gets the fill: at rest
  * the strip would lie over the gap between two groups. */
-const STICK_GAP = 16
+/* The board toolbar is sticky too (it carries the Groups navigator), so a group header
+ * sticks 16px under the TOOLBAR, not under the top of the scroller. The toolbar's height
+ * is measured, not assumed — it wraps on narrow screens — and published as --bar-h. */
+const GAP = 16
+const headEl = ref(null)
+const barH = ref(0)
+let barRO = null
+const stickLine = () => (scroller ? scroller.getBoundingClientRect().top : 0) + barH.value + GAP
 const stuckIds = ref(new Set())
 let scroller = null
 function markStuck() {
   if (!scroller) return
-  const line = scroller.getBoundingClientRect().top + STICK_GAP
+  const line = stickLine()
   const next = new Set()
   scroller.querySelectorAll('.group[data-gid]').forEach((sec) => {
     const r = sec.getBoundingClientRect()
@@ -447,50 +454,129 @@ function markStuck() {
   })
   const cur = stuckIds.value
   if (next.size !== cur.size || [...next].some((id) => !cur.has(id))) stuckIds.value = next
+  spySection(line)
 }
 onMounted(() => {
   scroller = document.querySelector('.main')
   scroller?.addEventListener('scroll', markStuck, { passive: true })
+  ;['wheel', 'touchmove', 'keydown', 'mousedown'].forEach((ev) => scroller?.addEventListener(ev, unpin, { passive: true }))
+  if (headEl.value) {
+    barRO = new ResizeObserver(() => { barH.value = headEl.value?.offsetHeight || 0; markStuck() })
+    barRO.observe(headEl.value)
+  }
   markStuck()
 })
-onBeforeUnmount(() => scroller?.removeEventListener('scroll', markStuck))
+onBeforeUnmount(() => {
+  scroller?.removeEventListener('scroll', markStuck)
+  ;['wheel', 'touchmove', 'keydown', 'mousedown'].forEach((ev) => scroller?.removeEventListener(ev, unpin))
+  barRO?.disconnect()
+})
 
-/* ── Group switcher (▾ beside a group's title) ───────────────────────────────────────
- * The header sticks, so the switcher is always one click away wherever you are in a long
- * board. It lists every group with its widget count and marks the one this header belongs
- * to; picking another GLIDES there — the target's header lands at the sticky line — and
- * its outline flashes once so the eye knows where it arrived. A collapsed target opens. */
-const gSw = ref({ open: false, gid: null, top: 0, left: 0 })
-const SW_W = 240
-function openSwitcher(g, e) {
-  const r = e.currentTarget.getBoundingClientRect()
-  const rows = (d.value.groups || []).length
-  const H = Math.min(320, 34 + rows * 34)
-  const below = window.innerHeight - r.bottom >= H + 8
-  gSw.value = {
-    open: true, gid: g.id,
-    top: below ? r.bottom + 6 : Math.max(8, r.top - H - 6),
-    left: Math.max(8, Math.min(r.left + r.width / 2 - SW_W / 2, window.innerWidth - SW_W - 8)),
+/* ── The Groups navigator (board toolbar) ───────────────────────────────────────────
+ * Board-level, so it is reachable wherever you are — including 20 ungrouped widgets
+ * deep, where no group header is on screen. SECTIONS are the ungrouped widgets (when
+ * there are any) followed by every group; the one under the sticky line is "current"
+ * (scroll-spy) and is what the button names. Picking one GLIDES there and pulses the
+ * group's outline once. Alt+↓ / Alt+↑ step, G opens the list. The section you were last
+ * in is remembered per board (this browser only — a convenience, not saved state). */
+const UG = '__ug'
+const sections = computed(() => {
+  const gs = d.value?.groups || []
+  if (!gs.length) return []
+  const out = []
+  const loose = tilesIn(null).length
+  if (loose) out.push({ id: UG, name: 'Ungrouped widgets', n: loose })
+  gs.forEach((g) => out.push({ id: g.id, name: g.name, n: tilesIn(g.id).length }))
+  return out
+})
+const curSec = ref(null)
+const curSection = computed(() => sections.value.find((s) => s.id === curSec.value) || sections.value[0] || null)
+/* After a jump the section you PICKED is current until you scroll yourself — near the end
+   of a board the page bottoms out before a short last group reaches the line, and the spy
+   would otherwise name the section above it. Scrolling by hand (wheel / touch / keys)
+   hands control back to the spy. */
+let pinned = null
+const unpin = () => { pinned = null }
+function spySection(line) {
+  if (!scroller || !sections.value.length) return
+  let cur = sections.value[0].id
+  if (pinned && sections.value.some((s) => s.id === pinned)) cur = pinned
+  else if (scroller.scrollTop > 0 && scroller.scrollTop >= scroller.scrollHeight - scroller.clientHeight - 2) {
+    cur = sections.value[sections.value.length - 1].id      // at the very bottom: the last one
+  } else {
+    for (const s of sections.value) {
+      const el = scroller.querySelector(`[data-gid="${s.id}"]`)
+      if (el && el.getBoundingClientRect().top <= line + 4) cur = s.id
+    }
+  }
+  if (cur !== curSec.value) {
+    curSec.value = cur
+    // not until this board's own restore has run — a freshly opened board sits at the
+    // top, and saving THAT would overwrite the position we are about to go back to
+    if (restoredFor === d.value?.id) rememberSection(cur)
   }
 }
-const swGroups = computed(() => (d.value?.groups || []).map((g) => ({ id: g.id, name: g.name, n: tilesIn(g.id).length })))
+const posKey = () => `sod:lastSection:${d.value?.id}`
+function rememberSection(id) { try { localStorage.setItem(posKey(), id) } catch { /* private mode etc. */ } }
+
+const gNav = ref(false)
+const gNavQ = ref('')
+const gNavInput = ref(null)
+const navList = computed(() => {
+  const q = gNavQ.value.trim().toLowerCase()
+  return q ? sections.value.filter((s) => s.name.toLowerCase().includes(q)) : sections.value
+})
+function openNav(focus = false) {
+  gNavQ.value = ''
+  gNav.value = true
+  if (focus) nextTick(() => gNavInput.value?.focus())
+}
+function collapseAll(v) {
+  (d.value.groups || []).forEach((g) => { g.collapsed = v })
+  gNav.value = false
+  toast(v ? 'All groups collapsed' : 'All groups expanded')
+  nextTick(markStuck)
+}
+
 const flashGid = ref(null)
 let flashT = null
-function jumpToGroup(id) {
-  gSw.value = { ...gSw.value, open: false }
+function jumpToGroup(id, { glide = true, flash = true } = {}) {
+  gNav.value = false
   const g = (d.value.groups || []).find((x) => x.id === id)
-  if (!g) return
-  if (g.collapsed) g.collapsed = false
+  if (id !== UG && !g) return
+  if (g?.collapsed) g.collapsed = false
+  pinned = id
+  if (curSec.value !== id) { curSec.value = id; rememberSection(id) }
   nextTick(() => {
-    const sec = scroller?.querySelector(`.group[data-gid="${id}"]`)
+    const sec = scroller?.querySelector(`[data-gid="${id}"]`)
     if (!sec || !scroller) return
-    const y = scroller.scrollTop + sec.getBoundingClientRect().top - scroller.getBoundingClientRect().top - STICK_GAP
+    const y = scroller.scrollTop + sec.getBoundingClientRect().top - stickLine()
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    scroller.scrollTo({ top: Math.max(0, y), behavior: reduce ? 'auto' : 'smooth' })
+    scroller.scrollTo({ top: Math.max(0, y), behavior: glide && !reduce ? 'smooth' : 'auto' })
+    if (!flash || id === UG) return
     clearTimeout(flashT); flashGid.value = null
     // flash once the glide has (about) landed, so the highlight is seen, not scrolled past
-    flashT = setTimeout(() => { flashGid.value = id; flashT = setTimeout(() => { flashGid.value = null }, 1200) }, reduce ? 0 : 420)
+    flashT = setTimeout(() => { flashGid.value = id; flashT = setTimeout(() => { flashGid.value = null }, 1200) }, glide && !reduce ? 420 : 0)
   })
+}
+function stepSection(dir) {
+  const list = sections.value
+  if (!list.length) return
+  const i = Math.max(0, list.findIndex((s) => s.id === curSection.value?.id))
+  const t = list[Math.min(list.length - 1, Math.max(0, i + dir))]
+  if (t && t.id !== curSection.value?.id) jumpToGroup(t.id)
+}
+/* Back to where you were: once the board has rendered, jump (no glide, no pulse) to the
+   remembered section. */
+let restoredFor = null
+function restoreSection() {
+  if (!d.value || restoredFor === d.value.id) return
+  restoredFor = d.value.id
+  let id = null
+  try { id = localStorage.getItem(posKey()) } catch { /* ignore */ }
+  if (id && sections.value.some((s) => s.id === id) && id !== sections.value[0]?.id) {
+    setTimeout(() => jumpToGroup(id, { glide: false, flash: false }), 60)
+  }
 }
 
 /* ── Reordering groups: drag a group by its header ──────────────────────────────────
@@ -664,6 +750,7 @@ function onWidgetCreated(id) {
 // param changes, so onMounted alone wouldn't fire for a freshly-created board.
 function loadBoard() {
   loadingBoard.value = true
+  restoredFor = null; pinned = null; curSec.value = null     // a (re)opened board restores its own section
   recordView(d.value)
   setTimeout(() => {
     loadingBoard.value = false
@@ -674,6 +761,7 @@ function loadBoard() {
       setTimeout(() => (showAdd.value = true), 260)
     }
     focusPendingTile()
+    nextTick(() => { markStuck(); restoreSection() })
   }, 600)
 }
 onMounted(loadBoard)
@@ -737,9 +825,15 @@ function undo() { if (!canUndo.value) return; redoStack.value.push(boardSnap());
 function redo() { if (!canRedo.value) return; undoStack.value.push(boardSnap()); applySnap(redoStack.value.pop()); toast('Redo') }
 function onKey(e) {
   const t = e.target
+  if (e.key === 'Escape' && gNav.value) { gNav.value = false; return }
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
+  // Undo / Redo keep their shortcuts — the toolbar buttons gave their place to Groups
   if (e.ctrlKey && !e.shiftKey && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); undo() }
   else if (e.ctrlKey && (e.key === 'y' || e.key === 'Y')) { e.preventDefault(); redo() }
+  // Groups navigator: Alt+↓ / Alt+↑ step between sections, G opens the list
+  else if (sections.value.length && e.altKey && e.key === 'ArrowDown') { e.preventDefault(); stepSection(1) }
+  else if (sections.value.length && e.altKey && e.key === 'ArrowUp') { e.preventDefault(); stepSection(-1) }
+  else if (sections.value.length && !e.ctrlKey && !e.metaKey && !e.altKey && (e.key === 'g' || e.key === 'G')) { e.preventDefault(); openNav(true) }
 }
 onMounted(() => window.addEventListener('keydown', onKey))
 onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
@@ -777,9 +871,9 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 </script>
 
 <template>
-  <div v-if="d" class="board" :style="boardVars">
+  <div v-if="d" class="board" :style="{ ...boardVars, '--bar-h': barH + 'px' }">
     <!-- Header -->
-    <header class="bhead">
+    <header ref="headEl" class="bhead">
       <div class="bh-left">
         <!-- collapse / expand the listing sidebar, beside the title (image 1) -->
         <button class="listing-toggle" :title="store.ui.listingOpen ? 'Collapse dashboard listing' : 'Expand dashboard listing'"
@@ -820,13 +914,42 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
         </div>
       </div>
       <div class="bh-right">
-        <!-- Undo/Redo are always present and disable when there is nothing to do, as the
-             prototype has them. A control that appears only once it works moves every
-             other button along with it, so the toolbar shifts under the pointer the
-             first time you change anything. -->
-        <div class="udr">
-          <button class="udr-b" :disabled="!canUndo" @click="undo"><Icon name="undo" :size="17" /><span class="tt udr-tip">Undo <kbd>Ctrl + Z</kbd></span></button>
-          <button class="udr-b" :disabled="!canRedo" @click="redo"><Icon name="redo" :size="17" /><span class="tt udr-tip">Redo <kbd>Ctrl + Y</kbd></span></button>
+        <!-- The Groups navigator, where Undo/Redo used to sit (those keep Ctrl+Z / Ctrl+Y).
+             Only on a board that has groups. It names the section you are in; the list
+             jumps anywhere, and the footer folds or opens every group at once. -->
+        <div v-if="sections.length" class="pop-wrap gnav-wrap">
+          <button class="gnav-btn" :class="{ on: gNav }" title="Jump to a group (G) · Alt+↑/↓ to step" @click.stop="gNav ? (gNav = false) : openNav()">
+            <Icon name="rows" :size="15" />
+            <span class="gnav-cur">{{ curSection?.name || 'Groups' }}</span>
+            <span class="gnav-pos">{{ sections.indexOf(curSection) + 1 }}/{{ sections.length }}</span>
+            <Icon name="chevron-down" :size="14" class="gnav-chev" />
+          </button>
+          <div v-if="gNav" class="backdrop" @click="gNav = false" />
+          <transition name="pop">
+            <div v-if="gNav" class="menu gnav-pop" @click.stop>
+              <div v-if="sections.length > 6" class="gnav-search">
+                <Icon name="search" :size="14" />
+                <input ref="gNavInput" v-model="gNavQ" placeholder="Find a group…" @keydown.enter="navList[0] && jumpToGroup(navList[0].id)" />
+              </div>
+              <div class="menu-label">Jump to section</div>
+              <div class="gnav-list">
+                <button
+                  v-for="s in navList" :key="s.id" class="menu-item gnav-row" :class="{ cur: s.id === curSection?.id, ug: s.id === '__ug' }"
+                  @click="s.id === curSection?.id ? (gNav = false) : jumpToGroup(s.id)"
+                >
+                  <span class="gnav-dot" />
+                  <span class="gnav-nm">{{ s.name }}</span>
+                  <span class="gnav-n">{{ s.n }}</span>
+                </button>
+                <div v-if="!navList.length" class="gnav-none">No group matches “{{ gNavQ }}”</div>
+              </div>
+              <div class="gnav-foot">
+                <button class="gnav-act" @click="collapseAll(true)"><Icon name="chevron-up" :size="14" /> Collapse all</button>
+                <button class="gnav-act" @click="collapseAll(false)"><Icon name="chevron-down" :size="14" /> Expand all</button>
+                <span class="gnav-keys"><kbd>G</kbd> <kbd>Alt ↑↓</kbd></span>
+              </div>
+            </div>
+          </transition>
         </div>
         <TimeFilter />
         <AutoRefresh @refresh="onRefresh" />
@@ -935,7 +1058,7 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 
         <template v-else>
         <!-- ungrouped (inline style overlays a hover "+ New group here" inserter in each row gap) -->
-        <div v-if="tilesIn(null).length" class="ug-wrap">
+        <div v-if="tilesIn(null).length" class="ug-wrap" data-gid="__ug">
           <div class="grid" ref="ugGridEl" :style="gridStyle" :class="{ 'drop-into': dropGroup === null }"
             @dragover.prevent="dropGroup = null" @drop="onDropGroup(null)">
             <!-- B: a wide AI card takes the first slot of the KPI row; the metric tiles flow beside it -->
@@ -999,14 +1122,6 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
               />
               <b v-else class="grp-name" title="Rename group" @click="editingGroup = g.id">{{ g.name }}</b>
               <span v-if="grpStyleOf(g).share === 'private'" class="gh-lock" title="Private group — only you can see it"><Icon name="lock" :size="12" /></span>
-              <!-- the switcher: ▾ and where this group sits in the board (2/5) -->
-              <button
-                v-if="(d.groups || []).length > 1" class="gh-sw" :class="{ on: gSw.open && gSw.gid === g.id }"
-                title="Switch to another group" @click.stop="openSwitcher(g, $event)"
-              >
-                <Icon name="chevron-down" :size="14" />
-                <span class="gh-pos">{{ d.groups.indexOf(g) + 1 }}/{{ d.groups.length }}</span>
-              </button>
             </div>
             <div class="gh-r">
               <!-- The group's own time range. Set once here, every widget in the group reads
@@ -1074,23 +1189,6 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
         <div class="menu-sep" />
         <button class="menu-item danger" @click="askDeleteGroup(gMenu.g)"><Icon name="trash" :size="15" /> Delete group</button>
       </div>
-    </teleport>
-    <!-- group switcher — every group with its widget count, this header's own marked -->
-    <teleport to="body">
-      <div v-if="gSw.open" class="backdrop" @click="gSw = { ...gSw, open: false }" />
-      <transition name="pop">
-        <div v-if="gSw.open" class="menu gsw-pop" :style="{ top: gSw.top + 'px', left: gSw.left + 'px', width: SW_W + 'px' }" @click.stop>
-          <div class="menu-label">Jump to group</div>
-          <button
-            v-for="s in swGroups" :key="s.id" class="menu-item gsw-row" :class="{ cur: s.id === gSw.gid }"
-            @click="s.id === gSw.gid ? (gSw = { ...gSw, open: false }) : jumpToGroup(s.id)"
-          >
-            <span class="gsw-dot" />
-            <span class="gsw-nm">{{ s.name }}</span>
-            <span class="gsw-n">{{ s.n }}</span>
-          </button>
-        </div>
-      </transition>
     </teleport>
     <GroupEditDrawer v-if="editGroupTarget" :group="editGroupTarget" @close="editGroupTarget = null; dirty = true" />
     <ConfirmDialog
@@ -1199,11 +1297,16 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 </template>
 
 <style scoped>
-.board { display: flex; flex-direction: column; min-height: 100%; }
+/* flex: none — .main is a flex column, and a shrinkable board was squeezed to the viewport
+   height with its content overflowing it; the sticky toolbar then un-stuck as soon as that
+   viewport-tall box scrolled away. The board must be as tall as what it holds. */
+.board { display: flex; flex-direction: column; min-height: 100%; flex: none; }
 /* 16px sides, not 24. The BODY below takes its side padding inline from the board-margin
    setting (16px by default), so a 24px header put the board title 8px left of the widgets
    it belongs to — the one edge in the view where two stacked regions did not line up. */
-.bhead { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 16px; background: var(--surface); border-bottom: 1px solid var(--border); flex-wrap: nowrap; }
+/* STICKY: the toolbar holds the Groups navigator, so it stays with you down the board.
+   Above the group headers (20); the group headers stick under it via --bar-h. */
+.bhead { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 16px; background: var(--surface); border-bottom: 1px solid var(--border); flex-wrap: nowrap; position: sticky; top: 0; z-index: 30; }
 .bh-left { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
 .listing-toggle { width: 34px; height: 32px; border: 1px solid var(--border); background: var(--surface); color: var(--ink-2); border-radius: 4px; display: grid; place-items: center; flex: none; }
 .listing-toggle:hover { background: var(--surface-2); color: var(--ink); border-color: var(--border-strong); }
@@ -1255,15 +1358,36 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .titles { min-width: 0; }
 .t-row h1 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 360px; }
 .vsep { width: 1px; height: 24px; background: var(--border); margin: 0 2px; }
-/* undo / redo with instant hover tooltip */
-.udr { display: inline-flex; gap: 6px; margin-right: 4px; }
-.udr-b { position: relative; width: 34px; height: 32px; border: 1px solid var(--border); background: var(--surface); color: var(--ink-2); border-radius: 4px; display: grid; place-items: center; }
-.udr-b:hover:not(:disabled) { background: var(--surface-2); color: var(--ink); }
-.udr-b:disabled { color: var(--muted); opacity: .85; cursor: not-allowed; }
-/* placement only — surface, padding and colour come from .tt */
-.udr-tip { position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); white-space: nowrap; display: none; align-items: center; gap: 6px; z-index: 60; }
-.udr-b:hover .udr-tip { display: inline-flex; }
-.udr-tip kbd { font-family: inherit; font-size: 11px; background: rgba(255,255,255,.16); border-radius: 4px; padding: 1px 5px; }
+/* ── Groups navigator (toolbar) ──
+   The trigger matches the toolbar's other bordered 32px controls; it NAMES the section
+   in view (scroll-spy), so it doubles as a "you are here" readout. */
+.gnav-wrap { margin-right: 4px; }
+.gnav-btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; max-width: 240px; padding: 0 8px 0 10px; border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); color: var(--ink); font-size: 13px; font-weight: 500; }
+.gnav-btn:hover, .gnav-btn.on { background: var(--surface-2); border-color: var(--border-strong); }
+.gnav-btn :deep(.ico) { color: var(--ink-2); }
+.gnav-cur { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gnav-pos { flex: none; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.gnav-chev { flex: none; }
+.gnav-pop { top: calc(100% + 6px); left: 0; width: 290px; padding: 4px 0 0; display: flex; flex-direction: column; max-height: min(440px, 70vh); }
+.gnav-search { display: flex; align-items: center; gap: 6px; margin: 6px 8px 2px; height: 30px; padding: 0 8px; border: 1px solid var(--border-control); border-radius: var(--r); color: var(--muted); }
+.gnav-search input { flex: 1; min-width: 0; border: none; outline: none; background: transparent; font-size: 13px; color: var(--ink); }
+.gnav-list { flex: 1; min-height: 0; overflow: auto; padding-bottom: 4px; }
+.gnav-row { gap: 8px; }
+.gnav-dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+.gnav-nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gnav-n { flex: none; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+/* the loose widgets are a section too, but not a group — set in italic-free muted ink */
+.gnav-row.ug .gnav-nm { color: var(--ink-2); }
+.gnav-row.cur { font-weight: 600; }
+.gnav-row.cur .gnav-dot { background: var(--sel); }
+.gnav-row.cur .gnav-nm { color: var(--ink); }
+.gnav-row.cur .gnav-n { color: var(--ink); font-weight: 600; }
+.gnav-none { padding: 10px 12px; font-size: 12px; color: var(--muted); }
+.gnav-foot { display: flex; align-items: center; gap: 4px; padding: 6px 8px; border-top: 1px solid var(--border-hairline); }
+.gnav-act { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 8px; border: none; border-radius: var(--r); background: transparent; color: var(--ink-2); font-size: 12px; font-weight: 500; }
+.gnav-act:hover { background: var(--surface-2); color: var(--ink); }
+.gnav-keys { margin-left: auto; display: inline-flex; gap: 4px; }
+.gnav-keys kbd { font-family: inherit; font-size: 10px; color: var(--muted); border: 1px solid var(--border); border-radius: 3px; padding: 0 4px; line-height: 16px; }
 .btn.ico-only { width: 38px; padding: 0; justify-content: center; }
 .btn.ico-only.on { background: var(--primary-soft); color: var(--primary-700); border-color: transparent; }
 .pop-wrap { position: relative; }
@@ -1359,7 +1483,7 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
      leaves with it and the next group's header takes the top. A sticky element is bound
      by its parent, so the hand-off needs no script. z-index clears every layer inside a
      group (resize grip 6, row inserter 8) and stays under the FAB (40). */
-  position: sticky; top: 16px; z-index: 20;
+  position: sticky; top: calc(var(--bar-h, 0px) + 16px); z-index: 20;
 }
 /* STUCK: fill the 16px above with the board's white (reaching over the group's own side
    borders, hence -1px and the 1px clip margin), and give the band a top edge of its own
@@ -1411,18 +1535,6 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .ge-sub { margin: 0; font-size: 13px; line-height: 1.45; color: var(--muted); max-width: 320px; }
 .grp-empty .btn { margin-top: 8px; }
 .grp-menu { position: fixed; z-index: 140; min-width: 188px; }
-/* the switcher trigger — quiet at rest (it inherits the band's ink), a soft chip on hover */
-.gh-sw { display: inline-flex; align-items: center; gap: 3px; height: 22px; padding: 0 6px 0 4px; border: none; border-radius: var(--r); background: transparent; color: inherit; opacity: .7; flex: none; }
-.gh-sw:hover, .gh-sw.on { opacity: 1; background: color-mix(in srgb, currentColor 10%, transparent); }
-.gh-pos { font-size: 11px; font-weight: 500; font-variant-numeric: tabular-nums; }
-.gsw-pop { position: fixed; z-index: 140; max-height: 320px; overflow: auto; }
-.gsw-row { gap: 8px; }
-.gsw-dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
-.gsw-nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.gsw-n { flex: none; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.gsw-row.cur { font-weight: 600; }
-.gsw-row.cur .gsw-dot { background: var(--sel); }
-.gsw-row.cur .gsw-n { color: var(--ink); font-weight: 600; }
 /* arrival: the outline pulses once in the near-black, then settles back */
 .group.g-flash { animation: gflash 1.2s ease-out; }
 @keyframes gflash {
