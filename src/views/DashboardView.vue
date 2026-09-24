@@ -1094,21 +1094,21 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
           <!-- 2026-09-24 Figma: compact outlined pills, a small glyph inline, no coloured
                discs and no separator; AI keeps its gradient edge and violet label -->
           <button class="fab-opt ai" @click="fabMenu = false; onCardAsk('createstart', 'Generate with AI')">
-            <Icon name="sparkles" :size="14" /> Generate With AI
+            <Icon name="sparkles" :size="18" /> Generate With AI
           </button>
           <button class="fab-opt" @click="fabMenu = false; store.ui.cloneTarget = null; store.ui.editTarget = null; store.ui.createOpen = true">
-            <Icon name="layout" :size="14" /> Create Dashboard
+            <Icon name="layout" :size="18" /> Create Dashboard
           </button>
           <button class="fab-opt" @click="fabMenu = false; addToGroup = null; showAdd = true">
-            <Icon name="chart-bar" :size="14" /> Create Widget
+            <Icon name="chart-bar" :size="18" /> Create Widget
           </button>
           <button v-if="gShowFabGroup" class="fab-opt" @click="fabMenu = false; addEmptyGroup()">
-            <Icon name="new-group" :size="14" /> Empty Group
+            <Icon name="new-group" :size="18" /> Empty Group
           </button>
         </div>
       </transition>
       <button class="fab" :class="{ on: fabMenu }" @click="fabMenu = !fabMenu" :title="fabMenu ? 'Close' : 'Add'" aria-label="Add">
-        <Icon :name="fabMenu ? 'x' : 'plus'" :size="18" />
+        <Icon :name="fabMenu ? 'x' : 'plus'" :size="22" />
       </button>
     </div>
 
@@ -1458,22 +1458,22 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .empty p b { color: var(--ink-2); font-weight: 600; }
 .big-cta { height: 40px; padding: 0 20px; font-size: 14px; }
 .missing { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 90px; color: var(--muted); }
-/* 2026-09-24 Figma: a 32px near-black square (6px corners) that shows + and turns to ×,
-   with 28px outlined pills stacked 13px apart above it */
-.fab-wrap { position: fixed; right: 26px; bottom: 26px; z-index: 40; display: flex; flex-direction: column; align-items: flex-end; gap: 13px; }
+/* The Figma's near-black square that shows + and turns to ×, enlarged 32 → 42px on
+   2026-09-24; the pills above scale with it (28 → 36px, 12 → 13px type, 14 → 18px glyphs) */
+.fab-wrap { position: fixed; right: 26px; bottom: 26px; z-index: 40; display: flex; flex-direction: column; align-items: flex-end; gap: 16px; }
 .fab-backdrop { position: fixed; inset: 0; z-index: -1; }
-.fab { position: relative; width: 32px; height: 32px; padding: 0; border-radius: 6px; border: none; background: var(--sel); color: var(--sel-ink); display: grid; place-items: center; box-shadow: 0 4px 12px rgba(7,16,31,.22); transition: background .15s, box-shadow .15s; }
+.fab { position: relative; width: 42px; height: 42px; padding: 0; border-radius: 8px; border: none; background: var(--sel); color: var(--sel-ink); display: grid; place-items: center; box-shadow: 0 4px 12px rgba(7,16,31,.22); transition: background .15s, box-shadow .15s; }
 .fab:hover { background: var(--sel-hover); box-shadow: 0 6px 16px rgba(7,16,31,.28); }
 /* ③/⑩ live inside this menu — tint it AI-purple and pulse so the entry is findable */
 .fab.ai-hint { background: var(--ai-grad); box-shadow: 0 4px 12px rgba(139,92,246,.42); animation: fabpulse 2.2s ease-in-out infinite; }
 @keyframes fabpulse { 0%, 100% { box-shadow: 0 4px 12px rgba(139,92,246,.42), 0 0 0 0 rgba(139,92,246,.35); } 50% { box-shadow: 0 4px 12px rgba(139,92,246,.42), 0 0 0 9px rgba(139,92,246,0); } }
 @media (prefers-reduced-motion: reduce) { .fab.ai-hint { animation: none; } }
 /* slide-up menu above the FAB */
-.fab-menu { display: flex; flex-direction: column; gap: 13px; align-items: flex-end; }
-.fab-opt { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px 0 8px; border: 1px solid var(--sel); background: var(--surface); color: var(--sel); border-radius: 6px; font-weight: 500; font-size: 12px; white-space: nowrap; box-shadow: var(--sh-sm); }
+.fab-menu { display: flex; flex-direction: column; gap: 14px; align-items: flex-end; }
+.fab-opt { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px 0 11px; border: 1px solid var(--sel); background: var(--surface); color: var(--sel); border-radius: 8px; font-weight: 500; font-size: 13px; white-space: nowrap; box-shadow: var(--sh-sm); }
 .fab-opt:hover { background: var(--surface-2); }
 /* Generate With AI — the gradient edge (blue→purple→pink) and the violet label */
-.fab-opt.ai { padding-left: 6px; border: 1px solid transparent; background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--ai-grad-line) border-box; color: #7d1dfa; }
+.fab-opt.ai { padding-left: 10px; border: 1px solid transparent; background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--ai-grad-line) border-box; color: #7d1dfa; }
 .fab-opt.ai :deep(.ico) { color: var(--ai); opacity: .8; }
 .fab-opt.ai:hover { background: linear-gradient(var(--ai-softer), var(--ai-softer)) padding-box, var(--ai-grad-line) border-box; }
 [data-theme="dark"] .fab-opt.ai { color: var(--ai-ink); }

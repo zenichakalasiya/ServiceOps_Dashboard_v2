@@ -682,7 +682,7 @@ function save(place) {
                        and at 14 it read as a fifth row of the Chart Type control. -->
                   <!-- 2026-09-24 Figma: two outlined chips, the chosen one edged near-black
                        with a check — not the segmented track -->
-                  <div class="mode-row" style="margin-top:20px">
+                  <div class="mode-row" style="margin-top:32px">
                     <button class="mode-b" :class="{ on: cfg.mode==='manual' }" @click="cfg.mode='manual'">Manual <Icon v-if="cfg.mode==='manual'" name="check-circle" :size="13" /></button>
                     <button class="mode-b" :class="{ on: cfg.mode==='query' }" @click="cfg.mode='query'">Query Based <Icon v-if="cfg.mode==='query'" name="check-circle" :size="13" /></button>
                   </div>
