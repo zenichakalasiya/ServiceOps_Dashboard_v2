@@ -114,7 +114,57 @@ function groupedHelpdesk() {
   ]
   // helpdeskTiles() order: 6 counters · status + priority · the two technician charts · 3 lists
   const slot = (i) => (i < 6 ? 0 : i < 8 ? 1 : i < 10 ? 2 : 3)
-  return { groups: G, tiles: helpdeskTiles().map((t, i) => ({ ...t, group: G[slot(i)].id })) }
+  const base = helpdeskTiles().map((t, i) => ({ ...t, group: G[slot(i)].id }))
+
+  /* …then each group filled out to ten with a MIX of widget types, so the board shows the
+     whole catalogue in context: counters, gauges, legacy charts (line · column · bar · pie
+     · donut · area), the spec-driven kinds (stacked · grouped · multi-line · combo ·
+     histogram · funnel · heatmap — these compute from the 48-record dataset in
+     records.js), lists and notes. */
+  const into = (gi, t) => ({ ...t, group: G[gi].id })
+  const spec = (title, s, info, w) => ({ ...chart(title, { kind: s.kind, spec: { conds: [], ...s } }, info), w })
+  const WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  const extra = [
+    // ── Request Counters (Yellow): 6 counters + 3 more + a gauge ──
+    into(0, { ...kpi('Resolved Today', 38, '', { dir: 'up', pct: 11 }, 'good', 'Requests resolved since midnight.'), w: 3 }),
+    into(0, { ...kpi('SLA Compliance', 92, '%', { dir: 'up', pct: 2 }, 'good', 'Share of requests resolved within SLA.'), w: 3 }),
+    into(0, { ...kpi('Reopened Requests', 7, '', { dir: 'up', pct: 17 }, 'warn', 'Resolved requests that were reopened.'), w: 3 }),
+    into(0, spec('Open Request Load', { kind: 'gauge', measure: { mode: 'count', conds: [] }, gaugeMax: 60, warnAt: 30, badAt: 45, invert: false }, 'Open requests against the team’s comfortable load.', 3)),
+
+    // ── Status & Priority (Green): 2 donuts + 8 ──
+    into(1, spec('Status by Priority', { kind: 'stack', xDim: 'Priority', splitDim: 'Status' }, 'Each priority split into its statuses.', 4)),
+    into(1, spec('Priority by Team', { kind: 'grouped', xDim: 'Team', splitDim: 'Priority' }, 'Priority mix, team by team.', 6)),
+    into(1, spec('Request Lifecycle', { kind: 'funnel', stageField: 'Status' }, 'How far requests have progressed, as a share of all opened.', 6)),
+    into(1, spec('Priority × Status', { kind: 'heatmap', heatX: 'Status', heatY: 'Priority', heatFn: 'Count' }, 'Where the work sits — darker cells hold more requests.', 6)),
+    into(1, { ...chart('Requests by Category', bars(['Hardware', 'Software', 'Network', 'Access', 'Email'], [42, 58, 27, 35, 19]), 'Open requests grouped by category.'), w: 6 }),
+    into(1, { ...chart('Requests by Source', { kind: 'pie', labels: ['Portal', 'Email', 'Phone', 'Chat'], series: [{ name: 'Requests', values: [112, 74, 38, 24] }] }, 'Where requests come in from.'), w: 4 }),
+    into(1, { ...kpi('Escalated Requests', 11, '', { dir: 'up', pct: 8 }, 'bad', 'Open requests escalated to a higher tier.'), w: 4 }),
+    into(1, { ...text('Status & Priority notes', '## Reading this group\nCounts are **open requests** unless a title says otherwise. The heatmap shows where *Urgent* work piles up.'), w: 4 }),
+
+    // ── Technician Load (Blue): 2 technician charts + 8 ──
+    into(2, { ...chart('Top Technicians (Resolved)', { kind: 'hbar', labels: ['Aarav Nair', 'Meera Verma', 'Rohan Gupta', 'Priya Patel', 'Vikram Shah', 'Ananya Bose'], series: [{ name: 'Resolved', values: [46, 38, 31, 27, 22, 19] }] }, 'Requests resolved per technician this period.'), w: 4 }),
+    into(2, spec('Requests & Avg Resolution by Priority', { kind: 'combo', xDim: 'Priority', comboFn: 'Average', comboField: 'Resolution time' }, 'Bars count requests; the line is their average resolution time.', 6)),
+    into(2, spec('Status by Team', { kind: 'multiline', xDim: 'Team', splitDim: 'Status' }, 'Each status as a line across the teams.', 6)),
+    into(2, spec('Resolution Time Distribution', { kind: 'hist', histField: 'Resolution time', histBucket: 4 }, 'How long resolved requests took, in 4-hour buckets.', 6)),
+    into(2, spec('Average CSAT', { kind: 'gauge', measure: { mode: 'aggregate', fn: 'Average', field: 'CSAT score', conds: [] }, gaugeMax: 5, warnAt: 3, badAt: 4, invert: true }, 'Average customer satisfaction on resolved requests.', 3)),
+    into(2, { ...kpi('Active Technicians', 24, '', { dir: 'up', pct: 4 }, 'good', 'Technicians with at least one open assignment.'), w: 3 }),
+    into(2, { ...kpi('Avg Load per Technician', 10.3, '', { dir: 'up', pct: 5 }, 'warn', 'Open requests per active technician.'), w: 3 }),
+    into(2, { ...chart('Assignments per Day', line(WEEK, [42, 51, 47, 60, 55, 21, 18]), 'Requests assigned to technicians each day this week.'), w: 6 }),
+
+    // ── My Worklists (Orange): 3 lists + 7 ──
+    into(3, { ...shortcut('Recently Resolved by Me', ['Subject', 'Requester', 'Resolved'],
+      [['Printer offline — 3rd floor', 'Kiran Rao', '2h ago'], ['Reset MFA for new laptop', 'Asha Menon', '5h ago'], ['Shared drive permissions', 'Dev Patel', 'Yesterday']],
+      'Requests I resolved most recently.'), w: 6, total: 18 }),
+    into(3, { ...shortcut('Breaching SLA Soon', ['Subject', 'Priority', 'Due in'],
+      [['VPN down for finance team', 'Urgent', '35m'], ['Payroll app 500 error', 'High', '1h 20m'], ['SSO login failing for HR', 'Medium', '3h']],
+      'My open requests closest to their SLA due time.'), w: 6, total: 6 }),
+    into(3, { ...kpi('My Overdue', 2, '', { dir: 'down', pct: 33 }, 'bad', 'My requests past their SLA due date.'), w: 3 }),
+    into(3, { ...kpi('Awaiting My Approval', 7, '', { dir: 'up', pct: 16 }, 'warn', 'Approval requests waiting on me.'), w: 3 }),
+    into(3, { ...chart('My Resolved per Week', area(['W1', 'W2', 'W3', 'W4', 'W5', 'W6'], [8, 11, 9, 14, 12, 15]), 'Requests I resolved each week.'), w: 6 }),
+    into(3, { ...chart('My Requests by Status', donut(['Open', 'In Progress', 'Pending'], [5, 3, 1]), 'My open requests grouped by status.'), w: 4 }),
+    into(3, { ...text('Worklist tip', 'Lists show the **first few records** — use *View all* on a list to open the full view.'), w: 4 }),
+  ]
+  return { groups: G, tiles: [...base, ...extra] }
 }
 function assetTiles() {
   return [
@@ -234,7 +284,9 @@ export function seed() {
     { name: 'Vulnerability and Remediation Dashboard', folder: 'f-noc', category: 'Patch Management', owner: 'Aarav Mehta', access: 'public', predefined: false, favorite: false, description: 'Custom board (mirrors the “Vulnerability and Remediation Dashboard” on the ServiceOps instance): patch installation/deployment counters plus status, category and severity breakdowns.', tiles: vulnRemediationTiles(), updated: days(1), mine: true },
     { name: 'My SLA drafts', folder: 'f-mine', category: '', owner: 'Aarav Mehta', access: 'private', predefined: false, favorite: false, description: 'Work in progress — includes empty-widget state demos.', tiles: [...execTiles().slice(0, 3), ...demoStateTiles()], updated: days(5), mine: true },
     // a user's copy of Helpdesk Overview, organised into four coloured groups
-    { name: 'Helpdesk Overview (Grouped)', folder: 'f-svc', category: 'Service Desk', owner: 'Aarav Mehta', access: 'public', predefined: false, favorite: false, description: 'A copy of Helpdesk Overview organised into groups — counters, status & priority, technician load and my worklists — each with its own header colour.', ...groupedHelpdesk(), updated: days(0), mine: true },
+    // a FIXED id: the generated ones shift whenever a seed gains a tile, and this board's
+    // link gets shared (#/dashboard/d-grouped)
+    { id: 'd-grouped', name: 'Helpdesk Overview (Grouped)', folder: 'f-svc', category: 'Service Desk', owner: 'Aarav Mehta', access: 'public', predefined: false, favorite: false, description: 'A copy of Helpdesk Overview organised into groups — counters, status & priority, technician load and my worklists — each with its own header colour.', ...groupedHelpdesk(), updated: days(0), mine: true },
   ].map((d, i) => ({
     // the landing board: the grouped copy of Helpdesk Overview (2026-09-24), so a first
     // visit opens on the grouping features; the original keeps everything else it had
