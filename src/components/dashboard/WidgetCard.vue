@@ -402,7 +402,13 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
          EVERY tile uses this. The click-to-select floating toolbar three tiles used to
          have is gone — one board should not have two different ways to reach the same
          actions, and the odd tiles out were the ones that looked broken. -->
-    <header class="thead">
+    <!-- On a note the header has no title and no grip: its whole top lane IS the drag
+         handle. Pressing anywhere in it that isn't a button arms the drag, the same way the
+         grip does on every other widget. -->
+    <header
+      class="thead" :class="{ 'note-lane': isNote }"
+      @mousedown="isNote && !$event.target.closest('button') && emit('armdrag', tile)"
+    >
       <div class="left">
         <span class="draghandle" title="Drag to move" @mousedown="emit('armdrag', tile)"><Icon name="drag" :size="16" /></span>
         <span v-if="tile.pinned" class="pinbadge" title="Pinned"><Icon name="pin" :size="12" /></span>
@@ -753,31 +759,26 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
    whole body — the colour is a per-widget setting, so the card can no longer hardcode
    the paper it used to always wear. */
 .tile.note { position: relative; background: var(--surface); }
-/* The band SPANS the card, so the two controls land where they do on every other widget:
-   the grip at the top-left, the ⋯ at the top-right. It used to be a right-aligned cluster
-   holding both — which kept the left edge clear for writing, but made the note the one
-   tile whose grip you had to hunt for. Consistency wins: the writing starts below the
-   band, not beside it. */
+/* A note has no header band, so its header is a transparent LANE across the top — the
+   32px FreeTextTile reserves above the writing. The lane itself is the drag handle: the
+   cursor turns to a grab hand anywhere along it, and pressing there moves the tile (the
+   mousedown is on the <header>). No grip glyph — the lane is wide enough to find by
+   feel, and a grip icon floating over someone's writing was the one piece of chrome on
+   the note that didn't say anything the cursor couldn't. */
 .tile.note .thead {
-  position: absolute; top: 0; right: 0; left: 0; width: auto; height: auto; z-index: 3;
-  background: transparent; padding: 6px 8px 0;
-  opacity: 0; transition: opacity .15s ease; pointer-events: none;
+  position: absolute; top: 0; right: 0; left: 0; width: auto; height: 32px; z-index: 3;
+  background: transparent; padding: 0 6px; justify-content: flex-end;
+  cursor: grab;
 }
-.tile.note:hover .thead, .tile.note.acting .thead { opacity: 1; }
-.tile.note .thead .ractions, .tile.note .thead .draghandle { pointer-events: auto; }
-/* no title, no info, no provenance: a note is read, not identified */
-.tile.note .title, .tile.note .info { display: none; }
-.tile.note .left { position: static; }
-.tile.note .draghandle { position: static; transform: none; opacity: 1; }
-/* Both controls float OVER the note's own background, which is a per-widget colour now —
-   so each needs a surface of its own to stay legible on a red wash as well as on white.
-   An outlined chip on `--surface` is what the rest of the app puts an icon on. */
-.tile.note .mwrap .ti, .tile.note .draghandle {
-  width: 26px; height: 26px; display: grid; place-items: center;
-  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
-  box-shadow: var(--sh-sm); color: var(--ink-2);
-}
-.tile.note .mwrap .ti:hover, .tile.note .draghandle:hover { background: var(--surface-2); color: var(--ink); }
+.tile.note .thead:active { cursor: grabbing; }
+/* no title, no info, no grip: a note is read, not identified */
+.tile.note .title, .tile.note .info, .tile.note .draghandle { display: none; }
+/* Only the ⋯, and plain — no chip, no outline, no shadow. It appears with the hover like
+   every other widget's actions, instantly. */
+.tile.note .ractions { opacity: 0; cursor: default; }
+.tile.note:hover .ractions, .tile.note.acting .ractions { opacity: 1; }
+.tile.note .mwrap .ti { width: 24px; height: 24px; display: grid; place-items: center; background: transparent; border: none; color: var(--muted); border-radius: var(--r); }
+.tile.note .mwrap .ti:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); color: var(--ink); }
 /* No inset: the note's background is a setting, so it has to reach the card's edges.
    Its own padding is the widget's `pad` option, applied inside FreeTextTile. */
 .tile.note .tbody { padding: 0; }

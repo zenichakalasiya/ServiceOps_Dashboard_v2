@@ -293,7 +293,7 @@ function togglePick(id) {
 function boardMouseDown(e) {
   if (!gUseMarquee.value) return   // select-to-group only in styles ① and ⑤
   if (e.button !== 0) return
-  if (e.target.closest('button, a, input, textarea, select, .draghandle, .resize, .grp-head')) return
+  if (e.target.closest('button, a, input, textarea, select, .draghandle, .note-lane, .resize, .grp-head')) return
   // Shift / Ctrl / ⌘ + click on an ungrouped tile toggles it into the selection
   const cell = e.target.closest('.cell[data-tile]')
   if ((e.shiftKey || e.ctrlKey || e.metaKey) && cell && !cell.closest('.group')) {
