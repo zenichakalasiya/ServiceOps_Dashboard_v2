@@ -1047,15 +1047,22 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 /* drag-reorder states */
 .cell.dragging { opacity: .4; }
 .cell.dropzone { outline: 2px dashed var(--primary); outline-offset: 2px; border-radius: var(--r-lg); }
-/* Bottom-right resize grip (two diagonal strokes), revealed on hover.
-   Inset 5px, not 3px: at 3px a 17px grip ran its strokes over the tile's 1px border and
-   through its 4px corner arc, so the marks read as damage to the card rather than a
-   control sitting on it. 5px clears both the border and the radius, and 12px keeps the
-   grip small enough to stay a hint — it is a drag target, not a button. */
-.resize { position: absolute; right: 5px; bottom: 5px; width: 12px; height: 12px; z-index: 6; cursor: nwse-resize; opacity: 0; transition: opacity .14s;
-  background: linear-gradient(135deg, transparent 0 44%, var(--muted) 44% 57%, transparent 57% 71%, var(--muted) 71% 84%, transparent 84%); }
-.cell:hover .resize { opacity: .9; }
-.resize:hover { opacity: 1; }
+/* Bottom-right resize grip: a CORNER BRACKET, revealed on hover. It traces the tile's own
+   corner, which is what it moves — the two diagonal strokes it replaced read as a generic
+   textarea grip and said nothing about which edge you were about to drag.
+   Drawn with two borders on an empty box, so it is crisp at any zoom and needs no asset;
+   the rounded outer corner echoes the card's radius instead of cutting across it. Inset
+   5px clears the tile's 1px border and its corner arc. The HIT area stays 16px even though
+   the mark is 10: a drag target should be easier to grab than it is to see. Instant on
+   hover, like the widget's other actions. */
+.resize { position: absolute; right: 3px; bottom: 3px; width: 16px; height: 16px; z-index: 6; cursor: nwse-resize; opacity: 0; }
+.resize::after {
+  content: ''; position: absolute; right: 2px; bottom: 2px; width: 10px; height: 10px;
+  border-right: 2px solid var(--picker-ico); border-bottom: 2px solid var(--picker-ico);
+  border-bottom-right-radius: 3px;
+}
+.cell:hover .resize { opacity: 1; }
+.resize:hover::after { border-color: var(--primary); }
 /* staggered widget reveal after the loading skeleton */
 /* The CARD arrives quickly and quietly; the CHART inside it is what animates. This
    used to run .5s with up to .35s of stagger — long enough that a chart's 550ms draw
