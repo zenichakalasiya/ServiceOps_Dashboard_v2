@@ -45,8 +45,8 @@ const SCENES = [
   // the monochrome Chart Morph leads the section, and its continuous successor sits beside it
   { id: 'morph-mono', loader: { variant: 'morph', mono: true, smooth: true, size: 60 }, name: 'Chart Morph — Monochrome', charts: 'Column · Line · Donut · Scatter · Stacked', widget: 'Open Requests by Status',
     what: 'Five charts in turn, in slate greys, smaller, with soft easing — each chart fades out as the next arrives.' },
-  { id: 'flow', loader: { variant: 'flow', mono: true, smooth: true, size: 72 }, name: 'Chart Flow — Continuous', charts: 'Column → Line → Donut → Stacked → Bar → Funnel', widget: 'Open Requests by Status',
-    what: 'The same five shapes BECOME each chart: columns tip over into a line, the line curls into a donut, the slices break off and stack, the stack slides out into bars, the bars taper into a funnel, and the funnel drops back into columns — nothing ever disappears.' },
+  { id: 'flow', loader: { variant: 'flow', mono: true, smooth: true, size: 72 }, name: 'Chart Flow — Continuous', charts: 'Column → Line → Donut → Scatter → Stacked', widget: 'Open Requests by Status',
+    what: 'The same five charts, each built out of the last: columns tip over into a line, the line curls into a donut, the slices shatter into scatter dots and the trend draws through them, the dots drop and square off into stacked blocks, and the blocks merge back into columns — nothing ever disappears.' },
   { id: 'assemble', name: 'Dashboard Assembly', charts: 'KPI · Column · Donut · Line', widget: 'Helpdesk Overview',
     what: 'Four mini widget cards pop in one after another and fill themselves — the number counts up, columns grow, the donut closes, the line draws.' },
   { id: 'chomp', name: 'Pie Chomp', charts: 'Pie · Line · KPI', widget: 'Requests Created — Trend',
