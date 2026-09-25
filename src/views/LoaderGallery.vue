@@ -15,6 +15,9 @@ const VARIANTS = [
   { id: 'morph', name: 'Chart Morph', widget: 'Open Requests by Status',
     what: 'One chart turns into the next — columns drop, their tops become a trend line, it curls into a donut, loose dots gather into a pattern, and blocks drop into columns.',
     why: 'A little story in five beats; people watch to see what it becomes next.' },
+  { id: 'morph', key: 'morph-mono', mono: true, smooth: true, size: 60, name: 'Chart Morph — Monochrome', widget: 'Open Requests by Status',
+    what: 'The same five-chart story in the product’s slate greys (the empty-group artwork’s colours), smaller, with softer easing — no bounce, and each chart fades out as the next arrives.',
+    why: 'Calm and on-brand: it sits quietly in a busy board and never competes with the real charts around it.' },
   { id: 'trend', name: 'Live Trend', widget: 'Requests Created — Last 30 days',
     what: 'A line draws itself across the grid with a glowing dot riding its tip, and the area fills in behind it.',
     why: 'The eye follows the moving dot, the way it follows a cursor on a live ticker.' },
@@ -64,7 +67,7 @@ const VARIANTS = [
     </header>
 
     <div class="lg-grid">
-      <article v-for="v in VARIANTS" :key="v.id" class="lg-item">
+      <article v-for="v in VARIANTS" :key="v.key || v.id" class="lg-item">
         <!-- a widget-shaped card: header band + body, as on the board -->
         <div class="lg-tile">
           <div class="lg-thead">
@@ -72,7 +75,7 @@ const VARIANTS = [
             <span class="lg-chip">Loading</span>
           </div>
           <div class="lg-body">
-            <ChartLoader :variant="v.id" :speed="speed" :caption="captions" />
+            <ChartLoader :variant="v.id" :speed="speed" :caption="captions" :mono="!!v.mono" :smooth="!!v.smooth" :size="v.size || 76" />
           </div>
         </div>
         <div class="lg-meta">

@@ -27,9 +27,22 @@ const props = defineProps({
   variant: { type: String, default: 'morph' },
   speed: { type: Number, default: 1 },
   caption: { type: Boolean, default: true },
+  // monochrome: the product's slate (--picker-ico, #7186A8 — the empty-group artwork's
+  // colour) in stepped SOLID shades instead of the chart palette
+  mono: { type: Boolean, default: false },
+  // softer motion: no overshoot/bounce, longer eases, charts fade out as the next arrives
+  smooth: { type: Boolean, default: false },
+  // max drawing width in px
+  size: { type: Number, default: 76 },
 })
 
-const C = (i) => `var(--chart-${i})`
+/* Solid shades mixed against the card surface rather than alpha: overlapping parts (the
+   stacked blocks, the dots gathering on the line) stay clean instead of darkening where
+   they cross. Neighbours alternate dark/light so adjacent bars always read apart. */
+const MONO = [88, 58, 38, 74, 28, 50, 34, 66]
+const C = (i) => (props.mono
+  ? `color-mix(in srgb, var(--picker-ico) ${MONO[(i - 1) % MONO.length]}%, var(--surface))`
+  : `var(--chart-${i})`)
 const reduce = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
 /* ── captions: what the chart is "doing", rotated ── */
@@ -45,12 +58,16 @@ const LINES = {
 }
 const lineIdx = ref(0)
 // morph's caption names the chart on screen; the others rotate through their three lines
-const caption = computed(() => (props.variant === 'morph' ? LINES.morph[phase.value] : (LINES[props.variant] || LINES.morph)[lineIdx.value % 3]))
+const capText = computed(() => (props.variant === 'morph' ? LINES.morph[phase.value] : (LINES[props.variant] || LINES.morph)[lineIdx.value % 3]))
 
 /* ── morph: a five-phase cycle driven from JS (CSS does the tweening) ──
    0 columns · 1 trend line · 2 donut · 3 find the pattern · 4 block drop */
 const PHASES = 5
 const phase = ref(0)
+// the phase just left, for a short moment — lets the pattern and blocks FADE OUT instead of
+// snapping away when their class drops (removing an animation can't be transitioned)
+const prev = ref(-1)
+let prevT = null
 const BARS = [40, 62, 34, 70, 50]
 const bx = (i) => 22 + i * 28
 const TOPS = BARS.map((h, i) => [bx(i) + 8, 88 - h])
@@ -71,7 +88,11 @@ let tick = null, raf = null, t0 = 0
 function start() {
   stop()
   const period = 2000 / props.speed
-  tick = setInterval(() => { phase.value = (phase.value + 1) % PHASES; lineIdx.value++ }, period)
+  tick = setInterval(() => {
+    prev.value = phase.value
+    phase.value = (phase.value + 1) % PHASES; lineIdx.value++
+    clearTimeout(prevT); prevT = setTimeout(() => { prev.value = -1 }, 500 / props.speed)
+  }, period)
   if (reduce) return
   t0 = performance.now()
   const loop = (now) => {
@@ -84,7 +105,7 @@ function start() {
   }
   raf = requestAnimationFrame(loop)
 }
-function stop() { clearInterval(tick); cancelAnimationFrame(raf) }
+function stop() { clearInterval(tick); cancelAnimationFrame(raf); clearTimeout(prevT) }
 onMounted(start)
 onBeforeUnmount(stop)
 watch(() => [props.speed, props.variant], start)
@@ -125,7 +146,7 @@ const blocks = COLS.flatMap((col, ci) => {
 </script>
 
 <template>
-  <div class="cl" :class="[`cl-${variant}`, { still: reduce }]" :style="{ '--spd': speed }" role="status" aria-live="polite" :aria-label="caption">
+  <div class="cl" :class="[`cl-${variant}`, { still: reduce, mono, smooth }]" :style="{ '--spd': speed, '--cl-w': size + 'px' }" role="status" aria-live="polite" :aria-label="capText">
     <svg class="cl-svg" viewBox="0 0 160 100" fill="none" aria-hidden="true">
       <!-- ── MORPH ── columns → dots + trend → donut -->
       <template v-if="variant === 'morph'">
@@ -142,13 +163,13 @@ const blocks = COLS.flatMap((col, ci) => {
             :style="{ '--len': s.len, '--off': -s.off, '--circ': RING, transitionDelay: (s.i * 110) + 'ms' }" />
         </g>
         <!-- 3 · find the pattern: loose dots appear, drift into a trend, the line draws -->
-        <g class="msc" :class="{ on: phase === 3 }">
+        <g class="msc" :class="{ on: phase === 3 || prev === 3, leaving: prev === 3 }">
           <path d="M26 78 L150 18" class="msc-line" pathLength="1" />
           <circle v-for="p in DOTS" :key="'mp' + p.i" r="4" :fill="p.color" class="msc-dot"
             :style="{ '--x1': p.x1 + 'px', '--y1': p.y1 + 'px', '--x2': p.x2 + 'px', '--y2': p.y2 + 'px', '--dl': (p.i * 0.04) + 's' }" />
         </g>
         <!-- 4 · block drop: blocks fall into their columns with a small bounce -->
-        <g class="mbk" :class="{ on: phase === 4 }">
+        <g class="mbk" :class="{ on: phase === 4 || prev === 4, leaving: prev === 4 }">
           <rect v-for="b in blocks" :key="'mk' + b.key" class="mbk-b" :x="b.x" :y="b.y" width="20" :height="b.h" rx="3"
             :fill="b.color" :style="{ '--dl': (b.d * 0.4) + 's' }" />
         </g>
@@ -234,7 +255,8 @@ const blocks = COLS.flatMap((col, ci) => {
       </template>
     </svg>
     <transition name="clcap" mode="out-in">
-      <p v-if="caption" :key="caption" class="cl-cap">{{ caption }}</p>
+      <!-- `caption` here is the PROP (show captions?), `capText` the line itself -->
+      <p v-if="caption" :key="capText" class="cl-cap">{{ capText }}</p>
     </transition>
   </div>
 </template>
@@ -243,9 +265,9 @@ const blocks = COLS.flatMap((col, ci) => {
 .cl { --spd: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 100%; min-height: 0; padding: 10px; }
 /* SMALL on purpose (2026-09-24): a loader sits quietly in the widget body, it does not
    fill it — 76px wide at most, with a smaller caption under it */
-.cl-svg { width: 100%; max-width: 76px; height: auto; max-height: calc(100% - 24px); overflow: visible; display: block; }
+.cl-svg { width: 100%; max-width: var(--cl-w, 76px); height: auto; max-height: calc(100% - 24px); overflow: visible; display: block; }
 .cl-cap { margin: 0; font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: .01em; }
-.clcap-enter-active, .clcap-leave-active { transition: opacity .3s ease, transform .3s ease; }
+.clcap-enter-active, .clcap-leave-active { transition: opacity .16s ease, transform .16s ease; }
 .clcap-enter-from { opacity: 0; transform: translateY(4px); }
 .clcap-leave-to { opacity: 0; transform: translateY(-4px); }
 
@@ -279,6 +301,9 @@ const blocks = COLS.flatMap((col, ci) => {
 .msc-line { stroke: var(--ink-2); stroke-width: 1.75; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; opacity: 0; }
 .msc.on .msc-line { animation: mscLine calc(2s / var(--spd)) ease both; }
 @keyframes mscLine { 0%, 58% { stroke-dashoffset: 1; opacity: .5; } 88%, 100% { stroke-dashoffset: 0; opacity: .5; } }
+/* leaving: the pattern and the blocks fade out while the next chart comes in */
+.msc, .mbk { transition: opacity calc(.45s / var(--spd)) ease; }
+.msc.leaving, .mbk.leaving { opacity: 0; }
 /* 4 · block drop — each block falls in turn and settles with a bounce */
 .mbk-b { transform-box: fill-box; opacity: 0; }
 .mbk.on .mbk-b { animation: mbkIn calc(.7s / var(--spd)) cubic-bezier(.34, 1.5, .64, 1) calc(var(--dl) / var(--spd)) both; }
@@ -345,6 +370,23 @@ const blocks = COLS.flatMap((col, ci) => {
 .ga-needle path { stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
 .ga-hub { fill: var(--ink); }
 .ga-val { fill: var(--ink); font-size: 13px; font-weight: 700; text-anchor: middle; font-variant-numeric: tabular-nums; }
+
+/* ── mono: the lines join the slate too (the fills come from C() in the script) ── */
+.mono .mt, .mono .msc-line, .mono .sc-line { stroke: var(--picker-ico); }
+.mono .cl-base { stroke: var(--picker-ico); stroke-opacity: .45; }
+.mono .mring-track, .mono .or-track { stroke: color-mix(in srgb, var(--picker-ico) 14%, var(--surface)); }
+
+/* ── smooth: the same story with no overshoot — standard ease-in-out curves, a little
+   longer, so every change glides instead of springing ── */
+.smooth .mb { transition: transform calc(.8s / var(--spd)) cubic-bezier(.4, 0, .2, 1), opacity calc(.6s / var(--spd)) ease; }
+.smooth .mb.down { transition-timing-function: cubic-bezier(.4, 0, .2, 1); }
+.smooth .mt { transition: stroke-dashoffset calc(1s / var(--spd)) cubic-bezier(.4, 0, .2, 1) .2s, opacity calc(.4s / var(--spd)) ease; }
+.smooth .mdot { transition: transform calc(.6s / var(--spd)) cubic-bezier(.4, 0, .2, 1); }
+.smooth .mring { transition: transform calc(.9s / var(--spd)) cubic-bezier(.4, 0, .2, 1), opacity calc(.5s / var(--spd)) ease; }
+.smooth .mseg { transition: stroke-dasharray calc(.9s / var(--spd)) cubic-bezier(.4, 0, .2, 1); }
+.smooth .mbk.on .mbk-b { animation-duration: calc(.85s / var(--spd)); animation-timing-function: cubic-bezier(.22, .61, .36, 1); }
+.smooth .mbase { transition-duration: calc(.6s / var(--spd)); }
+.smooth .msc, .smooth .mbk { transition-duration: calc(.6s / var(--spd)); }
 
 /* reduced motion: no travel — the finished chart breathes */
 .cl.still * { animation: none !important; transition: none !important; }
