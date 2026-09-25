@@ -16,9 +16,6 @@ const VARIANTS = [
   { id: 'morph', name: 'Chart Morph', widget: 'Open Requests by Status',
     what: 'One chart turns into the next — columns drop, their tops become a trend line, it curls into a donut, loose dots gather into a pattern, and blocks drop into columns.',
     why: 'A little story in five beats; people watch to see what it becomes next.' },
-  { id: 'morph', key: 'morph-mono', mono: true, smooth: true, size: 60, name: 'Chart Morph — Monochrome', widget: 'Open Requests by Status',
-    what: 'The same five-chart story in the product’s slate greys (the empty-group artwork’s colours), smaller, with softer easing — no bounce, and each chart fades out as the next arrives.',
-    why: 'Calm and on-brand: it sits quietly in a busy board and never competes with the real charts around it.' },
   { id: 'trend', name: 'Live Trend', widget: 'Requests Created — Last 30 days',
     what: 'A line draws itself across the grid with a glowing dot riding its tip, and the area fills in behind it.',
     why: 'The eye follows the moving dot, the way it follows a cursor on a live ticker.' },
@@ -45,6 +42,11 @@ const VARIANTS = [
 /* Multi-chart scenes — two or three Create-Widget charts interacting, monochrome slate,
    smooth motion, and tappable (a tap squashes and bounces the scene). */
 const SCENES = [
+  // the monochrome Chart Morph leads the section, and its continuous successor sits beside it
+  { id: 'morph-mono', loader: { variant: 'morph', mono: true, smooth: true, size: 60 }, name: 'Chart Morph — Monochrome', charts: 'Column · Line · Donut · Scatter · Stacked', widget: 'Open Requests by Status',
+    what: 'Five charts in turn, in slate greys, smaller, with soft easing — each chart fades out as the next arrives.' },
+  { id: 'flow', loader: { variant: 'flow', mono: true, smooth: true, size: 72 }, name: 'Chart Flow — Continuous', charts: 'Column → Line → Donut → Stacked → Bar → Funnel', widget: 'Open Requests by Status',
+    what: 'The same five shapes BECOME each chart: columns tip over into a line, the line curls into a donut, the slices break off and stack, the stack slides out into bars, the bars taper into a funnel, and the funnel drops back into columns — nothing ever disappears.' },
   { id: 'assemble', name: 'Dashboard Assembly', charts: 'KPI · Column · Donut · Line', widget: 'Helpdesk Overview',
     what: 'Four mini widget cards pop in one after another and fill themselves — the number counts up, columns grow, the donut closes, the line draws.' },
   { id: 'chomp', name: 'Pie Chomp', charts: 'Pie · Line · KPI', widget: 'Requests Created — Trend',
@@ -117,7 +119,8 @@ const SCENES = [
             <span class="lg-chip">Loading</span>
           </div>
           <div class="lg-body">
-            <ChartLoaderScene :variant="s.id" :speed="speed" :caption="captions" />
+            <ChartLoader v-if="s.loader" :variant="s.loader.variant" :mono="s.loader.mono" :smooth="s.loader.smooth" :size="s.loader.size" :speed="speed" :caption="captions" />
+            <ChartLoaderScene v-else :variant="s.id" :speed="speed" :caption="captions" />
           </div>
         </div>
         <div class="lg-meta">

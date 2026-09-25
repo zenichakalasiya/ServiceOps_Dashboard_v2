@@ -13,6 +13,8 @@
  * Variants
  *   morph     — one chart becoming the next: columns → dots + trend line → donut →
  *               loose dots gathering into a trend → blocks dropping into columns
+ *   flow      — CONTINUOUS: the same five shapes reshape into each chart — columns →
+ *               line → donut → stacked → bars → funnel → columns — nothing swaps out
  *   equalizer — colour bars dancing like an audio meter
  *   trend     — a line drawing itself, a glowing dot riding its tip, the area filling in
  *   orbit     — donut arcs growing in turn while the ring turns, a counter ticking up
@@ -58,7 +60,8 @@ const LINES = {
 }
 const lineIdx = ref(0)
 // morph's caption names the chart on screen; the others rotate through their three lines
-const capText = computed(() => (props.variant === 'morph' ? LINES.morph[phase.value] : (LINES[props.variant] || LINES.morph)[lineIdx.value % 3]))
+const capText = computed(() => (props.variant === 'flow' ? FLOW_LINES[flowState.value]
+  : props.variant === 'morph' ? LINES.morph[phase.value] : (LINES[props.variant] || LINES.morph)[lineIdx.value % 3]))
 
 /* ── morph: a five-phase cycle driven from JS (CSS does the tweening) ──
    0 columns · 1 trend line · 2 donut · 3 find the pattern · 4 block drop */
@@ -80,6 +83,62 @@ const segs = SEGS.reduce((acc, f, i) => {
   return acc
 }, [])
 
+/* ── flow: ONE set of five shapes that physically becomes each chart in turn ──────────
+ * Every piece is a closed polygon of 16 points — two 8-point edges, A (out) and B (back).
+ * Each chart is just a different placement of those points, and the loop glides every
+ * point from one placement to the next, so nothing is swapped: the columns tip over into
+ * line segments, the segments curl round into donut slices, the slices break away and
+ * stack, the stack slides out into bars, the bars taper into a funnel, and the funnel
+ * drops back into columns. Piece i is the same data slice the whole way through. */
+const FLOW_N = 8
+const lerpPts = (a, b, n = FLOW_N) => Array.from({ length: n }, (_, k) => [a[0] + (b[0] - a[0]) * (k / (n - 1)), a[1] + (b[1] - a[1]) * (k / (n - 1))])
+const arcPts = (cx, cy, R, a0, a1, n = FLOW_N) => Array.from({ length: n }, (_, k) => { const a = a0 + (a1 - a0) * (k / (n - 1)); return [cx + R * Math.cos(a), cy + R * Math.sin(a)] })
+const poly = (A, B) => [...A, ...[...B].reverse()]
+const rectV = (x, y, w, h) => poly(lerpPts([x, y + h], [x, y]), lerpPts([x + w, y + h], [x + w, y]))
+const rectH = (x, y, w, h) => poly(lerpPts([x, y], [x + w, y]), lerpPts([x, y + h], [x + w, y + h]))
+const trap = (cx, y, wt, wb, h) => poly(lerpPts([cx - wt / 2, y], [cx + wt / 2, y]), lerpPts([cx - wb / 2, y + h], [cx + wb / 2, y + h]))
+const segQ = (p, q, t) => {
+  const dx = q[0] - p[0], dy = q[1] - p[1], L = Math.hypot(dx, dy), nx = (-dy / L) * t / 2, ny = (dx / L) * t / 2
+  return poly(lerpPts([p[0] - nx, p[1] - ny], [q[0] - nx, q[1] - ny]), lerpPts([p[0] + nx, p[1] + ny], [q[0] + nx, q[1] + ny]))
+}
+const FRAC = [0.3, 0.24, 0.2, 0.15, 0.11]
+const LINE_P = [[20, 66], [44, 44], [68, 54], [92, 30], [116, 40], [140, 24]]
+const FLOW_STATES = (() => {
+  const cols = [40, 62, 34, 70, 50].map((h, i) => rectV(22 + i * 26, 88 - h, 16, h))
+  const line = LINE_P.slice(0, 5).map((p, i) => segQ(p, LINE_P[i + 1], 3.2))
+  let a = -Math.PI / 2
+  const donut = FRAC.map((f) => { const a0 = a + 0.035, a1 = a + f * 2 * Math.PI - 0.035; a += f * 2 * Math.PI; return poly(arcPts(80, 50, 33, a0, a1), arcPts(80, 50, 20, a0, a1)) })
+  let y = 88
+  const stack = FRAC.map((f) => { const h = f * 72; y -= h + 1.5; return rectV(70, y + 1.5, 20, h) })
+  const bars = [104, 84, 66, 48, 30].map((w, i) => rectH(24, 16 + i * 14, w, 10))
+  const tw = [120, 96, 74, 54, 36]
+  const funnel = tw.map((w, i) => trap(80, 16 + i * 14, w, tw[i + 1] ?? 22, 12))
+  return [cols, line, donut, stack, bars, funnel]
+})()
+// which frame lines each chart carries: the x-axis under the axis charts, a y-axis for the
+// horizontal bars, nothing under the donut or the funnel
+const FLOW_AXIS = [[1, 0], [1, 0], [0, 0], [1, 0], [0, 1], [0, 0]]
+const FLOW_DOTS = [0, 1, 0, 0, 0, 0]
+const flowState = ref(0)
+const flowK = ref(1)                                        // 0 → 1 across the current morph
+const flowAt = (i) => {                                     // piece i's eased progress (staggered)
+  const k = Math.min(1, Math.max(0, (flowK.value * 1.3) - i * 0.075))
+  return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2
+}
+const flowPaths = computed(() => {
+  const cur = FLOW_STATES[flowState.value], prv = FLOW_STATES[(flowState.value + FLOW_STATES.length - 1) % FLOW_STATES.length]
+  return cur.map((pts, i) => {
+    const k = flowAt(i)
+    return 'M' + pts.map((p, j) => `${(prv[i][j][0] + (p[0] - prv[i][j][0]) * k).toFixed(2)},${(prv[i][j][1] + (p[1] - prv[i][j][1]) * k).toFixed(2)}`).join(' L') + ' Z'
+  })
+})
+const flowFade = (arr) => {                                  // cross-fade a per-state flag
+  const s = flowState.value, p = (s + FLOW_STATES.length - 1) % FLOW_STATES.length
+  const k = Math.min(1, flowK.value * 1.4)
+  return arr[p] + (arr[s] - arr[p]) * k
+}
+const FLOW_LINES = ['Stacking the columns…', 'Tracing the trend…', 'Slicing the donut…', 'Stacking the slices…', 'Laying out the bars…', 'Narrowing the funnel…']
+
 /* ── orbit + gauge: a live number ── */
 const count = ref(0)
 const needle = ref(-70)
@@ -96,7 +155,13 @@ function start() {
   if (reduce) return
   t0 = performance.now()
   const loop = (now) => {
-    const t = ((now - t0) / 1000) * props.speed
+    // clamped: a frame's timestamp can predate t0 by a hair, and a negative t made the
+    // flow index -1 on the very first frame
+    const t = Math.max(0, ((now - t0) / 1000) * props.speed)
+    // flow: 2s per chart — the first ~1s is the morph in, the rest the hold
+    const fs = Math.floor(t / 2), fe = t - fs * 2
+    flowState.value = fs % FLOW_STATES.length
+    flowK.value = Math.min(1, fe / 1.05)
     // orbit: 0 → 100 over each 2.4s turn, then again
     count.value = Math.round(((t % 2.4) / 2.4) * 100)
     // gauge: a needle that hunts and settles — two sines, never a metronome
@@ -173,6 +238,16 @@ const blocks = COLS.flatMap((col, ci) => {
           <rect v-for="b in blocks" :key="'mk' + b.key" class="mbk-b" :x="b.x" :y="b.y" width="20" :height="b.h" rx="3"
             :fill="b.color" :style="{ '--dl': (b.d * 0.4) + 's' }" />
         </g>
+      </template>
+
+      <!-- ── FLOW ── five shapes that become each chart in turn -->
+      <template v-else-if="variant === 'flow'">
+        <path d="M14 88 H146" class="cl-base" :style="{ opacity: flowFade(FLOW_AXIS.map((a) => a[0])) }" />
+        <path d="M22 10 V88" class="cl-base" :style="{ opacity: flowFade(FLOW_AXIS.map((a) => a[1])) }" />
+        <path v-for="(d, i) in flowPaths" :key="'fl' + i" :d="d" :fill="C(i + 1)" stroke-linejoin="round" />
+        <!-- the line chart's points, only while it is a line -->
+        <circle v-for="(p, i) in LINE_P" :key="'fp' + i" :cx="p[0]" :cy="p[1]" r="3.4" :fill="C(Math.min(i, 4) + 1)"
+          stroke="var(--surface)" stroke-width="1.4" :style="{ opacity: flowFade(FLOW_DOTS) }" />
       </template>
 
       <!-- ── EQUALIZER ── -->
