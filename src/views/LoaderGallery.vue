@@ -6,6 +6,7 @@
  */
 import { ref } from 'vue'
 import ChartLoader from '../components/ui/ChartLoader.vue'
+import ChartLoaderScene from '../components/ui/ChartLoaderScene.vue'
 
 const speed = ref(1)
 const captions = ref(true)
@@ -39,6 +40,23 @@ const VARIANTS = [
   { id: 'gauge', name: 'Needle Hunt', widget: 'SLA Compliance',
     what: 'A gauge needle hunts across the bands and settles, with a live value under it.',
     why: 'Feels like an instrument taking a reading, not like waiting.' },
+]
+
+/* Multi-chart scenes — two or three Create-Widget charts interacting, monochrome slate,
+   smooth motion, and tappable (a tap squashes and bounces the scene). */
+const SCENES = [
+  { id: 'assemble', name: 'Dashboard Assembly', charts: 'KPI · Column · Donut · Line', widget: 'Helpdesk Overview',
+    what: 'Four mini widget cards pop in one after another and fill themselves — the number counts up, columns grow, the donut closes, the line draws.' },
+  { id: 'chomp', name: 'Pie Chomp', charts: 'Pie · Line · KPI', widget: 'Requests Created — Trend',
+    what: 'A pie chomps its way along a line chart, eating each data point, while a little KPI keeps score.' },
+  { id: 'funnel', name: 'Funnel Pour', charts: 'Funnel · Stacked', widget: 'Request Lifecycle',
+    what: 'Records drip through a funnel chart and settle into the columns of a stacked chart beside it.' },
+  { id: 'pulse', name: 'Pulse Monitor', charts: 'Combo · Gauge', widget: 'SLA Compliance',
+    what: 'A combo chart (bars + line) scrolls like a heart-rate monitor with a live ping, and a gauge reads it as it goes.' },
+  { id: 'heatdrop', name: 'Heat Drop', charts: 'Heatmap · Histogram', widget: 'Priority × Status',
+    what: 'Heatmap cells ripple, then drop straight down and stack into histogram columns — and float back up.' },
+  { id: 'race', name: 'Line Race', charts: 'Multi-line · KPI', widget: 'Status Trend by Team',
+    what: 'Three lines race each other to a waving finish flag while a KPI counts the race to 100%.' },
 ]
 </script>
 
@@ -85,6 +103,29 @@ const VARIANTS = [
         </div>
       </article>
     </div>
+
+    <!-- ── Multi-chart scenes ── -->
+    <header class="lg-sec">
+      <h2>Multi-chart scenes <span class="lg-tag">Monochrome</span></h2>
+      <p class="lg-sub">Two or three charts from the Create Widget catalogue interacting in one small scene, in the product’s slate greys, with smooth motion. <b>Tap any of them</b> — they bounce.</p>
+    </header>
+    <div class="lg-grid">
+      <article v-for="s in SCENES" :key="s.id" class="lg-item">
+        <div class="lg-tile">
+          <div class="lg-thead">
+            <span class="lg-title">{{ s.widget }}</span>
+            <span class="lg-chip">Loading</span>
+          </div>
+          <div class="lg-body">
+            <ChartLoaderScene :variant="s.id" :speed="speed" :caption="captions" />
+          </div>
+        </div>
+        <div class="lg-meta">
+          <b>{{ s.name }} <span class="lg-charts">{{ s.charts }}</span></b>
+          <p>{{ s.what }}</p>
+        </div>
+      </article>
+    </div>
   </div>
 </template>
 
@@ -106,4 +147,8 @@ const VARIANTS = [
 .lg-meta b { display: block; font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
 .lg-meta p { margin: 0; font-size: 12px; line-height: 1.5; color: var(--ink-2); }
 .lg-meta .lg-why { margin-top: 4px; color: var(--muted); }
+.lg-sec { margin: 32px 0 16px; }
+.lg-sec h2 { margin: 0 0 4px; font-size: 16px; font-weight: 600; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+.lg-tag { font-size: 10px; font-weight: 600; letter-spacing: .03em; color: var(--picker-ico); background: color-mix(in srgb, var(--picker-ico) 12%, var(--surface)); border-radius: var(--r-sm); padding: 2px 6px; }
+.lg-charts { font-size: 11px; font-weight: 500; color: var(--muted); margin-left: 6px; }
 </style>
