@@ -61,6 +61,10 @@ const SCENES = [
   { id: 'race', name: 'Line Race', charts: 'Multi-line · KPI', widget: 'Status Trend by Team',
     what: 'Three lines race each other to a waving finish flag while a KPI counts the race to 100%.' },
 ]
+// Hidden (2026-09-25, user's call): only the mono Chart Morph stays on the page. The rest
+// are kept here, not deleted — take an id out of this set to bring its card back.
+const HIDDEN_SCENES = new Set(['flow', 'assemble', 'chomp', 'funnel', 'pulse', 'heatdrop', 'race'])
+const SHOWN_SCENES = SCENES.filter((s) => !HIDDEN_SCENES.has(s.id))
 </script>
 
 <template>
@@ -110,10 +114,10 @@ const SCENES = [
     <!-- ── Multi-chart scenes ── -->
     <header class="lg-sec">
       <h2>Multi-chart scenes <span class="lg-tag">Monochrome</span></h2>
-      <p class="lg-sub">Two or three charts from the Create Widget catalogue interacting in one small scene, in the product’s slate greys, with smooth motion. <b>Tap any of them</b> — they bounce.</p>
+      <p class="lg-sub">Five charts from the Create Widget catalogue in one small loop, in the product’s slate greys, with smooth motion. The icon files under it are ready to hand to a developer.</p>
     </header>
     <div class="lg-grid">
-      <article v-for="s in SCENES" :key="s.id" class="lg-item">
+      <article v-for="s in SHOWN_SCENES" :key="s.id" class="lg-item">
         <div class="lg-tile">
           <div class="lg-thead">
             <span class="lg-title">{{ s.widget }}</span>
