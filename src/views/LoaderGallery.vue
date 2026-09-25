@@ -7,6 +7,7 @@
 import { ref } from 'vue'
 import ChartLoader from '../components/ui/ChartLoader.vue'
 import ChartLoaderScene from '../components/ui/ChartLoaderScene.vue'
+import MorphIconKit from '../components/ui/MorphIconKit.vue'
 
 const speed = ref(1)
 const captions = ref(true)
@@ -43,7 +44,7 @@ const VARIANTS = [
    smooth motion, and tappable (a tap squashes and bounces the scene). */
 const SCENES = [
   // the monochrome Chart Morph leads the section, and its continuous successor sits beside it
-  { id: 'morph-mono', loader: { variant: 'morph', mono: true, smooth: true, size: 60 }, name: 'Chart Morph — Monochrome', charts: 'Column · Line · Donut · Scatter · Stacked', widget: 'Open Requests by Status',
+  { id: 'morph-mono', loader: { variant: 'morph', mono: true, smooth: true, size: 60 }, name: 'Chart Morph — Monochrome', kit: true, charts: 'Column · Line · Donut · Scatter · Stacked', widget: 'Open Requests by Status',
     what: 'Five charts in turn, in slate greys, smaller, with soft easing — each chart fades out as the next arrives.' },
   { id: 'flow', loader: { variant: 'flow', mono: true, smooth: true, size: 72 }, name: 'Chart Flow — Continuous', charts: 'Column → Line → Donut → Scatter → Stacked', widget: 'Open Requests by Status',
     what: 'The same five charts, each built out of the last: columns tip over into a line, the line curls into a donut, the slices shatter into scatter dots and the trend draws through them, the dots drop and square off into stacked blocks, and the blocks merge back into columns — nothing ever disappears.' },
@@ -127,6 +128,8 @@ const SCENES = [
           <b>{{ s.name }} <span class="lg-charts">{{ s.charts }}</span></b>
           <p>{{ s.what }}</p>
         </div>
+        <!-- the icon handed to developers: copy / download as SVG, PNG, Vue or a zip -->
+        <MorphIconKit v-if="s.kit" />
       </article>
     </div>
   </div>
