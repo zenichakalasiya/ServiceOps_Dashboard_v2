@@ -1208,7 +1208,9 @@ function save(place) {
    so that pair sits closer than two unrelated sections do (user, 2026-09-29) */
 .sec.sec-mode { padding-bottom: 12px; }
 /* every other line of text in the sidebar (user, 2026-09-29) */
-.config .kind-grp-h, .config .acc-note, .config .acc-note :deep(.ico), .config .toggle, .config .mode-b { color: var(--cfg-text); }
+.config .kind-grp-h, .config .toggle, .config .mode-b { color: var(--cfg-text); }
+/* the grey one-liners stay grey — #516381 (user, 2026-09-29) */
+.config .acc-note, .config .acc-note :deep(.ico) { color: var(--cfg-sub); }
 .sec > *:last-child { margin-bottom: 0; }
 /* Manage Legend — the segmented control and the value field share the row and fill it
    together, both at input height. The value box was 74px, which is a box for a number
@@ -1229,7 +1231,7 @@ function save(place) {
    read as disabled. (A .fld label stays grey precisely because it is not alone: the input
    beneath it holds its value at full ink, so the label can afford to recede.) */
 .tgl-txt b { font-size: 13px; font-weight: 500; color: var(--cfg-title); }
-.tgl-txt em { font-style: normal; font-size: 12px; color: var(--cfg-text); line-height: 1.4; }
+.tgl-txt em { font-style: normal; font-size: 12px; color: var(--cfg-sub); line-height: 1.4; }
 /* the ON/OFF pill, same as the dashboard panel's — a bare track says there are two states
    but not which one you are looking at */
 .tgl { flex: none; width: 58px; height: 24px; padding: 0; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface-2); position: relative; transition: background .15s, border-color .15s; }
@@ -1308,7 +1310,7 @@ function save(place) {
    follows a segmented control is the configuration it governs, so it belongs against it. */
 /* No top margin. A hint is the DESCRIPTION of the heading above it, not a paragraph in
    its own right — it belongs against that heading, with the air below the pair. */
-.hint { font-size: 12px; color: var(--cfg-text); margin: 0 0 8px; }
+.hint { font-size: 12px; color: var(--cfg-sub); margin: 0 0 8px; }
 /* Visibility & Sharing — Figma: a 276px switch (three equal segments), then the grey
    note band under it */
 .acc-lbl { display: block; font-size: 12px; font-weight: 400; color: var(--cfg-text); margin-bottom: 4px; }

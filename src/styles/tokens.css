@@ -139,6 +139,8 @@
   /* the widget builder sidebar (2026-09-29, user's values): section titles and the rest of its text */
   --cfg-title: #07101f;
   --cfg-text: #1d2a3e;
+  /* …and its grey one-line descriptions (hints, toggle notes, the access note) */
+  --cfg-sub: #516381;
   --sel-ink: #ffffff;
   /* every widget tile's edge — one value on the board, in or out of a group (2026-09-24) */
   --tile-border: #dfe5ee;
@@ -264,6 +266,7 @@
   --sel: #e3e8f2;
   --cfg-title: var(--ink);
   --cfg-text: var(--ink-2);
+  --cfg-sub: var(--muted);
   --sel-hover: #cad3e2;
   --sel-ink: #07101f;
   --seg-track: #25252f;
