@@ -69,6 +69,22 @@ const GHOSTS = {
     + '<rect x="28" y="63" width="24" height="2.4" rx="1.2" fill="currentColor" fill-opacity=".2"/>',
 }
 
+/* CENTERING. Each ghost is drawn in its own coordinates, so each is moved to sit dead centre
+   in the frame's plot area — horizontally in the frame (x 4–84 → 44) and vertically in the
+   space under the title stub (y 28–78 → 53). These are the ghosts' measured bounding boxes
+   (getBBox, [x, y, w, h]); re-measure one if you change its drawing. */
+const BOX = {
+  line: [12, 39.1, 58, 31.9], bar: [14, 34, 50, 38], column: [12, 37, 58, 34], pie: [22, 34, 36, 36],
+  donut: [22, 34, 36, 36], stack: [12, 38, 58, 33], grouped: [12, 41, 58, 30], multiline: [12, 40, 58, 31],
+  combo: [12, 32.1, 58, 38.9], hist: [12, 41, 58, 30], funnel: [12, 36, 56, 34.5], heatmap: [15, 36, 51.6, 34.6],
+  gauge: [16, 43, 48, 26.4], kpi: [21, 40, 38, 25.4],
+}
+const CX = 44, CY = 53
+function centred(id) {
+  const [x, y, w, h] = BOX[id] || BOX.column
+  return [(CX - (x + w / 2)).toFixed(2), (CY - (y + h / 2)).toFixed(2)]
+}
+
 /** The chart types this empty state is drawn for, in the builder's picker order. */
 export const PREVIEW_KINDS = [
   { id: 'line', label: 'Line', noun: 'line chart', desc: 'Pick the records to trace in Conditions on the right, and the line draws here point by point.' },
@@ -91,7 +107,9 @@ export const previewTitle = (id) => `Add a condition to preview your ${previewKi
 
 /** The inner SVG markup (viewBox 0 0 132 84) for a type. `currentColor` + var(--surface). */
 export function previewArtMarkup(id) {
-  const ghost = (GHOSTS[id] || GHOSTS.column)()
+  const key = GHOSTS[id] ? id : 'column'
+  const [dx, dy] = centred(key)
+  const ghost = `<g transform="translate(${dx} ${dy})">${GHOSTS[key]()}</g>`
   return `
   <rect x="4" y="18" width="80" height="62" rx="7" fill="currentColor" fill-opacity=".05" stroke="currentColor" stroke-opacity=".38" stroke-width="1.25" stroke-dasharray="4 3"/>
   <rect x="11" y="25" width="22" height="2.6" rx="1.3" fill="currentColor" fill-opacity=".22"/>
