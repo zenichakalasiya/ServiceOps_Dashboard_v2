@@ -233,7 +233,28 @@ function submit(openAdd = false) {
 @keyframes slideIn { from { transform: translateX(30px); opacity: .4; } to { transform: none; opacity: 1; } }
 .head p { margin: 3px 0 0; font-size: 13px; }
 /* close sits in its own soft square, as the design has it */
-.body { flex: 1; padding: 6px 22px 20px; display: flex; flex-direction: column; gap: 16px; overflow: auto; }
+.body { flex: 1; padding: var(--cd-top) 12px 20px; display: flex; flex-direction: column; gap: var(--cd-gap); overflow: auto; }
+/* ── Figma "Create dashboard — Full form" (node 362:12919), measured text-to-text
+   (2026-09-29, user): 12px side padding everywhere, a 48px header over a 1px rule, 30px
+   controls, a 12px footer. Scoped to this panel — .dlg-head/.dlg-foot are shared. ── */
+.drawer { --cd-top: 12px; --cd-gap: 12px; --cd-lbl: 2px; --cd-sec: 8px; }
+/* the two toggles are section-level settings in the Figma, spaced like a section */
+.drawer .toggle-grp { margin-top: var(--cd-sec); }
+.drawer .dlg-head { min-height: 50px; padding: 0 12px; border-bottom: 1px solid var(--border); }
+.drawer .dlg-foot { padding: 12px; }
+.drawer .dlg-foot .btn { height: 30px; }
+.drawer .grp > label.field { margin-bottom: var(--cd-lbl); }
+.drawer .body .input:not(textarea), .drawer .body :deep(.dd-btn), .drawer .cat-new { height: 30px; }
+.drawer .body textarea.input { height: 64px; }
+/* the access switch is 276×36 with three equal segments, the note under it hugs its text,
+   and a toggle sits level with its setting's title — all as the Figma frame draws them */
+.drawer .seg { width: 276px; max-width: 100%; }
+.drawer .seg .seg-b { flex: 1; height: 28px; }
+.drawer .oneliner:not(.plain) { align-self: flex-start; padding: 6px 10px; font-size: 12px; }
+.drawer .toggle-grp { align-items: flex-start; }
+.drawer .grp > label.field + .seg { margin-top: 3px; }
+/* the first toggle opens its own block after the fields, so it takes a section's step */
+.drawer .body > :not(.toggle-grp) + .toggle-grp { margin-top: 16px; }
 /* section headings — Basics / Visibility & sharing / Layout, as the design groups them.
    The first one loses its top margin so it doesn't push away from the drawer header. */
 /* The .body already owns the vertical rhythm (gap: 16px). A heading carrying its own
@@ -241,8 +262,8 @@ function submit(openAdd = false) {
    what preceded it and 14px above what followed — the spacing changed depending on
    which block you were between. It now adds ONE deliberate step (8px, so 24px above a
    heading) and nothing below, leaving the container to space everything else evenly. */
-.sec-h { font-size: 14px; font-weight: 600; color: var(--ink); margin: 8px 0 0; }
-.sec-h:first-of-type { margin-top: 2px; }
+.sec-h { font-size: 14px; font-weight: 600; color: var(--ink); margin: var(--cd-sec) 0 0; }
+.sec-h:first-of-type { margin-top: 0; }
 .grp { display: flex; flex-direction: column; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .req { color: var(--red); }
