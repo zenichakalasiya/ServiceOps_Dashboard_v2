@@ -1141,15 +1141,16 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
                    it instead of the dashboard filter; a widget can still opt out with its
                    own calendar. It stays visible when SET — it reports a state — and joins
                    the hover actions when not. -->
-              <!-- Only when the group's configuration SETS a range — the same rule as a
-                   widget's calendar. It is set in Edit group; a click here still opens
-                   the picker to change or clear it. -->
-              <!-- what the range does is said on HOVER of this chip (the info band below
-                   the header was removed) — see the .gd-tip card -->
+              <!-- ALWAYS on the header (2026-09-28, user's call) — this icon is the only
+                   place a group's range is set; Edit group no longer has the field. With no
+                   range it is a plain icon; once set it wears the filled calendar tint and
+                   its hover card says what it does (the .gd-tip card). Either way a click
+                   opens the same picker. -->
               <button
-                v-if="g.dateFilter" class="gh-act gh-date on" :aria-label="groupDateTitle(g)"
+                class="gh-act gh-date" :class="{ on: g.dateFilter }" :aria-label="groupDateTitle(g)"
+                :title="g.dateFilter ? null : groupDateTitle(g)"
                 @click.stop="gdTip = null; toggleGroupDate(g, $event)"
-                @mouseenter="showGdTip(g, $event)" @mouseleave="gdTip = null"
+                @mouseenter="g.dateFilter && showGdTip(g, $event)" @mouseleave="gdTip = null"
               ><Icon name="calendar" :size="13" /></button>
               <button class="gh-act gh-hov" title="Add a widget to this group" @click="addWidgetToGroup(g.id)"><Icon name="plus" :size="16" /></button>
               <button class="gh-act gh-hov" title="Group actions" @click.stop="openGroupMenu(g, $event)"><Icon name="dots-v" :size="16" /></button>
@@ -1538,7 +1539,7 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .gh-tog:hover { opacity: 1; }
 
 /* Right side: + and ⋯ appear on hover, instantly, like a widget's actions. The date icon
-   exists only when a range is set, and then it is always visible — it reports a state. */
+   is always there: plain with no range, tinted once one is set — it reports a state. */
 .gh-act { width: 28px; height: 28px; padding: 0; border: none; background: transparent; color: inherit; opacity: .75; display: grid; place-items: center; border-radius: var(--r); }
 .gh-act:hover { opacity: 1; background: color-mix(in srgb, currentColor 10%, transparent); }
 /* + and ⋯ take NO room at rest (display, not visibility), so a set date chip sits hard
@@ -1546,8 +1547,9 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .gh-hov { display: none; }
 .grp-head:hover .gh-hov, .grp-head.acting .gh-hov { display: grid; }
 /* the widget's calendar chip exactly: 22px, 13px icon, a filled --df tint (WidgetCard .df-btn) */
-.gh-act.gh-date { width: 22px; height: 22px; margin: 0 3px; opacity: 1; color: var(--df); background: var(--df-soft); }
-.gh-act.gh-date:hover { background: var(--df-soft); color: var(--df-ink); }
+.gh-act.gh-date { width: 22px; height: 22px; margin: 0 3px; }
+.gh-act.gh-date.on { opacity: 1; color: var(--df); background: var(--df-soft); }
+.gh-act.gh-date.on:hover { background: var(--df-soft); color: var(--df-ink); }
 
 /* the body — widget padding is the group's own `pad` option */
 .grp-body { padding: 12px; }

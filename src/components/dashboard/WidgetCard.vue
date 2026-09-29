@@ -14,6 +14,7 @@ import TimeRangePopover, { rectOf } from './TimeRangePopover.vue'
 import { typesFor, isFrozen, frozenReason, whyDisabled } from '../../data/chartTypes.js'
 import { conditionFields, matchesConds } from '../../data/filters.js'
 import { windowFor, relativeFor, stampFor } from '../../data/timeRanges.js'
+import { rangeValue, rangeChart, rangeRows } from '../../data/rangeData.js'
 import { emptyStateFor } from '../../data/emptyStates.js'
 import { widgetBrief } from '../../data/aiEngine.js'
 import { store, toast } from '../../store/index.js'
@@ -105,6 +106,14 @@ const dfSource = computed(() => (ownRange.value ? 'own' : groupRange.value ? 'gr
 // every tile said nothing. A group's range is shown once, on the group header.
 // Never on a note, which has no query for a range to filter.
 const showDf = computed(() => !isNote.value && !!ownRange.value)
+
+/* What the widget SHOWS for its group's range (data/rangeData.js). Only an inherited group
+   range re-reads the data: a widget's own range is the one its seeded data was written
+   for, and with no range the dashboard filter shows the data as seeded. */
+const dataRange = computed(() => (dfSource.value === 'group' ? groupRange.value : null))
+const viewValue = computed(() => rangeValue(props.tile.value, dataRange.value, props.tile.title, props.tile.unit))
+const viewChart = computed(() => rangeChart(props.tile.chart, dataRange.value))
+const viewRows = computed(() => rangeRows(props.tile.rows || [], dataRange.value))
 
 const dfChipEl = ref(null)
 const dfOpen = ref(false)
@@ -254,12 +263,12 @@ const tableSearch = ref('')
  * searches records and builds typed conditions — Field · Operator · Value — the way the
  * Requests list does. Conditions are ANDed; an unfinished chip filters nothing. */
 const tableConds = ref([])
-const filterFields = computed(() => conditionFields(props.tile.columns || [], props.tile.rows || []))
+const filterFields = computed(() => conditionFields(props.tile.columns || [], viewRows.value))
 // Rows are filtered HERE rather than inside DataTable: the table keeps its own search and
 // sorting, and this way one matcher owns condition semantics for both the tile and the
 // full-screen view.
 const filteredRows = computed(() =>
-  matchedRows(props.tile.rows || []))
+  matchedRows(viewRows.value))
 function matchedRows(rows) {
   if (!tableConds.value.length) return rows
   return rows.filter((r) => matchesConds((key) => r[+key], tableConds.value, filterFields.value))
@@ -278,7 +287,8 @@ const hasTableFilters = computed(() => tableConds.value.length > 0)
    The search half repeats what DataTable does with the same string (a case-insensitive
    contains over every cell) rather than asking the table for its count, which would mean
    reaching into TanStack from outside for one number. */
-const footTotal = computed(() => props.tile.total ?? (props.tile.rows || []).length)
+// never below the rows actually held, or the footer would read "5 out of 3"
+const footTotal = computed(() => (props.tile.total != null ? Math.max(viewRows.value.length, rangeValue(props.tile.total, dataRange.value, 'total')) : viewRows.value.length))
 const footShown = computed(() => {
   const q = tableSearch.value.trim().toLowerCase()
   if (!q) return filteredRows.value.length
@@ -666,8 +676,9 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 
     <!-- Body -->
     <div ref="bodyEl" class="tbody">
-      <!-- the Chart Morph loader, centred, while a loaderDemo widget "loads" -->
-      <div v-if="demoLoading" class="demo-loader"><ChartLoader variant="morph" /></div>
+      <!-- the Chart Morph loader, centred, while a loaderDemo widget "loads" — the MONOCHROME
+           one from /loaders (slate, smooth, 60px), not the colourful original -->
+      <div v-if="demoLoading" class="demo-loader"><ChartLoader variant="morph" mono smooth :size="60" /></div>
       <div v-else-if="loading" class="loading">
         <div class="skeleton" style="height:60%;width:80%" />
         <div class="skeleton" style="height:14px;width:50%;margin-top:10px" />
@@ -688,12 +699,12 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
                the period it compared to was never stated on the tile, and an arrow whose
                baseline you cannot see is a claim the widget can't back up. The AI panel
                still reports the same movement in prose, where it can name the window. -->
-          <div class="kpinum">{{ tile.value }}<span v-if="tile.unit" class="unit">{{ tile.unit }}</span></div>
+          <div class="kpinum">{{ viewValue }}<span v-if="tile.unit" class="unit">{{ tile.unit }}</span></div>
         </div>
       </template>
 
       <template v-else-if="tile.type === 'chart'">
-        <ChartTile v-if="tile.chart" :chart="tile.chart" :legend="showLegend" :data-labels="tile.dataLabels === true" :height="chartH" />
+        <ChartTile v-if="tile.chart" :chart="viewChart" :legend="showLegend" :data-labels="tile.dataLabels === true" :height="chartH" />
       </template>
 
       <template v-else-if="tile.type === 'text'">
@@ -765,14 +776,14 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
             </div>
           </div>
           <div class="pbody" :class="{ tbl: tile.type === 'shortcut' }">
-            <ChartTile v-if="tile.type === 'chart'" :chart="tile.chart" :legend="showLegend" :data-labels="tile.dataLabels === true" :height="620" />
-            <div v-else-if="tile.type === 'kpi'" class="kpi big"><div class="kpinum">{{ tile.value }}<span class="unit">{{ tile.unit }}</span></div></div>
+            <ChartTile v-if="tile.type === 'chart'" :chart="viewChart" :legend="showLegend" :data-labels="tile.dataLabels === true" :height="620" />
+            <div v-else-if="tile.type === 'kpi'" class="kpi big"><div class="kpinum">{{ viewValue }}<span class="unit">{{ tile.unit }}</span></div></div>
             <FreeTextTile v-else-if="tile.type === 'text'" :content="tile.content" :ft="tile.ft" />
             <div v-else class="stbl big">
               <!-- full screen: the same bar, always there, and the whole record set scrolls
                    in the dialog -->
               <TableFilterBar
-                :columns="tile.columns || []" :rows="tile.rows || []"
+                :columns="tile.columns || []" :rows="viewRows"
                 v-model="tableConds" v-model:search="tableSearch"
                 @close="tableConds = []; tableSearch = ''"
               />

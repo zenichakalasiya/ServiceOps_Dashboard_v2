@@ -1,112 +1,84 @@
-# Handoff — 2026-09-22 23:30
+# Handoff — 2026-09-29 10:43
 
 ## Read first
-See **CLAUDE.md → Key files** rows for `AddWidgetModal.vue` and `WidgetCard.vue` —
-both were reworked this session and their table entries now describe the current
-behavior (the old entries were stale).
+In the prototype's `CLAUDE.md` → **Key files**, read the rows for `data/morphIcon.js` +
+`MorphIconKit.vue`, `ChartLoader.vue` and `data/groups.js`. All three were changed this
+session, and their rows describe the current behaviour: the loader hand-off kit, the mono
+loader in the widget, and the group date icon, range-driven data and white body.
+
+All work is on branch `v2-main` and deploys with `git push v2 v2-main:main`
+→ https://zenichakalasiya.github.io/ServiceOps_Dashboard_v2/
 
 ## What we worked on this session
-Three related, incrementally-requested changes to the widget-adding flow and the
-empty-widget state, each verified live before moving on:
+- Handed the monochrome **Chart Morph** loader to developers as downloadable files.
+- Trimmed `/loaders` down to that one scene.
+- Reworked group date filters and made widgets actually follow a group's range.
+- Swapped the widget demo loader to the mono version.
+- Made group bodies white.
 
-1. **Add-widget drawer**: replaced the checkbox multi-select with a per-row hover
-   "Add" action, and moved the search box from above the tab strip to below it
-   (scoped to the active tab).
-2. **Widget empty state**: made the "no data" state type-aware — it now draws the
-   tile's own chart-shape illustration instead of one generic icon for every widget.
-3. **Search box padding**: more top padding, less bottom padding, to match a
-   reference screenshot.
-4. **Made the empty state permanently visible on the demo board** — see below.
-
-## Completed (pushed live — `v2-main` → `v2` remote's `main`)
-- **`components/dashboard/AddWidgetModal.vue`**
-  - Removed the checkbox / multi-select flow entirely (`selected`, `MAX_SEL`,
-    `isSel`, `toggleSel`, `clearSel`, `addSelected`, and the "N selected" footer are
-    gone).
-  - Each library row now shows hover-only actions — **Add (leftmost, primary-tinted)
-    · Duplicate · Edit · Delete** — via a new `quickAdd(l)` function. Add places the
-    tile at the **end** of the dashboard and **keeps the drawer open** (explicit
-    user choice) so several widgets can be added in a row; the row then swaps to a
-    static green "already added" checkmark (`.la-added`) instead of a click target.
-  - Search box moved from **above** the tab strip to **below** it, and only renders
-    on the three reuse tabs (Predefined / Created by me / Shared with me) — Create
-    Widget has nothing to search. Scope changed too: it now filters **only the
-    active tab** (same scope as the type pills / module dropdown beside it),
-    explicit user choice, rather than the old cross-tab/cross-module search that
-    grouped results by module with a source-tab tag.
-  - Removed the now-dead grouped-search machinery (`searchGroups`, `searchCount`,
-    `sections`, `TAB_OF_PROV`) and the CSS that went with the checkbox/selection
-    state (`.lcb`, `.lrow.sel`, `.lrow.pick`, `.lsec*`, `.row-tag.src`, the
-    multi-select footer transition).
-  - `.lt-acts` gutter widened from 3 buttons (96px) to 4 (130px) to fit Add.
-  - `.aw-search` padding changed from `8px 16px 12px` to `18px 16px 4px` (more air
-    above the box, tight below it) to match a reference screenshot.
-- **`components/dashboard/WidgetCard.vue`**
-  - Imported `ChartIcon` (the same illustrated artwork the Add-widget picker uses).
-  - New `emptyIconName` computed + `EMPTY_KIND_ICON` map (`{hbar:'bar', bar:
-    'column'}`) — translates a tile's renderer-style `chart.kind` into ChartIcon's
-    picker-style naming (see the naming note already in `data/chartTypes.js`).
-  - The `nodata` empty state now renders `<ChartIcon :name="emptyIconName" />` in a
-    60px soft rounded well (`--picker-tile-fill` / `--picker-ico` tokens, new
-    `.ws-ico-shape` class) instead of the old flat grey box with a generic
-    `chart-bar` icon. `error` / `unconfigured` states were left on their plain
-    semantic glyph (alert / settings) since those are a system problem, not the
-    widget's shape.
-- **`data/mock.js`**
-  - **`Open Requests By Technician`** (the `hbar` chart on the default "Helpdesk
-    Overview" board) now seeds with `values: []` — **deliberately and permanently
-    empty**, per explicit user request, so the empty-widget state has a visible,
-    always-on example on the board shown to management. Commented in-place ("do
-    not fix by putting values back") so a future session doesn't "repair" it.
+## Completed
+- **Loader hand-off kit** (`src/data/morphIcon.js`, `src/components/ui/MorphIconKit.vue`) is
+  an "Icon files" panel under the Chart Morph — Monochrome card on `/loaders`. It offers:
+  - an animated SVG with a 10s pure-CSS loop that works as `<img>` and follows auto light/dark;
+  - a `currentColor` variant;
+  - five still frames as SVG and 4× PNG;
+  - the `ChartLoader.vue` source;
+  - a zip of everything. A tiny store-only zip writer is included, with no dependency.
+  - The `<img>` loop and the zip were verified in headless Chromium. **Deployed.**
+- **`/loaders`**: every multi-chart scene except Chart Morph — Monochrome is hidden. They
+  are hidden via `HIDDEN_SCENES` in `LoaderGallery.vue`, not deleted. **Deployed.**
+- **Edit group drawer** (`GroupEditDrawer.vue`) keeps only Title · Header colour · Title
+  size · Alignment. Date filter, Padding and Share group are removed.
+- **Group header calendar icon is always shown** (`DashboardView.vue`). It is plain when
+  unset and tinted `--df` when set, and it opens the same `TimeRangePopover`. This is now
+  the only place a group's range is set.
+- **Widgets follow the group's range** (`src/data/rangeData.js`, wired in `WidgetCard.vue`
+  as `dataRange` / `viewValue` / `viewChart` / `viewRows`):
+  - counts scale with the window's length;
+  - each point gets a stable wobble;
+  - `%` is capped at 100;
+  - Shortcut rows become a stable subset.
+- **Widget demo loader** ("Open Requests By Status", Helpdesk Overview (Grouped)) is now
+  `<ChartLoader variant="morph" mono smooth :size="60" />`, the same as on `/loaders`.
+- **Group body is white** (`--gh-body: var(--surface)` in `data/groups.js`). The border
+  still takes the header colour.
 
 ## In progress
-Nothing mid-flight.
+**Adding several existing board widgets to a group at once** is at the proposal stage; no
+code has been written. Proposed to the user:
+- **A.** A "On this dashboard" tab in the group's **+** drawer, with checkboxes and a
+  "Move N widgets" action.
+- **B.** A selection mode on the board (Ctrl/Shift+click) with a floating bar:
+  Move to group ▾ · New group from selection · Clear.
+- **C.** Multi-drag, which would come later and build on B.
+
+Recommended: A + B. Waiting on the user's answers to:
+1. Move or copy?
+2. Include widgets already in other groups?
+3. Order inside the group?
+4. Can seeded widgets be moved?
 
 ## Next steps
-- Flagged but not fixed: on the narrowest KPI tiles (`w: 2`, ~140px), the nodata
-  title "No data in this range" can wrap to several lines. Pre-existing text-sizing
-  constraint, not introduced by this session — worth a look if it comes up again.
-- Optional: confirm the pie/donut nodata icon mapping visually too (only `hbar`→bar
-  and a KPI were screenshotted; pie/donut/line pass through their kind unchanged,
-  which should be correct by the same logic, but wasn't independently eyeballed).
-- If a second/third empty-state example is ever wanted (e.g. a KPI or a Shortcut,
-  not just the one `hbar` chart), the pattern is the same: seed with no data
-  (`value: null` for a KPI, `rows: []` for a shortcut, `series: [{...values: []}]`
-  for a chart) and leave an in-place comment saying it's deliberate.
+1. Get the user's decisions on the four questions, then mock up A (and B) in the prototype.
+2. Optionally extend `rangeData.js` to the spec-driven chart kinds (`chart.spec`: Stacked,
+   Heatmap, Funnel, and so on). They do not follow a group range yet.
 
 ## Decisions made
-- **Add stays open after adding** (not close-on-add) — explicit user choice, so
-  several widgets can be added back-to-back without reopening the drawer.
-- **Search is scoped to the active tab**, not global across all three reuse tabs —
-  explicit user choice, matching the screenshot layout (search sits with the other
-  per-tab filters, not above the tab switcher).
-- **Only `nodata` gets the type-aware chart icon**; `error`/`unconfigured` keep the
-  generic alert/settings glyph, because those describe a system problem rather than
-  "this chart has no data to draw" — the tile's shape isn't the relevant fact there.
-- **The empty-state demo widget is now PERMANENT, not a temporary screenshot aid.**
-  Earlier in the session it was verified by temporarily emptying data and
-  reverting, specifically to avoid leaving a real widget broken on the board shown
-  to management without asking first. The user then explicitly asked to keep it
-  empty going forward and push it — so `Open Requests By Technician` on Helpdesk
-  Overview is now intentionally, permanently seeded with no data.
+- **Only a GROUP range re-reads widget data.** A widget's own range and the dashboard
+  filter keep the seeded data, because the seeded figures were written for their own range
+  (e.g. "Requests Due in the 24 Hours" on Today stays 24). The chain is still
+  widget → group → dashboard.
+- Padding and share are no longer editable. Existing groups keep their values, and the
+  defaults are padded and public.
+- The standalone loader SVG is a **CSS-keyframe rebuild** of the JS-timed morph. Its
+  geometry is copied from `ChartLoader.vue`, so change both together.
 
 ## Gotchas & notes
-- **Icon-name mismatch between the renderer and the picker is real and easy to
-  trip on.** `tile.chart.kind` uses the renderer's naming (`hbar` = horizontal,
-  `bar` = vertical/Column), but `ChartIcon`'s `name` prop uses the picker's naming
-  (`bar` = horizontal, `column` = vertical) — see the note already in
-  `data/chartTypes.js` around `PICKER_GROUPS`. Passing a raw `chart.kind` straight
-  into `ChartIcon` without the `EMPTY_KIND_ICON` swap silently renders a blank icon
-  for `hbar` and the wrong (horizontal) icon for `bar`/Column. `AddWidgetModal`'s
-  own `libIcon()` doesn't need this swap because library items store `kind` as the
-  **picker id** already (`WidgetBuilderModal` emits `kind: curType.value.id` when
-  saving to the library) — only live dashboard tiles use the renderer kind.
-- **`ChartIcon.vue` has no fallback branch** — an unmapped `name` renders an empty
-  `<g>` (no visible icon, no error). If a new chart kind is ever added, its
-  `ChartIcon` name must be added there or nodata tiles of that kind will go blank.
-- **`Open Requests By Technician` on Helpdesk Overview is intentionally empty —
-  this is not a bug.** If anyone reports "a widget is broken" on that board, check
-  here before touching `mock.js`.
-- Dev server on this machine defaults to port 5180 (`http://localhost:5180/ServiceOps_Dashboard_v2/`)
-  and falls back to 5181/5182 if occupied — check the actual `npm run dev` output
-  rather than assuming 5180 when driving it with Playwright.
+- The Claude-in-Chrome tab here ran as a **hidden tab**, where timers and SVG `<img>`
+  animation are throttled and looked "frozen". Verify animation in headless Playwright
+  instead: a scratch script that imports `playwright` + Vite's `createServer` from the
+  project folder works well.
+- The long-running dev server was killed once for low memory. Use short-lived Vite servers
+  inside test scripts.
+- `vite:vue` warns about a `<button>` inside a `<button>` in `ModuleListing.vue`. This is
+  pre-existing and unrelated.

@@ -6,7 +6,7 @@
  * size, title alignment, padding and sharing. Two differences, both deliberate:
  *   · alignment DEFAULTS to centre (the reference defaults left);
  *   · the Default header colour is `--grp-head` (#ecf1f9), and the body under any header
- *     colour is that colour at 5% (`--gh-body`).
+ *     colour is plain surface — white (`--gh-body`).
  *
  * Colours are named, not hex, so they survive the theme switch. Solid headers carry
  * their own text ink because white type on yellow and dark type on red are both wrong.
@@ -58,10 +58,10 @@ export function grpHeadVars(g) {
      colour, so band and frame read as one object rather than a stripe on a grey box. */
   const neutral = !named ? false : ['Default', 'Transparent', 'Gray'].includes(named.id)
   return {
-    /* The BODY is the header colour at 5% over the card surface, whatever the header is —
-       so a group reads as one tinted object, band and all. Transparent stays the surface.
-       (10% until 2026-09-24; the user asked for it quieter.) */
-    '--gh-body': st.bg === 'Transparent' ? 'var(--surface)' : `color-mix(in srgb, ${bg} 5%, var(--surface))`,
+    /* The BODY is the plain card surface (white) under every header colour; the header
+       band and the coloured outline (--gh-line) carry the group's colour. (A 5% tint of the
+       header colour until 2026-09-29 — 10% before 2026-09-24 — removed at the user's ask.) */
+    '--gh-body': 'var(--surface)',
     '--gh-line': neutral ? 'var(--border)' : bg,
     '--gh-bg': bg,
     '--gh-ink': ink,
