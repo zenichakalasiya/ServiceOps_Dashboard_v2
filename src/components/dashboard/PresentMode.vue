@@ -65,6 +65,8 @@ function cellStyle(t) {
 .pm-cell { position: relative; display: flex; flex-direction: column; }
 .pm-cell > :deep(.tile) { flex: 1; min-height: 0; }
 /* wallboard: hide per-tile hover controls + drag handle */
-.pm-cell :deep(.right), .pm-cell :deep(.draghandle) { display: none !important; }
+.pm-cell :deep(.right) { display: none !important; }
+/* nothing moves in present mode, so the header doesn't offer the move cursor */
+.pm-cell :deep(.thead) { cursor: default; }
 .pm-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; height: 100%; color: var(--muted-2); }
 </style>

@@ -142,7 +142,11 @@ function applyAbs() {
 .cal:hover { background: var(--surface-2); color: var(--ink); }
 .trp-err { display: flex; align-items: center; gap: 6px; margin: -4px 0 10px; font-size: 12px; color: var(--red); }
 .apply { width: 100%; margin-top: 4px; }
-.follow { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px; padding: 7px; border: none; background: transparent; color: var(--muted); border-radius: 4px; font-size: 12px; }
+/* Lined up with Apply above it: the same 17px inset (Apply's 16px padding + 1px border),
+   the 13px ✕ centred in Apply's 15px icon column, and the same 6px gap — so the ✕ sits
+   under the ✓ and the two labels start at one x. */
+.follow { display: flex; align-items: center; justify-content: flex-start; gap: 6px; width: 100%; margin-top: 8px; padding: 7px 17px; border: none; background: transparent; color: var(--muted); border-radius: 4px; font-size: 12px; }
+.follow svg { flex: none; margin: 0 1px; }
 .follow:hover { background: var(--surface-2); color: var(--ink); }
 .quick { padding: 12px 10px; display: flex; flex-direction: column; min-height: 0; }
 .qlist { display: flex; flex-direction: column; gap: 1px; overflow: auto; max-height: 300px; }

@@ -299,7 +299,10 @@ function togglePick(id) {
 function boardMouseDown(e) {
   if (!gUseMarquee.value) return   // select-to-group only in styles ① and ⑤
   if (e.button !== 0) return
-  if (e.target.closest('button, a, input, textarea, select, .draghandle, .note-lane, .resize, .grp-head')) return
+  if (e.target.closest('button, a, input, textarea, select, .note-lane, .resize, .grp-head')) return
+  // a widget's header is its drag handle — a plain press there moves the tile, it doesn't
+  // start a marquee (a Shift/Ctrl/⌘ press still toggles the pick, below)
+  if (!(e.shiftKey || e.ctrlKey || e.metaKey) && e.target.closest('.thead')) return
   // Shift / Ctrl / ⌘ + click on an ungrouped tile toggles it into the selection
   const cell = e.target.closest('.cell[data-tile]')
   if ((e.shiftKey || e.ctrlKey || e.metaKey) && cell && !cell.closest('.group')) {
@@ -1079,7 +1082,7 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
               <AiInsightCard :board="aiBoard" @ask="onCardAsk" />
             </div>
             <div v-for="t in tilesIn(null)" :key="t.id" :data-tile="t.id" class="cell"
-              :class="{ flash: highlightId === t.id, dragging: dragId === t.id, 'pick-on': groupPicks.has(t.id) }" :style="cellStyle(t)" :draggable="dragArmed === t.id && !selecting"
+              :class="{ locked: layoutLocked, flash: highlightId === t.id, dragging: dragId === t.id, 'pick-on': groupPicks.has(t.id) }" :style="cellStyle(t)" :draggable="dragArmed === t.id && !selecting"
               @dragstart="onDragStart(t)" @dragend="onDragEnd" @dragover.prevent @drop.stop.prevent="onDropTile(t)" @contextmenu="onCellContext(t, $event)">
               <WidgetCard :tile="t" :edit="edit" @remove="onRemove" @edit="onEditTile" @duplicate="onDuplicate" @pin="onPin" @armdrag="armDrag" />
               <span v-if="!layoutLocked" class="resize" title="Drag to resize" @mousedown.stop.prevent="startResize($event, t)" />
@@ -1159,7 +1162,7 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
           <div v-if="!g.collapsed" class="grp-body">
           <div class="grid" :style="gridStyle">
             <div v-for="t in tilesIn(g.id)" :key="t.id" :data-tile="t.id" class="cell"
-              :class="{ flash: highlightId === t.id, dragging: dragId === t.id }" :style="cellStyle(t)" :draggable="dragArmed === t.id"
+              :class="{ locked: layoutLocked, flash: highlightId === t.id, dragging: dragId === t.id }" :style="cellStyle(t)" :draggable="dragArmed === t.id"
               @dragstart="onDragStart(t)" @dragend="onDragEnd" @dragover.prevent @drop.stop.prevent="onDropTile(t)" @contextmenu="onCellContext(t, $event)">
               <!-- `group` is what lets the tile inherit this group's date filter -->
               <WidgetCard :tile="t" :edit="edit" :group="g" @remove="onRemove" @edit="onEditTile" @duplicate="onDuplicate" @pin="onPin" @armdrag="armDrag" />
@@ -1446,6 +1449,8 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
    5px clears the tile's 1px border and its corner arc. The HIT area stays 16px even though
    the mark is 6: a drag target should be easier to grab than it is to see. Instant on
    hover, like the widget's other actions. */
+/* a locked layout can't be dragged, so its widget headers don't offer the move cursor */
+.cell.locked :deep(.thead) { cursor: default; }
 .resize { position: absolute; right: 3px; bottom: 3px; width: 16px; height: 16px; z-index: 6; cursor: nwse-resize; opacity: 0; }
 .resize::after {
   content: ''; position: absolute; right: 2px; bottom: 2px; width: 6px; height: 6px;

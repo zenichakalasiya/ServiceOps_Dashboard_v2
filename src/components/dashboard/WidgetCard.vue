@@ -451,15 +451,15 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
          EVERY tile uses this. The click-to-select floating toolbar three tiles used to
          have is gone — one board should not have two different ways to reach the same
          actions, and the odd tiles out were the ones that looked broken. -->
-    <!-- On a note the header has no title and no grip: its whole top lane IS the drag
-         handle. Pressing anywhere in it that isn't a button arms the drag, the same way the
-         grip does on every other widget. -->
+    <!-- The HEADER is the drag handle, on every widget (2026-09-29, user's call — the 6-dot
+         grip that appeared on hover is gone): the cursor turns to "move" over the band, and
+         pressing anywhere in it that isn't a control arms the drag. A note's header is its
+         transparent top lane, and works the same way. -->
     <header
       class="thead" :class="{ 'note-lane': isNote }"
-      @mousedown="isNote && !$event.target.closest('button') && emit('armdrag', tile)"
+      @mousedown="!$event.target.closest('button, input, a, .info, .sch-mark') && emit('armdrag', tile)"
     >
       <div class="left">
-        <span class="draghandle" title="Drag to move" @mousedown="emit('armdrag', tile)"><Icon name="drag" :size="16" /></span>
         <span v-if="tile.pinned" class="pinbadge" title="Pinned"><Icon name="pin" :size="12" /></span>
         <span class="title ellip">{{ tile.title }}</span>
         <span ref="infoEl" class="info" @mouseenter="showInfo" @mouseleave="infoHover = false">
@@ -842,12 +842,10 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 .tile.note .thead {
   position: absolute; top: 0; right: 0; left: 0; width: auto; height: 12px; min-height: 0; z-index: 3;
   background: transparent; padding: 0; justify-content: flex-end; overflow: visible;
-  cursor: grab;
 }
 .tile.note .ractions { position: absolute; top: 4px; right: 4px; }
-.tile.note .thead:active { cursor: grabbing; }
-/* no title, no info, no grip: a note is read, not identified */
-.tile.note .title, .tile.note .info, .tile.note .draghandle { display: none; }
+/* no title, no info: a note is read, not identified */
+.tile.note .title, .tile.note .info { display: none; }
 /* Only the ⋯, and plain — no chip, no outline, no shadow. It appears with the hover like
    every other widget's actions, instantly. */
 .tile.note .ractions { opacity: 0; cursor: default; }
@@ -862,27 +860,11 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
    --surface-2 band that competed with the chart under it. */
 /* No rule under the header. The band's own background already separates it from the
    body, so the line was a second divider drawing the same boundary. */
-.thead { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 8px 4px 12px; background: var(--bg); }
+.thead { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 8px 4px 12px; background: var(--bg); cursor: move; }
+/* the header's controls are clicked, not dragged — they keep their own cursors */
+.thead button { cursor: pointer; }
+.thead input { cursor: text; }
 .left { position: relative; display: flex; align-items: center; gap: 6px; min-width: 0; }
-/* 6-dot drag handle — OUT OF FLOW, drawn on top of the title's first characters, so the
-   title never moves between rest and hover. The title is masked from under the grip
-   instead of being clipped by it: a hard cut swallows the first letter whole, the
-   gradient reads as the text passing behind the handle. */
-/* The grip sits ON TOP of the title, so it needs its own ground or the letters show
-   through the gaps between the six dots and the two read as one smudge. The fill is
-   the header band's own colour, and it runs the full width of the glyph — the title's
-   fade then starts where the grip ENDS, not underneath it. */
-.draghandle { position: absolute; left: 0; top: 50%; transform: translateY(-50%); z-index: 2; width: 20px; height: 20px; display: inline-grid; place-items: center; background: var(--bg); border-radius: var(--r-sm); color: var(--muted); cursor: grab; opacity: 0; }
-.draghandle:active { cursor: grabbing; }
-/* The grip answers the HEADER, not the whole tile. Hovering a chart to read it is not a
-   request to move it, and a grip that appeared over the title every time the pointer
-   crossed the tile covered the first letters of the name for no reason. You reach for
-   the header when you want to drag — that is where it shows. */
-.thead:hover .draghandle { opacity: 1; }
-/* fully hidden for the grip's 20px, THEN a 10px ramp — so no glyph ever overlaps a
-   half-faded letter. It used to clear only 4px, which left the title at ~30% opacity
-   directly behind the dots. */
-.thead:hover .title { -webkit-mask-image: linear-gradient(90deg, transparent 0, transparent 21px, #000 31px); mask-image: linear-gradient(90deg, transparent 0, transparent 21px, #000 31px); }
 .pinbadge { display: inline-grid; place-items: center; color: var(--primary); flex: none; transform: rotate(35deg); }
 .title { font-weight: 600; font-size: var(--tile-title, 13.5px); }
 
@@ -893,7 +875,7 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 .sch-mark { flex: none; width: 20px; height: 20px; border: none; background: transparent; color: var(--green); border-radius: 4px; display: grid; place-items: center; }
 .sch-mark:hover { background: var(--green-soft); }
 .info { position: relative; color: var(--muted-2); display: inline-grid; place-items: center; cursor: help; opacity: 0; }
-/* left-side extras follow the grip onto the header; the tile hover reveals the RIGHT
+/* left-side extras appear with the header hover; the tile hover reveals the RIGHT
    actions only */
 .thead:hover .info { opacity: 1; }
 .info:hover { color: var(--primary); }
