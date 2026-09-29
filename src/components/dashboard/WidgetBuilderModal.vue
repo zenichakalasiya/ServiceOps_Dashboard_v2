@@ -615,10 +615,10 @@ function save(place) {
               <div v-if="predefinedEdit" class="pe-note">
                 <Icon name="info" :size="14" />
                 <span v-if="frozenType">
-                  This is a <b>predefined {{ curType.label }}</b> — its type can’t be changed, and only <b>Highlights</b> below are editable.
+                  This is a <b>predefined {{ curType.label }}</b> — it can’t be changed here.
                 </span>
                 <span v-else>
-                  This is a <b>predefined {{ curType.label }}</b> — you can switch its <b>Chart Type</b>, and only <b>Highlights</b> below are editable.
+                  This is a <b>predefined {{ curType.label }}</b> — only its <b>Chart Type</b> can be switched.
                 </span>
               </div>
               <!-- Editing a switchable chart (Bar/Column/Line): the type switch lives here as
@@ -689,7 +689,7 @@ function save(place) {
                    tooltip rather than disappearing — several of these kinds are genuinely
                    hard to tell apart as glyphs (Bar vs Column vs Stacked vs Histogram), so
                    there has to be somewhere the name still lives. -->
-              <div v-if="showFamilies && isChart" class="sec">
+              <div v-if="showFamilies && isChart" class="sec sec-mode">
                 <div class="sec-h">Chart Type</div>
                 <p class="hint">Pick how the data should be visualized.</p>
                 <!-- Grouped, in the same buckets and the same order as the Create Widget
@@ -725,7 +725,7 @@ function save(place) {
                        and at 14 it read as a fifth row of the Chart Type control. -->
                   <!-- 2026-09-24 Figma: two outlined chips, the chosen one edged near-black
                        with a check — not the segmented track -->
-                  <div class="mode-row" style="margin-top:32px">
+                  <div class="mode-row" style="margin-top:20px">
                     <button class="mode-b" :class="{ on: cfg.mode==='manual' }" @click="cfg.mode='manual'">Manual <Icon v-if="cfg.mode==='manual'" name="check-circle" :size="13" /></button>
                     <button class="mode-b" :class="{ on: cfg.mode==='query' }" @click="cfg.mode='query'">Query Based <Icon v-if="cfg.mode==='query'" name="check-circle" :size="13" /></button>
                   </div>
@@ -845,12 +845,12 @@ function save(place) {
                     <div class="fld" style="margin-top:12px">
                       <label>Base conditions</label>
                       <p class="hint" style="margin:0 0 8px">The base set — the denominator. Leave empty to measure against every record.</p>
-                      <MeasureConditions v-model="cfg.conds" empty-text="No base conditions — every record counts." />
+                      <MeasureConditions v-model="cfg.conds" empty-text="" />
                     </div>
                     <div class="fld" style="margin-top:12px">
                       <label>Numerator</label>
                       <p class="hint" style="margin:0 0 8px">The share of the base that also meets these — the numerator.</p>
-                      <MeasureConditions v-model="cfg.gaugeNumConds" empty-text="No numerator conditions yet." />
+                      <MeasureConditions v-model="cfg.gaugeNumConds" empty-text="" />
                     </div>
                   </template>
                 </div>
@@ -859,7 +859,7 @@ function save(place) {
                      different name depending on which widget you were building. -->
                 <div v-if="cfg.gaugeMode!=='percentage'" class="sec">
                   <div class="sec-h">Conditions</div>
-                  <MeasureConditions v-model="cfg.conds" />
+                  <MeasureConditions v-model="cfg.conds" empty-text="" />
                 </div>
                 <div class="sec">
                   <div class="sec-h">Gauge Range</div>
@@ -977,11 +977,11 @@ function save(place) {
                    preview's empty state waits for the first condition added here -->
               <div v-if="manualMode && !isNewKind && !isText" class="sec">
                 <div class="sec-h">Conditions</div>
-                <MeasureConditions v-model="cfg.conds" :empty-text="building ? 'No conditions yet — add one to draw the preview.' : undefined" />
+                <MeasureConditions v-model="cfg.conds" empty-text="" />
               </div>
               <div v-if="isChart && manualMode && isNewKind && curType.kind !== 'gauge'" class="sec">
                 <div class="sec-h">Conditions</div>
-                <MeasureConditions v-model="cfg.conds" />
+                <MeasureConditions v-model="cfg.conds" empty-text="" />
               </div>
 
               <!-- Display — custom widgets only. A predefined widget is Highlights and
@@ -1051,14 +1051,8 @@ function save(place) {
                 </label>
               </div>
 
-              <!-- Highlights (also the only editable section for a predefined widget).
-                   New kinds carry their own (Gauge Range) or don't use it. -->
+              <!-- The Highlights section was removed from the sidebar (2026-09-29, user's call). -->
               </fieldset>
-              <div v-if="(manualMode && !isNewKind && !isText) || predefinedEdit" class="sec">
-                <div class="sec-h">Highlights</div>
-                <p class="hint">Color the number when it crosses a threshold.</p>
-                <button class="add-line"><Icon name="plus" :size="13" /> Add Highlights</button>
-              </div>
             </div>
 
             <footer class="cfg-foot dlg-foot">
@@ -1210,6 +1204,11 @@ function save(place) {
    section happened to end in a field, a hint or a toggle. */
 /* 20px between sections, as the Figma spaces them */
 .sec { padding-bottom: 20px; margin-bottom: 0; border-bottom: none; }
+/* the Chart Type section ends in Manual / Query, which governs the Axes right under it —
+   so that pair sits closer than two unrelated sections do (user, 2026-09-29) */
+.sec.sec-mode { padding-bottom: 12px; }
+/* every other line of text in the sidebar (user, 2026-09-29) */
+.config .kind-grp-h, .config .acc-note, .config .acc-note :deep(.ico), .config .toggle, .config .mode-b { color: var(--cfg-text); }
 .sec > *:last-child { margin-bottom: 0; }
 /* Manage Legend — the segmented control and the value field share the row and fill it
    together, both at input height. The value box was 74px, which is a box for a number
@@ -1221,7 +1220,7 @@ function save(place) {
 .rank-n:disabled { background: var(--surface-2); color: var(--muted-2); font-weight: 500; cursor: not-allowed; }
 
 /* Display → toggles */
-.tgl-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; cursor: pointer; margin-bottom: 12px; }
+.tgl-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; cursor: pointer; margin-bottom: 16px; }
 .tgl-row:last-child { margin-bottom: 0; }
 .tgl-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 /* --ink, not --ink-2. This <b> is the control's NAME and the only full-strength thing in
@@ -1229,8 +1228,8 @@ function save(place) {
    Secondary grey over muted grey gave the whole row nothing at primary strength, so it
    read as disabled. (A .fld label stays grey precisely because it is not alone: the input
    beneath it holds its value at full ink, so the label can afford to recede.) */
-.tgl-txt b { font-size: 13px; font-weight: 500; color: var(--ink); }
-.tgl-txt em { font-style: normal; font-size: 12px; color: var(--muted); line-height: 1.4; }
+.tgl-txt b { font-size: 13px; font-weight: 500; color: var(--cfg-title); }
+.tgl-txt em { font-style: normal; font-size: 12px; color: var(--cfg-text); line-height: 1.4; }
 /* the ON/OFF pill, same as the dashboard panel's — a bare track says there are two states
    but not which one you are looking at */
 .tgl { flex: none; width: 58px; height: 24px; padding: 0; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface-2); position: relative; transition: background .15s, border-color .15s; }
@@ -1264,9 +1263,10 @@ function save(place) {
 /* 14px matches Create/Edit Dashboard — the two panels sit one click apart and were
    using different heading sizes for the same level of heading. */
 /* Figma: a 14px medium heading, 12px above its fields */
-.sec-h { font-weight: 500; font-size: 14px; color: var(--ink); margin-bottom: 12px; }
+/* 2026-09-29 (user): titles #07101F medium, 8px above their first field in EVERY section */
+.sec-h { font-weight: 500; font-size: 14px; color: var(--cfg-title); margin-bottom: 8px; }
 /* heading and its action on one line, the action right-aligned */
-.q-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 5px; }
+.q-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
 /* ── Free Text ── */
 .ft-ta {
   width: 100%; min-height: 104px; resize: vertical; padding: 10px 12px;
@@ -1280,7 +1280,7 @@ function save(place) {
 /* ONE control per row, like every other field in this panel. Two columns was tried and
    it put Font size beside Alignment — two unrelated questions sharing a line, each
    half-width, and the eye had to scan in two directions to read one section. */
-.ft-grid { display: flex; flex-direction: column; gap: 14px; margin-top: 4px; }
+.ft-grid { display: flex; flex-direction: column; gap: 16px; margin-top: 0; }
 .ft-grid .fld { margin-bottom: 0; }
 /* A SQUARE target with the glyph centred in it, sized to the 32px control height the rest
    of the builder uses — the icons were 15px marks in a stretched strip, which read as
@@ -1290,11 +1290,16 @@ function save(place) {
 /* a heading that OWNS the line under it sits tight to it — 12px of air between a title
    and its own description reads as two separate things */
 .sec-h:has(+ .hint) { margin-bottom: 2px; }
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.fld { display: flex; flex-direction: column; margin-bottom: 12px; }
+/* 16px between fields (was 12) — the user asked for more air between them */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+/* a side-by-side pair is ONE row: its fields drop their own bottom margin (it stretched the
+   grid row, leaving 36px under the pair instead of the section's 20) and the row takes it */
+.grid2 > .fld { margin-bottom: 0; }
+.grid2 { margin-bottom: 16px; }
+.fld { display: flex; flex-direction: column; margin-bottom: 16px; }
 .fld:last-child { margin-bottom: 0; }
 /* Figma: field labels are the subdued 12px, 4px over their field */
-.fld label { font-size: 12px; font-weight: 400; color: var(--label); margin-bottom: 4px; }
+.fld label { font-size: 12px; font-weight: 400; color: var(--cfg-text); margin-bottom: 4px; }
 .fld label i { color: var(--red); font-style: normal; }
 .selw { position: relative; }
 .selw select { appearance: none; padding-right: 30px; cursor: pointer; }
@@ -1303,10 +1308,10 @@ function save(place) {
    follows a segmented control is the configuration it governs, so it belongs against it. */
 /* No top margin. A hint is the DESCRIPTION of the heading above it, not a paragraph in
    its own right — it belongs against that heading, with the air below the pair. */
-.hint { font-size: 12px; color: var(--label); margin: 0 0 12px; }
+.hint { font-size: 12px; color: var(--cfg-text); margin: 0 0 8px; }
 /* Visibility & Sharing — Figma: a 276px switch (three equal segments), then the grey
    note band under it */
-.acc-lbl { display: block; font-size: 12px; font-weight: 500; color: var(--label); margin-bottom: 6px; }
+.acc-lbl { display: block; font-size: 12px; font-weight: 400; color: var(--cfg-text); margin-bottom: 4px; }
 .acc-seg { width: 276px; max-width: 100%; }
 .acc-lbl i { color: var(--red); font-style: normal; }
 

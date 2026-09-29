@@ -136,6 +136,9 @@
      with near-black text. */
   --sel: #07101f;
   --sel-hover: #1d2a3e;
+  /* the widget builder sidebar (2026-09-29, user's values): section titles and the rest of its text */
+  --cfg-title: #07101f;
+  --cfg-text: #1d2a3e;
   --sel-ink: #ffffff;
   /* every widget tile's edge — one value on the board, in or out of a group (2026-09-24) */
   --tile-border: #dfe5ee;
@@ -259,6 +262,8 @@
   --placeholder: #8a8ca2;
 
   --sel: #e3e8f2;
+  --cfg-title: var(--ink);
+  --cfg-text: var(--ink-2);
   --sel-hover: #cad3e2;
   --sel-ink: #07101f;
   --seg-track: #25252f;

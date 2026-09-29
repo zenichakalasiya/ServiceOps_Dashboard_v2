@@ -33,7 +33,7 @@ function setValue(i, value) { set(rows.value.map((r, k) => (k === i ? { ...r, va
 
 <template>
   <div class="mconds">
-    <p v-if="!rows.length" class="hint mc-empty">{{ emptyText }}</p>
+    <p v-if="!rows.length && emptyText" class="hint mc-empty">{{ emptyText }}</p>
     <div v-for="(row, i) in rows" :key="i" class="mc-row">
       <Dropdown class="mc-dd" :modelValue="row.field" :options="CONDITION_FIELD_LABELS" @update:modelValue="setField(i, $event)" />
       <span class="mc-is">is</span>
