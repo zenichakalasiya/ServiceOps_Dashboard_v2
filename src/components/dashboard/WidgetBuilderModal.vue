@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, computed, ref } from 'vue'
+import { reactive, computed, ref, watch } from 'vue'
 import Icon from '../ui/Icon.vue'
 import ChartIcon from '../ui/ChartIcon.vue'
 import Dropdown from '../ui/Dropdown.vue'
@@ -121,6 +121,17 @@ const FAMILIES = [
 const CHART_KINDS = TYPES.filter((t) => t.type === 'chart')
 // same buckets, same order as the Create Widget grid — one list, two renderers
 const kindGroups = groupPickerTypes(CHART_KINDS)
+/* The Chart Type field shows ONE category at a time (2026-09-29, user's pick — it was all
+   four stacked, ~330px of sidebar). A segmented track names the four categories; it opens
+   on the family of the chart being built, and only that family's tiles sit under it. A
+   category tab only BROWSES — the type changes when a tile is clicked — and while you look
+   at another category, the one holding the current type keeps a dot, so you can find the
+   way back. Picking a type from anywhere snaps the view to that type's own category. */
+const kindCatPick = ref(null)
+const curKindCat = computed(() => kindGroups.find((g) => g.types.some((t) => t.id === curType.value.id))?.cat || kindGroups[0].cat)
+const kindCat = computed(() => kindCatPick.value || curKindCat.value)
+const kindCatTypes = computed(() => kindGroups.find((g) => g.cat === kindCat.value)?.types || [])
+watch(() => curType.value.id, () => { kindCatPick.value = null })
 // remembers which chart you were on, so leaving the Widget family and coming back
 // returns you to it rather than resetting to a default
 const lastChartId = ref(props.type.type === 'chart' ? props.type.id : 'column')
@@ -693,16 +704,20 @@ function save(place) {
                      under a heading you find "the stacked one" by reading four words instead
                      of scanning all thirteen. The two convertible groups lead, so the
                      reversible choices come first. -->
-                <div v-for="g in kindGroups" :key="g.cat" class="kind-grp">
-                  <div class="kind-grp-h">{{ g.cat }}</div>
-                  <div class="kinds">
-                    <button
-                      v-for="k in g.types" :key="k.id" class="kind"
-                      :class="{ on: curType.id === k.id }" :title="k.label" :aria-label="k.label" @click="pickKind(k)"
-                    >
-                      <ChartIcon :name="k.id" :size="40" />
-                    </button>
-                  </div>
+                <!-- one category at a time: the track browses, a tile picks -->
+                <div class="seg fill kind-cats" role="tablist" aria-label="Chart category">
+                  <button
+                    v-for="g in kindGroups" :key="g.cat" class="seg-b" role="tab"
+                    :class="{ on: kindCat === g.cat }" :aria-selected="kindCat === g.cat" @click="kindCatPick = g.cat"
+                  >{{ g.cat }}<i v-if="g.cat === curKindCat && kindCat !== g.cat" class="kind-cat-dot" title="The current chart type is in this category" /></button>
+                </div>
+                <div class="kinds">
+                  <button
+                    v-for="k in kindCatTypes" :key="k.id" class="kind"
+                    :class="{ on: curType.id === k.id }" :title="k.label" :aria-label="k.label" @click="pickKind(k)"
+                  >
+                    <ChartIcon :name="k.id" :size="40" />
+                  </button>
                 </div>
                 <template v-if="!isShortcut && !isText">
                   <!-- 26px, not 14: Manual / Query Based is a different question from the
@@ -1142,6 +1157,10 @@ function save(place) {
    deliberately lighter and smaller than .sec-h — "Chart Type" is the field, these
    are subdivisions of it, and matching weights would have read as four fields. */
 .kind-grp + .kind-grp { margin-top: 12px; }
+/* the category track above the one row of tiles */
+.kind-cats { margin-bottom: 10px; }
+.kind-cats .seg-b { position: relative; text-transform: none; }
+.kind-cat-dot { position: absolute; top: 4px; right: 5px; width: 5px; height: 5px; border-radius: 50%; background: var(--sel); }
 .kind-grp-h { font-size: 11px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; color: var(--label); margin-bottom: 6px; }
 /* 2026-09-24 Figma: 56×50 tiles, 8px corners, 8px apart, each carrying the chart's
    illustrated artwork (ChartIcon) rather than a line glyph */
