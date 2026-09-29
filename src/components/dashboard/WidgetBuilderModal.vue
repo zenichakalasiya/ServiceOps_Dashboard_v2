@@ -9,6 +9,7 @@ import ChartTile from './ChartTile.vue'
 import MeasureConditions from './MeasureConditions.vue'
 import FreeTextTile from './FreeTextTile.vue'
 import EmptyPreviewArt from '../ui/EmptyPreviewArt.vue'
+import { previewKind, previewTitle } from '../../data/previewArt.js'
 import FormattingHelp from './FormattingHelp.vue'
 import Hint from '../ui/Hint.vue'
 import {
@@ -461,7 +462,8 @@ function applyConds(t) {
 const building = computed(() => !props.existing && !props.libItem)
 const needsCond = computed(() => building.value && manualMode.value && !isText.value
   && (isChart.value || isKpi.value) && !cfg.conds.length && !(cfg.gaugeNumConds || []).length)
-const emptyNoun = computed(() => (isKpi.value ? 'KPI' : 'chart'))
+// the art, title and line follow the chart type being built (data/previewArt.js)
+const emptyKind = computed(() => (isKpi.value ? 'kpi' : curType.value.id))
 
 /* Access is THREE fields, not one. "Restricted" only means something alongside the
  * technicians and groups it is restricted TO, and only `access` was ever written to
@@ -581,9 +583,9 @@ function save(place) {
                      preview that shows one would be previewing something else -->
                 <!-- no condition yet: say what to do, instead of drawing sample data -->
                 <div v-if="needsCond" class="pv-empty">
-                  <EmptyPreviewArt class="pv-empty-art" :width="176" />
-                  <b class="pv-empty-t">Add a condition to preview your {{ emptyNoun }}</b>
-                  <p class="pv-empty-s">Conditions choose which records this {{ emptyNoun }} counts. Add one from <b>Conditions</b> in the panel on the right and the preview draws here, then updates as you configure.</p>
+                  <EmptyPreviewArt class="pv-empty-art" :kind="emptyKind" :width="176" />
+                  <b class="pv-empty-t">{{ previewTitle(emptyKind) }}</b>
+                  <p class="pv-empty-s">{{ previewKind(emptyKind).desc }}</p>
                 </div>
                 <div v-else-if="isKpi" class="pv-kpi">{{ previewTile.value }}<span v-if="previewTile.unit" class="u">{{ previewTile.unit }}</span></div>
                 <ChartTile v-else-if="isChart" :chart="previewTile.chart" :legend="cfg.legend" :data-labels="cfg.dataLabels" :height="320" />
@@ -591,7 +593,6 @@ function save(place) {
                 <table v-else class="pv-tbl"><thead><tr><th v-for="c in previewTile.columns" :key="c">{{ c }}</th></tr></thead><tbody><tr v-for="(r,i) in previewTile.rows" :key="i"><td v-for="(c,j) in r" :key="j">{{ c }}</td></tr></tbody></table>
               </div>
             </div>
-            <div class="pv-foot"><Icon name="eye" :size="13" /> Live preview — updates as you configure</div>
           </section>
 
           <!-- RIGHT: scrollable config (ServiceOps fields) -->
@@ -1165,13 +1166,13 @@ function save(place) {
 .pv-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; max-width: 360px; }
 .pv-empty-art { color: var(--picker-ico); margin-bottom: 10px; }
 .pv-empty-t { font-size: 14px; font-weight: 600; color: var(--ink); }
-.pv-empty-s { margin: 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
-.pv-empty-s b { font-weight: 600; color: var(--ink-2); }
+/* two lines, never more — the same copy and width as /preview-states */
+.pv-empty-s { margin: 0; max-width: 300px; font-size: 13px; line-height: 1.5; color: var(--muted);
+  display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .pv-kpi { font-size: 72px; font-weight: 500; letter-spacing: -2px; text-align: center; }
 .pv-tbl { width: 100%; border-collapse: collapse; font-size: 13px; align-self: start; }
 .pv-tbl th { text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .4px; padding: 7px 10px; border-bottom: 1px solid var(--border); }
 .pv-tbl td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
-.pv-foot { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); margin: 10px 12px 0; }
 /* The line does the separating, so the panel no longer pays for a second gutter on top
    of the preview's own right padding — the two together read as an undivided drift
    rather than as two regions. Fields keep 20px off the rule so they do not touch it. */

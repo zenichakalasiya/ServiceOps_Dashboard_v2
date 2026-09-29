@@ -91,14 +91,14 @@ function pickSub(m, sub) {
       <transition name="fade"><span v-if="!store.ui.railExpanded && hoverKey === 'icons'" class="tt tip">Icon Library</span></transition>
     </button>
 
-    <!-- Empty states — the other reference page, so it sits with the Icon Library rather
-         than among the modules. `inbox` is the product's "nothing here" glyph and is
-         already what an empty listing draws. -->
-    <button class="mod lib" :class="{ active: route.path === '/empty-states' }"
-      @click="router.push('/empty-states')" @mouseenter="hoverKey = 'empty'" @mouseleave="hoverKey = ''">
-      <span class="mod-ic"><Icon name="inbox" :size="19" /></span>
-      <span v-if="store.ui.railExpanded" class="mod-nm">Empty States</span>
-      <transition name="fade"><span v-if="!store.ui.railExpanded && hoverKey === 'empty'" class="tt tip">Empty States</span></transition>
+    <!-- Preview states — the builder's live-preview empty state for every chart type, with
+         SVG/PNG downloads. It took the place of the Empty States page (removed 2026-09-29).
+         `eye` is the glyph the live preview itself used. -->
+    <button class="mod lib" :class="{ active: route.path === '/preview-states' }"
+      @click="router.push('/preview-states')" @mouseenter="hoverKey = 'preview'" @mouseleave="hoverKey = ''">
+      <span class="mod-ic"><Icon name="eye" :size="19" /></span>
+      <span v-if="store.ui.railExpanded" class="mod-nm">Preview States</span>
+      <transition name="fade"><span v-if="!store.ui.railExpanded && hoverKey === 'preview'" class="tt tip">Preview States</span></transition>
     </button>
 
     <!-- Chart loaders — the third reference page: widget loading-state candidates -->

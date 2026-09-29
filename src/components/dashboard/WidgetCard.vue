@@ -400,7 +400,7 @@ const tileState = computed(() => {
   return (props.tile.rows || []).length ? 'ok' : 'nodata'
 })
 /* The wording, the artwork and the per-kind split all live in data/emptyStates.js, so
- * the tile and the catalogue at /empty-states cannot drift apart. */
+ * the tile and the former /empty-states catalogue (removed 2026-09-29) cannot drift apart. */
 const emptyState = computed(() => emptyStateFor(props.tile, tileState.value))
 function retry() { loading.value = true; setTimeout(() => { props.tile.state = undefined; loading.value = false }, 800) }
 
@@ -685,7 +685,7 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
       </div>
 
       <!-- empty-widget states: unconfigured / error / no-data. One component, shared with
-           the catalogue at /empty-states; the wording lives in data/emptyStates.js. -->
+           the former /empty-states catalogue (removed 2026-09-29); the wording lives in data/emptyStates.js. -->
       <WidgetEmpty
         v-else-if="tileState !== 'ok'"
         :state="emptyState" :kind="tileState"

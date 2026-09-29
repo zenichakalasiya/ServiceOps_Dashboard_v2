@@ -17,7 +17,9 @@ const routes = [
   { path: '/icons', name: 'icons', component: () => import('../views/IconLibrary.vue') },
   /* Every empty state on one page. Same kind of page as the icon catalogue — it
      documents the product rather than being part of it. */
-  { path: '/empty-states', name: 'empty-states', component: () => import('../views/EmptyStateGallery.vue') },
+  // /empty-states was removed 2026-09-29 (the no-data art now lives in the widget itself);
+  // /preview-states is the builder's live-preview empty state, one per chart type
+  { path: '/preview-states', name: 'preview-states', component: () => import('../views/PreviewStateGallery.vue') },
   { path: '/loaders', name: 'loaders', component: () => import('../views/LoaderGallery.vue') },
   // AI-insights placement lab — compare three entry-point placements over the real board
   { path: '/ai-placement', name: 'ai-placement', component: () => import('../views/AiPlacementLab.vue') },

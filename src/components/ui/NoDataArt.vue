@@ -8,9 +8,11 @@
  *
  * The story: an empty chart frame — its gridlines and axis are there, but every column
  * is a flat stub sitting on the axis, because each one counted zero — and a magnifier
- * sweeping across it, finding the same flat baseline inside its lens. It says "we looked,
+ * held over it, finding the same flat baseline inside its lens. It says "we looked,
  * and nothing matched", which is different from a fault (a red disc) or a widget that was
  * never set up.
+ *
+ * STATIC — no motion (the user's call, 2026-09-29; the magnifier used to sweep).
  */
 defineProps({ width: { type: Number, default: 112 } })
 </script>
@@ -33,8 +35,8 @@ defineProps({ width: { type: Number, default: 112 } })
       <rect x="69" y="64.6" width="9" height="2.4" rx="1" />
     </g>
 
-    <!-- the magnifier, sweeping: inside the lens, the same flat baseline -->
-    <g class="nda-lens">
+    <!-- the magnifier: inside the lens, the same flat baseline -->
+    <g>
       <path d="M100.5 50.5 L 112 62" stroke="currentColor" stroke-opacity=".55" stroke-width="4.5" stroke-linecap="round" />
       <circle cx="90" cy="40" r="15" fill="var(--surface)" stroke="currentColor" stroke-opacity=".7" stroke-width="1.75" />
       <path d="M80 45 H100" stroke="currentColor" stroke-opacity=".3" stroke-width="1" />
@@ -48,8 +50,4 @@ defineProps({ width: { type: Number, default: 112 } })
 
 <style scoped>
 .nda { display: block; flex: none; overflow: visible; }
-/* the magnifier sweeps slowly across the frame, searching */
-.nda-lens { animation: ndaSweep 3.6s ease-in-out infinite; transform-box: view-box; transform-origin: 90px 40px; }
-@keyframes ndaSweep { 0%, 100% { transform: translateX(0) rotate(0); } 50% { transform: translateX(-26px) rotate(-6deg); } }
-@media (prefers-reduced-motion: reduce) { .nda-lens { animation: none; } }
 </style>

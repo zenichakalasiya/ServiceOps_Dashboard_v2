@@ -2,7 +2,7 @@
  * emptyStates.js — what a widget SAYS when it has nothing to draw.
  *
  * One table, two renderers: the real tile (`WidgetCard` → `WidgetEmpty`) and the
- * catalogue at /empty-states. A second copy of this wording is how the product and its
+ * catalogue at /empty-states (removed 2026-09-29). A second copy of this wording is how the product and its
  * own reference page start out agreeing and stop three commits later.
  *
  * ── How the copy is written ─────────────────────────────────────────────────────

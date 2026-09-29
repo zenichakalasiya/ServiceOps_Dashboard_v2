@@ -2,7 +2,7 @@
 /**
  * WidgetEmpty — the "nothing to draw" block inside a widget.
  *
- * Extracted so the real tile (`WidgetCard`) and the catalogue at /empty-states render
+ * Extracted so the real tile (`WidgetCard`) and the former /empty-states catalogue (removed 2026-09-29) render
  * the SAME component rather than two copies that agree today. The copy itself lives in
  * `data/emptyStates.js`; this file owns only how it is laid out.
  *

@@ -1,4 +1,4 @@
-# Handoff — 2026-09-29 14:32
+# Handoff — 2026-09-29 15:17
 
 ## Read first
 In the prototype's `CLAUDE.md` → **Key files**, read the rows for `data/morphIcon.js` +
@@ -6,7 +6,8 @@ In the prototype's `CLAUDE.md` → **Key files**, read the rows for `data/morphI
 session, and their rows describe the current behaviour: the loader hand-off kit, the mono
 loader in the widget, and the group date icon, range-driven data, white body and default
 border. The `WidgetCard.vue` row covers the header-as-drag-handle change. The
-`EmptyPreviewArt` · `NoDataArt` row covers the two new empty-state illustrations.
+`data/previewArt.js` · `EmptyPreviewArt` · `PreviewStateGallery` · `NoDataArt` row covers the
+empty-state illustrations and the new `/preview-states` page.
 
 All work is on branch `v2-main` and deploys with `git push v2 v2-main:main`
 → https://zenichakalasiya.github.io/ServiceOps_Dashboard_v2/
@@ -21,6 +22,9 @@ All work is on branch `v2-main` and deploys with `git push v2 v2-main:main`
 - Lined up the date picker's "Follow … filter" action with "Apply time range".
 - Drew two new empty-state illustrations in the empty-group style: the builder's live
   preview before any condition is added, and "no data found" on widgets.
+- Made both illustrations static, made the preview art follow the chart type (14 types),
+  replaced the Empty States page with a "Preview States" page (SVG/PNG downloads), and
+  removed the preview's "Live preview — updates as you configure" line.
 
 ## Completed
 - **Loader hand-off kit** (`src/data/morphIcon.js`, `src/components/ui/MorphIconKit.vue`) is
@@ -67,6 +71,18 @@ All work is on branch `v2-main` and deploys with `git push v2 v2-main:main`
   type's no-data state in `WidgetEmpty.vue`; it replaced the disc with the tile's chart
   icon. It is sized by a ResizeObserver: 112px, then 80px, then hidden on very short tiles.
   Errors and unconfigured widgets keep the disc. Verified in light and dark themes.
+- **Follow-up (same session):** everything below was verified in headless Chromium.
+  - Both illustrations are **static**.
+  - The preview art now follows the chart type. `data/previewArt.js` is the ONE source:
+    - `PREVIEW_KINDS`: 14 types, each with a two-line `desc`;
+    - `previewArtMarkup(kind)`;
+    - `previewSvgFile` / `previewPng`.
+  - `EmptyPreviewArt` takes `kind`. The builder passes `emptyKind` and uses the matching
+    title and description.
+  - The `/preview-states` page (`views/PreviewStateGallery.vue`, rail "Preview States", eye
+    icon) lists all 14, with Copy · SVG · PNG and a zip.
+  - The `/empty-states` page (`EmptyStateGallery.vue`) and its rail item were **removed**.
+  - The builder's `.pv-foot` line was removed.
 
 ## In progress
 **Adding several existing board widgets to a group at once** is at the proposal stage; no
