@@ -8,6 +8,7 @@ import DateRangePicker from '../ui/DateRangePicker.vue'
 import ChartTile from './ChartTile.vue'
 import MeasureConditions from './MeasureConditions.vue'
 import FreeTextTile from './FreeTextTile.vue'
+import EmptyPreviewArt from '../ui/EmptyPreviewArt.vue'
 import FormattingHelp from './FormattingHelp.vue'
 import Hint from '../ui/Hint.vue'
 import {
@@ -248,7 +249,8 @@ function initCfg() {
     // donut-ness is carried by the TYPE now (Pie vs Doughnut are two members of the
     // part-of-whole family), so it is derived, not toggled in two places at once
     // ── PMG-ACT-01 additional-kind config (prefilled from the tile's saved spec) ──
-    conds: (ex?.chart?.spec?.conds || ex?.chart?.spec?.measure?.conds || []).map((c) => ({ ...c })),
+    // a spec-driven kind keeps its conditions in the spec; a classic chart or KPI on the tile
+    conds: (ex?.chart?.spec?.conds || ex?.chart?.spec?.measure?.conds || ex?.conds || []).map((c) => ({ ...c })),
     stackXDim: ex?.chart?.spec?.xDim || 'Priority',
     stackSplit: ex?.chart?.spec?.splitDim || 'Status',
     // stackMode retired — the kind ('stack' | 'grouped') carries it now
@@ -444,6 +446,22 @@ const previewTile = computed(() => {
  * its header reads. Switching sticky off clears it, so the tile falls back to the board's
  * filter and its calendar disappears — the same state as every widget that never had one. */
 function applySticky(t) { t.dateFilter = cfg.stickyDate ? cfg.dateRange : null }
+// a classic chart or KPI keeps its conditions on the tile (a spec-driven kind has them in its spec)
+function applyConds(t) {
+  const keep = manualMode.value && !isNewKind.value && (isChart.value || isKpi.value) && cfg.conds.length
+  t.conds = keep ? cfg.conds.map((c) => ({ ...c })) : undefined
+}
+
+/* The live preview's EMPTY STATE (2026-09-29, user's call). While BUILDING a new widget,
+   the preview waits for a condition: until the first one is added in the panel on the
+   right, it shows EmptyPreviewArt and says what to do, instead of drawing sample data the
+   person never asked for. Editing, duplicating or cloning an existing widget always
+   previews its real chart. Manual charts and KPIs only — a Query-based widget is filled by
+   its SQL, and a note has no data. */
+const building = computed(() => !props.existing && !props.libItem)
+const needsCond = computed(() => building.value && manualMode.value && !isText.value
+  && (isChart.value || isKpi.value) && !cfg.conds.length && !(cfg.gaugeNumConds || []).length)
+const emptyNoun = computed(() => (isKpi.value ? 'KPI' : 'chart'))
 
 /* Access is THREE fields, not one. "Restricted" only means something alongside the
  * technicians and groups it is restricted TO, and only `access` was ever written to
@@ -466,6 +484,7 @@ function save(place) {
     if (queryMode.value) pv.sql = cfg.sqlQuery
     applyAccess(pv)
     applySticky(pv)
+    applyConds(pv)
     emit('duplicated', { tile: pv, afterId: ex.id })
     return
   }
@@ -496,6 +515,7 @@ function save(place) {
     if (!isShortcut.value && !isText.value) t.sql = cfg.mode === 'query' ? cfg.sqlQuery : undefined
     applyAccess(t)
     applySticky(t)
+    applyConds(t)
     props.d.updated = new Date().toISOString()
     emit('saved', { id: t.id, place })
     return
@@ -507,6 +527,7 @@ function save(place) {
     if (queryMode.value) pv.sql = cfg.sqlQuery
     applyAccess(pv)
     applySticky(pv)
+    applyConds(pv)
     props.d.tiles.push(pv)
     props.d.updated = new Date().toISOString()
     emit('created', pv.id)
@@ -558,7 +579,13 @@ function save(place) {
               <div class="pv-canvas">
                 <!-- the number only — the placed tile no longer shows a ▲/▼ %, and a
                      preview that shows one would be previewing something else -->
-                <div v-if="isKpi" class="pv-kpi">{{ previewTile.value }}<span v-if="previewTile.unit" class="u">{{ previewTile.unit }}</span></div>
+                <!-- no condition yet: say what to do, instead of drawing sample data -->
+                <div v-if="needsCond" class="pv-empty">
+                  <EmptyPreviewArt class="pv-empty-art" :width="176" />
+                  <b class="pv-empty-t">Add a condition to preview your {{ emptyNoun }}</b>
+                  <p class="pv-empty-s">Conditions choose which records this {{ emptyNoun }} counts. Add one from <b>Conditions</b> in the panel on the right and the preview draws here, then updates as you configure.</p>
+                </div>
+                <div v-else-if="isKpi" class="pv-kpi">{{ previewTile.value }}<span v-if="previewTile.unit" class="u">{{ previewTile.unit }}</span></div>
                 <ChartTile v-else-if="isChart" :chart="previewTile.chart" :legend="cfg.legend" :data-labels="cfg.dataLabels" :height="320" />
                 <div v-else-if="isText" class="pv-text"><FreeTextTile :content="cfg.content" :ft="cfg.ft" /></div>
                 <table v-else class="pv-tbl"><thead><tr><th v-for="c in previewTile.columns" :key="c">{{ c }}</th></tr></thead><tbody><tr v-for="(r,i) in previewTile.rows" :key="i"><td v-for="(c,j) in r" :key="j">{{ c }}</td></tr></tbody></table>
@@ -930,9 +957,11 @@ function save(place) {
 
               <!-- Conditions — classic kinds get the placeholder line; additional kinds
                    get the real shared `field is value` editor bound to the engine (§5). -->
+              <!-- a real editor on the classic kinds too (it was a placeholder button) — the
+                   preview's empty state waits for the first condition added here -->
               <div v-if="manualMode && !isNewKind && !isText" class="sec">
                 <div class="sec-h">Conditions</div>
-                <button class="add-line"><Icon name="plus" :size="14" /> Add Condition</button>
+                <MeasureConditions v-model="cfg.conds" :empty-text="building ? 'No conditions yet — add one to draw the preview.' : undefined" />
               </div>
               <div v-if="isChart && manualMode && isNewKind && curType.kind !== 'gauge'" class="sec">
                 <div class="sec-h">Conditions</div>
@@ -1132,6 +1161,12 @@ function save(place) {
    none: the note's inset is its own `pad` option. */
 .pv-card:has(.pv-text) { background: var(--surface); border-color: var(--border); padding: 0; overflow: hidden; }
 .pv-card:has(.pv-text) .pv-text { height: 100%; }
+/* the preview's empty state — the empty group's idiom: slate art, one short title, a line */
+.pv-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; max-width: 360px; }
+.pv-empty-art { color: var(--picker-ico); margin-bottom: 10px; }
+.pv-empty-t { font-size: 14px; font-weight: 600; color: var(--ink); }
+.pv-empty-s { margin: 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
+.pv-empty-s b { font-weight: 600; color: var(--ink-2); }
 .pv-kpi { font-size: 72px; font-weight: 500; letter-spacing: -2px; text-align: center; }
 .pv-tbl { width: 100%; border-collapse: collapse; font-size: 13px; align-self: start; }
 .pv-tbl th { text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .4px; padding: 7px 10px; border-bottom: 1px solid var(--border); }

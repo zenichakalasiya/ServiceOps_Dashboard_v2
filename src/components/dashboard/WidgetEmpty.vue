@@ -6,12 +6,20 @@
  * the SAME component rather than two copies that agree today. The copy itself lives in
  * `data/emptyStates.js`; this file owns only how it is laid out.
  *
- * The disc is 42px and the mark inside it 24px, with one grey line under it (no title). The mark is the tile's OWN chart artwork
- * for an empty period — a ghost of the thing that would be there — and a plain semantic
- * glyph for a fault or unfinished setup, which are not about the widget's shape.
+ * NO DATA (2026-09-29, user's call) draws the "no data found" illustration (NoDataArt: an
+ * empty chart frame with a magnifier finding only a flat baseline) — the same one on every
+ * widget type, in the empty group's slate. It replaced the disc holding the tile's own
+ * chart icon. A fault or unfinished setup keeps the 42px disc with a plain semantic glyph,
+ * since those are a system problem, not "we looked and nothing matched".
+ *
+ * On a short tile (a one-row KPI) the illustration shrinks, then steps aside for the line
+ * of text. The block MEASURES itself (ResizeObserver) — a CSS size container matched its
+ * smallest query on a 188px tile, so the art vanished where it had plenty of room.
  */
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import Icon from '../ui/Icon.vue'
 import ChartIcon from '../ui/ChartIcon.vue'
+import NoDataArt from '../ui/NoDataArt.vue'
 
 defineProps({
   // an entry from data/emptyStates.js: { art | icon, title, sub, action? }
@@ -22,11 +30,22 @@ defineProps({
   canAct: { type: Boolean, default: true },
 })
 defineEmits(['act'])
+
+// the art's width for the room this block has: full, smaller, or none (text only)
+const el = ref(null)
+const h = ref(999)
+let ro = null
+onMounted(() => { ro = new ResizeObserver(([e]) => { h.value = e.contentRect.height }); ro.observe(el.value) })
+onBeforeUnmount(() => ro?.disconnect())
+const artW = computed(() => (h.value >= 150 ? 112 : h.value >= 108 ? 80 : 0))
 </script>
 
 <template>
-  <div class="we" :class="{ err: kind === 'error' }">
-    <span class="we-disc">
+  <div ref="el" class="we" :class="{ err: kind === 'error' }">
+    <template v-if="kind === 'nodata'">
+      <NoDataArt v-if="artW" class="we-art" :width="artW" />
+    </template>
+    <span v-else class="we-disc">
       <!-- the tile's own chart shape for an empty period… -->
       <ChartIcon v-if="state.art" :name="state.art" :size="24" />
       <!-- …a semantic glyph for a fault or for setup that never happened -->
@@ -69,4 +88,6 @@ defineEmits(['act'])
 .we.err .we-disc { background: var(--red-soft); color: var(--red); }
 .we-sub { font-size: 12px; max-width: 260px; line-height: 1.45; }
 .we .btn { margin-top: 9px; }
+/* the no-data illustration, in the empty group's slate */
+.we-art { color: var(--picker-ico); margin-bottom: 4px; }
 </style>

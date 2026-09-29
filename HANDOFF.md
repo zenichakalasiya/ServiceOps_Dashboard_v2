@@ -1,11 +1,12 @@
-# Handoff — 2026-09-29 11:59
+# Handoff — 2026-09-29 14:32
 
 ## Read first
 In the prototype's `CLAUDE.md` → **Key files**, read the rows for `data/morphIcon.js` +
 `MorphIconKit.vue`, `ChartLoader.vue` and `data/groups.js`. All three were changed this
 session, and their rows describe the current behaviour: the loader hand-off kit, the mono
 loader in the widget, and the group date icon, range-driven data, white body and default
-border. The `WidgetCard.vue` row covers the header-as-drag-handle change.
+border. The `WidgetCard.vue` row covers the header-as-drag-handle change. The
+`EmptyPreviewArt` · `NoDataArt` row covers the two new empty-state illustrations.
 
 All work is on branch `v2-main` and deploys with `git push v2 v2-main:main`
 → https://zenichakalasiya.github.io/ServiceOps_Dashboard_v2/
@@ -18,6 +19,8 @@ All work is on branch `v2-main` and deploys with `git push v2 v2-main:main`
 - Made group bodies white and gave every group the default border.
 - Made the widget header the drag handle, with a move cursor instead of a grip.
 - Lined up the date picker's "Follow … filter" action with "Apply time range".
+- Drew two new empty-state illustrations in the empty-group style: the builder's live
+  preview before any condition is added, and "no data found" on widgets.
 
 ## Completed
 - **Loader hand-off kit** (`src/data/morphIcon.js`, `src/components/ui/MorphIconKit.vue`) is
@@ -52,6 +55,18 @@ All work is on branch `v2-main` and deploys with `git push v2 v2-main:main`
 - **Date picker** (`TimeRangePopover.vue`): "Follow dashboard/group filter" is full-width
   and left-aligned, with its ✕ centred under Apply's ✓ and both labels starting at the
   same x (measured). **Deployed.**
+- **Builder live-preview empty state** (`components/ui/EmptyPreviewArt.vue`, `needsCond` in
+  `WidgetBuilderModal.vue`). While building a NEW manual chart or KPI with no condition,
+  the preview shows the art, the title "Add a condition to preview your chart|KPI" and one
+  line. The first condition added reveals the chart. Editing, duplicating and cloning
+  always preview the real chart. Shortcut, Query Based and Free Text are unaffected.
+- **Classic kinds get a real condition editor.** Bar, Column, Line, Pie and KPI now use
+  `MeasureConditions` (it was a placeholder "Add Condition" button). Conditions are saved
+  on the tile as `t.conds` (`applyConds`) and read back when editing.
+- **"No data found" illustration** (`components/ui/NoDataArt.vue`) is used by every widget
+  type's no-data state in `WidgetEmpty.vue`; it replaced the disc with the tile's chart
+  icon. It is sized by a ResizeObserver: 112px, then 80px, then hidden on very short tiles.
+  Errors and unconfigured widgets keep the disc. Verified in light and dark themes.
 
 ## In progress
 **Adding several existing board widgets to a group at once** is at the proposal stage; no
@@ -80,6 +95,9 @@ Recommended: A + B. Waiting on the user's answers to:
   widget → group → dashboard.
 - Padding and share are no longer editable. Existing groups keep their values, and the
   defaults are padded and public.
+- Preview empty state: classic kinds get the REAL condition editor (not a placeholder
+  click); only building shows it (editing shows the real chart); one no-data illustration
+  for every widget type. All three were the user's picks.
 - The standalone loader SVG is a **CSS-keyframe rebuild** of the JS-timed morph. Its
   geometry is copied from `ChartLoader.vue`, so change both together.
 
@@ -90,5 +108,10 @@ Recommended: A + B. Waiting on the user's answers to:
   project folder works well.
 - The long-running dev server was killed once for low memory. Use short-lived Vite servers
   inside test scripts.
+- **Don't use a CSS size container (`container-type: size`) for the widget empty state.** It
+  matched its smallest `@container (max-height)` query on a 188px tile and hid the art.
+  `WidgetEmpty` measures itself with a ResizeObserver instead.
+- In test scripts, `getByText('Helpdesk Overview').first()` can time out on the sidebar.
+  Clicking the leaf element whose text matches exactly, from `page.evaluate`, works.
 - `vite:vue` warns about a `<button>` inside a `<button>` in `ModuleListing.vue`. This is
   pre-existing and unrelated.
