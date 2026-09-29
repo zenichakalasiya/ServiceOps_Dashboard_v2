@@ -53,16 +53,13 @@ export function grpHeadVars(g) {
   const bg = named ? named.css : isHex(st.bg) ? st.bg : 'var(--bg)'
   const ink = named ? named.ink : isHex(st.bg) ? inkFor(st.bg) : 'var(--ink)'
   const px = (GRP_SIZES.find((s) => s.id === st.size) || {}).px || 0
-  /* The group's outline follows its header. A neutral header (Default / Transparent /
-     Gray) keeps the ordinary border; a coloured one outlines the whole group in that
-     colour, so band and frame read as one object rather than a stripe on a grey box. */
-  const neutral = !named ? false : ['Default', 'Transparent', 'Gray'].includes(named.id)
   return {
-    /* The BODY is the plain card surface (white) under every header colour; the header
-       band and the coloured outline (--gh-line) carry the group's colour. (A 5% tint of the
-       header colour until 2026-09-29 — 10% before 2026-09-24 — removed at the user's ask.) */
+    /* Only the HEADER BAND carries the group's colour (2026-09-29, user's call). The body
+       is the plain card surface (white) — a 5% tint of the header colour until then, 10%
+       before 2026-09-24 — and the outline is the default group's border for every header
+       colour; a coloured header used to outline the whole group in its colour. */
     '--gh-body': 'var(--surface)',
-    '--gh-line': neutral ? 'var(--border)' : bg,
+    '--gh-line': 'var(--border)',
     '--gh-bg': bg,
     '--gh-ink': ink,
     '--gh-size': px ? px + 'px' : '14px',

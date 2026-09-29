@@ -1,10 +1,11 @@
-# Handoff — 2026-09-29 10:43
+# Handoff — 2026-09-29 11:59
 
 ## Read first
 In the prototype's `CLAUDE.md` → **Key files**, read the rows for `data/morphIcon.js` +
 `MorphIconKit.vue`, `ChartLoader.vue` and `data/groups.js`. All three were changed this
 session, and their rows describe the current behaviour: the loader hand-off kit, the mono
-loader in the widget, and the group date icon, range-driven data and white body.
+loader in the widget, and the group date icon, range-driven data, white body and default
+border. The `WidgetCard.vue` row covers the header-as-drag-handle change.
 
 All work is on branch `v2-main` and deploys with `git push v2 v2-main:main`
 → https://zenichakalasiya.github.io/ServiceOps_Dashboard_v2/
@@ -14,7 +15,9 @@ All work is on branch `v2-main` and deploys with `git push v2 v2-main:main`
 - Trimmed `/loaders` down to that one scene.
 - Reworked group date filters and made widgets actually follow a group's range.
 - Swapped the widget demo loader to the mono version.
-- Made group bodies white.
+- Made group bodies white and gave every group the default border.
+- Made the widget header the drag handle, with a move cursor instead of a grip.
+- Lined up the date picker's "Follow … filter" action with "Apply time range".
 
 ## Completed
 - **Loader hand-off kit** (`src/data/morphIcon.js`, `src/components/ui/MorphIconKit.vue`) is
@@ -40,8 +43,15 @@ All work is on branch `v2-main` and deploys with `git push v2 v2-main:main`
   - Shortcut rows become a stable subset.
 - **Widget demo loader** ("Open Requests By Status", Helpdesk Overview (Grouped)) is now
   `<ChartLoader variant="morph" mono smooth :size="60" />`, the same as on `/loaders`.
-- **Group body is white** (`--gh-body: var(--surface)` in `data/groups.js`). The border
-  still takes the header colour.
+- **Group body is white** (`--gh-body: var(--surface)` in `data/groups.js`), and every
+  group's border is the default `--border` — only the header band takes the chosen colour.
+- **Widget drag by header** (`WidgetCard.vue`): the hover grip is gone. The whole header
+  shows `cursor: move` and arms the drag, while its buttons keep `pointer`. Locked layouts
+  (`.cell.locked`) and present mode fall back to the default cursor, and the board marquee
+  in `DashboardView.vue` ignores plain presses on `.thead`. **Deployed.**
+- **Date picker** (`TimeRangePopover.vue`): "Follow dashboard/group filter" is full-width
+  and left-aligned, with its ✕ centred under Apply's ✓ and both labels starting at the
+  same x (measured). **Deployed.**
 
 ## In progress
 **Adding several existing board widgets to a group at once** is at the proposal stage; no
