@@ -725,7 +725,7 @@ function save(place) {
                        and at 14 it read as a fifth row of the Chart Type control. -->
                   <!-- 2026-09-24 Figma: two outlined chips, the chosen one edged near-black
                        with a check — not the segmented track -->
-                  <div class="mode-row" style="margin-top:20px">
+                  <div class="mode-row" style="margin-top:32px">
                     <button class="mode-b" :class="{ on: cfg.mode==='manual' }" @click="cfg.mode='manual'">Manual <Icon v-if="cfg.mode==='manual'" name="check-circle" :size="13" /></button>
                     <button class="mode-b" :class="{ on: cfg.mode==='query' }" @click="cfg.mode='query'">Query Based <Icon v-if="cfg.mode==='query'" name="check-circle" :size="13" /></button>
                   </div>
@@ -1202,11 +1202,9 @@ function save(place) {
 /* A section owns its own bottom space. Its LAST child was adding a 12px margin on top
    of that, so the gap between two sections was 22px or 34px depending on whether the
    section happened to end in a field, a hint or a toggle. */
-/* 20px between sections, as the Figma spaces them */
-.sec { padding-bottom: 20px; margin-bottom: 0; border-bottom: none; }
-/* the Chart Type section ends in Manual / Query, which governs the Axes right under it —
-   so that pair sits closer than two unrelated sections do (user, 2026-09-29) */
-.sec.sec-mode { padding-bottom: 12px; }
+/* 24px under EVERY main section (user, 2026-09-29) — Chart Type included, so the tighter
+   12px it briefly had above Axes is gone */
+.sec { padding-bottom: 24px; margin-bottom: 0; border-bottom: none; }
 /* every other line of text in the sidebar (user, 2026-09-29) */
 .config .kind-grp-h, .config .toggle, .config .mode-b { color: var(--cfg-text); }
 /* the grey one-liners stay grey — #516381 (user, 2026-09-29) */
