@@ -124,9 +124,9 @@ const kindGroups = groupPickerTypes(CHART_KINDS)
 /* The Chart Type field shows ONE category at a time (2026-09-29, user's pick — it was all
    four stacked, ~330px of sidebar). A segmented track names the four categories; it opens
    on the family of the chart being built, and only that family's tiles sit under it. A
-   category tab only BROWSES — the type changes when a tile is clicked — and while you look
-   at another category, the one holding the current type keeps a dot, so you can find the
-   way back. Picking a type from anywhere snaps the view to that type's own category. */
+   category tab only BROWSES — the type changes when a tile is clicked. Picking a type from
+   anywhere snaps the view to that type's own category. (A dot marking the current type's
+   category while browsing was removed at the user's ask.) */
 const kindCatPick = ref(null)
 const curKindCat = computed(() => kindGroups.find((g) => g.types.some((t) => t.id === curType.value.id))?.cat || kindGroups[0].cat)
 const kindCat = computed(() => kindCatPick.value || curKindCat.value)
@@ -709,7 +709,7 @@ function save(place) {
                   <button
                     v-for="g in kindGroups" :key="g.cat" class="seg-b" role="tab"
                     :class="{ on: kindCat === g.cat }" :aria-selected="kindCat === g.cat" @click="kindCatPick = g.cat"
-                  >{{ g.cat }}<i v-if="g.cat === curKindCat && kindCat !== g.cat" class="kind-cat-dot" title="The current chart type is in this category" /></button>
+                  >{{ g.cat }}</button>
                 </div>
                 <div class="kinds">
                   <button
@@ -1159,8 +1159,7 @@ function save(place) {
 .kind-grp + .kind-grp { margin-top: 12px; }
 /* the category track above the one row of tiles */
 .kind-cats { margin-bottom: 10px; }
-.kind-cats .seg-b { position: relative; text-transform: none; }
-.kind-cat-dot { position: absolute; top: 4px; right: 5px; width: 5px; height: 5px; border-radius: 50%; background: var(--sel); }
+.kind-cats .seg-b { text-transform: none; }
 .kind-grp-h { font-size: 11px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; color: var(--label); margin-bottom: 6px; }
 /* 2026-09-24 Figma: 56×50 tiles, 8px corners, 8px apart, each carrying the chart's
    illustrated artwork (ChartIcon) rather than a line glyph */
