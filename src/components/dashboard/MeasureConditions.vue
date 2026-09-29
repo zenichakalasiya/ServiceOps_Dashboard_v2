@@ -40,7 +40,7 @@ function setValue(i, value) { set(rows.value.map((r, k) => (k === i ? { ...r, va
       <Dropdown class="mc-dd" :modelValue="row.value" :options="valuesFor(row.field)" @update:modelValue="setValue(i, $event)" />
       <button class="mc-x" title="Remove condition" @click="remove(i)"><Icon name="x" :size="14" /></button>
     </div>
-    <button class="mc-add" @click="add"><Icon name="plus" :size="14" /> Add Condition</button>
+    <button class="mc-add" @click="add"><Icon name="plus" :size="13" /> Add Condition</button>
   </div>
 </template>
 
@@ -52,6 +52,8 @@ function setValue(i, value) { set(rows.value.map((r, k) => (k === i ? { ...r, va
 .mc-is { flex: none; font-size: 13px; color: var(--muted); }
 .mc-x { flex: none; width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
 .mc-x:hover { background: var(--red-soft); color: var(--red); }
-.mc-add { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; border: 1px dashed var(--border-strong); background: transparent; color: var(--primary-700); border-radius: 4px; padding: 7px 12px; font-size: 13px; font-weight: 600; }
-.mc-add:hover { background: var(--primary-softer); border-color: var(--primary); }
+/* the "+ Add Highlights" look (user, 2026-09-29): 26px, 1px near-black edge, near-black
+   12px medium label — the dashed blue chip read as a link, not a button */
+.mc-add { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 8px; border: 1px solid var(--sel); border-radius: var(--r); background: var(--surface); color: var(--sel); font-size: 12px; font-weight: 500; cursor: pointer; }
+.mc-add:hover { background: var(--surface-2); }
 </style>

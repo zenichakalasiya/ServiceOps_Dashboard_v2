@@ -561,7 +561,7 @@ function save(place) {
                the preview (below); what belongs up here next to Close is the action
                that operates on the whole form. -->
           <div class="hacts">
-            <button class="ic" title="Reset every field to how this widget opened" @click="reset"><Icon name="reset" :size="16" /></button>
+            <button class="ic" data-itip="Reset every field to how this widget opened" aria-label="Reset every field to how this widget opened" @click="reset"><Icon name="reset" :size="16" /></button>
             <button class="ic" @click="emit('close')" title="Close"><Icon name="x" :size="18" /></button>
           </div>
         </header>
@@ -586,7 +586,7 @@ function save(place) {
               </div>
             </div>
             <div class="pv-card">
-              <button class="pv-refresh" title="Refresh preview" @click="refreshPreview">
+              <button class="pv-refresh" data-itip="Refresh the live preview" aria-label="Refresh the live preview" @click="refreshPreview">
                 <Icon name="refresh" :size="16" :class="{ spin: spinning }" />
               </button>
               <div class="pv-canvas">
@@ -729,7 +729,7 @@ function save(place) {
                     <button class="mode-b" :class="{ on: cfg.mode==='manual' }" @click="cfg.mode='manual'">Manual <Icon v-if="cfg.mode==='manual'" name="check-circle" :size="13" /></button>
                     <button class="mode-b" :class="{ on: cfg.mode==='query' }" @click="cfg.mode='query'">Query Based <Icon v-if="cfg.mode==='query'" name="check-circle" :size="13" /></button>
                   </div>
-                  <p class="hint" style="margin-top:6px">{{ modeHint }}</p>
+                  <p class="hint">{{ modeHint }}</p>
                 </template>
               </div>
               <!-- families without a chart type still need the Manual / Query switch -->
@@ -1268,15 +1268,17 @@ function save(place) {
 /* heading and its action on one line, the action right-aligned */
 .q-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
 /* ── Free Text ── */
+/* block, not the default inline-block: an inline textarea leaves a line-box gap under it,
+   which pushed the character counter 8px away instead of the sidebar's 2px */
 .ft-ta {
-  width: 100%; min-height: 104px; resize: vertical; padding: 10px 12px;
+  display: block; width: 100%; min-height: 104px; resize: vertical; padding: 10px 12px;
   border: 1px solid var(--border-strong); border-radius: var(--r); background: var(--surface);
   color: var(--ink); font-size: 13px; line-height: 1.55; outline: none;
 }
 .ft-ta:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
 /* right-aligned, so the count sits under the field's own right edge rather than reading
    as a caption for the label on the left */
-.ft-count { text-align: right; margin-top: 5px; }
+.ft-count { text-align: right; margin-top: 0; }
 /* ONE control per row, like every other field in this panel. Two columns was tried and
    it put Font size beside Alignment — two unrelated questions sharing a line, each
    half-width, and the eye had to scan in two directions to read one section. */
@@ -1290,6 +1292,11 @@ function save(place) {
 /* a heading that OWNS the line under it sits tight to it — 12px of air between a title
    and its own description reads as two separate things */
 .sec-h:has(+ .hint) { margin-bottom: 2px; }
+/* …and a one-liner under a FIELD (or a row of fields, the Manual / Query chips, the Query
+   heading, the Free Text box) sits exactly as tight: 2px, the same as under a title
+   (user, 2026-09-29). One rule, so a new field + one-liner pair gets it for free. */
+.config :not(.sec-h):not(.hint):has(+ .hint) { margin-bottom: 2px; }
+.config .hint:not(:first-child) { margin-top: 0; }
 /* 16px between fields (was 12) — the user asked for more air between them */
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 /* a side-by-side pair is ONE row: its fields drop their own bottom margin (it stretched the
