@@ -717,10 +717,11 @@ function save(place) {
                   <!-- DEMO: which Manual / Query design is live — A cards · D banner (store.ui.modeUi) -->
                   <div class="dm-demo" title="Prototype only — compare the two designs">
                     <span>Demo · switch UI</span>
-                    <button :class="{ on: store.ui.modeUi !== 'banner' }" @click="store.ui.modeUi = 'cards'">A · Cards</button>
+                    <button :class="{ on: !['banner', 'pill'].includes(store.ui.modeUi) }" @click="store.ui.modeUi = 'cards'">A · Cards</button>
                     <button :class="{ on: store.ui.modeUi === 'banner' }" @click="store.ui.modeUi = 'banner'">D · Banner</button>
+                    <button :class="{ on: store.ui.modeUi === 'pill' }" @click="store.ui.modeUi = 'pill'">Black pill</button>
                   </div>
-                  <DataModeSwitch v-model="cfg.mode" :variant="store.ui.modeUi === 'banner' ? 'banner' : 'cards'" :subject="isKpi ? 'KPI' : 'chart'" />
+                  <DataModeSwitch v-model="cfg.mode" :variant="['banner', 'pill'].includes(store.ui.modeUi) ? store.ui.modeUi : 'cards'" :subject="isKpi ? 'KPI' : 'chart'" />
                 </template>
               </div>
               <!-- families without a chart type still need the Manual / Query switch -->
@@ -732,10 +733,11 @@ function save(place) {
                 <!-- DEMO: which Manual / Query design is live — A cards · D banner (store.ui.modeUi) -->
                 <div class="dm-demo" title="Prototype only — compare the two designs">
                   <span>Demo · switch UI</span>
-                  <button :class="{ on: store.ui.modeUi !== 'banner' }" @click="store.ui.modeUi = 'cards'">A · Cards</button>
+                  <button :class="{ on: !['banner', 'pill'].includes(store.ui.modeUi) }" @click="store.ui.modeUi = 'cards'">A · Cards</button>
                   <button :class="{ on: store.ui.modeUi === 'banner' }" @click="store.ui.modeUi = 'banner'">D · Banner</button>
+                    <button :class="{ on: store.ui.modeUi === 'pill' }" @click="store.ui.modeUi = 'pill'">Black pill</button>
                 </div>
-                <DataModeSwitch v-model="cfg.mode" :variant="store.ui.modeUi === 'banner' ? 'banner' : 'cards'" :subject="isKpi ? 'KPI' : 'chart'" />
+                <DataModeSwitch v-model="cfg.mode" :variant="['banner', 'pill'].includes(store.ui.modeUi) ? store.ui.modeUi : 'cards'" :subject="isKpi ? 'KPI' : 'chart'" />
               </div>
 
               <!-- Query — Shortcuts always; Widget/KPI when "Query Based" tab is active -->
@@ -1261,6 +1263,12 @@ function save(place) {
 /* 2px larger and 200 heavier than a section title (16/700, not 14/500) — it heads the choice
    that decides every field below it (user, 2026-09-30) */
 .sec-h.dm-title { font-size: 16px; font-weight: 700; }
+/* The SIDEBAR's segmented tracks are white-minimal (user, 2026-09-30, from a reference):
+   grey track, the chosen segment a white chip with a hairline shadow and ink text — not the
+   near-black fill the rest of the app's .seg wears. Only the Data source "Pill" design stays
+   black, so the one choice that swaps the fields below is the one that stands out. */
+.config :deep(.seg-b.on) { background: var(--surface); color: var(--ink); font-weight: 500; box-shadow: 0 1px 2px rgba(16, 24, 40, .10), 0 0 0 1px rgba(16, 24, 40, .04); }
+.config :deep(.seg-b.on .ico) { color: var(--ink); }
 /* the section the switch ends is 6px tighter (18, not 24) so the first field under it —
    Axes, or Query — reads as belonging to the chosen mode (user, 2026-09-30) */
 .sec:has(> .dm-cards, > .dm-banner) { padding-bottom: 18px; }

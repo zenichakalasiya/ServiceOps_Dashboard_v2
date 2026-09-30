@@ -41,7 +41,7 @@ export const store = reactive({
     // AI-insights PLACEMENT demo (shown to management): which of the three entry placements
     // is live on the board — 'A' header chip · 'B' KPI-row card · 'C' banner (default/baseline).
     aiPlacement: 'A',
-    // builder demo: which Manual / Query Based design is live — 'cards' (A) or 'banner' (D)
+    // builder demo: which Manual / Query Based design is live — 'cards' (A) · 'banner' (D) · 'pill'
     modeUi: 'cards',
     // AI-insights placement lab: the shared panel's open + pinned state. Persists "per user"
     // via the store, the app's own mechanism (there is no localStorage layer anywhere).
