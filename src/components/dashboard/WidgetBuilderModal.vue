@@ -1258,6 +1258,9 @@ function save(place) {
 /* Manual / Query Based is DataModeSwitch.vue. Its heading sits 32px under the Chart Type tiles — a different question (how the data
    is fetched, not how it is drawn). */
 .dm-head { margin-top: 32px; }
+/* the section the switch ends is 6px tighter (18, not 24) so the first field under it —
+   Axes, or Query — reads as belonging to the chosen mode (user, 2026-09-30) */
+.sec:has(> .dm-cards, > .dm-banner) { padding-bottom: 18px; }
 /* the prototype's demo pill for comparing the two designs — dashed, so it never reads as UI */
 .dm-demo { display: flex; align-items: center; gap: 4px; margin: 0 0 8px; padding: 4px 6px; border: 1px dashed var(--border-strong); border-radius: var(--r); font-size: 11px; color: var(--muted); width: fit-content; }
 .dm-demo span { margin-right: 4px; }
