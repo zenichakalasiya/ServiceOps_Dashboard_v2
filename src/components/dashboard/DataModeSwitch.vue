@@ -68,7 +68,9 @@ const other = computed(() => MODES.value.find((m) => m.id !== cur.value.id))
 /* 1px only (user, 2026-09-30) — no second ring */
 .dm-card.on { border-color: var(--sel); }
 .dm-card .dm-ic { background: var(--surface-2); color: var(--muted); }
-.dm-card.on .dm-ic { background: var(--sel); color: var(--sel-ink); }
+/* the chosen badge: a LIGHT tint of the near-black with the glyph in it — the solid dark
+   square read too heavy (user, 2026-09-30) */
+.dm-card.on .dm-ic { background: color-mix(in srgb, var(--sel) 10%, var(--surface)); color: var(--sel); }
 .dm-check { position: absolute; top: 10px; right: 10px; color: var(--sel-ink); fill: var(--sel); }
 .dm-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding-right: 18px; }
 .dm-txt b { font-size: 13px; font-weight: 600; color: var(--ink); }
@@ -79,7 +81,7 @@ const other = computed(() => MODES.value.find((m) => m.id !== cur.value.id))
 
 /* ── D · banner ── */
 .dm-banner { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: var(--r-lg); border: 1px solid var(--border); border-left: 3px solid var(--sel); background: color-mix(in srgb, var(--primary) 5%, var(--surface)); }
-.dm-banner .dm-ic { background: var(--sel); color: var(--sel-ink); }
+.dm-banner .dm-ic { background: color-mix(in srgb, var(--sel) 10%, var(--surface)); color: var(--sel); }
 .dm-banner .dm-txt { flex: 1; padding: 0; }
 .dm-banner em { font-style: normal; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink); }
 .dm-banner .dm-txt span { color: var(--ink-2); }
