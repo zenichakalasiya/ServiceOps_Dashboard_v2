@@ -10,9 +10,10 @@
  *                chosen card is edged in --sel with a check.
  *   D · banner — the mode as a STATE: a tinted strip naming the mode you are in and what
  *                it means for the fields below, with one action to switch.
- *   pill       — a prominent BLACK pill track, full width: the chosen mode filled --sel,
- *                with its one line under it. The sidebar's other tracks are white-minimal,
- *                so this is the one dark control there.
+ *   pill       — the SAME segmented track as the sidebar's white tabs (Public / Private /
+ *                Restricted: `.seg.fill`, 6px corners, 28px segments, the track hugging its
+ *                text) — only the chosen segment is filled black. The sidebar's other
+ *                tracks are white-minimal, so this is the one dark control there.
  */
 import { computed } from 'vue'
 import Icon from '../ui/Icon.vue'
@@ -50,15 +51,12 @@ const other = computed(() => MODES.value.find((m) => m.id !== cur.value.id))
     </button>
   </div>
 
-  <!-- black pill -->
-  <div v-else-if="variant === 'pill'" class="dm-pillwrap">
-    <div class="dm-pill" role="radiogroup" aria-label="Data source">
-      <button
-        v-for="m in MODES" :key="m.id" type="button" class="dm-pb" :class="{ on: m.id === cur.id }"
-        role="radio" :aria-checked="m.id === cur.id" @click="emit('update:modelValue', m.id)"
-      ><Icon :name="m.icon" :size="15" /> {{ m.title }}</button>
-    </div>
-    <p class="dm-pill-line">{{ cur.line }}</p>
+  <!-- black pill: the shared .seg track, one black segment -->
+  <div v-else-if="variant === 'pill'" class="seg fill dm-seg" role="radiogroup" aria-label="Data source">
+    <button
+      v-for="m in MODES" :key="m.id" type="button" class="seg-b" :class="{ on: m.id === cur.id }"
+      role="radio" :aria-checked="m.id === cur.id" :title="m.line" @click="emit('update:modelValue', m.id)"
+    ><Icon :name="m.icon" :size="14" /> {{ m.title }}</button>
   </div>
 
   <!-- D · mode banner -->
@@ -93,12 +91,12 @@ const other = computed(() => MODES.value.find((m) => m.id !== cur.value.id))
 /* shared icon badge */
 .dm-ic { flex: none; width: 30px; height: 30px; border-radius: var(--r); display: grid; place-items: center; transition: background .15s, color .15s; }
 
-/* ── black pill ── */
-.dm-pill { display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--seg-track); }
-.dm-pb { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 34px; border: none; border-radius: 999px; background: transparent; color: var(--ink-2); font-size: 13px; font-weight: 500; cursor: pointer; transition: background .15s, color .15s; }
-.dm-pb:not(.on):hover { background: color-mix(in srgb, var(--surface) 70%, transparent); color: var(--ink); }
-.dm-pb.on { background: var(--sel); color: var(--sel-ink); font-weight: 600; box-shadow: 0 1px 3px rgba(7, 16, 31, .25); }
-.dm-pill-line { margin: 6px 0 0 4px; font-size: 12px; color: var(--muted); }
+/* ── black pill ── geometry is the global .seg.fill (same as the access tabs); the track
+   hugs its text, and the chosen segment is black — this out-specifies the sidebar's
+   white-minimal `.config .seg-b.on` */
+.seg.fill.dm-seg { width: fit-content; }
+.seg.fill.dm-seg .seg-b.on { background: var(--sel); color: var(--sel-ink); font-weight: 500; box-shadow: none; }
+.seg.fill.dm-seg .seg-b.on :deep(.ico) { color: var(--sel-ink); }
 
 /* ── D · banner ── */
 .dm-banner { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: var(--r-lg); border: 1px solid var(--border); border-left: 3px solid var(--sel); background: color-mix(in srgb, var(--primary) 5%, var(--surface)); }
