@@ -12,7 +12,7 @@ import { previewKind, previewTitle } from '../../data/previewArt.js'
 import RichTextEditor from './RichTextEditor.vue'
 import Hint from '../ui/Hint.vue'
 import {
-  noteTitle, noteIsEmpty, FT_DEFAULTS,
+  noteTitle, noteIsEmpty, FT_DEFAULTS, FT_PRESETS, ftPresetOf,
 } from '../../data/freeText.js'
 import { store, toast } from '../../store/index.js'
 import { chart as mkChart, kpi as mkKpi, shortcut as mkShortcut, text as mkText, ACCESS } from '../../data/mock.js'
@@ -150,6 +150,17 @@ const isShortcut = computed(() => curType.value.type === 'shortcut')
 const isText = computed(() => curType.value.type === 'text')
 const ctaLabel = computed(() => (isChart.value ? 'Widget' : curType.value.label))
 
+/* Free Text layout — Default (body text) or Header (a centred banner across the row). It is
+ * chosen INSIDE the rich-text editor (2026-09-30, user's call) and writes the same fields
+ * the old Preset row did: the presentation config plus the tile's width. */
+const noteLayout = computed({
+  get: () => ftPresetOf(cfg.ft),
+  set: (id) => {
+    const p = FT_PRESETS.find((x) => x.id === id); if (!p) return
+    Object.assign(cfg.ft, p.cfg)
+    cfg.ftSpan = p.span
+  },
+})
 function switchType(t) {
   if (typeBlock(t)) return
   // a note is filed under its own first line, so it never carries a placeholder name —
@@ -516,7 +527,8 @@ function save(place) {
   }
   // --- create new ---
   if (place) {
-    if (isText.value) { pv.w = 4; pv.h = 1 }
+    // a Header note is a banner across the row (its layout's span); a Default note is 4 wide
+    if (isText.value) { pv.w = cfg.ftSpan || 4; pv.h = 1 }
     else { pv.w = isChart.value ? 6 : isShortcut.value ? 6 : 3; pv.h = isKpi.value ? 1 : 2 }
     if (queryMode.value) pv.sql = cfg.sqlQuery
     applyAccess(pv)
@@ -872,7 +884,7 @@ function save(place) {
                    editor's own toolbar formats the text itself. -->
               <div v-if="isText" class="sec">
                 <div class="sec-h">Text to display <i class="req">*</i></div>
-                <RichTextEditor v-model="cfg.content" :max="600" />
+                <RichTextEditor v-model="cfg.content" v-model:layout="noteLayout" :max="600" />
               </div>
 
               <!-- Data Configuration -->

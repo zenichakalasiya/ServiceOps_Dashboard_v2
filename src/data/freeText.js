@@ -408,7 +408,7 @@ export const FT_DEFAULTS = {
    a Header is a BANNER — a centred title in a 4-column tile is not the same object. */
 export const FT_PRESETS = [
   { id: 'Default', label: 'Default', cfg: { size: '16px', align: 'left', valign: 'top', bg: 'Default', pad: true }, span: 4 },
-  { id: 'Header', label: 'Header', cfg: { size: 'Auto', align: 'center', valign: 'middle', bg: 'Transparent', pad: true }, span: 12 },
+  { id: 'Header', label: 'Header', cfg: { size: '24px', align: 'center', valign: 'middle', bg: 'Transparent', pad: true }, span: 12 },
 ]
 
 const isHex = (v) => /^#[0-9a-f]{3,8}$/i.test(String(v || ''))

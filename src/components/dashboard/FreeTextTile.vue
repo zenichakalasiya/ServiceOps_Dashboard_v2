@@ -42,7 +42,9 @@ const style = computed(() => ftStyle(props.ft))
 </template>
 
 <style scoped>
-.ftx { height: 100%; width: 100%; display: flex; overflow: auto; }
+/* flex: 1 + stretch, not just height: 100% — the tile body is a flex box whose height is
+   not definite, so a percentage collapsed the note to its text and "middle" had no room */
+.ftx { flex: 1 1 auto; align-self: stretch; min-height: 0; height: 100%; width: 100%; display: flex; overflow: auto; }
 /* full width, so the box's text-align has something to act on */
 .ftx-in { width: 100%; min-width: 0; }
 .ftx-empty { color: var(--muted); margin: 0; }

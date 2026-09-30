@@ -10,7 +10,11 @@
  * Deliberately NOT here (the user's call): table, divider, attach, emoji, undo/redo,
  * templates, knowledge, AI Assist.
  *
- * The text area is 300px tall and the corner handle (the same mark a widget's resize
+ * A LAYOUT strip sits along the top (2026-09-30): Default (body text) or Header (a centred
+ * banner). It is the old Preset, moved into the editor — v-model:layout — and the text area
+ * takes the look it picks, so what you type already sits where the tile will show it.
+ *
+ * The text area is 400px tall and the corner handle (the same mark a widget's resize
  * handle wears) drags it taller.
  *
  * Built on contenteditable + execCommand, no dependency — ServiceOps ships on-prem, so an
@@ -34,8 +38,14 @@ const props = defineProps({
   modelValue: { type: String, default: '' },
   placeholder: { type: String, default: 'Enter the text to display' },
   max: { type: Number, default: 600 },
+  // 'Default' | 'Header' | null (a note styled some other way before layouts existed)
+  layout: { type: String, default: null },
 })
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'update:layout'])
+const LAYOUTS = [
+  { id: 'Default', tip: 'Body text — top-left, sized for reading' },
+  { id: 'Header', tip: 'A centred banner across the whole row' },
+]
 
 const el = ref(null)
 const root = ref(null)
@@ -45,9 +55,9 @@ const hasSel = ref(false)         // a non-empty selection inside the editor
 const menu = ref(null)            // which dropdown / popover is open
 const st = ref({})                // pressed states at the caret
 const count = ref(0)
-/* the text area's height — 300px by default (the user's "double it"), dragged taller from
-   the corner handle, never shorter than the default */
-const MIN_H = 300, MAX_H = 900
+/* the text area's height — 400px by default (300 until 2026-09-30, the user's "increase
+   it"), dragged taller from the corner handle, never shorter than the default */
+const MIN_H = 400, MAX_H = 900
 const bodyH = ref(MIN_H)
 function startResize(e) {
   const y0 = e.clientY, h0 = bodyH.value
@@ -249,9 +259,19 @@ const blockLabel = computed(() => BLOCKS.find((b) => b.v === st.value.block)?.la
 
 <template>
   <div ref="root" class="rte" :class="{ focus: focused }">
+    <!-- layout: the two cards, as the reference draws them -->
+    <div class="rte-lay" role="radiogroup" aria-label="Layout">
+      <button
+        v-for="l in LAYOUTS" :key="l.id" type="button" class="rte-lc" :class="{ on: layout === l.id }"
+        role="radio" :aria-checked="layout === l.id" :title="l.tip" @click="emit('update:layout', l.id)"
+      >
+        <span class="rte-lc-art" :class="'lc-' + l.id.toLowerCase()"><i /><i /><i /></span>
+        <span class="rte-lc-l">{{ l.id }}</span>
+      </button>
+    </div>
     <div class="rte-area">
       <div
-        ref="el" class="rte-body note-body" contenteditable="true" role="textbox" aria-multiline="true"
+        ref="el" class="rte-body note-body" :class="{ 'is-hdr': layout === 'Header' }" contenteditable="true" role="textbox" aria-multiline="true"
         :style="{ height: bodyH + 'px' }"
         :data-ph="placeholder" @input="push" @beforeinput="onBeforeInput" @paste="onPaste"
         @focus="focused = true" @blur="focused = false" @keyup="sync" @mouseup="sync"
@@ -355,6 +375,18 @@ const blockLabel = computed(() => BLOCKS.find((b) => b.v === st.value.block)?.la
 .rte { position: relative; display: flex; flex-direction: column; border: 1px solid var(--border-control); border-radius: var(--r); background: var(--surface); transition: border-color .15s; }
 .rte.focus { border-color: var(--primary); }
 .rte-area { position: relative; }
+/* layout cards — a grey card holding a white thumbnail, the chosen one edged in --sel */
+.rte-lay { display: flex; gap: 8px; padding: 8px; border-bottom: 1px solid var(--border); }
+.rte-lc { flex: 1; max-width: 132px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 8px 6px; border: 1px solid transparent; border-radius: var(--r-lg); background: var(--surface-2); color: var(--muted); font-size: 12px; cursor: pointer; transition: border-color .15s, background .15s; }
+.rte-lc:hover { border-color: var(--border-strong); }
+.rte-lc.on { border-color: var(--sel); background: color-mix(in srgb, var(--primary) 6%, var(--surface-2)); color: var(--ink); font-weight: 600; }
+.rte-lc-art { width: 100%; height: 26px; border-radius: 4px; background: var(--surface); display: flex; flex-direction: column; justify-content: center; gap: 3px; padding: 0 8px; box-shadow: 0 0 0 1px var(--border); }
+.rte-lc-art i { display: block; height: 3px; border-radius: 2px; background: var(--muted-2); }
+.rte-lc-art.lc-header { align-items: center; }
+.rte-lc-art.lc-header i { width: 58%; height: 5px; }
+.rte-lc-art.lc-header i + i { display: none; }
+/* Header: what you type sits where the banner will show it — centred, mid-height */
+.rte-body.is-hdr { display: flex; flex-direction: column; justify-content: center; text-align: center; font-size: 24px; line-height: 1.25; }
 .rte-body { overflow: auto; padding: 10px 12px 18px; outline: none; font-size: 13px; color: var(--ink); }
 /* the same corner mark as a widget's resize handle (DashboardView .resize), shown on hover */
 .rte-resize { position: absolute; right: 3px; bottom: 3px; width: 16px; height: 16px; cursor: ns-resize; opacity: 0; transition: opacity .15s; }
