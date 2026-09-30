@@ -63,9 +63,10 @@ const other = computed(() => MODES.value.find((m) => m.id !== cur.value.id))
 <style scoped>
 /* ── A · cards ── */
 .dm-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.dm-card { position: relative; display: flex; align-items: flex-start; gap: 10px; padding: 12px; min-height: 72px; text-align: left; border: 1px solid var(--border-control); border-radius: var(--r-lg); background: var(--surface); color: var(--ink); cursor: pointer; transition: border-color .15s, box-shadow .15s, background .15s; }
+.dm-card { position: relative; display: flex; align-items: flex-start; gap: 10px; padding: 12px; min-height: 72px; text-align: left; border: 1px solid var(--border-control); border-radius: var(--r-lg); background: var(--surface); color: var(--ink); cursor: pointer; transition: border-color .15s, background .15s; }
 .dm-card:hover { border-color: var(--muted-2); }
-.dm-card.on { border-color: var(--sel); box-shadow: 0 0 0 1px var(--sel); }
+/* 1px only (user, 2026-09-30) — no second ring */
+.dm-card.on { border-color: var(--sel); }
 .dm-card .dm-ic { background: var(--surface-2); color: var(--muted); }
 .dm-card.on .dm-ic { background: var(--sel); color: var(--sel-ink); }
 .dm-check { position: absolute; top: 10px; right: 10px; color: var(--sel-ink); fill: var(--sel); }
