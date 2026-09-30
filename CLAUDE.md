@@ -290,17 +290,18 @@ first line.
 **The builder's Free Text field is a RICH-TEXT EDITOR** (`RichTextEditor.vue`, 2026-09-30,
 built to the user's screenshots) and it is the ONLY Free Text configuration — the markdown
 box, Formatting help, Preset and every presentation setting (font size, alignment,
-vertical alignment, padding, font colour, background) were removed. Its **bottom bar** is
-always there: attach · image · link · **T**; **T** (or any text selection) shows the
-**formatting bar**: block style (Paragraph / Heading 1–3) · B I U · font size (Default,
-8–72) · alignment (Left / Center / Right / Justify) · bulleted / numbered list ·
-background colour · text colour (the 8×7 palette) · divider. **Not** in it, by the user's
-call: table, emoji, undo/redo, templates, knowledge, AI Assist. contenteditable +
+vertical alignment, padding, font colour, background) were removed. The text area is
+**300px** tall and a corner handle (the widgets' resize mark) drags it taller (300–900px).
+Under it, the **formatting bar** — shown on **T** or any text selection, sitting directly
+ABOVE the bottom bar with its menus opening upward: block style (Paragraph / Heading 1–3) ·
+B I U · font size (Default, 8–72) · alignment (Left / Center / Right / Justify) ·
+bulleted / numbered list · background colour · text colour (the 8×7 palette). Then the
+**bottom bar**, always there: image · link · **T** · the character count. **Not** in it, by
+the user's call: table, divider, attach, emoji, undo/redo, templates, knowledge, AI Assist. contenteditable +
 execCommand, no dependency (on-prem). Toolbar buttons act on `mousedown.prevent` so they
 never steal the selection; the link/image popovers save and restore the range. Paste is
-plain text; the 600-character limit is enforced on input. An attached file goes in as its
-name (a note has no file store); an attached or uploaded image is embedded (PNG/JPG/GIF/
-WebP, ≤ 1 MB, as a data URL). Older notes stored as markdown are converted to HTML when
+plain text; the 600-character limit is enforced on input. An uploaded image is embedded
+(PNG/JPG/GIF/WebP, ≤ 1 MB, as a data URL). Older notes stored as markdown are converted to HTML when
 opened.
 
 `toNoteHtml()` still takes HTML or markdown and **allowlist-sanitises** it (it goes out via

@@ -2,12 +2,16 @@
 /**
  * RichTextEditor — the Free Text widget's text field (2026-09-30, to the user's screenshots).
  *
- * A BOTTOM bar is always there with what INSERTS something — attach · image · link — and a
- * "T" that toggles the FORMATTING bar. The formatting bar also appears by itself the moment
- * text is selected, and carries: block style (Paragraph / Heading 1–3) · B I U · font size ·
- * alignment · bulleted / numbered list · background colour · text colour · divider.
- * Deliberately NOT here (the user's call): table, emoji, undo/redo, templates, knowledge,
- * AI Assist.
+ * A BOTTOM bar is always there with what INSERTS something — image · link — and a "T"
+ * that toggles the FORMATTING bar. That bar sits directly ABOVE the bottom bar (as the
+ * reference stacks them) and also appears by itself the moment text is selected: block
+ * style (Paragraph / Heading 1–3) · B I U · font size · alignment · bulleted / numbered
+ * list · background colour · text colour. Its menus open UPWARD.
+ * Deliberately NOT here (the user's call): table, divider, attach, emoji, undo/redo,
+ * templates, knowledge, AI Assist.
+ *
+ * The text area is 300px tall and the corner handle (the same mark a widget's resize
+ * handle wears) drags it taller.
  *
  * Built on contenteditable + execCommand, no dependency — ServiceOps ships on-prem, so an
  * editor library would be redistributed (the same reasoning as ECharts; see NoteEditor.vue
@@ -40,6 +44,17 @@ const hasSel = ref(false)         // a non-empty selection inside the editor
 const menu = ref(null)            // which dropdown / popover is open
 const st = ref({})                // pressed states at the caret
 const count = ref(0)
+/* the text area's height — 300px by default (the user's "double it"), dragged taller from
+   the corner handle, never shorter than the default */
+const MIN_H = 300, MAX_H = 900
+const bodyH = ref(MIN_H)
+function startResize(e) {
+  const y0 = e.clientY, h0 = bodyH.value
+  const move = (ev) => { bodyH.value = Math.min(MAX_H, Math.max(MIN_H, h0 + ev.clientY - y0)) }
+  const up = () => { removeEventListener('mousemove', move); removeEventListener('mouseup', up); document.body.style.cursor = '' }
+  document.body.style.cursor = 'ns-resize'
+  addEventListener('mousemove', move); addEventListener('mouseup', up)
+}
 
 const BLOCKS = [
   { v: 'p', label: 'Paragraph' },
@@ -176,7 +191,7 @@ function onPaste(e) {
 function toggle(m) { menu.value = menu.value === m ? null : m; if (m === 'link' || m === 'image') prepInsert(m) }
 function onDocDown(e) { if (menu.value && root.value && !root.value.querySelector('.rte-pop')?.contains(e.target) && !e.target.closest?.('.rte-btn')) menu.value = null }
 
-/* link / image / attach */
+/* link / image */
 const linkUrl = ref(''), linkText = ref(''), imgUrl = ref('')
 const urlEl = ref(null)
 function prepInsert(m) {
@@ -199,7 +214,7 @@ function insertImageUrl() {
   if (!/^https?:/i.test(url)) { toast('An image link needs to start with https:// or http://', 'warn'); return }
   exec('insertImage', url); menu.value = null
 }
-const fileEl = ref(null), attachEl = ref(null)
+const fileEl = ref(null)
 function readImage(file) {
   if (!/^image\/(png|jpe?g|gif|webp)$/.test(file.type)) { toast('Use a PNG, JPG, GIF or WebP image', 'warn'); return }
   if (file.size > 1024 * 1024) { toast('Images up to 1 MB can go in a note', 'warn'); return }
@@ -208,22 +223,25 @@ function readImage(file) {
   r.readAsDataURL(file)
 }
 function onImageFile(e) { const f = e.target.files?.[0]; if (f) readImage(f); e.target.value = '' }
-/* An attachment goes into the note as its NAME — a dashboard note has no file store to
-   link to. An image attachment is placed as the image itself. */
-function onAttach(e) {
-  const f = e.target.files?.[0]; e.target.value = ''
-  if (!f) return
-  if (f.type.startsWith('image/')) { readImage(f); return }
-  const kb = f.size < 1024 * 1024 ? Math.max(1, Math.round(f.size / 1024)) + ' KB' : (f.size / 1048576).toFixed(1) + ' MB'
-  exec('insertHTML', `<b>📎 ${esc(f.name)}</b> (${kb})&nbsp;`)
-}
 const sizeLabel = computed(() => st.value.size || '')
 const blockLabel = computed(() => BLOCKS.find((b) => b.v === st.value.block)?.label || 'Paragraph')
 </script>
 
 <template>
   <div ref="root" class="rte" :class="{ focus: focused }">
-    <!-- the formatting bar: on when T is toggled, or whenever text is selected -->
+    <div class="rte-area">
+      <div
+        ref="el" class="rte-body note-body" contenteditable="true" role="textbox" aria-multiline="true"
+        :style="{ height: bodyH + 'px' }"
+        :data-ph="placeholder" @input="push" @beforeinput="onBeforeInput" @paste="onPaste"
+        @focus="focused = true" @blur="focused = false" @keyup="sync" @mouseup="sync"
+      />
+      <!-- the widget's resize mark; drags the text area taller -->
+      <span class="rte-resize" title="Drag to resize" @mousedown.prevent="startResize" />
+    </div>
+
+    <!-- the formatting bar: on when T is toggled, or whenever text is selected — right
+         above the bottom bar, as the reference stacks them -->
     <div v-if="showFmt" class="rte-fmt" @mousedown.prevent>
       <div class="rte-dd">
         <button class="rte-btn rte-wide" :class="{ open: menu === 'block' }" :title="blockLabel" @mousedown.prevent="toggle('block')">
@@ -287,19 +305,11 @@ const blockLabel = computed(() => BLOCKS.find((b) => b.v === st.value.block)?.la
           </div>
         </div>
       </div>
-      <i class="rte-sep" />
-      <button class="rte-btn" title="Divider line" @mousedown.prevent="exec('insertHorizontalRule')"><Icon name="hr" :size="16" /></button>
     </div>
 
-    <div
-      ref="el" class="rte-body note-body" contenteditable="true" role="textbox" aria-multiline="true"
-      :data-ph="placeholder" @input="push" @beforeinput="onBeforeInput" @paste="onPaste"
-      @focus="focused = true" @blur="focused = false" @keyup="sync" @mouseup="sync"
-    />
 
     <!-- always there: what inserts something, and the T that shows the formatting bar -->
     <div class="rte-foot">
-      <button class="rte-btn" title="Attach a file" @mousedown.prevent="attachEl.click()"><Icon name="attach" :size="16" /></button>
       <div class="rte-dd">
         <button class="rte-btn" :class="{ open: menu === 'image' }" title="Insert image" @mousedown.prevent="toggle('image')"><Icon name="image" :size="16" /></button>
         <div v-if="menu === 'image'" class="rte-pop rte-ins">
@@ -331,7 +341,6 @@ const blockLabel = computed(() => BLOCKS.find((b) => b.v === st.value.block)?.la
       <span class="grow" />
       <span class="rte-count" :class="{ full: count >= max }">{{ count }} / {{ max }}</span>
       <input ref="fileEl" type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden @change="onImageFile" />
-      <input ref="attachEl" type="file" hidden @change="onAttach" />
     </div>
   </div>
 </template>
@@ -339,10 +348,16 @@ const blockLabel = computed(() => BLOCKS.find((b) => b.v === st.value.block)?.la
 <style scoped>
 .rte { position: relative; display: flex; flex-direction: column; border: 1px solid var(--border-control); border-radius: var(--r); background: var(--surface); transition: border-color .15s; }
 .rte.focus { border-color: var(--primary); }
-.rte-body { min-height: 150px; max-height: 320px; overflow: auto; padding: 10px 12px; outline: none; font-size: 13px; color: var(--ink); }
+.rte-area { position: relative; }
+.rte-body { overflow: auto; padding: 10px 12px 18px; outline: none; font-size: 13px; color: var(--ink); }
+/* the same corner mark as a widget's resize handle (DashboardView .resize), shown on hover */
+.rte-resize { position: absolute; right: 3px; bottom: 3px; width: 16px; height: 16px; cursor: ns-resize; opacity: 0; transition: opacity .15s; }
+.rte-resize::after { content: ''; position: absolute; right: 2px; bottom: 2px; width: 6px; height: 6px; border-right: 2px solid var(--muted-2); border-bottom: 2px solid var(--muted-2); border-bottom-right-radius: 2px; }
+.rte:hover .rte-resize, .rte.focus .rte-resize { opacity: 1; }
+.rte-resize:hover::after { border-color: var(--primary); }
 .rte-body:empty::before { content: attr(data-ph); color: var(--placeholder, var(--muted-2)); pointer-events: none; }
 /* one row: the bar has to fit the 480px builder sidebar without wrapping */
-.rte-fmt { display: flex; align-items: center; flex-wrap: nowrap; gap: 1px; padding: 5px 6px; border-bottom: 1px solid var(--border); background: var(--surface-2); border-radius: var(--r) var(--r) 0 0; }
+.rte-fmt { display: flex; align-items: center; flex-wrap: nowrap; gap: 1px; padding: 5px 6px; border-top: 1px solid var(--border); background: var(--surface-2); }
 .rte-foot { display: flex; align-items: center; gap: 2px; padding: 5px 8px; border-top: 1px solid var(--border); }
 .rte-btn { position: relative; flex: none; height: 28px; min-width: 26px; padding: 0 4px; display: inline-flex; align-items: center; justify-content: center; gap: 2px; border: none; border-radius: var(--r); background: transparent; color: var(--ink-2); cursor: pointer; }
 .rte-btn:hover, .rte-btn.open { background: var(--border); color: var(--ink); }
@@ -355,7 +370,8 @@ const blockLabel = computed(() => BLOCKS.find((b) => b.v === st.value.block)?.la
 .rte-bar { width: 16px; height: 3px; border-radius: 1px; }
 .rte-dd { position: relative; }
 .rte-pop { position: absolute; z-index: 40; background: var(--surface); border: 1px solid var(--border-control); border-radius: var(--r-lg); box-shadow: var(--sh-pop); }
-.rte-fmt .rte-pop { top: calc(100% + 6px); left: 0; }
+/* both bars sit at the bottom, so every menu opens UPWARD */
+.rte-fmt .rte-pop { bottom: calc(100% + 6px); left: 0; }
 .rte-foot .rte-pop { bottom: calc(100% + 6px); left: 0; }
 .rte-menu { min-width: 150px; padding: 4px; display: flex; flex-direction: column; }
 .rte-scroll { min-width: 110px; max-height: 240px; overflow: auto; }
