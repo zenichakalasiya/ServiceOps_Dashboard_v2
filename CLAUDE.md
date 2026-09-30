@@ -194,8 +194,9 @@ positioned in viewport coordinates — follow that pattern for any new floating 
 | `data/aiAssistant.js` | Intent routing, tile/fact resolution, and `resolveWidget` (description → configured widget). |
 | `data/freeText.js` | Note content: allowlist sanitiser, markdown-lite upgrade, derived title. |
 | `components/ui/ColorPicker.vue` | Named palette + a custom HSV picker (hue/alpha/hex/RGBA). Teleported to `<body>` and flipped above the field when there is no room below. |
-| `components/dashboard/FormattingHelp.vue` | What the Free Text field accepts, generated from `FT_SYNTAX` and rendered through the real `toNoteHtml()`. |
-| `components/dashboard/NoteEditor.vue` | The old note rich-text editor (contenteditable + execCommand). **Currently unreferenced** — the Free Text builder moved to a markdown field; kept pending a decision on whether WYSIWYG editing comes back. |
+| `components/dashboard/FormattingHelp.vue` | **Unreferenced since 2026-09-30** — the Free Text field is now a rich-text editor (`RichTextEditor.vue`), so the markdown help modal has nothing to explain. |
+| `components/dashboard/NoteEditor.vue` | The OLD note editor — **unreferenced**; superseded by `RichTextEditor.vue` (the builder's Free Text field). |
+| `components/dashboard/RichTextEditor.vue` | The Free Text rich-text editor — see "Free Text is a NOTE" below. |
 | `components/dashboard/TimeRangePopover.vue` | The two-pane date picker for **per-widget and per-group** overrides. NOT the topbar — `TimeFilter.vue` has its own copy of the markup and does not import this. Change one and check the other. |
 | `components/dashboard/CreateDashboardPanel.vue` | The Create / Edit / Clone Dashboard drawer. **Spaced to the Figma frame "Create dashboard — Full form" (`pgE39fu3jbYtHGWus4NAWk`, node `362:12919`), matched text-to-text by pixel measurement (2026-09-29):** 12px side padding, a 50px header over a 1px rule, 12px footer with 30px buttons, 30px controls (64px textarea), section title 18px under the header rule, label→control 2px, field→field 12px, field→section 20px, a 276×36 access switch, a content-hugging access note, toggles aligned to their title. All of it is SCOPED to `.drawer` via `--cd-*` vars — `.dlg-head` / `.dlg-foot` are shared by every dialog. |
 | `components/dashboard/ExportDialog.vue` | Board Export — Image / PDF / Email as PDF. |
@@ -286,22 +287,30 @@ header and in every widget's ⋯ — offers exactly **Image · PDF · Email as P
 no AI summary; the ⋯ floats on hover. Notes are not named — the title is derived from the
 first line.
 
-Content is **markdown**, written in a plain "Text to display" field (600 chars) with a
-**Formatting help** modal beside it. The grammar is `#` / `##`, `**bold**`, `*italic*`,
-`` `code` ``, `-` and `1.` lists, `[label](url)`, a bare URL, and `![alt](url)` — and the
-help modal is GENERATED from `FT_SYNTAX`, rendered through the same `toNoteHtml()` the
-tile uses, so it cannot document a mark the renderer does not support. Older notes are
-rich HTML; `toNoteHtml()` takes either and **allowlist-sanitises** the result (it goes out
-via `v-html`) — one render path, no migration.
+**The builder's Free Text field is a RICH-TEXT EDITOR** (`RichTextEditor.vue`, 2026-09-30,
+built to the user's screenshots) and it is the ONLY Free Text configuration — the markdown
+box, Formatting help, Preset and every presentation setting (font size, alignment,
+vertical alignment, padding, font colour, background) were removed. Its **bottom bar** is
+always there: attach · image · link · **T**; **T** (or any text selection) shows the
+**formatting bar**: block style (Paragraph / Heading 1–3) · B I U · font size (Default,
+8–72) · alignment (Left / Center / Right / Justify) · bulleted / numbered list ·
+background colour · text colour (the 8×7 palette) · divider. **Not** in it, by the user's
+call: table, emoji, undo/redo, templates, knowledge, AI Assist. contenteditable +
+execCommand, no dependency (on-prem). Toolbar buttons act on `mousedown.prevent` so they
+never steal the selection; the link/image popovers save and restore the range. Paste is
+plain text; the 600-character limit is enforced on input. An attached file goes in as its
+name (a note has no file store); an attached or uploaded image is embedded (PNG/JPG/GIF/
+WebP, ≤ 1 MB, as a data URL). Older notes stored as markdown are converted to HTML when
+opened.
 
-It is also the one family that carries **its own presentation**: font size (Auto → 88px),
-horizontal and vertical alignment, padding on/off, font colour and background, plus two
-presets (**Default** a left-aligned note, **Header** a centred full-width banner — a preset
-sets the tile's `span` too). All of it lives on `tile.ft` and resolves through `ftStyle()`
-in `data/freeText.js`, which the builder's live preview and the placed tile both read, so
-a setting cannot mean two things. Because the background is now a per-widget choice, the
-CARD is neutral and `FreeTextTile` paints the colour across the whole body — `.tile.note`
-no longer hardcodes the paper it used to always wear.
+`toNoteHtml()` still takes HTML or markdown and **allowlist-sanitises** it (it goes out via
+`v-html`). The allowlist now also keeps what the editor sets — H1–H4, HR, and a SPAN only as
+a carrier for `font-size` (8–72px), `color` / `background-color` (hex or rgb only), plus
+`text-align` on blocks; `<font color>` / `align=` are converted. Image `src` may be
+http(s) or a `data:image/(png|jpeg|gif|webp)` URL — never SVG (it can carry script).
+
+A note placed before this still carries `tile.ft` (resolved by `ftStyle()`); new notes get
+the defaults, since the builder no longer offers those settings.
 
 ⚠️ `.note-body` headings size in **`em`, not px**: the widget sets its own base font size,
 and pinned pixel headings rendered a `##` heading *smaller* than 16px body text.

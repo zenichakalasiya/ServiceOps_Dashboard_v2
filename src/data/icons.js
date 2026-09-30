@@ -35,9 +35,12 @@ import {
   MonitorSmartphone, Shield, Boxes, PanelLeftOpen, PanelLeftClose, Bold, Italic, Underline,
   Strikethrough, Highlighter, Heading, Quote, Code, ListOrdered, IndentIncrease,
   IndentDecrease, RemoveFormatting, StickyNote, SlidersHorizontal, ChevronsUpDown, CircleCheck,
+  Type, ALargeSmall, AlignJustify, Baseline, Minus,
 } from 'lucide-vue-next'
 
 export const ICON_MAP = {
+  // the Free Text rich-text editor's toolbar
+  'text-type': Type, 'text-size': ALargeSmall, 'align-justify': AlignJustify, 'text-color': Baseline, 'hr': Minus,
   plus: Plus, search: Search, star: Star, 'star-fill': Star,
   folder: Folder, 'folder-open': FolderOpen, clock: Clock, refresh: RefreshCw,
   share: Share2, link: Link, copy: Copy, edit: Pencil, trash: Trash2,

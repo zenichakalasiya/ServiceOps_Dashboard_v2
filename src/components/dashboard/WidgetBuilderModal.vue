@@ -3,18 +3,16 @@ import { reactive, computed, ref, watch } from 'vue'
 import Icon from '../ui/Icon.vue'
 import ChartIcon from '../ui/ChartIcon.vue'
 import Dropdown from '../ui/Dropdown.vue'
-import ColorPicker from '../ui/ColorPicker.vue'
 import DateRangePicker from '../ui/DateRangePicker.vue'
 import ChartTile from './ChartTile.vue'
 import MeasureConditions from './MeasureConditions.vue'
 import FreeTextTile from './FreeTextTile.vue'
 import EmptyPreviewArt from '../ui/EmptyPreviewArt.vue'
 import { previewKind, previewTitle } from '../../data/previewArt.js'
-import FormattingHelp from './FormattingHelp.vue'
+import RichTextEditor from './RichTextEditor.vue'
 import Hint from '../ui/Hint.vue'
 import {
-  noteTitle, noteIsEmpty, ftPresetOf,
-  FT_SIZES, FT_COLORS, FT_BGS, FT_ALIGNS, FT_VALIGNS, FT_PRESETS, FT_DEFAULTS,
+  noteTitle, noteIsEmpty, FT_DEFAULTS,
 } from '../../data/freeText.js'
 import { store, toast } from '../../store/index.js'
 import { chart as mkChart, kpi as mkKpi, shortcut as mkShortcut, text as mkText, ACCESS } from '../../data/mock.js'
@@ -152,23 +150,6 @@ const isShortcut = computed(() => curType.value.type === 'shortcut')
 const isText = computed(() => curType.value.type === 'text')
 const ctaLabel = computed(() => (isChart.value ? 'Widget' : curType.value.label))
 
-/* ── Free Text presentation ───────────────────────────────────────────────────────
- * The option lists come from data/freeText.js — the same module the tile renders
- * through — so the builder cannot offer a size, colour or background the renderer does
- * not understand. Only the label/swatch shaping for our Dropdown happens here. */
-const FT_SIZE_OPTS = FT_SIZES.map((s) => ({ value: s.id, label: s.id }))
-// Tabler-style glyphs; the horizontal trio is our own align set
-const VALIGN_ICON = { top: 'align-top', middle: 'align-middle', bottom: 'align-bottom' }
-
-const helpOpen = ref(false)
-const activePreset = computed(() => ftPresetOf(cfg.ft))
-/* A preset writes the fields and nothing else — `span` is the tile's width, which is why
- * it is applied at save time rather than here (see the `w` it sets in `build`). */
-function applyPreset(p) {
-  Object.assign(cfg.ft, p.cfg)
-  cfg.ftSpan = p.span
-  toast(`Preset “${p.label}” applied — every option is still editable`)
-}
 function switchType(t) {
   if (typeBlock(t)) return
   // a note is filed under its own first line, so it never carries a placeholder name —
@@ -885,68 +866,13 @@ function save(place) {
                    from this builder's own vocabulary: pill rows, our Dropdown, our field
                    labels — nothing bespoke, so a Free Text widget is configured the same
                    way as everything else on this screen. -->
+              <!-- Free Text (2026-09-30, user's call): ONE rich-text field and nothing else. The
+                   markdown box, Formatting help, the Preset and every presentation setting
+                   (font size, alignment, vertical alignment, padding, colours) are gone — the
+                   editor's own toolbar formats the text itself. -->
               <div v-if="isText" class="sec">
-                <div class="q-head">
-                  <div class="sec-h" style="margin:0">Text to display <i class="req">*</i></div>
-                  <button class="btn btn-sm" @click="helpOpen = true"><Icon name="info" :size="14" /> Formatting help</button>
-                </div>
-                <textarea
-                  v-model="cfg.content" class="ft-ta" maxlength="600" rows="5"
-                  placeholder="Enter the text — markdown is supported"
-                />
-                <p class="hint ft-count">{{ (cfg.content || '').length }} / 600</p>
-
-                <!-- Two starting points, not two modes: a preset writes the same fields
-                     the controls below write, so everything stays editable after. -->
-                <div class="fld">
-                  <label>Preset</label>
-                  <div class="seg">
-                    <button
-                      v-for="p in FT_PRESETS" :key="p.id" class="seg-b"
-                      :class="{ on: activePreset === p.id }" @click="applyPreset(p)"
-                    >{{ p.label }}</button>
-                  </div>
-                </div>
-
-                <div class="ft-grid">
-                  <div class="fld">
-                    <label>Font size</label>
-                    <Dropdown v-model="cfg.ft.size" :options="FT_SIZE_OPTS" />
-                  </div>
-                  <div class="fld">
-                    <label>Alignment</label>
-                    <div class="seg">
-                      <button
-                        v-for="a in FT_ALIGNS" :key="a" class="seg-b ft-ic"
-                        :class="{ on: cfg.ft.align === a }" :title="'Align ' + a" @click="cfg.ft.align = a"
-                      ><Icon :name="'align-' + a" :size="15" /></button>
-                    </div>
-                  </div>
-                  <div class="fld">
-                    <label>Vertical alignment</label>
-                    <div class="seg">
-                      <button
-                        v-for="v in FT_VALIGNS" :key="v" class="seg-b ft-ic"
-                        :class="{ on: cfg.ft.valign === v }" :title="'Align ' + v" @click="cfg.ft.valign = v"
-                      ><Icon :name="VALIGN_ICON[v]" :size="15" /></button>
-                    </div>
-                  </div>
-                  <div class="fld">
-                    <label>Padding</label>
-                    <div class="seg">
-                      <button class="seg-b" :class="{ on: cfg.ft.pad !== false }" @click="cfg.ft.pad = true">On</button>
-                      <button class="seg-b" :class="{ on: cfg.ft.pad === false }" @click="cfg.ft.pad = false">None</button>
-                    </div>
-                  </div>
-                  <div class="fld">
-                    <label>Font colour</label>
-                    <ColorPicker v-model="cfg.ft.color" :options="FT_COLORS" />
-                  </div>
-                  <div class="fld">
-                    <label>Background</label>
-                    <ColorPicker v-model="cfg.ft.bg" :options="FT_BGS" />
-                  </div>
-                </div>
+                <div class="sec-h">Text to display <i class="req">*</i></div>
+                <RichTextEditor v-model="cfg.content" :max="600" />
               </div>
 
               <!-- Data Configuration -->
@@ -1083,7 +1009,6 @@ function save(place) {
 
   <!-- What the Free Text field accepts. Generated from the same list the renderer
        implements, so it cannot document a mark that does nothing. -->
-  <FormattingHelp v-if="helpOpen" @close="helpOpen = false" />
 </template>
 
 <style scoped>
@@ -1267,28 +1192,7 @@ function save(place) {
 .sec-h { font-weight: 500; font-size: 14px; color: var(--cfg-title); margin-bottom: 8px; }
 /* heading and its action on one line, the action right-aligned */
 .q-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
-/* ── Free Text ── */
-/* block, not the default inline-block: an inline textarea leaves a line-box gap under it,
-   which pushed the character counter 8px away instead of the sidebar's 2px */
-.ft-ta {
-  display: block; width: 100%; min-height: 104px; resize: vertical; padding: 10px 12px;
-  border: 1px solid var(--border-strong); border-radius: var(--r); background: var(--surface);
-  color: var(--ink); font-size: 13px; line-height: 1.55; outline: none;
-}
-.ft-ta:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
-/* right-aligned, so the count sits under the field's own right edge rather than reading
-   as a caption for the label on the left */
-.ft-count { text-align: right; margin-top: 0; }
-/* ONE control per row, like every other field in this panel. Two columns was tried and
-   it put Font size beside Alignment — two unrelated questions sharing a line, each
-   half-width, and the eye had to scan in two directions to read one section. */
-.ft-grid { display: flex; flex-direction: column; gap: 16px; margin-top: 0; }
-.ft-grid .fld { margin-bottom: 0; }
-/* A SQUARE target with the glyph centred in it, sized to the 32px control height the rest
-   of the builder uses — the icons were 15px marks in a stretched strip, which read as
-   cramped next to the 36px fields above them. `flex: none` keeps them square rather than
-   letting the row stretch them into slabs. */
-.seg-b.ft-ic { flex: none; width: 28px; height: 24px; display: grid; place-items: center; padding: 0; }
+/* ── Free Text: the field is RichTextEditor.vue, which owns its own styles ── */
 /* a heading that OWNS the line under it sits tight to it — 12px of air between a title
    and its own description reads as two separate things */
 .sec-h:has(+ .hint) { margin-bottom: 2px; }

@@ -52,13 +52,15 @@ export function parseFreeText(content) {
 
 /* ── sanitising ────────────────────────────────────────────────────────────────── */
 
-// Structure and emphasis only. No sizing, no colour, no positioning — a note inherits
-// the board's type scale so it cannot be styled into something that isn't a note.
+// Structure and emphasis, plus what the rich-text editor sets (2026-09-30): Heading 1–3,
+// a divider, and — as a narrow STYLE allowlist, see keepStyle() — font size, text colour,
+// highlight colour and alignment. Nothing else survives: no positioning, no widths, no
+// fonts, no classes, no event handlers.
 const ALLOWED = new Set([
-  'P', 'BR', 'DIV',
+  'P', 'BR', 'DIV', 'SPAN', 'HR',
   'B', 'STRONG', 'I', 'EM', 'U', 'S', 'MARK', 'CODE',
   'UL', 'OL', 'LI',
-  'H3', 'H4', 'BLOCKQUOTE',
+  'H1', 'H2', 'H3', 'H4', 'BLOCKQUOTE',
   'A',
   /* IMG is allowed because `![alt](url)` is part of the grammar the Formatting-help
      modal documents. It is the one tag here that makes the browser FETCH something, so
@@ -68,8 +70,35 @@ const ALLOWED = new Set([
 ])
 // tags that mean the same as an allowed one — normalised rather than dropped, because
 // execCommand and pasted markup both produce these
-const ALIAS = { STRIKE: 'S', DEL: 'S', FONT: 'SPAN', H1: 'H3', H2: 'H3', H5: 'H4', H6: 'H4', PRE: 'CODE' }
+const ALIAS = { STRIKE: 'S', DEL: 'S', FONT: 'SPAN', H5: 'H4', H6: 'H4', PRE: 'CODE' }
 const SAFE_URL = /^(https?:|mailto:)/i
+// an image the editor embedded from the viewer's own disk — image types only, never
+// data:text/html or data:image/svg+xml (an SVG can carry script)
+const SAFE_IMG_DATA = /^data:image\/(png|jpe?g|gif|webp);base64,[a-z0-9+/=\s]+$/i
+
+/* The ONLY inline styles a note keeps, each with a value pattern it must match. */
+const COLOR_RE = /^(#[0-9a-f]{3,8}|rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*(0|1|0?\.\d+)\s*)?\))$/i
+const INLINE_STYLE = {
+  'font-size': (v) => { const m = /^(\d{1,2})px$/.exec(v); return m && +m[1] >= 8 && +m[1] <= 72 },
+  color: (v) => COLOR_RE.test(v),
+  'background-color': (v) => COLOR_RE.test(v),
+}
+const BLOCK_STYLE = { 'text-align': (v) => /^(left|center|right|justify)$/.test(v) }
+const ALIGNABLE = new Set(['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'LI', 'BLOCKQUOTE'])
+function keepStyle(el, font) {
+  const rules = el.tagName === 'SPAN' ? INLINE_STYLE : ALIGNABLE.has(el.tagName) ? BLOCK_STYLE : null
+  if (!rules) return ''
+  const out = []
+  // <font color> and align="" arrive as attributes from execCommand — read them as styles
+  if (font?.color && rules.color) out.push(['color', font.color])
+  if (font?.align && rules['text-align']) out.push(['text-align', font.align.toLowerCase()])
+  for (const decl of (el.getAttribute('style') || '').split(';')) {
+    const i = decl.indexOf(':'); if (i < 0) continue
+    const prop = decl.slice(0, i).trim().toLowerCase(), val = decl.slice(i + 1).trim().toLowerCase()
+    if (rules[prop]) out.push([prop, val])
+  }
+  return out.filter(([p, v]) => rules[p](v)).map(([p, v]) => `${p}: ${v}`).join('; ')
+}
 
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
@@ -97,6 +126,8 @@ function clean(node) {
     }
 
     let el = child
+    // attributes an alias would lose: <font color="…"> and align="…"
+    const legacy = { color: child.getAttribute('color'), align: child.getAttribute('align') }
     const alias = ALIAS[tag]
     if (alias) {
       // rename in place, carrying the children across
@@ -114,10 +145,14 @@ function clean(node) {
     const href = el.tagName === 'A' ? (el.getAttribute('href') || '').trim() : ''
     const src = el.tagName === 'IMG' ? (el.getAttribute('src') || '').trim() : ''
     const alt = el.tagName === 'IMG' ? (el.getAttribute('alt') || '') : ''
+    const style = keepStyle(el, legacy)
     for (const attr of [...el.attributes]) el.removeAttribute(attr.name)
+    // a span is only ever a carrier for a kept style — without one it is noise
+    if (el.tagName === 'SPAN' && !style) { clean(el); unwrap(el); continue }
+    if (style) el.setAttribute('style', style)
     if (el.tagName === 'IMG') {
       // an image we won't load is nothing at all — it has no text to keep
-      if (!SAFE_URL.test(src)) { el.remove(); continue }
+      if (!SAFE_URL.test(src) && !SAFE_IMG_DATA.test(src)) { el.remove(); continue }
       el.setAttribute('src', src)
       el.setAttribute('alt', alt)
       el.setAttribute('loading', 'lazy')
@@ -142,9 +177,9 @@ function clean(node) {
  * side of every list. They are invisible in the editor and stack up as blank lines in
  * the placed tile, so they go here. A <p><br></p> is NOT empty: that is a blank line
  * somebody typed on purpose. */
-const BLOCKS = new Set(['P', 'H3', 'H4', 'BLOCKQUOTE'])
+const BLOCKS = new Set(['P', 'H1', 'H2', 'H3', 'H4', 'BLOCKQUOTE'])
 function dropEmptyBlocks(root) {
-  for (const el of [...root.querySelectorAll('p, h3, h4, blockquote')]) {
+  for (const el of [...root.querySelectorAll('p, h1, h2, h3, h4, blockquote')]) {
     if (!BLOCKS.has(el.tagName)) continue
     if (!el.childNodes.length && !el.textContent.trim()) el.remove()
   }
