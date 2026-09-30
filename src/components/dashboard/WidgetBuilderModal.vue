@@ -713,7 +713,7 @@ function save(place) {
                        and at 14 it read as a fifth row of the Chart Type control. -->
                   <!-- 2026-09-24 Figma: two outlined chips, the chosen one edged near-black
                        with a check — not the segmented track -->
-                  <div class="sec-h dm-head">Data source</div>
+                  <div class="sec-h dm-head dm-title">Data source</div>
                   <!-- DEMO: which Manual / Query design is live — A cards · D banner (store.ui.modeUi) -->
                   <div class="dm-demo" title="Prototype only — compare the two designs">
                     <span>Demo · switch UI</span>
@@ -728,7 +728,7 @@ function save(place) {
                    rendering as an unlabelled pair of tabs floating between Visibility and
                    Axes. It asks how the data is FETCHED, so it says so. -->
               <div v-else-if="!isShortcut && !isText" class="sec">
-                <div class="sec-h">Data source</div>
+                <div class="sec-h dm-title">Data source</div>
                 <!-- DEMO: which Manual / Query design is live — A cards · D banner (store.ui.modeUi) -->
                 <div class="dm-demo" title="Prototype only — compare the two designs">
                   <span>Demo · switch UI</span>
@@ -1258,6 +1258,9 @@ function save(place) {
 /* Manual / Query Based is DataModeSwitch.vue. Its heading sits 32px under the Chart Type tiles — a different question (how the data
    is fetched, not how it is drawn). */
 .dm-head { margin-top: 32px; }
+/* 2px larger and 200 heavier than a section title (16/700, not 14/500) — it heads the choice
+   that decides every field below it (user, 2026-09-30) */
+.sec-h.dm-title { font-size: 16px; font-weight: 700; }
 /* the section the switch ends is 6px tighter (18, not 24) so the first field under it —
    Axes, or Query — reads as belonging to the chosen mode (user, 2026-09-30) */
 .sec:has(> .dm-cards, > .dm-banner) { padding-bottom: 18px; }
