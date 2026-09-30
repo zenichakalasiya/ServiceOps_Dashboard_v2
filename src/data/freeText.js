@@ -76,8 +76,11 @@ const SAFE_URL = /^(https?:|mailto:)/i
 // data:text/html or data:image/svg+xml (an SVG can carry script)
 const SAFE_IMG_DATA = /^data:image\/(png|jpe?g|gif|webp);base64,[a-z0-9+/=\s]+$/i
 
-/* The ONLY inline styles a note keeps, each with a value pattern it must match. */
-const COLOR_RE = /^(#[0-9a-f]{3,8}|rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*(0|1|0?\.\d+)\s*)?\))$/i
+/* The ONLY inline styles a note keeps, each with a value pattern it must match. A colour
+   is a literal (#hex / rgb / rgba — the editor's Custom) or one of the editor's NAMED
+   colours, stored as a theme token so it follows light/dark: `var(--red)`, or a highlight
+   wash `color-mix(in srgb, var(--red) 24%, transparent)`. Only these tokens pass. */
+const COLOR_RE = /^(#[0-9a-f]{3,8}|rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*(0|1|0?\.\d+)\s*)?\)|var\(--(ink|muted|green|primary|amber|orange|red)\)|color-mix\(in srgb, var\(--(muted|green|primary|amber|orange|red)\) \d{1,2}%, transparent\))$/i
 const INLINE_STYLE = {
   'font-size': (v) => { const m = /^(\d{1,2})px$/.exec(v); return m && +m[1] >= 8 && +m[1] <= 72 },
   color: (v) => COLOR_RE.test(v),
@@ -377,6 +380,19 @@ export const FT_BGS = [
   { id: 'Yellow', css: 'color-mix(in srgb, var(--amber) 16%, var(--surface))' },
   { id: 'Orange', css: 'color-mix(in srgb, var(--orange) 14%, var(--surface))' },
   { id: 'Red', css: 'color-mix(in srgb, var(--red) 12%, var(--surface))' },
+]
+
+/* The rich-text editor's HIGHLIGHT (background) colours — a wash of each colour over
+   whatever the note wears, so text on it stays readable in both themes. Default removes
+   the highlight; its chip is the plain surface. Text colours are FT_COLORS above. */
+export const NOTE_HL = [
+  { id: 'Default', css: '', swatch: 'var(--surface)' },
+  { id: 'Gray', css: 'color-mix(in srgb, var(--muted) 22%, transparent)' },
+  { id: 'Green', css: 'color-mix(in srgb, var(--green) 24%, transparent)' },
+  { id: 'Blue', css: 'color-mix(in srgb, var(--primary) 22%, transparent)' },
+  { id: 'Yellow', css: 'color-mix(in srgb, var(--amber) 30%, transparent)' },
+  { id: 'Orange', css: 'color-mix(in srgb, var(--orange) 24%, transparent)' },
+  { id: 'Red', css: 'color-mix(in srgb, var(--red) 20%, transparent)' },
 ]
 
 export const FT_ALIGNS = ['left', 'center', 'right']

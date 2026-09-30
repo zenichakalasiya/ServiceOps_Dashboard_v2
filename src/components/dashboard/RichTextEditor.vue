@@ -26,7 +26,8 @@
  */
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import Icon from '../ui/Icon.vue'
-import { toNoteHtml, noteText } from '../../data/freeText.js'
+import ColorPanel from '../ui/ColorPanel.vue'
+import { toNoteHtml, noteText, FT_COLORS, NOTE_HL } from '../../data/freeText.js'
 import { toast } from '../../store/index.js'
 
 const props = defineProps({
@@ -69,18 +70,13 @@ const ALIGNS = [
   { v: 'Right', icon: 'align-right' },
   { v: 'Full', label: 'Justify', icon: 'align-justify' },
 ]
-/* the colour grid, as the screenshots draw it: greys, vivid, then five tint/shade rows */
-const PALETTE = [
-  ['#000000', '#434343', '#666666', '#999999', '#cccccc', '#efefef', '#f3f3f3', '#ffffff'],
-  ['#ff0000', '#ff9900', '#ffff00', '#00ff00', '#00ffff', '#0000ff', '#9900ff', '#ff00ff'],
-  ['#f4cccc', '#fce5cd', '#fff2cc', '#d9ead3', '#d0e0e3', '#cfe2f3', '#d9d2e9', '#ead1dc'],
-  ['#ea9999', '#f9cb9c', '#ffe599', '#b6d7a8', '#a2c4c9', '#9fc5e8', '#b4a7d6', '#d5a6bd'],
-  ['#e06666', '#f6b26b', '#ffd966', '#93c47d', '#76a5af', '#6fa8dc', '#8e7cc3', '#c27ba0'],
-  ['#cc0000', '#e69138', '#f1c232', '#6aa84f', '#45818e', '#3d85c6', '#674ea7', '#a64d79'],
-  ['#990000', '#b45f06', '#bf9000', '#38761d', '#134f5c', '#0b5394', '#351c75', '#741b47'],
-]
-const bgColor = ref('#ffff00')    // the last-used colours, shown as the underline bars
-const fgColor = ref('#cc0000')
+/* Text and background colour open ColorPanel (the user's screenshot): the named colours
+   first — stored as theme tokens, so a red note stays red-for-this-theme — then Custom.
+   The last colour chosen for each shows as the bar under its button. */
+const COLORS = { fg: FT_COLORS, bg: NOTE_HL }
+const colorSel = ref({ fg: 'Default', bg: 'Default' })
+const colorBtn = ref({ fg: null, bg: null })
+const barOf = (k) => { const v = colorSel.value[k], o = COLORS[k].find((x) => x.id === v); return o ? (o.css || 'var(--border-strong)') : v }
 
 const showFmt = computed(() => fmtOn.value || hasSel.value || !!menu.value && menu.value !== 'link' && menu.value !== 'image')
 
@@ -150,10 +146,33 @@ function exec(cmd, val = null, css = false) {
 }
 function setBlock(v) { exec('formatBlock', `<${v}>`); menu.value = null }
 function setAlign(v) { exec('justify' + v); menu.value = null }
-function setColor(kind, c) {
-  if (kind === 'bg') bgColor.value = c; else fgColor.value = c
-  exec(kind === 'bg' ? 'hiliteColor' : 'foreColor', c, true)
+/* A literal (Custom) goes straight through execCommand. A NAMED colour can't — the browser
+   rejects var() there — so a sentinel colour marks the selection first, and every marked
+   span then gets the token instead (or loses the colour, for Default). */
+const MARK = { fg: '#010203', bg: '#010204' }
+const MARK_RGB = { fg: 'rgb(1, 2, 3)', bg: 'rgb(1, 2, 4)' }
+function setColor(kind, v) {
   menu.value = null
+  colorSel.value = { ...colorSel.value, [kind]: v }
+  const cmd = kind === 'bg' ? 'hiliteColor' : 'foreColor'
+  const named = COLORS[kind].find((o) => o.id === v)
+  if (!named) { exec(cmd, v, true); return }
+  exec(cmd, MARK[kind], true)
+  const prop = kind === 'bg' ? 'backgroundColor' : 'color'
+  const css = v === 'Default' ? '' : named.css
+  // execCommand may still write <font color> for text colour — turn those into spans
+  for (const f of [...el.value.querySelectorAll('font[color]')]) {
+    if (f.getAttribute('color').toLowerCase() !== MARK.fg) continue
+    const span = document.createElement('span'); span.style.color = MARK_RGB.fg
+    while (f.firstChild) span.appendChild(f.firstChild)
+    f.replaceWith(span)
+  }
+  for (const n of [...el.value.querySelectorAll('[style]')]) {
+    if (n.style[prop] !== MARK_RGB[kind]) continue
+    n.style[prop] = css
+    if (!n.getAttribute('style') && n.tagName === 'SPAN') { while (n.firstChild) n.parentNode.insertBefore(n.firstChild, n); n.remove() }
+  }
+  sync(); push()
 }
 /* execCommand's fontSize only speaks 1–7, so: mark the selection with size 7, then swap
    every marker for a span carrying the real pixel size (or unwrap it for Default). */
@@ -189,7 +208,8 @@ function onPaste(e) {
 
 /* ── menus ───────────────────────────────────────────────────────────────────── */
 function toggle(m) { menu.value = menu.value === m ? null : m; if (m === 'link' || m === 'image') prepInsert(m) }
-function onDocDown(e) { if (menu.value && root.value && !root.value.querySelector('.rte-pop')?.contains(e.target) && !e.target.closest?.('.rte-btn')) menu.value = null }
+// the colour panel is teleported to <body>, so it is outside root — a click in it is still ours
+function onDocDown(e) { if (menu.value && root.value && !root.value.querySelector('.rte-pop')?.contains(e.target) && !e.target.closest?.('.rte-btn, .cpx')) menu.value = null }
 
 /* link / image */
 const linkUrl = ref(''), linkText = ref(''), imgUrl = ref('')
@@ -279,32 +299,18 @@ const blockLabel = computed(() => BLOCKS.find((b) => b.v === st.value.block)?.la
       <button class="rte-btn" :class="{ on: st.ul }" title="Bulleted list" @mousedown.prevent="exec('insertUnorderedList')"><Icon name="list-bullet" :size="16" /></button>
       <button class="rte-btn" :class="{ on: st.ol }" title="Numbered list" @mousedown.prevent="exec('insertOrderedList')"><Icon name="list-number" :size="16" /></button>
       <i class="rte-sep" />
-      <div class="rte-dd">
-        <button class="rte-btn rte-col" :class="{ open: menu === 'bg' }" title="Background color" @mousedown.prevent="toggle('bg')">
-          <Icon name="highlight" :size="16" /><i class="rte-bar" :style="{ background: bgColor }" />
-        </button>
-        <div v-if="menu === 'bg'" class="rte-pop rte-pal">
-          <div class="rte-pal-t">Background color</div>
-          <div v-for="(row, r) in PALETTE" :key="r" class="rte-row">
-            <button v-for="c in row" :key="c" class="rte-sw" :style="{ background: c }" :title="c" @mousedown.prevent="setColor('bg', c)">
-              <Icon v-if="c === bgColor" name="check" :size="12" />
-            </button>
-          </div>
-        </div>
-      </div>
-      <div class="rte-dd">
-        <button class="rte-btn rte-col" :class="{ open: menu === 'fg' }" title="Text color" @mousedown.prevent="toggle('fg')">
-          <Icon name="text-color" :size="16" /><i class="rte-bar" :style="{ background: fgColor }" />
-        </button>
-        <div v-if="menu === 'fg'" class="rte-pop rte-pal">
-          <div class="rte-pal-t">Text color</div>
-          <div v-for="(row, r) in PALETTE" :key="r" class="rte-row">
-            <button v-for="c in row" :key="c" class="rte-sw" :style="{ background: c }" :title="c" @mousedown.prevent="setColor('fg', c)">
-              <Icon v-if="c === fgColor" name="check" :size="12" />
-            </button>
-          </div>
-        </div>
-      </div>
+      <button
+        :ref="(e) => (colorBtn.bg = e)" class="rte-btn rte-col" :class="{ open: menu === 'bg' }" title="Background colour"
+        @mousedown.prevent="toggle('bg')"
+      ><Icon name="highlight" :size="16" /><i class="rte-bar" :style="{ background: barOf('bg') }" /></button>
+      <button
+        :ref="(e) => (colorBtn.fg = e)" class="rte-btn rte-col" :class="{ open: menu === 'fg' }" title="Text colour"
+        @mousedown.prevent="toggle('fg')"
+      ><Icon name="text-color" :size="16" /><i class="rte-bar" :style="{ background: barOf('fg') }" /></button>
+      <ColorPanel
+        v-if="menu === 'fg' || menu === 'bg'" :key="menu" :model-value="colorSel[menu]" :options="COLORS[menu]"
+        :anchor="colorBtn[menu]" @pick="(v) => setColor(menu, v)" @close="menu = null"
+      />
     </div>
 
 
@@ -382,15 +388,6 @@ const blockLabel = computed(() => BLOCKS.find((b) => b.v === st.value.block)?.la
 .rte-mi.bk-h1 { font-size: 20px; font-weight: 600; }
 .rte-mi.bk-h2 { font-size: 17px; font-weight: 600; }
 .rte-mi.bk-h3 { font-size: 15px; font-weight: 600; }
-/* the colour grids sit at the bar's right end, so they open right-aligned to stay inside the panel */
-.rte-fmt .rte-pal { left: auto; right: -40px; }
-.rte-pal { padding: 10px 12px 12px; }
-.rte-pal-t { font-size: 13px; color: var(--ink); margin-bottom: 8px; }
-.rte-row { display: flex; gap: 4px; margin-top: 4px; }
-.rte-row:nth-child(3) { margin-bottom: 6px; }
-.rte-sw { width: 22px; height: 22px; padding: 0; border: 1px solid rgba(0, 0, 0, .08); border-radius: 3px; display: grid; place-items: center; cursor: pointer; color: #fff; }
-.rte-sw:hover { transform: scale(1.1); }
-.rte-sw :deep(.ico) { filter: drop-shadow(0 0 1px rgba(0, 0, 0, .7)); }
 .rte-ins { width: 280px; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
 .rte-lbl { font-size: 12px; color: var(--ink-2); }
 .rte-ins .input { height: 30px; font-size: 12px; }

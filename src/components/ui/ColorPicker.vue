@@ -21,6 +21,7 @@
  */
 import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
 import Icon from './Icon.vue'
+import { isHex, hsvToRgb, rgbToHex, hexToHsv } from '../../data/color.js'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -35,7 +36,6 @@ const open = ref(false)
 const btn = ref(null)
 const pos = ref({ top: 0, left: 0 })
 
-const isHex = (v) => /^#[0-9a-f]{3,8}$/i.test(String(v || ''))
 const current = computed(() => props.options.find((o) => o.id === props.modelValue))
 const label = computed(() => (current.value ? current.value.id : isHex(props.modelValue) ? 'Custom' : props.modelValue || 'Select'))
 const swatch = computed(() => (current.value ? current.value.css : props.modelValue))
@@ -44,31 +44,6 @@ const swatch = computed(() => (current.value ? current.value.css : props.modelVa
 const hsv = ref({ h: 210, s: 0.5, v: 0.9 })
 const alpha = ref(1)
 const hexIn = ref('#7fa8d9')
-
-function hsvToRgb(h, s, v) {
-  const c = v * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = v - c
-  const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x]
-    : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x]
-  return { r: Math.round((r + m) * 255), g: Math.round((g + m) * 255), b: Math.round((b + m) * 255) }
-}
-function rgbToHex({ r, g, b }) {
-  return '#' + [r, g, b].map((n) => n.toString(16).padStart(2, '0')).join('')
-}
-function hexToHsv(hex) {
-  const h = hex.replace('#', '')
-  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h.slice(0, 6)
-  const r = parseInt(full.slice(0, 2), 16) / 255
-  const g = parseInt(full.slice(2, 4), 16) / 255
-  const b = parseInt(full.slice(4, 6), 16) / 255
-  const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min
-  let hh = 0
-  if (d) {
-    if (max === r) hh = 60 * (((g - b) / d) % 6)
-    else if (max === g) hh = 60 * ((b - r) / d + 2)
-    else hh = 60 * ((r - g) / d + 4)
-  }
-  return { h: (hh + 360) % 360, s: max ? d / max : 0, v: max }
-}
 
 const rgb = computed(() => hsvToRgb(hsv.value.h, hsv.value.s, hsv.value.v))
 const hex = computed(() => rgbToHex(rgb.value))
