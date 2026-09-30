@@ -10,6 +10,7 @@ import FreeTextTile from './FreeTextTile.vue'
 import EmptyPreviewArt from '../ui/EmptyPreviewArt.vue'
 import { previewKind, previewTitle } from '../../data/previewArt.js'
 import RichTextEditor from './RichTextEditor.vue'
+import DataModeSwitch from './DataModeSwitch.vue'
 import Hint from '../ui/Hint.vue'
 import {
   noteTitle, noteIsEmpty, FT_DEFAULTS, FT_PRESETS, ftPresetOf,
@@ -192,12 +193,6 @@ const legendHint = computed(() => {
   return `Out of every entry in the legend, only the ${n} with the ${which} values are drawn. The rest are left off the chart.`
 })
 
-const modeHint = computed(() => {
-  if (queryMode.value) return 'Write the query that returns this widget’s data.'
-  if (isKpi.value) return 'A KPI counts the records that match your conditions.'
-  if (isShortcut.value) return 'A Shortcut lists the records that match your conditions.'
-  return 'The chart plots the records that match your conditions.'
-})
 
 const queryMode = computed(() => isShortcut.value || (!isShortcut.value && cfg.mode === 'query'))
 const manualMode = computed(() => !isShortcut.value && cfg.mode === 'manual')
@@ -718,11 +713,14 @@ function save(place) {
                        and at 14 it read as a fifth row of the Chart Type control. -->
                   <!-- 2026-09-24 Figma: two outlined chips, the chosen one edged near-black
                        with a check — not the segmented track -->
-                  <div class="mode-row" style="margin-top:32px">
-                    <button class="mode-b" :class="{ on: cfg.mode==='manual' }" @click="cfg.mode='manual'">Manual <Icon v-if="cfg.mode==='manual'" name="check-circle" :size="13" /></button>
-                    <button class="mode-b" :class="{ on: cfg.mode==='query' }" @click="cfg.mode='query'">Query Based <Icon v-if="cfg.mode==='query'" name="check-circle" :size="13" /></button>
+                  <div class="sec-h dm-head">Data source</div>
+                  <!-- DEMO: which Manual / Query design is live — A cards · D banner (store.ui.modeUi) -->
+                  <div class="dm-demo" title="Prototype only — compare the two designs">
+                    <span>Demo · switch UI</span>
+                    <button :class="{ on: store.ui.modeUi !== 'banner' }" @click="store.ui.modeUi = 'cards'">A · Cards</button>
+                    <button :class="{ on: store.ui.modeUi === 'banner' }" @click="store.ui.modeUi = 'banner'">D · Banner</button>
                   </div>
-                  <p class="hint">{{ modeHint }}</p>
+                  <DataModeSwitch v-model="cfg.mode" :variant="store.ui.modeUi === 'banner' ? 'banner' : 'cards'" :subject="isKpi ? 'KPI' : 'chart'" />
                 </template>
               </div>
               <!-- families without a chart type still need the Manual / Query switch -->
@@ -731,10 +729,13 @@ function save(place) {
                    Axes. It asks how the data is FETCHED, so it says so. -->
               <div v-else-if="!isShortcut && !isText" class="sec">
                 <div class="sec-h">Data source</div>
-                <div class="mode-row">
-                  <button class="mode-b" :class="{ on: cfg.mode==='manual' }" @click="cfg.mode='manual'">Manual <Icon v-if="cfg.mode==='manual'" name="check-circle" :size="13" /></button>
-                  <button class="mode-b" :class="{ on: cfg.mode==='query' }" @click="cfg.mode='query'">Query Based <Icon v-if="cfg.mode==='query'" name="check-circle" :size="13" /></button>
+                <!-- DEMO: which Manual / Query design is live — A cards · D banner (store.ui.modeUi) -->
+                <div class="dm-demo" title="Prototype only — compare the two designs">
+                  <span>Demo · switch UI</span>
+                  <button :class="{ on: store.ui.modeUi !== 'banner' }" @click="store.ui.modeUi = 'cards'">A · Cards</button>
+                  <button :class="{ on: store.ui.modeUi === 'banner' }" @click="store.ui.modeUi = 'banner'">D · Banner</button>
                 </div>
+                <DataModeSwitch v-model="cfg.mode" :variant="store.ui.modeUi === 'banner' ? 'banner' : 'cards'" :subject="isKpi ? 'KPI' : 'chart'" />
               </div>
 
               <!-- Query — Shortcuts always; Widget/KPI when "Query Based" tab is active -->
@@ -1143,7 +1144,7 @@ function save(place) {
    12px it briefly had above Axes is gone */
 .sec { padding-bottom: 24px; margin-bottom: 0; border-bottom: none; }
 /* every other line of text in the sidebar (user, 2026-09-29) */
-.config .kind-grp-h, .config .toggle, .config .mode-b { color: var(--cfg-text); }
+.config .kind-grp-h, .config .toggle { color: var(--cfg-text); }
 /* the grey one-liners stay grey — #516381 (user, 2026-09-29) */
 .config .acc-note, .config .acc-note :deep(.ico) { color: var(--cfg-sub); }
 .sec > *:last-child { margin-bottom: 0; }
@@ -1254,12 +1255,14 @@ function save(place) {
 }
 .acc-note { display: inline-flex; align-items: center; gap: 10px; margin: 6px 0 0; padding: 6px 10px; border-radius: var(--r); background: var(--surface-2); font-size: 10px; color: var(--label); }
 .acc-note :deep(.ico) { flex: none; color: var(--label); }
-/* Manual / Query Based — two outlined chips; the chosen one edged near-black, with a check */
-.mode-row { display: flex; gap: 6px; }
-.mode-b { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border: 1px solid var(--border-control); border-radius: var(--r); background: var(--surface); color: var(--ink); font-size: 12px; font-weight: 400; }
-.mode-b:hover { border-color: var(--muted-2); }
-.mode-b.on { border-color: var(--sel); font-weight: 500; }
-.mode-b.on :deep(.ico) { color: var(--sel-ink); fill: var(--sel); }
+/* Manual / Query Based is DataModeSwitch.vue. Its heading sits 32px under the Chart Type tiles — a different question (how the data
+   is fetched, not how it is drawn). */
+.dm-head { margin-top: 32px; }
+/* the prototype's demo pill for comparing the two designs — dashed, so it never reads as UI */
+.dm-demo { display: flex; align-items: center; gap: 4px; margin: 0 0 8px; padding: 4px 6px; border: 1px dashed var(--border-strong); border-radius: var(--r); font-size: 11px; color: var(--muted); width: fit-content; }
+.dm-demo span { margin-right: 4px; }
+.dm-demo button { height: 22px; padding: 0 8px; border: none; border-radius: 4px; background: transparent; color: var(--ink-2); font-size: 11px; cursor: pointer; }
+.dm-demo button.on { background: var(--sel); color: var(--sel-ink); }
 .open-dd { display: flex; flex-direction: column; gap: 3px; border: 1px solid var(--primary-soft); border-radius: 4px; padding: 5px; background: var(--primary-softer); }
 .dd-opt { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border: none; background: transparent; border-radius: 4px; font-size: 13px; text-align: left; }
 .dd-opt:hover { background: var(--surface); } .dd-opt.on { background: var(--surface); color: var(--primary-700); font-weight: 600; }
