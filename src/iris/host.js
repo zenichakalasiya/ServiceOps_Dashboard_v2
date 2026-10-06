@@ -183,10 +183,15 @@ function installGlobals() {
 }
 
 /* ── mount once: styles, markup, then the panel's own script ─────────────────────── */
-let mounted = false
+/* The flag lives on window, not in this module: a hot reload re-runs this module with a fresh
+   `let`, and injecting the classic script twice throws ("Identifier … has already been
+   declared"). A re-run only refreshes the stylesheet. */
 export function mountIris() {
-  if (mounted) return
-  mounted = true
+  if (window.__irisMounted) {
+    const st = document.getElementById('iris-css'); if (st) st.textContent = css
+    return
+  }
+  window.__irisMounted = true
   installGlobals()
   const st = document.createElement('style'); st.id = 'iris-css'; st.textContent = css
   document.head.appendChild(st)

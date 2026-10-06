@@ -18,7 +18,7 @@
 :root { --ai-w: 384px; }
 
 /* ── tokens: dark (the reference's default) ── */
-#aiPanel, #aiScrim, #aiPeek, #aiDockGhost, .iris-tip, #sbAI {
+#aiPanel, #aiScrim, #aiPeek, #aiDockGhost, .iris-tip {
   --bg: #07101f;
   --header: #07101f;
   --sidebar: #172336;
@@ -103,7 +103,7 @@
   --ac-w: 420px;
 }
 /* ── tokens: light ── */
-html[data-theme="light"] :is(#aiPanel, #aiScrim, #aiPeek, #aiDockGhost, .iris-tip, #sbAI) {
+html[data-theme="light"] :is(#aiPanel, #aiScrim, #aiPeek, #aiDockGhost, .iris-tip) {
   --bg: #ffffff;
   --header: #ffffff;
   --sidebar: #F6F9FC;
@@ -1087,6 +1087,64 @@ ul.aiab,ol.aiab,.aiab ul{margin:2px 0 4px;padding:0;list-style:none}
   display:grid;grid-template-columns:repeat(5,2.6px);grid-auto-rows:2.6px;
   gap:1.3px;line-height:0;flex:0 0 auto}
 .aidotm i{width:2.6px;height:2.6px;border-radius:999px;background:var(--ai-2);display:block}
+.aidpb i:nth-child(2),.aidpb i:nth-child(4),.aidpb i:nth-child(6),.aidpb i:nth-child(10),.aidpb i:nth-child(16),.aidpb i:nth-child(20),.aidpb i:nth-child(22),.aidpb i:nth-child(24){animation:aidpb0 calc(1700ms * var(--aidot-speed,1)) linear infinite}
+.aidpb i:nth-child(1),.aidpb i:nth-child(5),.aidpb i:nth-child(21),.aidpb i:nth-child(25){animation:aidpb1 calc(1700ms * var(--aidot-speed,1)) linear infinite}
+.aidpb i:nth-child(3),.aidpb i:nth-child(11),.aidpb i:nth-child(15),.aidpb i:nth-child(23){animation:aidpb2 calc(1700ms * var(--aidot-speed,1)) linear infinite}
+.aidpb i:nth-child(7),.aidpb i:nth-child(9),.aidpb i:nth-child(17),.aidpb i:nth-child(19){animation:aidpb3 calc(1700ms * var(--aidot-speed,1)) linear infinite}
+.aidpb i:nth-child(8),.aidpb i:nth-child(18){animation:aidpb4 calc(1700ms * var(--aidot-speed,1)) linear infinite}
+.aidpb i:nth-child(12),.aidpb i:nth-child(14){animation:aidpb5 calc(1700ms * var(--aidot-speed,1)) linear infinite}
+.aidpb i:nth-child(13){opacity:.52}
+.aidcs i{animation:aidcs calc(1500ms * var(--aidot-speed,1)) linear infinite}
+.aidcs i:nth-child(1){animation-delay:calc(0ms * var(--aidot-speed,1))}
+.aidcs i:nth-child(2){animation-delay:calc(60ms * var(--aidot-speed,1))}
+.aidcs i:nth-child(3){animation-delay:calc(120ms * var(--aidot-speed,1))}
+.aidcs i:nth-child(4){animation-delay:calc(180ms * var(--aidot-speed,1))}
+.aidcs i:nth-child(5){animation-delay:calc(240ms * var(--aidot-speed,1))}
+.aidcs i:nth-child(6){animation-delay:calc(900ms * var(--aidot-speed,1))}
+.aidcs i:nth-child(7){animation-delay:calc(960ms * var(--aidot-speed,1))}
+.aidcs i:nth-child(8){animation-delay:calc(1020ms * var(--aidot-speed,1))}
+.aidcs i:nth-child(9){animation-delay:calc(1080ms * var(--aidot-speed,1))}
+.aidcs i:nth-child(10){animation-delay:calc(300ms * var(--aidot-speed,1))}
+.aidcs i:nth-child(11){animation-delay:calc(840ms * var(--aidot-speed,1))}
+.aidcs i:nth-child(12){animation-delay:calc(1380ms * var(--aidot-speed,1))}
+.aidcs i:nth-child(13){animation-delay:calc(1440ms * var(--aidot-speed,1))}
+.aidcs i:nth-child(14){animation-delay:calc(1140ms * var(--aidot-speed,1))}
+.aidcs i:nth-child(15){animation-delay:calc(360ms * var(--aidot-speed,1))}
+.aidcs i:nth-child(16){animation-delay:calc(780ms * var(--aidot-speed,1))}
+.aidcs i:nth-child(17){animation-delay:calc(1320ms * var(--aidot-speed,1))}
+.aidcs i:nth-child(18){animation-delay:calc(1260ms * var(--aidot-speed,1))}
+.aidcs i:nth-child(19){animation-delay:calc(1200ms * var(--aidot-speed,1))}
+.aidcs i:nth-child(20){animation-delay:calc(420ms * var(--aidot-speed,1))}
+.aidcs i:nth-child(21){animation-delay:calc(720ms * var(--aidot-speed,1))}
+.aidcs i:nth-child(22){animation-delay:calc(660ms * var(--aidot-speed,1))}
+.aidcs i:nth-child(23){animation-delay:calc(600ms * var(--aidot-speed,1))}
+.aidcs i:nth-child(24){animation-delay:calc(540ms * var(--aidot-speed,1))}
+.aidcs i:nth-child(25){animation-delay:calc(480ms * var(--aidot-speed,1))}
+.aidss i:nth-child(1){animation:aidss0 calc(2000ms * var(--aidot-speed,1)) steps(1,end) infinite}
+.aidss i:nth-child(2){animation:aidss1 calc(2000ms * var(--aidot-speed,1)) steps(1,end) infinite}
+.aidss i:nth-child(3){animation:aidss2 calc(2000ms * var(--aidot-speed,1)) steps(1,end) infinite}
+.aidss i:nth-child(4){animation:aidss3 calc(2000ms * var(--aidot-speed,1)) steps(1,end) infinite}
+.aidss i:nth-child(5){animation:aidss4 calc(2000ms * var(--aidot-speed,1)) steps(1,end) infinite}
+.aidss i:nth-child(6){animation:aidss5 calc(2000ms * var(--aidot-speed,1)) steps(1,end) infinite}
+.aidss i:nth-child(7){animation:aidss6 calc(2000ms * var(--aidot-speed,1)) steps(1,end) infinite}
+.aidss i:nth-child(8){animation:aidss7 calc(2000ms * var(--aidot-speed,1)) steps(1,end) infinite}
+.aidss i:nth-child(9){animation:aidss8 calc(2000ms * var(--aidot-speed,1)) steps(1,end) infinite}
+.aidss i:nth-child(10){animation:aidss9 calc(2000ms * var(--aidot-speed,1)) steps(1,end) infinite}
+.aidss i:nth-child(11){animation:aidss10 calc(2000ms * var(--aidot-speed,1)) steps(1,end) infinite}
+.aidss i:nth-child(12){animation:aidss11 calc(2000ms * var(--aidot-speed,1)) steps(1,end) infinite}
+.aidss i:nth-child(13){animation:aidss12 calc(2000ms * var(--aidot-speed,1)) steps(1,end) infinite}
+.aidss i:nth-child(14){animation:aidss13 calc(2000ms * var(--aidot-speed,1)) steps(1,end) infinite}
+.aidss i:nth-child(15){animation:aidss14 calc(2000ms * var(--aidot-speed,1)) steps(1,end) infinite}
+.aidss i:nth-child(16){animation:aidss15 calc(2000ms * var(--aidot-speed,1)) steps(1,end) infinite}
+.aidss i:nth-child(17){animation:aidss16 calc(2000ms * var(--aidot-speed,1)) steps(1,end) infinite}
+.aidss i:nth-child(18){animation:aidss17 calc(2000ms * var(--aidot-speed,1)) steps(1,end) infinite}
+.aidss i:nth-child(19){animation:aidss18 calc(2000ms * var(--aidot-speed,1)) steps(1,end) infinite}
+.aidss i:nth-child(20){animation:aidss19 calc(2000ms * var(--aidot-speed,1)) steps(1,end) infinite}
+.aidss i:nth-child(21){animation:aidss20 calc(2000ms * var(--aidot-speed,1)) steps(1,end) infinite}
+.aidss i:nth-child(22){animation:aidss21 calc(2000ms * var(--aidot-speed,1)) steps(1,end) infinite}
+.aidss i:nth-child(23){animation:aidss22 calc(2000ms * var(--aidot-speed,1)) steps(1,end) infinite}
+.aidss i:nth-child(24){animation:aidss23 calc(2000ms * var(--aidot-speed,1)) steps(1,end) infinite}
+.aidss i:nth-child(25){animation:aidss24 calc(2000ms * var(--aidot-speed,1)) steps(1,end) infinite}
 @media (prefers-reduced-motion:reduce){ .aidotm i{animation:none!important;opacity:.45} }
 .aildm{flex:0 0 18px;width:18px;height:18px;display:grid;place-items:center}
 .aildm svg{width:16px;height:16px;fill:var(--ai-2);display:block;
@@ -1558,6 +1616,38 @@ html:not([data-theme="light"]) #userPop .up4av::after{box-shadow:0 0 0 2px var(-
 @keyframes aitrspin{to{transform:rotate(360deg)}}
 @keyframes aitrpop{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:none}}
 @keyframes aitrfade{from{opacity:0}to{opacity:1}}
+@keyframes aidpb0{0.000%{opacity:.08}16.667%{opacity:.08}33.333%{opacity:.08}43.922%{opacity:1}50.000%{opacity:1}60.588%{opacity:.08}66.667%{opacity:.08}77.255%{opacity:1}83.333%{opacity:1}93.922%{opacity:.08}100.000%{opacity:.08}}
+@keyframes aidpb1{0.000%{opacity:.08}10.588%{opacity:1}16.667%{opacity:1}27.255%{opacity:.08}33.333%{opacity:.08}50.000%{opacity:.08}60.588%{opacity:1}66.667%{opacity:1}77.255%{opacity:.08}83.333%{opacity:.08}100.000%{opacity:.08}}
+@keyframes aidpb2{0.000%{opacity:1}10.588%{opacity:.08}16.667%{opacity:.08}27.255%{opacity:1}33.333%{opacity:1}43.922%{opacity:.08}50.000%{opacity:.08}60.588%{opacity:1}66.667%{opacity:1}77.255%{opacity:.08}83.333%{opacity:.08}93.922%{opacity:1}100.000%{opacity:1}}
+@keyframes aidpb3{0.000%{opacity:.52}10.588%{opacity:1}16.667%{opacity:1}27.255%{opacity:.52}33.333%{opacity:.52}43.922%{opacity:.08}50.000%{opacity:.08}60.588%{opacity:.52}66.667%{opacity:.52}77.255%{opacity:.08}83.333%{opacity:.08}93.922%{opacity:.52}100.000%{opacity:.52}}
+@keyframes aidpb4{0.000%{opacity:1}10.588%{opacity:.08}16.667%{opacity:.08}27.255%{opacity:1}33.333%{opacity:1}43.922%{opacity:.52}50.000%{opacity:.52}60.588%{opacity:.08}66.667%{opacity:.08}77.255%{opacity:.52}83.333%{opacity:.52}93.922%{opacity:1}100.000%{opacity:1}}
+@keyframes aidpb5{0.000%{opacity:.52}10.588%{opacity:.08}16.667%{opacity:.08}27.255%{opacity:.52}33.333%{opacity:.52}43.922%{opacity:.08}50.000%{opacity:.08}66.667%{opacity:.08}83.333%{opacity:.08}93.922%{opacity:.52}100.000%{opacity:.52}}
+@keyframes aidcs{0%{opacity:0.080}8%{opacity:1.000}16%{opacity:0.644}24%{opacity:0.442}32%{opacity:0.240}40%{opacity:0.120}100%{opacity:0.080}}
+@keyframes aidss0{0.000%{opacity:0.08}20.833%{opacity:0.52}41.667%{opacity:0.38}45.833%{opacity:1}50.000%{opacity:0.38}54.167%{opacity:1}58.333%{opacity:0.52}62.500%{opacity:0.08}100.000%{opacity:0.08}}
+@keyframes aidss1{0.000%{opacity:0.08}25.000%{opacity:0.52}41.667%{opacity:0.38}45.833%{opacity:1}50.000%{opacity:0.38}54.167%{opacity:1}58.333%{opacity:0.52}66.667%{opacity:0.08}100.000%{opacity:0.08}}
+@keyframes aidss2{0.000%{opacity:0.08}29.167%{opacity:0.52}41.667%{opacity:0.38}45.833%{opacity:1}50.000%{opacity:0.38}54.167%{opacity:1}58.333%{opacity:0.52}70.833%{opacity:0.08}100.000%{opacity:0.08}}
+@keyframes aidss3{0.000%{opacity:0.08}33.333%{opacity:0.52}41.667%{opacity:0.38}45.833%{opacity:1}50.000%{opacity:0.38}54.167%{opacity:1}58.333%{opacity:0.52}75.000%{opacity:0.08}100.000%{opacity:0.08}}
+@keyframes aidss4{0.000%{opacity:0.08}37.500%{opacity:0.52}41.667%{opacity:0.38}45.833%{opacity:1}50.000%{opacity:0.38}54.167%{opacity:1}58.333%{opacity:0.52}79.167%{opacity:0.08}100.000%{opacity:0.08}}
+@keyframes aidss5{0.000%{opacity:0.08}16.667%{opacity:1}20.833%{opacity:0.52}41.667%{opacity:0.38}45.833%{opacity:1}50.000%{opacity:0.38}54.167%{opacity:1}58.333%{opacity:0.52}62.500%{opacity:1}66.667%{opacity:0.08}100.000%{opacity:0.08}}
+@keyframes aidss6{0.000%{opacity:0.08}20.833%{opacity:1}25.000%{opacity:0.52}41.667%{opacity:0.38}45.833%{opacity:1}50.000%{opacity:0.38}54.167%{opacity:1}58.333%{opacity:0.52}66.667%{opacity:1}70.833%{opacity:0.08}100.000%{opacity:0.08}}
+@keyframes aidss7{0.000%{opacity:0.08}25.000%{opacity:1}29.167%{opacity:0.52}41.667%{opacity:0.38}45.833%{opacity:1}50.000%{opacity:0.38}54.167%{opacity:1}58.333%{opacity:0.52}70.833%{opacity:1}75.000%{opacity:0.08}100.000%{opacity:0.08}}
+@keyframes aidss8{0.000%{opacity:0.08}29.167%{opacity:1}33.333%{opacity:0.52}41.667%{opacity:0.38}45.833%{opacity:1}50.000%{opacity:0.38}54.167%{opacity:1}58.333%{opacity:0.52}75.000%{opacity:1}79.167%{opacity:0.08}100.000%{opacity:0.08}}
+@keyframes aidss9{0.000%{opacity:0.08}33.333%{opacity:1}37.500%{opacity:0.52}41.667%{opacity:0.38}45.833%{opacity:1}50.000%{opacity:0.38}54.167%{opacity:1}58.333%{opacity:0.52}79.167%{opacity:1}83.333%{opacity:0.08}100.000%{opacity:0.08}}
+@keyframes aidss10{0.000%{opacity:0.08}12.500%{opacity:1}16.667%{opacity:0.52}41.667%{opacity:0.38}45.833%{opacity:1}50.000%{opacity:0.38}54.167%{opacity:1}58.333%{opacity:0.52}66.667%{opacity:1}70.833%{opacity:0.08}100.000%{opacity:0.08}}
+@keyframes aidss11{0.000%{opacity:0.08}16.667%{opacity:1}20.833%{opacity:0.52}41.667%{opacity:0.38}45.833%{opacity:1}50.000%{opacity:0.38}54.167%{opacity:1}58.333%{opacity:0.52}70.833%{opacity:1}75.000%{opacity:0.08}100.000%{opacity:0.08}}
+@keyframes aidss12{0.000%{opacity:0.08}20.833%{opacity:1}25.000%{opacity:0.52}41.667%{opacity:0.38}45.833%{opacity:1}50.000%{opacity:0.38}54.167%{opacity:1}58.333%{opacity:0.52}75.000%{opacity:1}79.167%{opacity:0.08}100.000%{opacity:0.08}}
+@keyframes aidss13{0.000%{opacity:0.08}25.000%{opacity:1}29.167%{opacity:0.52}41.667%{opacity:0.38}45.833%{opacity:1}50.000%{opacity:0.38}54.167%{opacity:1}58.333%{opacity:0.52}79.167%{opacity:1}83.333%{opacity:0.08}100.000%{opacity:0.08}}
+@keyframes aidss14{0.000%{opacity:0.08}29.167%{opacity:1}33.333%{opacity:0.52}41.667%{opacity:0.38}45.833%{opacity:1}50.000%{opacity:0.38}54.167%{opacity:1}58.333%{opacity:0.52}83.333%{opacity:1}87.500%{opacity:0.08}100.000%{opacity:0.08}}
+@keyframes aidss15{0.000%{opacity:0.08}8.333%{opacity:1}12.500%{opacity:0.52}41.667%{opacity:0.38}45.833%{opacity:1}50.000%{opacity:0.38}54.167%{opacity:1}58.333%{opacity:0.52}70.833%{opacity:1}75.000%{opacity:0.08}100.000%{opacity:0.08}}
+@keyframes aidss16{0.000%{opacity:0.08}12.500%{opacity:1}16.667%{opacity:0.52}41.667%{opacity:0.38}45.833%{opacity:1}50.000%{opacity:0.38}54.167%{opacity:1}58.333%{opacity:0.52}75.000%{opacity:1}79.167%{opacity:0.08}100.000%{opacity:0.08}}
+@keyframes aidss17{0.000%{opacity:0.08}16.667%{opacity:1}20.833%{opacity:0.52}41.667%{opacity:0.38}45.833%{opacity:1}50.000%{opacity:0.38}54.167%{opacity:1}58.333%{opacity:0.52}79.167%{opacity:1}83.333%{opacity:0.08}100.000%{opacity:0.08}}
+@keyframes aidss18{0.000%{opacity:0.08}20.833%{opacity:1}25.000%{opacity:0.52}41.667%{opacity:0.38}45.833%{opacity:1}50.000%{opacity:0.38}54.167%{opacity:1}58.333%{opacity:0.52}83.333%{opacity:1}87.500%{opacity:0.08}100.000%{opacity:0.08}}
+@keyframes aidss19{0.000%{opacity:0.08}25.000%{opacity:1}29.167%{opacity:0.52}41.667%{opacity:0.38}45.833%{opacity:1}50.000%{opacity:0.38}54.167%{opacity:1}58.333%{opacity:0.52}87.500%{opacity:1}91.667%{opacity:0.08}100.000%{opacity:0.08}}
+@keyframes aidss20{0.000%{opacity:0.08}4.167%{opacity:1}8.333%{opacity:0.52}41.667%{opacity:0.38}45.833%{opacity:1}50.000%{opacity:0.38}54.167%{opacity:1}58.333%{opacity:0.52}75.000%{opacity:1}79.167%{opacity:0.08}100.000%{opacity:0.08}}
+@keyframes aidss21{0.000%{opacity:0.08}8.333%{opacity:1}12.500%{opacity:0.52}41.667%{opacity:0.38}45.833%{opacity:1}50.000%{opacity:0.38}54.167%{opacity:1}58.333%{opacity:0.52}79.167%{opacity:1}83.333%{opacity:0.08}100.000%{opacity:0.08}}
+@keyframes aidss22{0.000%{opacity:0.08}12.500%{opacity:1}16.667%{opacity:0.52}41.667%{opacity:0.38}45.833%{opacity:1}50.000%{opacity:0.38}54.167%{opacity:1}58.333%{opacity:0.52}83.333%{opacity:1}87.500%{opacity:0.08}100.000%{opacity:0.08}}
+@keyframes aidss23{0.000%{opacity:0.08}16.667%{opacity:1}20.833%{opacity:0.52}41.667%{opacity:0.38}45.833%{opacity:1}50.000%{opacity:0.38}54.167%{opacity:1}58.333%{opacity:0.52}87.500%{opacity:1}91.667%{opacity:0.08}100.000%{opacity:0.08}}
+@keyframes aidss24{0.000%{opacity:0.08}20.833%{opacity:1}25.000%{opacity:0.52}41.667%{opacity:0.38}45.833%{opacity:1}50.000%{opacity:0.38}54.167%{opacity:1}58.333%{opacity:0.52}91.667%{opacity:1}95.833%{opacity:0.08}100.000%{opacity:0.08}}
 @keyframes aildpulse{0%,100%{opacity:.4}50%{opacity:1}}
 @keyframes aiwrite{
   from{--chromatic-sweep:-14%; --aireveal:-6%}
@@ -1587,6 +1677,23 @@ html:not([data-theme="light"]) #userPop .up4av::after{box-shadow:0 0 0 2px var(-
   100%{transform:rotate(190deg); opacity:0}
 }
 @keyframes aiblink{0%,60%,100%{opacity:.25}30%{opacity:1}}
+
+/* ── host: the rail tile — the reference's #sbAI rules, on OUR rail button ──────────────
+   Copied from the reference (.stop #sbAI, .sitem.airail, .aisprk, .aitrail, #sbAI .lbl):
+   a 10% brand-gradient wash over the sidebar (15% on hover), the 1px gradient ring (::before),
+   the conic orbit on hover (::after), and the star that spins in on load / hover with its
+   trail arc. ⚠️ .aisprk .aitrail MUST be fill:none — the trail is a circle r=29 on a 48 grid,
+   larger than the star, and unfilled-by-default it painted a BLACK rounded square behind it. */
+#sbAI { --ai-2: #1d2a3e; --ai-soft: rgba(29,42,62,.09); color: var(--ai-2); border: 0; border-radius: 4px;
+  background: linear-gradient(90deg,rgba(76,177,254,.1) 0%,rgba(115,30,251,.1) 55%,rgba(249,17,227,.1) 100%), var(--sidebar); }
+html[data-theme="dark"] #sbAI { --ai-2: #cad3e2; --ai-soft: rgba(202,211,226,.13); }
+#sbAI:hover { color: var(--ai-2);
+  background: linear-gradient(90deg,rgba(76,177,254,.15) 0%,rgba(115,30,251,.15) 55%,rgba(249,17,227,.15) 100%), var(--sidebar); }
+#sbAI .mod-nm { flex: 0 0 auto; background: linear-gradient(90deg,rgb(76,177,254) 0%,rgb(115,30,251) 55%,rgb(249,17,227) 100%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+.aisprk { overflow: visible; }
+.aisprk path { transform-box: fill-box; transform-origin: 50% 50%; }
+.aisprk .aitrail { fill: none; stroke: var(--ai-2); stroke-width: 3.4; stroke-linecap: round; opacity: 0; transform-box: fill-box; transform-origin: 50% 50%; }
 
 /* ── host: the reference flashes a widget it jumps to; our widgets are .cell[data-tile] ── */
 .cell.aiflash { outline: 2px solid #8b5cf6; outline-offset: 2px; animation: aiflash 1.8s ease-out 1; border-radius: 6px; }
