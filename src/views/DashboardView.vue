@@ -780,6 +780,12 @@ function loadBoard() {
     nextTick(() => { markStuck(); restoreSection() })
   }, 600)
 }
+/* Iris's "Add a widget" follow-up — it navigates to the board first, then asks for the drawer */
+watch(() => store.ui.irisAddWidget, (v) => {
+  if (!v) return
+  store.ui.irisAddWidget = false; addToGroup.value = null
+  setTimeout(() => (showAdd.value = true), loadingBoard.value ? 900 : 60)
+})
 onMounted(loadBoard)
 watch(() => route.params.id, loadBoard)
 

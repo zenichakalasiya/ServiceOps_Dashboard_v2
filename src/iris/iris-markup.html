@@ -1,0 +1,49 @@
+<!-- IRIS markup — the reference panel's own markup (kisu1311.github.io/dashboard-enhancement-ai-chat), comments stripped. The <defs> gradient is the AI spark's paint server: every star references url(#aisprkg). -->
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden"><defs><radialGradient id="aisprkg" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(45.7817 23.9609) rotate(-165.676) scale(43.3694 27.715)"><stop stop-color="#4CB1FE"/><stop offset="0.547969" stop-color="#731EFB"/><stop offset="0.907125" stop-color="#F911E3"/></radialGradient></defs></svg>
+<div class="aiscrim" id="aiScrim"></div>
+<aside class="aipanel" id="aiPanel" role="dialog" aria-label="Ask AI — Iris">
+  <span class="aigw" data-tip="Drag to resize  ⇔" onmousedown="aiRzStart(event,'w')" ondblclick="aiRzReset()"></span>
+  <span class="aign" onmousedown="aiRzStart(event,'n')" ondblclick="aiRzReset()"></span>
+  <span class="aige" data-tip="Drag to resize  ⇔" onmousedown="aiRzStart(event,'e')" ondblclick="aiRzReset()"></span>
+  <span class="aigs" onmousedown="aiRzStart(event,'s')" ondblclick="aiRzReset()"></span>
+  <span class="aignw" data-tip="Drag to resize" onmousedown="aiRzStart(event,'nw')" ondblclick="aiRzReset()"><svg viewBox="0 0 20 20" aria-hidden="true"><path class="o" d="M0 17V14A14 14 0 0 1 14 0h3"/><path class="i" d="M0 17V14A14 14 0 0 1 14 0h3"/></svg></span>
+  <span class="aigne" data-tip="Drag to resize" onmousedown="aiRzStart(event,'ne')" ondblclick="aiRzReset()"><svg viewBox="0 0 20 20" aria-hidden="true"><path class="o" d="M0 17V14A14 14 0 0 1 14 0h3"/><path class="i" d="M0 17V14A14 14 0 0 1 14 0h3"/></svg></span>
+  <span class="aigse" data-tip="Drag to resize" onmousedown="aiRzStart(event,'se')" ondblclick="aiRzReset()"><svg viewBox="0 0 20 20" aria-hidden="true"><path class="o" d="M0 17V14A14 14 0 0 1 14 0h3"/><path class="i" d="M0 17V14A14 14 0 0 1 14 0h3"/></svg></span>
+  <span class="aigsw" data-tip="Drag to resize" onmousedown="aiRzStart(event,'sw')" ondblclick="aiRzReset()"><svg viewBox="0 0 20 20" aria-hidden="true"><path class="o" d="M0 17V14A14 14 0 0 1 14 0h3"/><path class="i" d="M0 17V14A14 14 0 0 1 14 0h3"/></svg></span>
+  <header class="aihd" onmousedown="aiDragStart(event)">
+    <button class="aihb aihsbtn" id="aiHsBtn" data-tip="History" aria-pressed="false"
+      onclick="aiHsToggle()"></button>
+    <button class="aihb aihnew" id="aiNewBtn" data-tip="Start a new chat" onclick="aiNewChat()"><svg viewBox="0 0 24 24"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></svg></button>
+    <span class="aihdhist" id="aiHdHist">
+      <button class="aihb" data-tip="Back to chat" onclick="aiHistClose()"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
+      <b>Chat history</b><span class="n" id="aiHdHistN"></span></span>
+    <span class="aiht"><span class="aihttl" id="aiTitleBtn" role="button" tabindex="0"
+        data-tip="Rename, delete or switch conversation" onclick="aiChatMenu(event)"
+        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();aiChatMenu(event)}"
+      ><b id="aiChatName">New chat</b><span class="cv" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></span></span></span>
+    <button class="aihb" id="aiHelpBtn" data-tip="More" onclick="aiHelpMenu(event)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+    <button class="aihb" id="aiLayBtn" data-tip="Full screen" onclick="aiLayTog(event)"><svg viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><rect width="18" height="18" x="3" y="3" rx="2" fill="currentColor" stroke="none" opacity=".22"/></svg></button>
+    <button class="aihb x" title="Close" onclick="aiClose()"><svg viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+  </header>
+  <div class="aihs" id="aiHs" aria-label="Chat history"></div>
+  <div class="aibody" id="aiBody"></div>
+  <div class="aicomp">
+    <button class="aitobot" id="aiToBot" data-tip="Jump to the latest"
+      onclick="aiToBottom()"><svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg></button>
+    <div class="aiclardock" id="aiClarDock"></div>
+    <div class="aipend" id="aiPend"></div>
+    <div class="aisugg" id="aiSugg"></div>
+    <div class="aiinbox">
+      <div class="aictxbar" id="aiCtx"></div>
+      <textarea id="aiIn" rows="1" placeholder="Ask, build and act — type @ to add context" oninput="aiMentIn(this)" onkeydown="aiKey(event)"></textarea>
+      <div class="aiinrow">
+        <button class="aiplus" id="aiPlusBtn" data-tip="Mention dashboards, widgets or modules"
+          onclick="aiPlusCtx()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/></svg></button>
+        <button class="aiauto" id="aiAuto" onclick="aiToggleAuto()"
+          data-tip="Auto-approve  run safe actions without asking each time"><span class="lbl">Auto</span></button>
+        <button class="aisend" id="aiSendBtn" data-tip="Send  ↵" onclick="aiSendOrStop()"><svg viewBox="0 0 24 24"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg></button>
+      </div>
+      <span class="aigenbar" aria-hidden="true"></span>
+    </div>
+  </div>
+</aside>

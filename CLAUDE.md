@@ -210,6 +210,51 @@ positioned in viewport coordinates — follow that pattern for any new floating 
 | `data/groups.js` | A group's look: header colour, title size, alignment (default **centre**), padding, share. **Edit group has only Title · Header colour · Title size · Alignment** (2026-09-28): padding and share keep their defaults (padded, public) and are no longer editable; the **date filter is set only from the calendar icon that is ALWAYS on the group header** (plain when unset, `--df` tint when set). A group range re-reads the data of every widget in it that has no range of its own — `data/rangeData.js` (counts scale with the window's length, a stable per-point wobble, % capped at 100, Shortcut rows a stable subset); a widget's own range and the dashboard filter show the seeded data. Spec-driven chart kinds (`chart.spec`) are not re-read. `grpHeadVars(g)` is the one resolver. The Default header colour is `--grp-head` (#ecf1f9), and the group BODY is plain white `--surface` (`--gh-body`; the 5% header-colour tint was removed 2026-09-29) and the group OUTLINE is always the default `--border` (`--gh-line`) — only the header band takes the chosen colour (2026-09-29). |
 | `components/dashboard/GroupEditDrawer.vue` | Edit group: one field per row, applied live, and Cancel/Esc restores the snapshot. The group header's right side holds date · + · ⋯ (Edit / Clone / Ungroup / Delete, the menu flips up near the viewport bottom). An empty group is a dashed well. **Creating a group adds only that group** — widgets already on the board stay ungrouped above the groups (an auto-wrap into a board-named group was tried and removed). The header is the drag handle and is **`position: sticky`**, so it holds the top while its group scrolls and hands off to the next. That needs `.group { overflow: clip }`: `hidden` would make the group a scroll container and kill the stick. The board toolbar (`.bhead`) is sticky too, and a group header sticks 16px UNDER it (`--bar-h`, measured by a ResizeObserver); `markStuck()` flags the stuck one; while stuck its band is repainted as a rounded layer (`::after`) over a white backing (`::before`) so the top corners stay round and the gap above stays white. ⚠️ `.board` must be `flex: none`: `.main` is a flex column and a shrinkable board got squeezed to viewport height, which un-stuck the toolbar. **Group navigation is board-level — the toolbar's "Groups ▾"** (where Undo/Redo were; those keep Ctrl+Z / Ctrl+Y). Sections = "Ungrouped widgets" (if any) + every group; the button just reads "Groups"; the section under the sticky line (scroll-spy, `spySection`) is marked inside the list, which jumps (`jumpToGroup`: glide + `.g-flash` pulse), the footer has ONE toggle — Collapse all while every group is open, else Expand all, Alt+↓/↑ step, G opens it (type-to-filter over 6 sections). After a jump the picked section stays "current" until the user scrolls by hand. The last section per board is remembered in localStorage (`sod:lastSection:<id>`) and restored on open — saved only after that board's restore ran, or the fresh top-of-board position would overwrite it. A widget's ⋯ has **Move to another group** — a hover submenu shaped like Export (groups + widget counts, current one marked), offered only when there is somewhere else to go. |
 
+## Iris — the second AI assistant (`src/iris/`, 2026-10-06)
+
+The user asked to replicate, "same to same", the AI panel of another project —
+https://kisu1311.github.io/dashboard-enhancement-ai-chat/ (open it, click the rail's AI icon) —
+**as a new option, beside the current assistant**: the rail's sparkle tile (top of `ModuleRail`,
+`#sbAI`) opens **Iris**; the topbar **Ask AI** still opens `AiAssistant`. Decisions (user): same
+flows with **ServiceOps data** (not ObserveOps copy); same name and mark (**Iris**); delivered in
+phases (this is phase 1: shell + every chat flow; phase 2/3 to refine build flows and the rest).
+
+**It is a TRANSPLANT, not a rewrite.** The reference panel is ~5,400 lines of plain JS (global
+functions, inline `onclick=`, innerHTML) + ~800 CSS rules. Rewriting 300 behaviours by eye would
+drift; so its own code runs here:
+- `iris-core.js` — the reference script, comments stripped, ObserveOps content + host calls
+  replaced by **exact-string edits** (`iris-build/build-core.js` at the workspace root, NOT
+  published; each edit must match once, so a drifted source fails loudly). Loaded `?raw` and run
+  as a **classic `<script>`** — its markup calls its functions from `onclick=`, so they must be
+  globals. **Don't hand-edit it; change the build script and rebuild.**
+- `iris.css` — the reference's rules for the panel's own classes, verbatim (`iris-build/build-css.js`).
+  Its **tokens are re-homed** from `:root` onto the panel's roots (`#aiPanel, #aiScrim, #aiPeek,
+  #aiDockGhost, .iris-tip, #sbAI`), because their names (`--border`, `--ink`, `--sel`, `--muted`…)
+  would overwrite ours. Values were read off the LIVE reference (getComputedStyle), dark + light;
+  our `<html data-theme>` is the attribute the reference already keys light on. Base element
+  rules sit under `:where(...)` (zero specificity) so the panel's classes still win; our global
+  `.tt` / `.chip` are neutralised inside it (it reuses those names).
+- `iris-markup.html` — the panel markup + the star's `<defs>` gradient (`url(#aisprkg)`).
+- `host.js` — **the one seam**: `mountIris()` (App.vue `onMounted`) injects style, markup, script;
+  it defines the globals the reference read off its own page (`WIDGETS`, `curG`, `dashState`,
+  `DASH_GROUPS`, `DASH_INDEX`, `W_USER`) as live getters over our store/router, and `window.IRIS`:
+  `facts()` (every number Iris says — open/overdue/unassigned/SLA KPIs, metrics = KPI tiles with
+  a delta ranked by status, the biggest chart slice), `go`, `createDash`, `deleteDash`,
+  `addWidget` (builds a real tile on the open board), `undoAdd`, `investigate` (scroll + `.aiflash`
+  the tile by `[data-tile]`), `openAddWidget` (`store.ui.irisAddWidget` → DashboardView opens the
+  Add Widget drawer), `toast`.
+
+Verified against the reference side by side: every measured element of the empty state
+(panel 384×860 @ 1036,20, header, title, star, greeting, CTA rows, help buttons, composer, chip,
+input, Auto) matches in **position, size, font, weight, colour and radius**, light and dark.
+Flows checked: summarise (agentic, with live timer + Skip + typewriter), rank, attention, diff,
+metric, out-of-scope, scope mismatch, Stop → Continue/Edit, @-mention + chips, suggestions, Auto,
+build widget (agentic → Accept → real tile on the board → Undo), clarify (4 questions → preview →
+Accept), new dashboard (plan → approve → real board → Undo), history dropdown + full history,
+rename/delete, ⋯ menu, full screen, float drag (compacts), 8-way resize, dock-to-edge, Esc ladder.
+Same as the reference, on purpose: the chat is renamed after each question until you rename it,
+and the `.aiq` query pills split per word while the answer types in.
+
 ## The AI assistant (`components/ai/AiAssistant.vue`)
 
 **Grounded, no LLM.** `data/aiEngine.js` computes *every* number deterministically (z-score

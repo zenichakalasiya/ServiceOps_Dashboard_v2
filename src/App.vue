@@ -1,5 +1,6 @@
 <script setup>
-import { watch, watchEffect } from 'vue'
+import { watch, watchEffect, onMounted } from 'vue'
+import { mountIris } from './iris/host.js'
 import ModuleRail from './components/shell/ModuleRail.vue'
 import ListingFlyout from './components/dashboard/ListingFlyout.vue'
 import ModuleListing from './components/shell/ModuleListing.vue'
@@ -18,6 +19,10 @@ watchEffect(() => { document.documentElement.dataset.theme = store.ui.theme })
 // the other. Both may be closed at once (max content) — only "both wide" is disallowed.
 watch(() => store.ui.railExpanded, (v) => { if (v) store.ui.listingOpen = false })
 watch(() => store.ui.listingOpen, (v) => { if (v) store.ui.railExpanded = false })
+
+/* Iris — the reference build's AI panel (src/iris/). Mounted once, after the rail exists,
+   because its spark intro plays on the rail's AI tile at load, as in the reference. */
+onMounted(mountIris)
 </script>
 
 <template>

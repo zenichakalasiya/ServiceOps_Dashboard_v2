@@ -12,6 +12,7 @@ import { useRouter, useRoute } from 'vue-router'
 import Icon from '../ui/Icon.vue'
 import { store, toast } from '../../store/index.js'
 import { MODULES } from '../../data/modules.js'
+import { openIris } from '../../iris/host.js'
 const router = useRouter()
 const route = useRoute()
 
@@ -55,6 +56,15 @@ function pickSub(m, sub) {
     <button class="rail-toggle" :title="store.ui.railExpanded ? 'Collapse' : 'Expand'" @click="toggleRail">
       <Icon :name="store.ui.railExpanded ? 'panel-close' : 'menu'" :size="18" />
       <span v-if="store.ui.railExpanded" class="rt-label">Menu</span>
+    </button>
+
+    <!-- Iris — the new AI assistant (src/iris/), as the reference opens it: an AI tile at the
+         top of the rail. The topbar's "Ask AI" still opens the current assistant, so the two
+         can be compared. The star is painted in by Iris (data-aispark) and plays its intro
+         on load; the gradient ring and hover orbit are the reference's #sbAI rules. -->
+    <button id="sbAI" class="mod airail iris-rail" data-tip="Ask AI" aria-label="Ask AI — Iris" @click="openIris()">
+      <svg class="ic aisprk" data-aispark viewBox="0 0 48 48" aria-hidden="true"></svg>
+      <span v-if="store.ui.railExpanded" class="mod-nm">Ask AI</span>
     </button>
 
     <div class="mods">
@@ -150,6 +160,11 @@ function pickSub(m, sub) {
    entry at the foot would make the two compete for the same glance */
 .mod.lib { color: var(--muted); }
 .mod.lib:hover { color: var(--ink); }
+/* Iris's rail tile — the reference's 32px square with 4px corners and a 16px star; its ring,
+   orbit and star animation come from iris.css (#sbAI). Expanded, it takes the row's width. */
+.mod.iris-rail { flex: none; width: 32px; height: 32px; padding: 0; margin: 2px 4px 6px; justify-content: center; gap: 10px; border-radius: 4px; }
+.rail.expanded .mod.iris-rail { width: auto; justify-content: flex-start; padding: 0 8px; margin: 2px 0 6px; }
+.mod.iris-rail .ic { width: 16px; height: 16px; flex: 0 0 16px; }
 .mod.ai:hover { background: var(--primary-soft); color: var(--primary-700); }
 .mod.ai.active { background: var(--primary); color: #fff; }
 /* placement only — surface, padding and weight come from .tt */

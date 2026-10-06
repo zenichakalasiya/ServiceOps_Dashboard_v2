@@ -33,7 +33,7 @@ export const store = reactive({
     rowHeight: 140,     // one grid row
     boardMargin: 16,    // the board's own gutter against the app frame
   },
-  ui: { createOpen: false, cloneTarget: null, editTarget: null, pendingAddWidget: false, theme: 'light', listingOpen: true, listingQuery: '', groupStyle: 1, listStyle: 1, legendStyle: 6,
+  ui: { createOpen: false, cloneTarget: null, editTarget: null, pendingAddWidget: false, irisAddWidget: false, theme: 'light', listingOpen: true, listingQuery: '', groupStyle: 1, listStyle: 1, legendStyle: 6,
     // AI entry-point demo: which surface reveals the AI Summary/Assistant, and whether the panel is open.
     // Entry ids live in src/data/aiEntries.js; one at a time, switched from the on-board demo bar.
     // aiAsk lets any component (topbar, a widget) request the panel run an intent — the board forwards it.
