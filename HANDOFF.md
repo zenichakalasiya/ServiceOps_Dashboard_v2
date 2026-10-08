@@ -1,133 +1,123 @@
-# Handoff — 2026-09-29 15:17
+# Handoff — 2026-10-08 14:58
 
 ## Read first
-In the prototype's `CLAUDE.md` → **Key files**, read the rows for `data/morphIcon.js` +
-`MorphIconKit.vue`, `ChartLoader.vue` and `data/groups.js`. All three were changed this
-session, and their rows describe the current behaviour: the loader hand-off kit, the mono
-loader in the widget, and the group date icon, range-driven data, white body and default
-border. The `WidgetCard.vue` row covers the header-as-drag-handle change. The
-`data/previewArt.js` · `EmptyPreviewArt` · `PreviewStateGallery` · `NoDataArt` row covers the
-empty-state illustrations and the new `/preview-states` page.
+
+(This file is mirrored in `serviceops-dashboard-revamp/HANDOFF.md`. "The prototype CLAUDE.md"
+below means `serviceops-dashboard-revamp/CLAUDE.md`.)
+
+- The prototype CLAUDE.md → **"Iris — the second AI assistant"**. It explains the transplant
+  architecture: generated `iris-core.js` / `iris.css`, and `host.js` as the only seam. Read it
+  before touching anything under `src/iris/`.
+- Its Key-files rows for **`DataModeSwitch.vue`**, **`RichTextEditor.vue`**, **`ColorPanel.vue`**
+  and **`ChartLoader.vue`** (the `flow` variant). All four changed this stretch.
+- `iris-build/README.md` (workspace root, NOT published): how Iris is regenerated.
 
 All work is on branch `v2-main` and deploys with `git push v2 v2-main:main`
 → https://zenichakalasiya.github.io/ServiceOps_Dashboard_v2/
 
 ## What we worked on this session
-- Handed the monochrome **Chart Morph** loader to developers as downloadable files.
-- Trimmed `/loaders` down to that one scene.
-- Reworked group date filters and made widgets actually follow a group's range.
-- Swapped the widget demo loader to the mono version.
-- Made group bodies white and gave every group the default border.
-- Made the widget header the drag handle, with a move cursor instead of a grip.
-- Lined up the date picker's "Follow … filter" action with "Apply time range".
-- Drew two new empty-state illustrations in the empty-group style: the builder's live
-  preview before any condition is added, and "no data found" on widgets.
-- Made both illustrations static, made the preview art follow the chart type (14 types),
-  replaced the Empty States page with a "Preview States" page (SVG/PNG downloads), and
-  removed the preview's "Live preview — updates as you configure" line.
+
+1. **Iris.** A second AI assistant: the reference project's AI chat panel
+   (kisu1311.github.io/dashboard-enhancement-ai-chat), replicated "same to same" but answering
+   about ServiceOps data. It opens from a new sparkle tile at the top of the left rail.
+2. A run of builder-sidebar and Free Text refinements.
+3. A continuous chart loader.
 
 ## Completed
-- **Loader hand-off kit** (`src/data/morphIcon.js`, `src/components/ui/MorphIconKit.vue`) is
-  an "Icon files" panel under the Chart Morph — Monochrome card on `/loaders`. It offers:
-  - an animated SVG with a 10s pure-CSS loop that works as `<img>` and follows auto light/dark;
-  - a `currentColor` variant;
-  - five still frames as SVG and 4× PNG;
-  - the `ChartLoader.vue` source;
-  - a zip of everything. A tiny store-only zip writer is included, with no dependency.
-  - The `<img>` loop and the zip were verified in headless Chromium. **Deployed.**
-- **`/loaders`**: every multi-chart scene except Chart Morph — Monochrome is hidden. They
-  are hidden via `HIDDEN_SCENES` in `LoaderGallery.vue`, not deleted. **Deployed.**
-- **Edit group drawer** (`GroupEditDrawer.vue`) keeps only Title · Header colour · Title
-  size · Alignment. Date filter, Padding and Share group are removed.
-- **Group header calendar icon is always shown** (`DashboardView.vue`). It is plain when
-  unset and tinted `--df` when set, and it opens the same `TimeRangePopover`. This is now
-  the only place a group's range is set.
-- **Widgets follow the group's range** (`src/data/rangeData.js`, wired in `WidgetCard.vue`
-  as `dataRange` / `viewValue` / `viewChart` / `viewRows`):
-  - counts scale with the window's length;
-  - each point gets a stable wobble;
-  - `%` is capped at 100;
-  - Shortcut rows become a stable subset.
-- **Widget demo loader** ("Open Requests By Status", Helpdesk Overview (Grouped)) is now
-  `<ChartLoader variant="morph" mono smooth :size="60" />`, the same as on `/loaders`.
-- **Group body is white** (`--gh-body: var(--surface)` in `data/groups.js`), and every
-  group's border is the default `--border` — only the header band takes the chosen colour.
-- **Widget drag by header** (`WidgetCard.vue`): the hover grip is gone. The whole header
-  shows `cursor: move` and arms the drag, while its buttons keep `pointer`. Locked layouts
-  (`.cell.locked`) and present mode fall back to the default cursor, and the board marquee
-  in `DashboardView.vue` ignores plain presses on `.thead`. **Deployed.**
-- **Date picker** (`TimeRangePopover.vue`): "Follow dashboard/group filter" is full-width
-  and left-aligned, with its ✕ centred under Apply's ✓ and both labels starting at the
-  same x (measured). **Deployed.**
-- **Builder live-preview empty state** (`components/ui/EmptyPreviewArt.vue`, `needsCond` in
-  `WidgetBuilderModal.vue`). While building a NEW manual chart or KPI with no condition,
-  the preview shows the art, the title "Add a condition to preview your chart|KPI" and one
-  line. The first condition added reveals the chart. Editing, duplicating and cloning
-  always preview the real chart. Shortcut, Query Based and Free Text are unaffected.
-- **Classic kinds get a real condition editor.** Bar, Column, Line, Pie and KPI now use
-  `MeasureConditions` (it was a placeholder "Add Condition" button). Conditions are saved
-  on the tile as `t.conds` (`applyConds`) and read back when editing.
-- **"No data found" illustration** (`components/ui/NoDataArt.vue`) is used by every widget
-  type's no-data state in `WidgetEmpty.vue`; it replaced the disc with the tile's chart
-  icon. It is sized by a ResizeObserver: 112px, then 80px, then hidden on very short tiles.
-  Errors and unconfigured widgets keep the disc. Verified in light and dark themes.
-- **Follow-up (same session):** everything below was verified in headless Chromium.
-  - Both illustrations are **static**.
-  - The preview art now follows the chart type. `data/previewArt.js` is the ONE source:
-    - `PREVIEW_KINDS`: 14 types, each with a two-line `desc`;
-    - `previewArtMarkup(kind)`;
-    - `previewSvgFile` / `previewPng`.
-  - `EmptyPreviewArt` takes `kind`. The builder passes `emptyKind` and uses the matching
-    title and description.
-  - The `/preview-states` page (`views/PreviewStateGallery.vue`, rail "Preview States", eye
-    icon) lists all 14, with Copy · SVG · PNG and a zip.
-  - The `/empty-states` page (`EmptyStateGallery.vue`) and its rail item were **removed**.
-  - The builder's `.pv-foot` line was removed.
+
+- **Iris phase 1** (`src/iris/`, deployed). The reference's own script, CSS and markup run
+  inside our app.
+  - **Matches the reference:** every measured element of the empty state matches it in
+    position, size, font, weight, colour and radius, in light and dark.
+  - **Answers from the board:** summarise, rank, attention, what changed and single-metric
+    questions all use our real board data.
+  - **Builds for real:**
+    - Build widget (agentic) → Accept → a real tile on the board, with Undo.
+    - Clarify flow (4 questions) → preview → Accept.
+    - New dashboard: plan → approve → a real board, with Undo.
+  - **Chrome:** history (dropdown and full list), rename/delete, the ⋯ menu, full screen,
+    float drag (compacts), 8-way resize, dock-to-edge, @-mentions, suggestions, Auto, Stop,
+    the out-of-scope answer and the Escape ladder.
+  - **Fixes after review:** the dot-matrix "thinking" animation (it was frozen) and the rail
+    tile (it showed a black square behind the star). Both now match the reference frame for
+    frame.
+- **The topbar Ask AI still opens the old `AiAssistant`.** Iris was added beside it as a new
+  option, by the user's choice.
+- **Chart Flow loader** (`ChartLoader.vue` `flow`): the same five charts as Chart Morph, each
+  built out of the last.
+- **Free Text editor:**
+  - a colour picker (`ColorPanel.vue`) with Default · named colours · Custom, stored as theme
+    tokens;
+  - Default / Header layout cards inside the editor;
+  - a 400px text area.
+  - Also fixed: a Header note never spanned the row, and placed notes didn't fill their tile.
+- **Builder "Data source"** (Manual / Query based): three demo designs (A cards, D banner,
+  Black pill), switched from a dashed demo pill (`store.ui.modeUi`). The sidebar's segmented
+  tracks became white-minimal.
 
 ## In progress
-**Adding several existing board widgets to a group at once** is at the proposal stage; no
-code has been written. Proposed to the user:
-- **A.** A "On this dashboard" tab in the group's **+** drawer, with checkboxes and a
-  "Move N widgets" action.
-- **B.** A selection mode on the board (Ctrl/Shift+click) with a floating bar:
-  Move to group ▾ · New group from selection · Clear.
-- **C.** Multi-drag, which would come later and build on B.
 
-Recommended: A + B. Waiting on the user's answers to:
-1. Move or copy?
-2. Include widgets already in other groups?
-3. Order inside the group?
-4. Can seeded widgets be moved?
+**New sidebar tabs from Figma, BLOCKED on access.** The user asked to implement the tabs in
+Figma frame `pgE39fu3jbYtHGWus4NAWk` node `799-19166` ("Dashboard Widget Preview UI"):
+- in the **builder configuration sidebar only**, replacing its segmented tracks
+  (`WidgetBuilderModal.vue`, `.config` scope);
+- and to **hide the three Data source demo designs** (`DataModeSwitch.vue` + the `.dm-demo`
+  pill).
+
+Nothing has been coded yet. Both Figma cloud connections answered "no edit access to this
+file", and the Figma desktop connection timed out (the file was not open). Options offered to
+the user: open the file in Figma desktop with the node selected, grant edit access, or paste
+a screenshot.
+
+The working reading of the request, still to be confirmed by the user:
+- Manual / Query based stays, in the new tab style.
+- The "Demo · switch UI" bar goes.
 
 ## Next steps
-1. Get the user's decisions on the four questions, then mock up A (and B) in the prototype.
-2. Optionally extend `rangeData.js` to the spec-driven chart kinds (`chart.spec`: Stacked,
-   Heatmap, Funnel, and so on). They do not follow a group range yet.
+
+1. Get the Figma frame (desktop open / access / screenshot). Then implement the tabs in the
+   builder sidebar, and replace the Data source demo with the same tabs.
+2. **Iris phase 2:** make the widgets Iris builds match our real chart kinds and the Add
+   Widget library (`IRIS.addWidget` in `src/iris/host.js`), then refine the remaining flows.
+3. Optionally extend `rangeData.js` to spec-driven chart kinds (carried over from 09-29).
+4. Carried over: "add several existing widgets to a group at once" is still at proposal stage
+   (options A drawer tab / B selection mode). Waiting on the user's four questions.
 
 ## Decisions made
-- **Only a GROUP range re-reads widget data.** A widget's own range and the dashboard
-  filter keep the seeded data, because the seeded figures were written for their own range
-  (e.g. "Requests Due in the 24 Hours" on Today stays 24). The chain is still
-  widget → group → dashboard.
-- Padding and share are no longer editable. Existing groups keep their values, and the
-  defaults are padded and public.
-- Preview empty state: classic kinds get the REAL condition editor (not a placeholder
-  click); only building shows it (editing shows the real chart); one no-data illustration
-  for every widget type. All three were the user's picks.
-- The standalone loader SVG is a **CSS-keyframe rebuild** of the JS-timed morph. Its
-  geometry is copied from `ChartLoader.vue`, so change both together.
+
+- **Iris is a transplant, not a rewrite.** The reference panel is ~5,400 lines of plain JS plus
+  ~800 CSS rules. Rewriting it by eye would drift, so its own code runs as a classic script
+  (its markup uses inline `onclick=`), with ObserveOps copy and host calls swapped in by
+  exact-string edits.
+- **Iris's tokens are re-homed** from `:root` onto the panel's roots, because their names
+  (`--border`, `--ink`, `--sel`…) would overwrite ours. The values were read off the live
+  reference.
+- **User choices:**
+  - Iris uses the same flows with ServiceOps data.
+  - Iris keeps the same name and mark.
+  - Iris is a new option, not a replacement.
+  - It is delivered in phases.
+- **Same as the reference, on purpose:**
+  - the chat title follows the latest question until you rename it;
+  - the `.aiq` query pills split per word while an answer types in.
 
 ## Gotchas & notes
-- The Claude-in-Chrome tab here ran as a **hidden tab**, where timers and SVG `<img>`
-  animation are throttled and looked "frozen". Verify animation in headless Playwright
-  instead: a scratch script that imports `playwright` + Vite's `createServer` from the
-  project folder works well.
-- The long-running dev server was killed once for low memory. Use short-lived Vite servers
-  inside test scripts.
-- **Don't use a CSS size container (`container-type: size`) for the widget empty state.** It
-  matched its smallest `@container (max-height)` query on a 188px tile and hid the art.
-  `WidgetEmpty` measures itself with a ResizeObserver instead.
-- In test scripts, `getByText('Helpdesk Overview').first()` can time out on the sidebar.
-  Clicking the leaf element whose text matches exactly, from `page.evaluate`, works.
-- `vite:vue` warns about a `<button>` inside a `<button>` in `ModuleListing.vue`. This is
-  pre-existing and unrelated.
+
+- **Iris files are GENERATED.** `iris-core.js` and `iris.css` are built by
+  `iris-build/build-core.js` / `build-css.js` (workspace root, not published). Change those,
+  then rebuild. The build needs `iris-build/ref/`, a clone of the reference repo:
+  `git clone --depth 1 https://github.com/kisu1311/dashboard-enhancement-ai-chat.git ref`.
+  Delete it afterwards.
+- **The CSS extractor must catch classes the reference builds in JS.** For example the
+  dot-matrix's `aidpb`, which is defined in an object literal. Missing those is what froze the
+  loader.
+- **`#sbAI` (the rail tile) must NOT carry the full Iris token set.** It leaked `--ink` and
+  `--sidebar` into our rail's hover. It gets only `--ai-2` / `--ai-soft`.
+- **`.aisprk .aitrail` needs `fill:none`.** Without it the trail circle (r=29, bigger than the
+  star) paints a black square.
+- **`mountIris()` guards on `window.__irisMounted`, not a module variable.** A Vite hot reload
+  re-runs `host.js`, and injecting the classic script twice throws "Identifier … has already
+  been declared".
+- **The reference's Escape ladder closes the whole panel** when a header menu is open. Tests
+  that press Escape to dismiss a menu will close the chat.
+- **Dev server:** port 5180 is often taken by another session, so it falls back to 5181.
