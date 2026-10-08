@@ -202,7 +202,7 @@ function doClone(d) { store.ui.editTarget = null; store.ui.cloneTarget = d; stor
       v-if="delTarget"
       title="Archive this dashboard?"
       :target="delTarget.name"
-      message="will be moved to the Archive, along with its widgets. You can restore it from there."
+      message="will move to the Archive tab with its widgets. Restore it from there, or delete it permanently."
       confirm-label="Archive"
       @confirm="del(delTarget); delTarget = null"
       @cancel="delTarget = null"

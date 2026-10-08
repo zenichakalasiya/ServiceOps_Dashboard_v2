@@ -19,7 +19,7 @@ function rel(iso) { const d = Math.round((Date.now() - new Date(iso)) / 864e5); 
         <span class="muted">{{ rel(d.updated) }}</span>
         <div class="acts">
           <button class="btn btn-sm" @click="restoreDashboard(d)"><Icon name="restore" :size="14" /> Restore</button>
-          <button class="btn btn-sm danger" @click="deleteForever(d)"><Icon name="trash" :size="14" /> Delete forever</button>
+          <button class="btn btn-sm danger" @click="deleteForever(d)"><Icon name="trash" :size="14" /> Delete permanently</button>
         </div>
       </div>
     </div>

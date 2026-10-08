@@ -184,7 +184,8 @@ export function markDefault(d) {
 export function archiveDashboard(d) {
   if (d.predefined) { toast(`“${d.name}” is a predefined dashboard — it can't be deleted`, 'warn'); return false }
   d.archived = true
-  toast(`Archived “${d.name}” — restore it from the Archive`, 'warn')
+  // archived boards live in Manage dashboards → Archive, where they can be restored or deleted permanently
+  toast(`Archived “${d.name}” — it’s in the Archive tab`, 'warn', { label: 'Open Archive', fn: () => { location.hash = '#/dashboards?tab=archive' } })
   return true
 }
 export function restoreDashboard(d) {

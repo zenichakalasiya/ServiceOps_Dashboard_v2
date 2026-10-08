@@ -15,6 +15,7 @@ import ScheduleDialog from '../components/dashboard/ScheduleDialog.vue'
 import TimeRangePopover, { rectOf } from '../components/dashboard/TimeRangePopover.vue'
 import GroupEditDrawer from '../components/dashboard/GroupEditDrawer.vue'
 import EmptyGroupArt from '../components/ui/EmptyGroupArt.vue'
+import EmptyBoardArt from '../components/ui/EmptyBoardArt.vue'
 import ConfirmDialog from '../components/ui/ConfirmDialog.vue'
 import { grpHeadVars, grpStyleOf } from '../data/groups.js'
 import AiSummaryCard from '../components/ai/AiSummaryCard.vue'
@@ -1039,11 +1040,8 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 
       <!-- empty state → template gallery (P2·9, P3·tour, ClickUp pattern) -->
       <div v-else-if="!d.tiles.length && !(d.groups && d.groups.length)" class="empty">
-        <div class="empty-ill">
-          <span class="ei ei-chart"><Icon name="chart-bar" :size="26" /></span>
-          <span class="ei ei-kpi"><Icon name="kpi" :size="22" /></span>
-          <span class="ei ei-tbl"><Icon name="table" :size="22" /></span>
-        </div>
+        <!-- an empty dashboard waiting for widgets — the empty-group art's slate vector idiom -->
+        <EmptyBoardArt class="empty-ill" :width="220" />
         <h3>Your dashboard is empty</h3>
         <p>Add a <b>Widget</b>, <b>KPI</b> or <b>Shortcut</b> to start visualizing your data.</p>
         <div class="empty-cta">
@@ -1683,11 +1681,8 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .add-group:hover { background: var(--primary-softer); }
 .empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; padding: 64px 20px; text-align: center; }
 /* illustration — a small cluster of the three tile types */
-.empty-ill { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 10px; }
-.ei { display: grid; place-items: center; border-radius: 4px; box-shadow: var(--sh-sm); }
-.ei-chart { width: 64px; height: 64px; background: var(--blue-soft); color: var(--blue); }
-.ei-kpi { width: 54px; height: 54px; background: var(--primary-soft); color: var(--primary); }
-.ei-tbl { width: 54px; height: 54px; background: var(--green-soft); color: var(--green); }
+/* the illustration paints in the slate the empty-group art uses (#7186A8) */
+.empty-ill { color: var(--picker-ico); margin-bottom: 18px; }
 .empty h3 { margin: 0; font-size: 18px; } .empty p { margin: 0 0 6px; color: var(--muted); }
 .empty p b { color: var(--ink-2); font-weight: 600; }
 .big-cta { height: 40px; padding: 0 20px; font-size: 14px; }

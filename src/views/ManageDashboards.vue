@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Icon from '../components/ui/Icon.vue'
 import ScheduleDialog from '../components/dashboard/ScheduleDialog.vue'
@@ -12,7 +12,9 @@ import { ACCESS } from '../data/mock.js'
 const route = useRoute()
 const router = useRouter()
 
-const tab = ref('all')                 // all | mine | shared | archive
+const tab = ref(route.query.tab === 'archive' ? 'archive' : 'all')   // all | mine | shared | archive
+// "Open Archive" (the archive toast) lands here with ?tab=archive — also when Manage is already open
+watch(() => route.query.tab, (v) => { if (v === 'archive') tab.value = 'archive' })
 const q = ref('')
 const isArchive = computed(() => tab.value === 'archive')
 
@@ -274,10 +276,10 @@ function onDrop(target) {
                        invited a click that does nothing. An empty slot of the same width
                        keeps the column aligned and says nothing at all. -->
                   <span v-if="d.predefined && !isArchive" class="ia-blank" title="Predefined dashboard — can’t be deleted" />
-                  <button v-else class="ia del" :title="isArchive ? 'Delete forever' : 'Archive'" @click.stop="confirmId = confirmId === d.id ? null : d.id"><Icon name="trash" :size="16" /></button>
+                  <button v-else class="ia del" :title="isArchive ? 'Delete permanently' : 'Archive'" @click.stop="confirmId = confirmId === d.id ? null : d.id"><Icon :name="isArchive ? 'trash' : 'archive'" :size="16" /></button>
                   <div v-if="confirmId === d.id" class="cfm-back" @click="confirmId = null" />
                   <div v-if="confirmId === d.id" class="cfm">
-                    <span>{{ isArchive ? 'Delete forever?' : 'Archive this dashboard?' }}</span>
+                    <span>{{ isArchive ? 'Delete permanently? This can’t be undone.' : 'Archive this dashboard?' }}</span>
                     <button class="btn btn-sm danger" @click="doDelete(d)">Yes</button>
                     <button class="btn btn-sm" @click="confirmId = null">No</button>
                   </div>

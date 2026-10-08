@@ -40,7 +40,7 @@ const confirmDel = ref(false)
              archived, so the action is absent rather than disabled -->
         <template v-if="!d.predefined">
           <div class="menu-sep" />
-          <button class="menu-item danger" @click="act(() => { confirmDel = true })"><Icon name="archive" :size="16" /> Delete / Archive</button>
+          <button class="menu-item danger" @click="act(() => { confirmDel = true })"><Icon name="archive" :size="16" /> Archive</button>
         </template>
       </div>
     </transition>
@@ -49,7 +49,7 @@ const confirmDel = ref(false)
       v-if="confirmDel"
       title="Archive this dashboard?"
       :target="d.name"
-      message="will be moved to the Archive, along with its widgets. You can restore it from there."
+      message="will move to the Archive tab with its widgets. Restore it from there, or delete it permanently."
       confirm-label="Archive"
       @confirm="confirmDel = false; archiveDashboard(d)"
       @cancel="confirmDel = false"
