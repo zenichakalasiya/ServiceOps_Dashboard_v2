@@ -12,6 +12,8 @@
  * EMPTY widget slots, one marked with a "+". Three widgets are on their way in: a chart card
  * being carried down onto the highlighted slot (dashed arc + landing shadow), a KPI card and a
  * list card floating alongside — the three things "Add Widget" offers.
+ *
+ * STATIC — no motion (the user's call, 2026-10-08). Downloadable from /preview-states.
  */
 defineProps({ width: { type: Number, default: 220 } })
 </script>
@@ -89,13 +91,6 @@ defineProps({ width: { type: Number, default: 220 } })
 </template>
 
 <style scoped>
+/* STATIC — no motion (the user's call, 2026-10-08; the cards used to bob), like NoDataArt */
 .eba { display: block; flex: none; overflow: visible; }
-/* the cards are being carried, not sitting: a slow bob, out of step with one another */
-.eba-card { animation: ebaBob 2.8s ease-in-out infinite; transform-box: fill-box; }
-.eba-kpi { animation: ebaBob 3.4s ease-in-out -1.1s infinite; transform-box: fill-box; }
-.eba-list { animation: ebaBob 3.1s ease-in-out -.6s infinite; transform-box: fill-box; }
-.eba-shadow { animation: ebaShadow 2.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
-@keyframes ebaBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
-@keyframes ebaShadow { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(.86); } }
-@media (prefers-reduced-motion: reduce) { .eba-card, .eba-kpi, .eba-list, .eba-shadow { animation: none; } }
 </style>
