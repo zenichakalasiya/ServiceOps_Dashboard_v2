@@ -8,13 +8,15 @@
  * from a stock library: a third-party vector would be redistributed with the on-prem product,
  * and its own colours break in dark mode.
  *
- * The story (redrawn 2026-10-09, user's call — the first version had widgets FLYING around the
- * board, which read as decoration, not as "fill this board"): everything happens INSIDE the
- * dashboard. A dashboard window — title bar and toolbar — whose body is a 2×2 grid of dashed
- * widget slots. Two widgets are being SET DOWN into their slots: a bar chart into the top-right
- * slot and a pie chart into the bottom-left one, each lifted a few px with a slight tilt over a
- * highlighted slot and a landing shadow, a small drop arrow beside the first. The other two
- * slots are still empty; one carries a "+".
+ * The story (third pass, 2026-10-09 — the user's call: widgets with CURVED ARROWS that go
+ * INTO the empty dashboard, the way the empty-group art carries its card in):
+ *   · an empty dashboard window — title bar and toolbar — with a 2×2 grid of dashed slots;
+ *   · a bar-chart widget outside, top-left, and a pie-chart widget outside, top-right, each
+ *     tilted as if picked up;
+ *   · from each widget a dashed CURVED arrow sweeps down into its own highlighted slot;
+ *   · the other two slots stay empty, one marked "+".
+ * (v1 floated widgets around the board with no arrow into it; v2 set them down inside it —
+ * neither read as "these go in there".)
  *
  * STATIC — no motion (the user's call, 2026-10-08). Downloadable from /preview-states.
  */
@@ -23,66 +25,67 @@ defineProps({ width: { type: Number, default: 220 } })
 
 <template>
   <svg class="eba" :width="width" :height="width * 0.66" viewBox="0 0 220 146" fill="none" aria-hidden="true" focusable="false">
-    <!-- the dashboard window -->
-    <rect x="12" y="8" width="196" height="132" rx="10" fill="currentColor" fill-opacity=".04"
+    <!-- the empty dashboard window -->
+    <rect x="40" y="46" width="150" height="96" rx="9" fill="currentColor" fill-opacity=".04"
       stroke="currentColor" stroke-opacity=".34" stroke-width="1.25" />
     <!-- its title bar: a star, a name stub, and the toolbar's buttons -->
-    <path d="M12.6 27 H207.4" stroke="currentColor" stroke-opacity=".2" />
-    <circle cx="24" cy="17.5" r="2.6" fill="currentColor" fill-opacity=".28" />
-    <rect x="31" y="15.5" width="38" height="4" rx="2" fill="currentColor" fill-opacity=".42" />
-    <rect x="160" y="14" width="16" height="7" rx="2.5" fill="currentColor" fill-opacity=".14" />
-    <rect x="179" y="14" width="20" height="7" rx="2.5" fill="currentColor" fill-opacity=".14" />
+    <path d="M40.6 60 H189.4" stroke="currentColor" stroke-opacity=".2" />
+    <circle cx="49" cy="53" r="2.2" fill="currentColor" fill-opacity=".28" />
+    <rect x="55" y="51.3" width="30" height="3.4" rx="1.7" fill="currentColor" fill-opacity=".42" />
+    <rect x="152" y="50" width="14" height="6" rx="2.2" fill="currentColor" fill-opacity=".14" />
+    <rect x="169" y="50" width="14" height="6" rx="2.2" fill="currentColor" fill-opacity=".14" />
 
-    <!-- the 2×2 grid of slots: two still empty (one with a "+"), two being filled -->
-    <rect x="22" y="36" width="84" height="44" rx="6" fill="currentColor" fill-opacity=".05"
+    <!-- the 2×2 grid of slots: two TARGETS (where the arrows land), one "+", one plain -->
+    <rect x="48" y="67" width="64" height="31" rx="5" fill="currentColor" fill-opacity=".05"
       stroke="currentColor" stroke-opacity=".3" stroke-width="1" stroke-dasharray="3.5 3" />
-    <rect x="114" y="36" width="84" height="44" rx="6" fill="currentColor" fill-opacity=".1"
+    <rect x="118" y="67" width="64" height="31" rx="5" fill="currentColor" fill-opacity=".1"
       stroke="currentColor" stroke-opacity=".5" stroke-width="1" stroke-dasharray="3.5 3" />
-    <rect x="22" y="88" width="84" height="44" rx="6" fill="currentColor" fill-opacity=".1"
+    <rect x="48" y="104" width="64" height="31" rx="5" fill="currentColor" fill-opacity=".1"
       stroke="currentColor" stroke-opacity=".5" stroke-width="1" stroke-dasharray="3.5 3" />
-    <rect x="114" y="88" width="84" height="44" rx="6" fill="currentColor" fill-opacity=".05"
+    <rect x="118" y="104" width="64" height="31" rx="5" fill="currentColor" fill-opacity=".05"
       stroke="currentColor" stroke-opacity=".3" stroke-width="1" stroke-dasharray="3.5 3" />
     <!-- "add here" -->
-    <circle cx="64" cy="58" r="8" fill="var(--surface)" stroke="currentColor" stroke-opacity=".45" stroke-width="1.1" />
-    <path d="M64 54.2 V61.8 M60.2 58 H67.8" stroke="currentColor" stroke-opacity=".65" stroke-width="1.4" stroke-linecap="round" />
+    <circle cx="80" cy="82.5" r="7" fill="var(--surface)" stroke="currentColor" stroke-opacity=".45" stroke-width="1.1" />
+    <path d="M80 79.2 V85.8 M76.7 82.5 H83.3" stroke="currentColor" stroke-opacity=".65" stroke-width="1.3" stroke-linecap="round" />
 
-    <!-- landing shadows: where each widget is being set down -->
-    <ellipse cx="156" cy="76" rx="30" ry="3" fill="currentColor" fill-opacity=".14" />
-    <ellipse cx="64" cy="128" rx="30" ry="3" fill="currentColor" fill-opacity=".14" />
+    <!-- the CURVED ARROWS — each widget's path into its slot -->
+    <!-- bar widget → bottom-left slot: sweeps down past the window's edge and in -->
+    <path d="M26 46 C 22 78, 34 104, 66 115" stroke="currentColor" stroke-opacity=".38" stroke-width="1.3"
+      stroke-dasharray="2.6 3" stroke-linecap="round" />
+    <path d="M61.2 110.8 L 67 115.3 L 60.4 117.9" stroke="currentColor" stroke-opacity=".5" stroke-width="1.3"
+      stroke-linecap="round" stroke-linejoin="round" />
+    <!-- pie widget → top-right slot: curls down and back in -->
+    <path d="M195 46 C 201 66, 190 81, 166 82.5" stroke="currentColor" stroke-opacity=".38" stroke-width="1.3"
+      stroke-dasharray="2.6 3" stroke-linecap="round" />
+    <path d="M170.6 78.4 L 165.6 82.6 L 170.8 86.4" stroke="currentColor" stroke-opacity=".5" stroke-width="1.3"
+      stroke-linecap="round" stroke-linejoin="round" />
 
-    <!-- the drop cue beside the bar widget -->
-    <path d="M203 34 V46" stroke="currentColor" stroke-opacity=".34" stroke-width="1.25" stroke-dasharray="2.5 2.5" stroke-linecap="round" />
-    <path d="M200 43.5 L 203 47 L 206 43.5" stroke="currentColor" stroke-opacity=".45" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" />
-
-    <!-- a BAR CHART widget, lifted just above its slot, being set down -->
-    <g transform="translate(119 30) rotate(-3 37 19)">
-      <rect x="0" y="0" width="74" height="38" rx="5" fill="var(--surface)" stroke="currentColor" stroke-opacity=".7" stroke-width="1.25" />
-      <path d="M0.6 10 H73.4" stroke="currentColor" stroke-opacity=".22" />
-      <rect x="6" y="3.8" width="22" height="2.6" rx="1.3" fill="currentColor" fill-opacity=".5" />
-      <path d="M8 33.4 H66" stroke="currentColor" stroke-opacity=".22" />
-      <rect x="11" y="24" width="7" height="9" rx="1" fill="currentColor" fill-opacity=".8" />
-      <rect x="22" y="17" width="7" height="16" rx="1" fill="currentColor" fill-opacity=".55" />
-      <rect x="33" y="21" width="7" height="12" rx="1" fill="currentColor" fill-opacity=".8" />
-      <rect x="44" y="14" width="7" height="19" rx="1" fill="currentColor" fill-opacity=".4" />
-      <rect x="55" y="19" width="7" height="14" rx="1" fill="currentColor" fill-opacity=".65" />
+    <!-- a BAR CHART widget, picked up, outside the board (top-left) -->
+    <g transform="translate(4 8) rotate(-6 28 18)">
+      <rect x="0" y="0" width="56" height="36" rx="5" fill="var(--surface)" stroke="currentColor" stroke-opacity=".7" stroke-width="1.25" />
+      <path d="M0.6 9.5 H55.4" stroke="currentColor" stroke-opacity=".22" />
+      <rect x="5" y="3.6" width="18" height="2.5" rx="1.25" fill="currentColor" fill-opacity=".5" />
+      <path d="M6 31.4 H50" stroke="currentColor" stroke-opacity=".22" />
+      <rect x="9" y="22" width="6" height="9" rx="1" fill="currentColor" fill-opacity=".8" />
+      <rect x="18" y="16" width="6" height="15" rx="1" fill="currentColor" fill-opacity=".55" />
+      <rect x="27" y="19" width="6" height="12" rx="1" fill="currentColor" fill-opacity=".8" />
+      <rect x="36" y="13" width="6" height="18" rx="1" fill="currentColor" fill-opacity=".4" />
     </g>
 
-    <!-- a PIE CHART widget, lifted just above its slot, being set down -->
-    <g transform="translate(27 82) rotate(2.5 37 19)">
-      <rect x="0" y="0" width="74" height="38" rx="5" fill="var(--surface)" stroke="currentColor" stroke-opacity=".7" stroke-width="1.25" />
-      <path d="M0.6 10 H73.4" stroke="currentColor" stroke-opacity=".22" />
-      <rect x="6" y="3.8" width="20" height="2.6" rx="1.3" fill="currentColor" fill-opacity=".5" />
-      <!-- the pie: three slices -->
-      <circle cx="19" cy="24" r="10" fill="currentColor" fill-opacity=".22" />
-      <path d="M19 24 L19 14 A10 10 0 0 1 28.5 27.1 Z" fill="currentColor" fill-opacity=".8" />
-      <path d="M19 24 L28.5 27.1 A10 10 0 0 1 12.1 31.2 Z" fill="currentColor" fill-opacity=".5" />
-      <!-- its legend -->
-      <circle cx="38" cy="17.6" r="1.7" fill="currentColor" fill-opacity=".8" />
-      <rect x="42" y="16.4" width="22" height="2.4" rx="1.2" fill="currentColor" fill-opacity=".3" />
-      <circle cx="38" cy="24" r="1.7" fill="currentColor" fill-opacity=".5" />
-      <rect x="42" y="22.8" width="17" height="2.4" rx="1.2" fill="currentColor" fill-opacity=".3" />
-      <circle cx="38" cy="30.4" r="1.7" fill="currentColor" fill-opacity=".22" />
-      <rect x="42" y="29.2" width="19" height="2.4" rx="1.2" fill="currentColor" fill-opacity=".3" />
+    <!-- a PIE CHART widget, picked up, outside the board (top-right) -->
+    <g transform="translate(160 6) rotate(6 28 18)">
+      <rect x="0" y="0" width="56" height="36" rx="5" fill="var(--surface)" stroke="currentColor" stroke-opacity=".7" stroke-width="1.25" />
+      <path d="M0.6 9.5 H55.4" stroke="currentColor" stroke-opacity=".22" />
+      <rect x="5" y="3.6" width="16" height="2.5" rx="1.25" fill="currentColor" fill-opacity=".5" />
+      <circle cx="16" cy="22.5" r="9" fill="currentColor" fill-opacity=".22" />
+      <path d="M16 22.5 L16 13.5 A9 9 0 0 1 24.6 25.3 Z" fill="currentColor" fill-opacity=".8" />
+      <path d="M16 22.5 L24.6 25.3 A9 9 0 0 1 10.1 29.3 Z" fill="currentColor" fill-opacity=".5" />
+      <circle cx="32" cy="17" r="1.6" fill="currentColor" fill-opacity=".8" />
+      <rect x="35.5" y="15.8" width="15" height="2.4" rx="1.2" fill="currentColor" fill-opacity=".3" />
+      <circle cx="32" cy="22.5" r="1.6" fill="currentColor" fill-opacity=".5" />
+      <rect x="35.5" y="21.3" width="11" height="2.4" rx="1.2" fill="currentColor" fill-opacity=".3" />
+      <circle cx="32" cy="28" r="1.6" fill="currentColor" fill-opacity=".22" />
+      <rect x="35.5" y="26.8" width="13" height="2.4" rx="1.2" fill="currentColor" fill-opacity=".3" />
     </g>
   </svg>
 </template>
