@@ -48,7 +48,7 @@ const EMPTY_ARTS = [
     title: 'Your dashboard is empty', desc: 'Add a Widget, KPI or Shortcut to start visualizing your data.' },
   { id: 'empty-group', label: 'Empty group', comp: EmptyGroupArt, width: 150, where: 'a group with no widgets in it',
     title: '', desc: 'No widgets yet — drag one here, or add a widget.' },
-  { id: 'no-data', label: 'No data found', comp: NoDataArt, width: 150, where: 'a widget whose query matched nothing',
+  { id: 'no-data', label: 'No data found', comp: NoDataArt, width: 112, where: 'a widget whose query matched nothing',
     title: ND.title, desc: ND.sub },
 ]
 const artEls = reactive({})

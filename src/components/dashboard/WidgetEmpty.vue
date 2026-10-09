@@ -37,7 +37,8 @@ const h = ref(999)
 let ro = null
 onMounted(() => { ro = new ResizeObserver(([e]) => { h.value = e.contentRect.height }); ro.observe(el.value) })
 onBeforeUnmount(() => ro?.disconnect())
-const artW = computed(() => (h.value >= 150 ? 112 : h.value >= 108 ? 80 : 0))
+// smaller since 2026-10-09 (user): 88px on a normal tile, 64px on a short one, none below
+const artW = computed(() => (h.value >= 150 ? 88 : h.value >= 108 ? 64 : 0))
 </script>
 
 <template>

@@ -15,7 +15,7 @@
  *
  * STATIC — no motion (the user's call, 2026-09-29).
  */
-defineProps({ width: { type: Number, default: 112 } })
+defineProps({ width: { type: Number, default: 88 } })
 </script>
 
 <template>
