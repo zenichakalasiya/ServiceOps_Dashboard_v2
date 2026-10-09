@@ -1,17 +1,20 @@
 <script setup>
 /**
- * EmptyBoardArt — a new dashboard with nothing on it: "add widgets to fill me" (2026-10-08).
+ * EmptyBoardArt — a new dashboard with nothing on it: "add widgets to fill me".
  *
  * The same idiom as EmptyGroupArt and ChartIcon — ONE colour (`currentColor`, set by the
  * caller) at stepped opacities, plus the card surface for the widgets' faces — so it sits in
  * the family of the empty-group art and flips with the theme. Drawn here rather than taken
- * from a stock library for the same reason: a third-party vector would be redistributed with
- * the on-prem product, and its own colours break in dark mode.
+ * from a stock library: a third-party vector would be redistributed with the on-prem product,
+ * and its own colours break in dark mode.
  *
- * The story: a dashboard window — title bar with its toolbar — whose body is four dashed,
- * EMPTY widget slots, one marked with a "+". Three widgets are on their way in: a chart card
- * being carried down onto the highlighted slot (dashed arc + landing shadow), a KPI card and a
- * list card floating alongside — the three things "Add Widget" offers.
+ * The story (redrawn 2026-10-09, user's call — the first version had widgets FLYING around the
+ * board, which read as decoration, not as "fill this board"): everything happens INSIDE the
+ * dashboard. A dashboard window — title bar and toolbar — whose body is a 2×2 grid of dashed
+ * widget slots. Two widgets are being SET DOWN into their slots: a bar chart into the top-right
+ * slot and a pie chart into the bottom-left one, each lifted a few px with a slight tilt over a
+ * highlighted slot and a landing shadow, a small drop arrow beside the first. The other two
+ * slots are still empty; one carries a "+".
  *
  * STATIC — no motion (the user's call, 2026-10-08). Downloadable from /preview-states.
  */
@@ -21,76 +24,70 @@ defineProps({ width: { type: Number, default: 220 } })
 <template>
   <svg class="eba" :width="width" :height="width * 0.66" viewBox="0 0 220 146" fill="none" aria-hidden="true" focusable="false">
     <!-- the dashboard window -->
-    <rect x="22" y="30" width="176" height="110" rx="10" fill="currentColor" fill-opacity=".04"
-      stroke="currentColor" stroke-opacity=".32" stroke-width="1.25" />
-    <!-- its title bar: a name stub, a star, and the toolbar's buttons -->
-    <path d="M22.6 48 H197.4" stroke="currentColor" stroke-opacity=".2" />
-    <circle cx="34" cy="39" r="2.6" fill="currentColor" fill-opacity=".28" />
-    <rect x="41" y="37" width="36" height="4" rx="2" fill="currentColor" fill-opacity=".42" />
-    <rect x="150" y="35.5" width="16" height="7" rx="2.5" fill="currentColor" fill-opacity=".14" />
-    <rect x="169" y="35.5" width="20" height="7" rx="2.5" fill="currentColor" fill-opacity=".14" />
+    <rect x="12" y="8" width="196" height="132" rx="10" fill="currentColor" fill-opacity=".04"
+      stroke="currentColor" stroke-opacity=".34" stroke-width="1.25" />
+    <!-- its title bar: a star, a name stub, and the toolbar's buttons -->
+    <path d="M12.6 27 H207.4" stroke="currentColor" stroke-opacity=".2" />
+    <circle cx="24" cy="17.5" r="2.6" fill="currentColor" fill-opacity=".28" />
+    <rect x="31" y="15.5" width="38" height="4" rx="2" fill="currentColor" fill-opacity=".42" />
+    <rect x="160" y="14" width="16" height="7" rx="2.5" fill="currentColor" fill-opacity=".14" />
+    <rect x="179" y="14" width="20" height="7" rx="2.5" fill="currentColor" fill-opacity=".14" />
 
-    <!-- four empty slots; the top-right one is the target the chart card is headed for -->
-    <rect x="31" y="56" width="74" height="35" rx="6" fill="currentColor" fill-opacity=".05"
+    <!-- the 2×2 grid of slots: two still empty (one with a "+"), two being filled -->
+    <rect x="22" y="36" width="84" height="44" rx="6" fill="currentColor" fill-opacity=".05"
       stroke="currentColor" stroke-opacity=".3" stroke-width="1" stroke-dasharray="3.5 3" />
-    <rect x="114" y="56" width="75" height="35" rx="6" fill="currentColor" fill-opacity=".1"
+    <rect x="114" y="36" width="84" height="44" rx="6" fill="currentColor" fill-opacity=".1"
       stroke="currentColor" stroke-opacity=".5" stroke-width="1" stroke-dasharray="3.5 3" />
-    <rect x="31" y="98" width="74" height="34" rx="6" fill="currentColor" fill-opacity=".05"
-      stroke="currentColor" stroke-opacity=".3" stroke-width="1" stroke-dasharray="3.5 3" />
-    <rect x="114" y="98" width="75" height="34" rx="6" fill="currentColor" fill-opacity=".05"
+    <rect x="22" y="88" width="84" height="44" rx="6" fill="currentColor" fill-opacity=".1"
+      stroke="currentColor" stroke-opacity=".5" stroke-width="1" stroke-dasharray="3.5 3" />
+    <rect x="114" y="88" width="84" height="44" rx="6" fill="currentColor" fill-opacity=".05"
       stroke="currentColor" stroke-opacity=".3" stroke-width="1" stroke-dasharray="3.5 3" />
     <!-- "add here" -->
-    <g class="eba-plus">
-      <circle cx="68" cy="115" r="8" fill="var(--surface)" stroke="currentColor" stroke-opacity=".45" stroke-width="1.1" />
-      <path d="M68 111.2 V118.8 M64.2 115 H71.8" stroke="currentColor" stroke-opacity=".65" stroke-width="1.4" stroke-linecap="round" />
-    </g>
-    <!-- where the chart card will land -->
-    <ellipse class="eba-shadow" cx="152" cy="80" rx="22" ry="3.2" fill="currentColor" fill-opacity=".14" />
+    <circle cx="64" cy="58" r="8" fill="var(--surface)" stroke="currentColor" stroke-opacity=".45" stroke-width="1.1" />
+    <path d="M64 54.2 V61.8 M60.2 58 H67.8" stroke="currentColor" stroke-opacity=".65" stroke-width="1.4" stroke-linecap="round" />
 
-    <!-- the motion: a dashed arc from the KPI card across to the chart card -->
-    <path d="M60 16 C 82 2, 106 2, 124 12" stroke="currentColor" stroke-opacity=".34" stroke-width="1.25"
-      stroke-dasharray="2.5 3" stroke-linecap="round" />
-    <path d="M120.4 8.2 L 124.6 12.3 L 119.2 13.6" stroke="currentColor" stroke-opacity=".45" stroke-width="1.25"
-      stroke-linecap="round" stroke-linejoin="round" />
+    <!-- landing shadows: where each widget is being set down -->
+    <ellipse cx="156" cy="76" rx="30" ry="3" fill="currentColor" fill-opacity=".14" />
+    <ellipse cx="64" cy="128" rx="30" ry="3" fill="currentColor" fill-opacity=".14" />
 
-    <!-- a KPI card, floating in from the left: a label stub and a big number -->
-    <g class="eba-kpi">
-      <g transform="translate(14 12) rotate(-6)">
-        <rect x="0" y="0" width="40" height="30" rx="5" fill="var(--surface)" stroke="currentColor" stroke-opacity=".62" stroke-width="1.2" />
-        <rect x="5" y="5" width="16" height="2.6" rx="1.3" fill="currentColor" fill-opacity=".42" />
-        <rect x="5" y="13" width="7" height="12" rx="1.6" fill="currentColor" fill-opacity=".8" />
-        <rect x="14" y="13" width="7" height="12" rx="1.6" fill="currentColor" fill-opacity=".8" />
-        <rect x="25" y="19" width="9" height="3" rx="1.5" fill="currentColor" fill-opacity=".3" />
-      </g>
-    </g>
+    <!-- the drop cue beside the bar widget -->
+    <path d="M203 34 V46" stroke="currentColor" stroke-opacity=".34" stroke-width="1.25" stroke-dasharray="2.5 2.5" stroke-linecap="round" />
+    <path d="M200 43.5 L 203 47 L 206 43.5" stroke="currentColor" stroke-opacity=".45" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" />
 
-    <!-- the chart widget, carried down onto its slot -->
-    <g class="eba-card">
-      <g transform="translate(130 2) rotate(-7)">
-        <rect x="0" y="0" width="50" height="38" rx="5" fill="var(--surface)" stroke="currentColor" stroke-opacity=".7" stroke-width="1.25" />
-        <path d="M0.6 10 H49.4" stroke="currentColor" stroke-opacity=".22" />
-        <rect x="5" y="3.8" width="18" height="2.6" rx="1.3" fill="currentColor" fill-opacity=".5" />
-        <rect x="8" y="23" width="6" height="10" rx="1" fill="currentColor" fill-opacity=".8" />
-        <rect x="17" y="17" width="6" height="16" rx="1" fill="currentColor" fill-opacity=".55" />
-        <rect x="26" y="21" width="6" height="12" rx="1" fill="currentColor" fill-opacity=".8" />
-        <rect x="35" y="14" width="6" height="19" rx="1" fill="currentColor" fill-opacity=".4" />
-      </g>
+    <!-- a BAR CHART widget, lifted just above its slot, being set down -->
+    <g transform="translate(119 30) rotate(-3 37 19)">
+      <rect x="0" y="0" width="74" height="38" rx="5" fill="var(--surface)" stroke="currentColor" stroke-opacity=".7" stroke-width="1.25" />
+      <path d="M0.6 10 H73.4" stroke="currentColor" stroke-opacity=".22" />
+      <rect x="6" y="3.8" width="22" height="2.6" rx="1.3" fill="currentColor" fill-opacity=".5" />
+      <path d="M8 33.4 H66" stroke="currentColor" stroke-opacity=".22" />
+      <rect x="11" y="24" width="7" height="9" rx="1" fill="currentColor" fill-opacity=".8" />
+      <rect x="22" y="17" width="7" height="16" rx="1" fill="currentColor" fill-opacity=".55" />
+      <rect x="33" y="21" width="7" height="12" rx="1" fill="currentColor" fill-opacity=".8" />
+      <rect x="44" y="14" width="7" height="19" rx="1" fill="currentColor" fill-opacity=".4" />
+      <rect x="55" y="19" width="7" height="14" rx="1" fill="currentColor" fill-opacity=".65" />
     </g>
 
-    <!-- a list (Shortcut) card, peeking in at the right -->
-    <g class="eba-list">
-      <g transform="translate(186 50) rotate(8)">
-        <rect x="0" y="0" width="30" height="34" rx="5" fill="var(--surface)" stroke="currentColor" stroke-opacity=".55" stroke-width="1.15" />
-        <rect x="5" y="6" width="20" height="3" rx="1.5" fill="currentColor" fill-opacity=".5" />
-        <rect x="5" y="13" width="20" height="2.6" rx="1.3" fill="currentColor" fill-opacity=".22" />
-        <rect x="5" y="19" width="16" height="2.6" rx="1.3" fill="currentColor" fill-opacity=".22" />
-        <rect x="5" y="25" width="18" height="2.6" rx="1.3" fill="currentColor" fill-opacity=".22" />
-      </g>
+    <!-- a PIE CHART widget, lifted just above its slot, being set down -->
+    <g transform="translate(27 82) rotate(2.5 37 19)">
+      <rect x="0" y="0" width="74" height="38" rx="5" fill="var(--surface)" stroke="currentColor" stroke-opacity=".7" stroke-width="1.25" />
+      <path d="M0.6 10 H73.4" stroke="currentColor" stroke-opacity=".22" />
+      <rect x="6" y="3.8" width="20" height="2.6" rx="1.3" fill="currentColor" fill-opacity=".5" />
+      <!-- the pie: three slices -->
+      <circle cx="19" cy="24" r="10" fill="currentColor" fill-opacity=".22" />
+      <path d="M19 24 L19 14 A10 10 0 0 1 28.5 27.1 Z" fill="currentColor" fill-opacity=".8" />
+      <path d="M19 24 L28.5 27.1 A10 10 0 0 1 12.1 31.2 Z" fill="currentColor" fill-opacity=".5" />
+      <!-- its legend -->
+      <circle cx="38" cy="17.6" r="1.7" fill="currentColor" fill-opacity=".8" />
+      <rect x="42" y="16.4" width="22" height="2.4" rx="1.2" fill="currentColor" fill-opacity=".3" />
+      <circle cx="38" cy="24" r="1.7" fill="currentColor" fill-opacity=".5" />
+      <rect x="42" y="22.8" width="17" height="2.4" rx="1.2" fill="currentColor" fill-opacity=".3" />
+      <circle cx="38" cy="30.4" r="1.7" fill="currentColor" fill-opacity=".22" />
+      <rect x="42" y="29.2" width="19" height="2.4" rx="1.2" fill="currentColor" fill-opacity=".3" />
     </g>
   </svg>
 </template>
 
 <style scoped>
-/* STATIC — no motion (the user's call, 2026-10-08; the cards used to bob), like NoDataArt */
+/* STATIC — no motion */
 .eba { display: block; flex: none; overflow: visible; }
 </style>
