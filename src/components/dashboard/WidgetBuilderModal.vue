@@ -1265,7 +1265,7 @@ function save(place) {
 .nl-c:hover { border-color: var(--border-strong); }
 .nl-c.on { border-color: var(--sel); color: var(--ink); font-weight: 600; }
 .nl-art { width: 100%; height: 26px; border-radius: 4px; background: var(--surface); display: flex; flex-direction: column; justify-content: center; gap: 3px; padding: 0 8px; box-shadow: 0 0 0 1px var(--border); }
-.nl-art i { display: block; height: 3px; border-radius: 2px; background: var(--muted-2); }
+.nl-art i { display: block; height: 3px; border-radius: 2px; background: var(--border-strong); }
 .nl-art.nl-header { align-items: center; }
 .nl-art.nl-header i { width: 58%; height: 5px; }
 .nl-art.nl-header i + i { display: none; }
