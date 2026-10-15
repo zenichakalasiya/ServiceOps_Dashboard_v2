@@ -30,7 +30,9 @@ const editing = computed(() => !!props.existing && !props.duplicate)
 const libMode = computed(() => !!props.libItem)   // duplicate/edit a library tile → returns to listing
 const prefix = computed(() => (libMode.value ? 'Clone' : props.duplicate ? 'Duplicate' : editing.value ? 'Update' : 'Create'))
 const spinning = ref(false)
-function refreshPreview() { spinning.value = true; setTimeout(() => { spinning.value = false }, 650) }
+// a Shortcut's preview waits for its query: Run Preview with a query in it fills the table
+const sqlRun = ref(false)
+function refreshPreview() { spinning.value = true; setTimeout(() => { spinning.value = false }, 650); if (isShortcut.value && cfg.sqlQuery.trim()) sqlRun.value = true }
 
 // Switchable tile types — tabs above the live preview
 const TYPES = [
@@ -463,9 +465,11 @@ function applyConds(t) {
    its SQL, and a note has no data. */
 const building = computed(() => !props.existing && !props.libItem)
 const needsCond = computed(() => building.value && manualMode.value && !isText.value
-  && (isChart.value || isKpi.value) && !cfg.conds.length && !(cfg.gaugeNumConds || []).length)
+  && (isChart.value || isKpi.value) && !cfg.conds.length && !(cfg.gaugeNumConds || []).length
+  // a new Shortcut has no conditions — it waits for its query to be run (2026-10-15, user)
+  || (building.value && isShortcut.value && (!sqlRun.value || !cfg.sqlQuery.trim())))
 // the art, title and line follow the chart type being built (data/previewArt.js)
-const emptyKind = computed(() => (isKpi.value ? 'kpi' : curType.value.id))
+const emptyKind = computed(() => (isKpi.value ? 'kpi' : isShortcut.value ? 'shortcut' : curType.value.id))
 
 /* Access is THREE fields, not one. "Restricted" only means something alongside the
  * technicians and groups it is restricted TO, and only `access` was ever written to

@@ -9,7 +9,8 @@
  *
  * Every illustration is the same scene (the empty-group idiom: one colour, `currentColor`,
  * at stepped opacities + the card surface): a dashed PREVIEW FRAME on the left, the
- * CONDITIONS panel on the right with a dashed arc carrying a condition into the frame.
+ * CONDITIONS panel on the right (the QUERY card for a Shortcut, which is filled by its SQL)
+ * with a dashed arc carrying it into the frame.
  * Only the ghost chart inside the frame changes with the type — always drawn the same way:
  * dashed outline, a 6% wash, nothing solid, because nothing has been counted yet.
  * Static on purpose (the user asked for no movement).
@@ -64,6 +65,12 @@ const GHOSTS = {
       + `<path d="M${cx} ${cy} L${cx + 11} ${cy - 13}" stroke="currentColor" stroke-opacity=".5" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2.5 2"/>`
       + `<circle cx="${cx}" cy="${cy}" r="2.4" fill="currentColor" fill-opacity=".3"/>`
   },
+  // Shortcut — a record table: a header band, three empty rows, two column rules
+  shortcut: () => `<rect x="14" y="34" width="54" height="36" rx="3" ${GHOST} ${WASH}/>`
+    + '<rect x="14.5" y="34.5" width="53" height="8" rx="2.5" fill="currentColor" fill-opacity=".08"/>'
+    + '<g stroke="currentColor" stroke-opacity=".22" stroke-width="1" stroke-dasharray="2.5 2"><path d="M14 42.5 H68"/><path d="M14 51.5 H68"/><path d="M14 60.5 H68"/><path d="M32 34.5 V69.5"/><path d="M50 34.5 V69.5"/></g>'
+    + '<g fill="currentColor"><rect x="18" y="37.3" width="10" height="2.4" rx="1.2" fill-opacity=".3"/><rect x="36" y="37.3" width="10" height="2.4" rx="1.2" fill-opacity=".3"/><rect x="54" y="37.3" width="10" height="2.4" rx="1.2" fill-opacity=".3"/>'
+    + '<rect x="18" y="45.8" width="8" height="2.2" rx="1.1" fill-opacity=".14"/><rect x="18" y="54.8" width="11" height="2.2" rx="1.1" fill-opacity=".14"/><rect x="18" y="63.8" width="7" height="2.2" rx="1.1" fill-opacity=".14"/></g>',
   kpi: () => `<rect x="21" y="40" width="38" height="18" rx="3" ${GHOST} ${WASH}/>`
     + '<path d="M28 49 H52" stroke="currentColor" stroke-opacity=".2" stroke-width="5" stroke-linecap="round" stroke-dasharray="6 3"/>'
     + '<rect x="28" y="63" width="24" height="2.4" rx="1.2" fill="currentColor" fill-opacity=".2"/>',
@@ -77,7 +84,7 @@ const BOX = {
   line: [12, 39.1, 58, 31.9], bar: [14, 34, 50, 38], column: [12, 37, 58, 34], pie: [22, 34, 36, 36],
   donut: [22, 34, 36, 36], stack: [12, 38, 58, 33], grouped: [12, 41, 58, 30], multiline: [12, 40, 58, 31],
   combo: [12, 32.1, 58, 38.9], hist: [12, 41, 58, 30], funnel: [12, 36, 56, 34.5], heatmap: [15, 36, 51.6, 34.6],
-  gauge: [16, 43, 48, 26.4], kpi: [21, 40, 38, 25.4],
+  gauge: [16, 43, 48, 26.4], kpi: [21, 40, 38, 25.4], shortcut: [14, 34, 54, 36],
 }
 const CX = 44, CY = 53
 function centred(id) {
@@ -101,21 +108,14 @@ export const PREVIEW_KINDS = [
   { id: 'heatmap', label: 'Heatmap', noun: 'heatmap', desc: 'Pick the records in Conditions on the right, and each cell shades by how many land in it.' },
   { id: 'gauge', label: 'Gauge', noun: 'gauge', desc: 'Pick the records to measure in Conditions on the right, and the needle settles on the value.' },
   { id: 'kpi', label: 'KPI', noun: 'KPI', desc: 'Pick the records to count in Conditions on the right, and the number appears here.' },
+  // a Shortcut is filled by its QUERY, not by conditions — so its panel is the Query card
+  { id: 'shortcut', label: 'Shortcut', noun: 'Shortcut', panel: 'query', title: 'Run a query to preview your Shortcut', desc: 'Write a query on the right and press Run Preview, and the records list here as rows.' },
 ]
 export const previewKind = (id) => PREVIEW_KINDS.find((k) => k.id === id) || PREVIEW_KINDS.find((k) => k.id === 'column')
-export const previewTitle = (id) => `Add a condition to preview your ${previewKind(id).noun}`
+export const previewTitle = (id) => previewKind(id).title || `Add a condition to preview your ${previewKind(id).noun}`
 
-/** The inner SVG markup (viewBox 0 0 132 84) for a type. `currentColor` + var(--surface). */
-export function previewArtMarkup(id) {
-  const key = GHOSTS[id] ? id : 'column'
-  const [dx, dy] = centred(key)
-  const ghost = `<g transform="translate(${dx} ${dy})">${GHOSTS[key]()}</g>`
-  return `
-  <rect x="4" y="18" width="80" height="62" rx="7" fill="currentColor" fill-opacity=".05" stroke="currentColor" stroke-opacity=".38" stroke-width="1.25" stroke-dasharray="4 3"/>
-  <rect x="11" y="25" width="22" height="2.6" rx="1.3" fill="currentColor" fill-opacity=".22"/>
-  ${ghost}
-  <path d="M94 50 C 88 60, 82 60, 76 55" stroke="currentColor" stroke-opacity=".35" stroke-width="1.25" stroke-dasharray="2.5 3" stroke-linecap="round"/>
-  <path d="M79.4 53 L 75.6 54.8 L 77.6 58.6" stroke="currentColor" stroke-opacity=".45" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+/* The panel the arc comes from: Conditions (every chart + KPI) or Query (Shortcut). */
+const CONDITIONS_CARD = `
   <rect x="88" y="4" width="40" height="44" rx="5" fill="var(--surface)" stroke="currentColor" stroke-opacity=".7" stroke-width="1.25"/>
   <path d="M92.5 9 H99.5 L 97 12.2 V 14.6 L 95 15.4 V 12.2 Z" fill="currentColor" fill-opacity=".55"/>
   <rect x="102" y="10.2" width="15" height="2.4" rx="1.2" fill="currentColor" fill-opacity=".5"/>
@@ -129,6 +129,31 @@ export function previewArtMarkup(id) {
   <rect x="92" y="38.8" width="21" height="6" rx="2" stroke="currentColor" stroke-opacity=".55" stroke-width=".9" stroke-dasharray="2 1.6"/>
   <path d="M95.2 41.8 H98.8 M97 40 V43.6" stroke="currentColor" stroke-opacity=".75" stroke-width="1" stroke-linecap="round"/>
   <rect x="100.6" y="41.1" width="9.4" height="1.5" rx=".75" fill="currentColor" fill-opacity=".45"/>`
+// a code card: "SQL" tab, four indented query lines (keyword darker), a Run Preview button
+const QUERY_CARD = `
+  <rect x="88" y="4" width="40" height="44" rx="5" fill="var(--surface)" stroke="currentColor" stroke-opacity=".7" stroke-width="1.25"/>
+  <path d="M94.4 8.6 L 92.2 11.2 L 94.4 13.8 M98.6 8.6 L 100.8 11.2 L 98.6 13.8" stroke="currentColor" stroke-opacity=".55" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="104" y="10" width="13" height="2.4" rx="1.2" fill="currentColor" fill-opacity=".5"/>
+  <path d="M88.6 17 H127.4" stroke="currentColor" stroke-opacity=".18"/>
+  <rect x="92" y="20.6" width="9" height="2.4" rx="1.2" fill="currentColor" fill-opacity=".45"/><rect x="103" y="20.6" width="17" height="2.4" rx="1.2" fill="currentColor" fill-opacity=".2"/>
+  <rect x="92" y="25.6" width="7" height="2.4" rx="1.2" fill="currentColor" fill-opacity=".45"/><rect x="101" y="25.6" width="12" height="2.4" rx="1.2" fill="currentColor" fill-opacity=".2"/>
+  <rect x="92" y="30.6" width="9" height="2.4" rx="1.2" fill="currentColor" fill-opacity=".45"/><rect x="103" y="30.6" width="20" height="2.4" rx="1.2" fill="currentColor" fill-opacity=".2"/>
+  <rect x="92" y="38.8" width="22" height="6" rx="2" fill="currentColor" fill-opacity=".55"/>
+  <path d="M95.4 40.4 L 98 41.8 L 95.4 43.2 Z" fill="var(--surface)"/>
+  <rect x="100" y="41.1" width="11" height="1.5" rx=".75" fill="var(--surface)" fill-opacity=".9"/>`
+
+/** The inner SVG markup (viewBox 0 0 132 84) for a type. `currentColor` + var(--surface). */
+export function previewArtMarkup(id) {
+  const key = GHOSTS[id] ? id : 'column'
+  const [dx, dy] = centred(key)
+  const ghost = `<g transform="translate(${dx} ${dy})">${GHOSTS[key]()}</g>`
+  return `
+  <rect x="4" y="18" width="80" height="62" rx="7" fill="currentColor" fill-opacity=".05" stroke="currentColor" stroke-opacity=".38" stroke-width="1.25" stroke-dasharray="4 3"/>
+  <rect x="11" y="25" width="22" height="2.6" rx="1.3" fill="currentColor" fill-opacity=".22"/>
+  ${ghost}
+  <path d="M94 50 C 88 60, 82 60, 76 55" stroke="currentColor" stroke-opacity=".35" stroke-width="1.25" stroke-dasharray="2.5 3" stroke-linecap="round"/>
+  <path d="M79.4 53 L 75.6 54.8 L 77.6 58.6" stroke="currentColor" stroke-opacity=".45" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+${previewKind(key).panel === 'query' ? QUERY_CARD : CONDITIONS_CARD}`
 }
 
 /* The downloadable file: tokens resolved to the product's light-theme values. */
