@@ -151,9 +151,13 @@ const isShortcut = computed(() => curType.value.type === 'shortcut')
 const isText = computed(() => curType.value.type === 'text')
 const ctaLabel = computed(() => (isChart.value ? 'Widget' : curType.value.label))
 
-/* Free Text layout — Default (body text) or Header (a centred banner across the row). It is
- * chosen INSIDE the rich-text editor (2026-09-30, user's call) and writes the same fields
- * the old Preset row did: the presentation config plus the tile's width. */
+/* Free Text layout — Default (body text) or Header (a centred banner across the row). Its own
+ * "Text layout" field below Visibility & sharing (2026-10-15, user; it was inside the editor)
+ * and writes the same fields the old Preset row did: the presentation config + the tile width. */
+const NOTE_LAYOUTS = [
+  { id: 'Default', tip: 'Body text — top-left, sized for reading' },
+  { id: 'Header', tip: 'A centred banner across the whole row' },
+]
 const noteLayout = computed({
   get: () => ftPresetOf(cfg.ft),
   set: (id) => {
@@ -669,6 +673,22 @@ function save(place) {
                 </div>
               </div>
 
+              <!-- Free Text layout — its own field under Visibility & sharing (2026-10-15, user;
+                   it was a strip inside the editor). Two cards on the tab-track grey; the
+                   chosen one is edged --sel, never a darker fill. -->
+              <div v-if="isText" class="sec">
+                <div class="sec-h">Text layout</div>
+                <div class="nl-row" role="radiogroup" aria-label="Text layout">
+                  <button
+                    v-for="l in NOTE_LAYOUTS" :key="l.id" type="button" class="nl-c" :class="{ on: noteLayout === l.id }"
+                    role="radio" :aria-checked="noteLayout === l.id" :title="l.tip" @click="noteLayout = l.id"
+                  >
+                    <span class="nl-art" :class="'nl-' + l.id.toLowerCase()"><i /><i /><i /></span>
+                    <span>{{ l.id }}</span>
+                  </button>
+                </div>
+              </div>
+
               <!-- Chart Type is its own section AFTER visibility, as the prototype orders
                    it: what the widget is called and who can see it are settled before how
                    it is drawn.
@@ -887,7 +907,7 @@ function save(place) {
                    editor's own toolbar formats the text itself. -->
               <div v-if="isText" class="sec">
                 <div class="sec-h">Text to display <i class="req">*</i></div>
-                <RichTextEditor v-model="cfg.content" v-model:layout="noteLayout" :max="600" />
+                <RichTextEditor v-model="cfg.content" :layout="noteLayout" :max="600" />
               </div>
 
               <!-- Data Configuration -->
@@ -1239,6 +1259,16 @@ function save(place) {
    note band under it */
 .acc-lbl { display: block; font-size: 12px; font-weight: 400; color: var(--cfg-text); margin-bottom: 4px; }
 .acc-seg { width: 276px; max-width: 100%; }
+/* Free Text layout cards — the tab track's grey (--seg-track) for both; chosen = --sel edge */
+.nl-row { display: flex; gap: 8px; }
+.nl-c { flex: 1; max-width: 132px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 8px 6px; border: 1px solid transparent; border-radius: var(--r-lg); background: var(--seg-track); color: var(--muted); font-size: 12px; cursor: pointer; transition: border-color .15s; }
+.nl-c:hover { border-color: var(--border-strong); }
+.nl-c.on { border-color: var(--sel); color: var(--ink); font-weight: 600; }
+.nl-art { width: 100%; height: 26px; border-radius: 4px; background: var(--surface); display: flex; flex-direction: column; justify-content: center; gap: 3px; padding: 0 8px; box-shadow: 0 0 0 1px var(--border); }
+.nl-art i { display: block; height: 3px; border-radius: 2px; background: var(--muted-2); }
+.nl-art.nl-header { align-items: center; }
+.nl-art.nl-header i { width: 58%; height: 5px; }
+.nl-art.nl-header i + i { display: none; }
 .acc-lbl i { color: var(--red); font-style: normal; }
 
 /* Read-only, on a predefined widget. The value stays legible — showing WHAT it is set
