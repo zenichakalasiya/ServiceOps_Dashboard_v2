@@ -97,8 +97,21 @@ const showFmt = computed(() => hdr.value || fmtOn.value || hasSel.value || !!men
 
 /* ── the model ───────────────────────────────────────────────────────────────── */
 function textLen() { return el.value ? noteText(el.value.innerHTML).replace(/\n/g, '').length : 0 }
+/* A size picked in an EMPTY note leaves a pending size-7 marker that only lands when the
+   first letter is typed — swap it for the real pixel size then. */
+let pendingPx = null
+function settleSize() {
+  for (const f of [...el.value.querySelectorAll('font[size="7"]')]) {
+    const span = document.createElement('span'); if (pendingPx) span.style.fontSize = pendingPx + 'px'
+    while (f.firstChild) span.appendChild(f.firstChild)
+    f.replaceWith(span)
+    const s = window.getSelection(), r = document.createRange()
+    r.selectNodeContents(span); r.collapse(false); s.removeAllRanges(); s.addRange(r)
+  }
+}
 function push() {
   if (!el.value) return
+  settleSize()
   count.value = textLen()
   emit('update:modelValue', el.value.innerHTML)
 }
@@ -218,6 +231,28 @@ function setColor(kind, v) {
    every marker for a span carrying the real pixel size (or unwrap it for Default). */
 function setSize(px) {
   restore()
+  pendingPx = px
+  /* No selection, just a caret: execCommand has nothing to mark, so the pick did nothing
+     (2026-11-02, user: "cannot increase the font size"). Size the caret's line instead —
+     its block, or the whole note when the text sits in no block. */
+  const sel = window.getSelection()
+  if (sel?.rangeCount && sel.isCollapsed && el.value.textContent.trim()) {
+    const BLOCK = /^(P|DIV|H[1-4]|LI|UL|OL|HR)$/
+    let blk = sel.anchorNode
+    while (blk && blk !== el.value && !BLOCK.test(blk.nodeName)) blk = blk.parentNode
+    const r = document.createRange()
+    if (blk && blk !== el.value) r.selectNodeContents(blk)
+    else {
+      // Chrome leaves the FIRST line as bare inline nodes before its <div> lines — take just
+      // that run of inline siblings around the caret
+      let top = sel.anchorNode; while (top.parentNode !== el.value) top = top.parentNode
+      let a = top, z = top
+      while (a.previousSibling && !BLOCK.test(a.previousSibling.nodeName)) a = a.previousSibling
+      while (z.nextSibling && !BLOCK.test(z.nextSibling.nodeName)) z = z.nextSibling
+      r.setStartBefore(a); r.setEndAfter(z)
+    }
+    sel.removeAllRanges(); sel.addRange(r)
+  }
   try { document.execCommand('styleWithCSS', false, false); document.execCommand('fontSize', false, '7') } catch { /* */ }
   for (const f of [...el.value.querySelectorAll('font[size="7"]')]) {
     for (const inner of f.querySelectorAll('[style]')) inner.style.fontSize = ''
