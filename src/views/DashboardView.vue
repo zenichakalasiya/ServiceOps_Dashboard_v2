@@ -697,6 +697,8 @@ function cellStyle(t) {
   const w = Math.min(12, Math.max(2, t.w || 3))
   const h = Math.max(1, t.h || 1)
   const base = lay('rowHeight')
+  // a Header note (a clear note) is a line of text — it hugs its writing, no row floor
+  if (t.type === 'text' && t.ft?.bg === 'Transparent') return { gridColumn: `span ${w}` }
   return { gridColumn: `span ${w}`, minHeight: (base + (h - 1) * 110) + 'px' }
 }
 let resizeCtx = null

@@ -830,6 +830,10 @@ function exploreId(id) { const m = ID_MODULE[String(id).split('-')[0]] || 'its m
 /* A note set to the Transparent background has no card at all — no fill and no outline, so
    its writing sits straight on the board (or group). Hover still shows the ⋯. */
 .tile.note.clear { background: transparent; border-color: transparent; box-shadow: none; }
+/* …and it is a line of text, not a card (2026-11-02, user): no 130px floor, so it hugs its
+   writing. The 12px inset + the 1px clear border put a left-aligned line on the same x as
+   every widget title. */
+.tile.note.clear { min-height: 0; }
 /* A note has no header band, so its header is a transparent LANE across the top — the
    32px FreeTextTile reserves above the writing. The lane itself is the drag handle: the
    cursor turns to a grab hand anywhere along it, and pressing there moves the tile (the

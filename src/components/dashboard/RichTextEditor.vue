@@ -15,6 +15,12 @@
  * READS it (`layout`), so the text area takes the look it picks and what you type already
  * sits where the tile will show it.
  *
+ * HEADER is a line of text, not a document (2026-11-02, user): 16px, and only alignment
+ * (Left / Center / Right), font size, background colour and text colour. The formatting bar
+ * is always open with just those; block style, B I U and lists are gone, and so are image,
+ * link and T from the bottom bar. Switching to Header strips what it can't carry
+ * (`toHeaderHtml`), and Ctrl+B / I / U are refused while it is on.
+ *
  * The text area is 400px tall and the corner handle (the same mark a widget's resize
  * handle wears) drags it taller.
  *
@@ -85,7 +91,9 @@ const colorSel = ref({ fg: 'Default', bg: 'Default' })
 const colorBtn = ref({ fg: null, bg: null })
 const barOf = (k) => { const v = colorSel.value[k], o = COLORS[k].find((x) => x.id === v); return o ? (o.css || 'var(--border-strong)') : v }
 
-const showFmt = computed(() => fmtOn.value || hasSel.value || !!menu.value && menu.value !== 'link' && menu.value !== 'image')
+const hdr = computed(() => props.layout === 'Header')
+const aligns = computed(() => (hdr.value ? ALIGNS.filter((a) => a.v !== 'Full') : ALIGNS))
+const showFmt = computed(() => hdr.value || fmtOn.value || hasSel.value || !!menu.value && menu.value !== 'link' && menu.value !== 'image')
 
 /* ── the model ───────────────────────────────────────────────────────────────── */
 function textLen() { return el.value ? noteText(el.value.innerHTML).replace(/\n/g, '').length : 0 }
@@ -110,6 +118,31 @@ watch(() => props.modelValue, (v) => {
   // only an EXTERNAL change (Reset, a different widget) is written back
   if (el.value && v !== el.value.innerHTML) { el.value.innerHTML = toNoteHtml(v); count.value = textLen() }
 })
+
+/* Header keeps only what its bar can set — colour / background / size spans and block
+   alignment. Bold, italic, underline and links are unwrapped, headings and list items
+   become paragraphs, images go. */
+function toHeaderHtml(root) {
+  root.querySelectorAll('img, hr').forEach((n) => n.remove())
+  root.querySelectorAll('b, strong, i, em, u, a').forEach((n) => n.replaceWith(...n.childNodes))
+  root.querySelectorAll('h1, h2, h3, h4, li').forEach((n) => {
+    const p = document.createElement('p')
+    if (n.style.textAlign) p.style.textAlign = n.style.textAlign
+    p.append(...n.childNodes); n.replaceWith(p)
+  })
+  root.querySelectorAll('ul, ol').forEach((n) => n.replaceWith(...n.childNodes))
+}
+watch(hdr, (on) => {
+  if (!on || !el.value) return
+  menu.value = null
+  const before = el.value.innerHTML
+  toHeaderHtml(el.value)
+  if (el.value.innerHTML !== before) push()
+}, { flush: 'post' })
+// the browser's own Ctrl+B / I / U would add formatting the Header bar doesn't offer
+function onKey(e) {
+  if (hdr.value && (e.ctrlKey || e.metaKey) && /^[biu]$/i.test(e.key)) e.preventDefault()
+}
 
 /* ── selection + pressed states ──────────────────────────────────────────────── */
 let saved = null
@@ -258,9 +291,9 @@ const blockLabel = computed(() => BLOCKS.find((b) => b.v === st.value.block)?.la
   <div ref="root" class="rte" :class="{ focus: focused }">
     <div class="rte-area">
       <div
-        ref="el" class="rte-body note-body" :class="{ 'is-hdr': layout === 'Header' }" contenteditable="true" role="textbox" aria-multiline="true"
+        ref="el" class="rte-body note-body" :class="{ 'is-hdr': hdr }" contenteditable="true" role="textbox" aria-multiline="true"
         :style="{ height: bodyH + 'px' }"
-        :data-ph="placeholder" @input="push" @beforeinput="onBeforeInput" @paste="onPaste"
+        :data-ph="placeholder" @input="push" @beforeinput="onBeforeInput" @paste="onPaste" @keydown="onKey"
         @focus="focused = true" @blur="focused = false" @keyup="sync" @mouseup="sync"
       />
       <!-- the widget's resize mark; drags the text area taller -->
@@ -270,19 +303,21 @@ const blockLabel = computed(() => BLOCKS.find((b) => b.v === st.value.block)?.la
     <!-- the formatting bar: on when T is toggled, or whenever text is selected — right
          above the bottom bar, as the reference stacks them -->
     <div v-if="showFmt" class="rte-fmt" @mousedown.prevent>
-      <div class="rte-dd">
-        <button class="rte-btn rte-wide" :class="{ open: menu === 'block' }" :title="blockLabel" @mousedown.prevent="toggle('block')">
-          <b class="rte-a">A</b><Icon name="pen" :size="11" /><Icon name="chevron-down" :size="13" />
-        </button>
-        <div v-if="menu === 'block'" class="rte-pop rte-menu">
-          <button v-for="b in BLOCKS" :key="b.v" class="rte-mi" :class="['bk-' + b.v, { on: st.block === b.v }]" @mousedown.prevent="setBlock(b.v)">{{ b.label }}</button>
+      <template v-if="!hdr">
+        <div class="rte-dd">
+          <button class="rte-btn rte-wide" :class="{ open: menu === 'block' }" :title="blockLabel" @mousedown.prevent="toggle('block')">
+            <b class="rte-a">A</b><Icon name="pen" :size="11" /><Icon name="chevron-down" :size="13" />
+          </button>
+          <div v-if="menu === 'block'" class="rte-pop rte-menu">
+            <button v-for="b in BLOCKS" :key="b.v" class="rte-mi" :class="['bk-' + b.v, { on: st.block === b.v }]" @mousedown.prevent="setBlock(b.v)">{{ b.label }}</button>
+          </div>
         </div>
-      </div>
-      <i class="rte-sep" />
-      <button class="rte-btn" :class="{ on: st.bold }" title="Bold" @mousedown.prevent="exec('bold')"><Icon name="bold" :size="16" /></button>
-      <button class="rte-btn" :class="{ on: st.italic }" title="Italic" @mousedown.prevent="exec('italic')"><Icon name="italic" :size="16" /></button>
-      <button class="rte-btn" :class="{ on: st.underline }" title="Underline" @mousedown.prevent="exec('underline')"><Icon name="underline" :size="16" /></button>
-      <i class="rte-sep" />
+        <i class="rte-sep" />
+        <button class="rte-btn" :class="{ on: st.bold }" title="Bold" @mousedown.prevent="exec('bold')"><Icon name="bold" :size="16" /></button>
+        <button class="rte-btn" :class="{ on: st.italic }" title="Italic" @mousedown.prevent="exec('italic')"><Icon name="italic" :size="16" /></button>
+        <button class="rte-btn" :class="{ on: st.underline }" title="Underline" @mousedown.prevent="exec('underline')"><Icon name="underline" :size="16" /></button>
+        <i class="rte-sep" />
+      </template>
       <div class="rte-dd">
         <button class="rte-btn rte-wide" :class="{ open: menu === 'size', on: !!st.size }" title="Font size" @mousedown.prevent="toggle('size')">
           <Icon name="text-size" :size="16" /><span v-if="sizeLabel" class="rte-num">{{ sizeLabel }}</span><Icon name="chevron-down" :size="13" />
@@ -292,7 +327,14 @@ const blockLabel = computed(() => BLOCKS.find((b) => b.v === st.value.block)?.la
         </div>
       </div>
       <i class="rte-sep" />
-      <div class="rte-dd">
+      <!-- Header: the three alignments as buttons — there is room, and one click beats a menu -->
+      <template v-if="hdr">
+        <button
+          v-for="a in aligns" :key="a.v" class="rte-btn" :class="{ on: st.align === a.v }" :title="'Align ' + a.v.toLowerCase()"
+          @mousedown.prevent="setAlign(a.v)"
+        ><Icon :name="a.icon" :size="16" /></button>
+      </template>
+      <div v-else class="rte-dd">
         <button class="rte-btn rte-wide" :class="{ open: menu === 'align' }" title="Alignment" @mousedown.prevent="toggle('align')">
           <Icon :name="ALIGNS.find((a) => a.v === st.align)?.icon || 'align-left'" :size="16" /><Icon name="chevron-down" :size="13" />
         </button>
@@ -303,9 +345,11 @@ const blockLabel = computed(() => BLOCKS.find((b) => b.v === st.value.block)?.la
         </div>
       </div>
       <i class="rte-sep" />
-      <button class="rte-btn" :class="{ on: st.ul }" title="Bulleted list" @mousedown.prevent="exec('insertUnorderedList')"><Icon name="list-bullet" :size="16" /></button>
-      <button class="rte-btn" :class="{ on: st.ol }" title="Numbered list" @mousedown.prevent="exec('insertOrderedList')"><Icon name="list-number" :size="16" /></button>
-      <i class="rte-sep" />
+      <template v-if="!hdr">
+        <button class="rte-btn" :class="{ on: st.ul }" title="Bulleted list" @mousedown.prevent="exec('insertUnorderedList')"><Icon name="list-bullet" :size="16" /></button>
+        <button class="rte-btn" :class="{ on: st.ol }" title="Numbered list" @mousedown.prevent="exec('insertOrderedList')"><Icon name="list-number" :size="16" /></button>
+        <i class="rte-sep" />
+      </template>
       <button
         :ref="(e) => (colorBtn.bg = e)" class="rte-btn rte-col" :class="{ open: menu === 'bg' }" title="Background colour"
         @mousedown.prevent="toggle('bg')"
@@ -323,6 +367,7 @@ const blockLabel = computed(() => BLOCKS.find((b) => b.v === st.value.block)?.la
 
     <!-- always there: what inserts something, and the T that shows the formatting bar -->
     <div class="rte-foot">
+      <template v-if="!hdr">
       <div class="rte-dd">
         <button class="rte-btn" :class="{ open: menu === 'image' }" title="Insert image" @mousedown.prevent="toggle('image')"><Icon name="image" :size="16" /></button>
         <div v-if="menu === 'image'" class="rte-pop rte-ins">
@@ -351,6 +396,7 @@ const blockLabel = computed(() => BLOCKS.find((b) => b.v === st.value.block)?.la
         </div>
       </div>
       <button class="rte-btn" :class="{ on: fmtOn }" :title="fmtOn ? 'Hide formatting' : 'Show formatting'" @mousedown.prevent="fmtOn = !fmtOn"><Icon name="text-type" :size="16" /></button>
+      </template>
       <span class="grow" />
       <span class="rte-count" :class="{ full: count >= max }">{{ count }} / {{ max }}</span>
       <input ref="fileEl" type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden @change="onImageFile" />
@@ -363,7 +409,7 @@ const blockLabel = computed(() => BLOCKS.find((b) => b.v === st.value.block)?.la
 .rte.focus { border-color: var(--primary); }
 .rte-area { position: relative; }
 /* Header: what you type sits where the banner will show it — centred, mid-height */
-.rte-body.is-hdr { display: flex; flex-direction: column; justify-content: center; text-align: center; font-size: 24px; line-height: 1.25; }
+.rte-body.is-hdr { display: flex; flex-direction: column; justify-content: center; text-align: center; font-size: 16px; line-height: 1.25; }
 .rte-body { overflow: auto; padding: 10px 12px 18px; outline: none; font-size: 13px; color: var(--ink); }
 /* the same corner mark as a widget's resize handle (DashboardView .resize), shown on hover */
 .rte-resize { position: absolute; right: 3px; bottom: 3px; width: 16px; height: 16px; cursor: ns-resize; opacity: 0; transition: opacity .15s; }
