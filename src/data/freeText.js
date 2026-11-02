@@ -443,6 +443,8 @@ export function ftStyle(ft = {}) {
     },
     text: {
       ...(px ? { fontSize: px + 'px', lineHeight: 1.25 } : {}),
+      // a Header (the clear note) is semibold, like the board's own titles (2026-11-02, user)
+      ...(ft.bg === 'Transparent' ? { fontWeight: 600 } : {}),
       color: ftValue(FT_COLORS, ft.color || 'Default', 'var(--ink)'),
     },
   }

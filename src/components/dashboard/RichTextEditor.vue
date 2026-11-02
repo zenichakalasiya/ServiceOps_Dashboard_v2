@@ -409,7 +409,7 @@ const blockLabel = computed(() => BLOCKS.find((b) => b.v === st.value.block)?.la
 .rte.focus { border-color: var(--primary); }
 .rte-area { position: relative; }
 /* Header: what you type sits where the banner will show it — centred, mid-height */
-.rte-body.is-hdr { display: flex; flex-direction: column; justify-content: center; text-align: center; font-size: 16px; line-height: 1.25; }
+.rte-body.is-hdr { display: flex; flex-direction: column; justify-content: center; text-align: center; font-size: 16px; font-weight: 600; line-height: 1.25; }
 .rte-body { overflow: auto; padding: 10px 12px 18px; outline: none; font-size: 13px; color: var(--ink); }
 /* the same corner mark as a widget's resize handle (DashboardView .resize), shown on hover */
 .rte-resize { position: absolute; right: 3px; bottom: 3px; width: 16px; height: 16px; cursor: ns-resize; opacity: 0; transition: opacity .15s; }
