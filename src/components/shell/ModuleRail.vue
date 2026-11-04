@@ -83,8 +83,8 @@ function pickSub(m, sub) {
       </button>
     </div>
 
-    <!-- AI Capabilities showcase — pinned to the foot -->
-    <button class="mod ai" :class="{ active: route.path === '/ai' }"
+    <!-- AI Capabilities showcase — hidden from the rail 2026-11-04 (user); /ai still opens it -->
+    <button v-if="false" class="mod ai" :class="{ active: route.path === '/ai' }"
       @click="router.push('/ai')" @mouseenter="hoverKey = 'ai'" @mouseleave="hoverKey = ''">
       <span class="mod-ic"><Icon name="sparkles" :size="19" /></span>
       <span v-if="store.ui.railExpanded" class="mod-nm">AI Capabilities</span>
