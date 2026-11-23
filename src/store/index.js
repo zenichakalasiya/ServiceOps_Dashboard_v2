@@ -43,6 +43,9 @@ export const store = reactive({
     aiPlacement: 'A',
     // builder demo: which Manual / Query Based design is live — 'cards' (A) · 'banner' (D) · 'pill'
     modeUi: 'cards',
+    // board first-landing skeleton (components/dashboard/BoardSkeleton.vue) — DEFAULT 'choreo' (finalized 2026-11-23);
+    // others: 'assemble' · 'split' · 'classic' (demo bar hidden: showSkeletonDemo in DashboardView)
+    skeletonStyle: 'choreo', skeletonNonce: 0,
     // AI-insights placement lab: the shared panel's open + pinned state. Persists "per user"
     // via the store, the app's own mechanism (there is no localStorage layer anywhere).
     aiInsightsOpen: false, aiInsightsPinned: false,

@@ -22,6 +22,7 @@ import AiSummaryCard from '../components/ai/AiSummaryCard.vue'
 import AiInsightChip from '../components/ai/AiInsightChip.vue'
 import AiInsightCard from '../components/ai/AiInsightCard.vue'
 import AiAssistant from '../components/ai/AiAssistant.vue'
+import BoardSkeleton, { SKELETON_MS, SKELETON_STYLES, rememberTileHeights } from '../components/dashboard/BoardSkeleton.vue'
 import { demoBoard } from '../data/aiDemo.js'
 import { store, byId, recordView, toggleFavorite, removeTile, toast } from '../store/index.js'
 import { uid, ACCESS } from '../data/mock.js'
@@ -767,11 +768,13 @@ function onWidgetCreated(id) {
 // Loading + reveal + (for a brand-new empty board) auto-open Add-Widget.
 // Runs on mount AND on every dashboard switch — the route component is reused across
 // param changes, so onMounted alone wouldn't fire for a freshly-created board.
+let loadTimer = null
 function loadBoard() {
+  clearTimeout(loadTimer)                               // a replay mid-load restarts the clock
   loadingBoard.value = true
   restoredFor = null; pinned = null; curSec.value = null     // a (re)opened board restores its own section
   recordView(d.value)
-  setTimeout(() => {
+  loadTimer = setTimeout(() => {
     loadingBoard.value = false
     revealing.value = true                              // widgets fade/slide in with staggered data
     setTimeout(() => (revealing.value = false), 1100)
@@ -781,7 +784,17 @@ function loadBoard() {
     }
     focusPendingTile()
     nextTick(() => { markStuck(); restoreSection() })
-  }, 600)
+    setTimeout(() => rememberTileHeights(gridEl.value), 1200)   // after the reveal, so charts have their final size
+  }, SKELETON_MS[skStyle.value] || 600)
+}
+/* Board loading-skeleton demo (BoardSkeleton.vue). Picking a style replays the load so the
+ * choreographies can be compared; Replay does the same for the current one. */
+const skStyle = computed(() => store.ui.skeletonStyle || 'choreo')
+const showSkeletonDemo = false   // ① Choreograph finalized as the default 2026-11-23; flip to compare variants
+function playSkeleton(id) {
+  if (id) store.ui.skeletonStyle = id
+  store.ui.skeletonNonce++
+  loadBoard()
 }
 /* Iris's "Add a widget" follow-up — it navigates to the board first, then asks for the drawer */
 watch(() => store.ui.irisAddWidget, (v) => {
@@ -1015,6 +1028,18 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
         <span class="gsb-desc">{{ GSTYLES.find(s => s.id === gs)?.desc }}</span>
       </div>
 
+      <!-- DEMO: the board's loading skeleton — four choreographies, Replay to watch again -->
+      <div v-if="showSkeletonDemo" class="gstyle-bar sk-bar">
+        <span class="gsb-label"><Icon name="layout" :size="14" /> Loading demo</span>
+        <div class="gsb-seg">
+          <button v-for="s in SKELETON_STYLES" :key="s.id" class="gsb-b" :class="{ on: skStyle === s.id }" :title="s.desc" @click="playSkeleton(s.id)">
+            <span class="gsb-n">{{ s.n }}</span> {{ s.label }}
+          </button>
+        </div>
+        <button class="btn btn-sm" :disabled="loadingBoard" @click="playSkeleton()"><Icon name="refresh" :size="14" /> Replay</button>
+        <span class="gsb-desc">{{ SKELETON_STYLES.find(s => s.id === skStyle)?.desc }}</span>
+      </div>
+
       <!-- DEMO: the 5 ways to handle a high-cardinality legend. Affects "Tickets by Technician" (63 values). -->
       <div v-if="showLegendDemo && !loadingBoard" class="gstyle-bar legend-bar">
         <span class="gsb-label"><Icon name="chart-pie" :size="14" /> Legend demo <em>63-category chart</em></span>
@@ -1036,9 +1061,11 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
       <AiSummaryCard v-if="!loadingBoard && ap === 'C'" :board="aiBoard" @ask="onCardAsk" />
 
       <!-- loading skeleton (P2·9) -->
-      <div v-if="loadingBoard" class="grid">
+      <div v-if="loadingBoard && skStyle === 'classic'" class="grid">
         <div v-for="n in 6" :key="n" class="card sk" :class="n <= 4 ? 'span-3' : 'span-6'"><div class="skeleton" style="height:100%" /></div>
       </div>
+      <BoardSkeleton v-else-if="loadingBoard" :key="d.id + ':' + skStyle + ':' + store.ui.skeletonNonce" :board="d" :variant="skStyle"
+        :h-gap="lay('hGap')" :v-gap="lay('vGap')" :row-height="lay('rowHeight')" />
 
       <!-- empty state → template gallery (P2·9, P3·tour, ClickUp pattern) -->
       <div v-else-if="!d.tiles.length && !(d.groups && d.groups.length)" class="empty">
@@ -1053,7 +1080,7 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
       </div>
 
       <!-- tiles (ungrouped + collapsible groups) — drag a box anywhere to marquee-select -->
-      <div v-else class="board-groups" ref="gridEl" :class="{ selecting, revealing }" @mousedown="boardMouseDown">
+      <div v-else class="board-groups" ref="gridEl" :class="{ selecting, revealing, 'reveal-soft': skStyle !== 'classic' }" @mousedown="boardMouseDown">
         <div v-if="gShowTip || gShowAddGroupBtn || gRightClick || gHoverIcon || gAutoBy" class="bg-toolbar">
           <span v-if="gRightClick" class="bg-hint">Right-click any widget → New group / Add to group</span>
           <span v-if="gHoverIcon" class="bg-hint">Hover a widget and click its ⊞ chip → New group / Add to group</span>
@@ -1478,6 +1505,9 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .revealing .cell:nth-child(4) { animation-delay: .12s; }
 .revealing .cell:nth-child(5) { animation-delay: .16s; }
 .revealing .cell:nth-child(n+6) { animation-delay: .2s; }
+/* the skeleton already stood where each tile lands — so the tiles crossfade in place */
+.revealing.reveal-soft .cell { animation-name: cellFade; animation-duration: .38s; }
+@keyframes cellFade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes cellReveal { from { opacity: 0; transform: translateY(10px) scale(.99); } to { opacity: 1; transform: none; } }
 /* widget groups (collapsible rows) */
 .board-groups { display: flex; flex-direction: column; gap: 16px; }
@@ -1601,6 +1631,7 @@ function discard() { if (dirty.value && !confirm('Discard unsaved changes?')) re
 .gsb-b:hover { color: var(--ink); }
 .gsb-b.on { background: var(--surface); color: var(--primary-700); box-shadow: var(--sh-sm); font-weight: 600; }
 .gsb-n { font-size: 13px; }
+.sk-bar .btn:disabled { opacity: .5; }
 .gsb-desc { font-size: 12px; color: var(--muted-2); margin-left: auto; }
 .gsb-desc em { font-style: normal; color: var(--ai-ink); font-weight: 500; }
 @media (max-width: 720px) { .gsb-desc { display: none; } }
